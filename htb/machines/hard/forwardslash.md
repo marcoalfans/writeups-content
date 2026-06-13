@@ -9,6 +9,7 @@ avatar: assets/htb/forwardslash.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/ForwardSlash
 ---
+
 ## Overview
 
 ### Useful Skills and Tools
@@ -20,7 +21,7 @@ htb_url: https://app.hackthebox.com/machines/ForwardSlash
 I started my enumeration of this system with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kalimaa:~/htb/forwardslash$ nmap -p- -sC -sV -oN forwardslash.nmap <YOUR_IP>
+kac0@kalimaa:~/htb/forwardslash$ nmap -p- -sC -sV -oN forwardslash.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-07-06 15:59 EDT
 Nmap scan report for forwardslash.htb (<YOUR_IP>)
 Host is up (0.046s latency).
@@ -42,7 +43,7 @@ Nmap done: 1 IP address (1 host up) scanned in 44.01 seconds
 
 This machine only had two ports open, `80 - HTTP` & `22 - SSH`.  Since I had no credentials to use for SSH I fired up a browser and navigated to `http://<YOUR_IP>`.
 
-![This page was automatically redirected to from <YOUR_IP>](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-port80-redirect.png)
+![This page was automatically redirected to from <YOUR_IP>](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-port80-redirect.png)
 
 When I connected to port 80 it automatically redirected to `forwardslash.htb`.  In order to redirect my request to get to this pageI had to add the following line to `/etc/hosts`:
 
@@ -52,7 +53,7 @@ When I connected to port 80 it automatically redirected to `forwardslash.htb`.  
 
 After adding the hostname to `/etc/hosts` I navigated to `http://forwardslash.htb` and was greeted by webpage that had been defaced by the "Backslash Gang".
 
-![title - Backslash Gang](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-forwardslash.htb.png)
+![title - Backslash Gang](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-forwardslash.htb.png)
 
 The Backslash Gang left a message behind:
 
@@ -62,11 +63,11 @@ This looked like clues as to how they managed to get into the site.  I made note
 
 ### Dirbuster - forwardslash.htb
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1.5-initial-dirbuster.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.5-initial-dirbuster.png)
 
 Using Dirbuster I found what initially looked like a large number of files, but after doing some closer inspection, the server was simply giving a `403 - Access Denied` error to any request that contained `.htaccess` or `.htpasswd` in it.  One accessible file stuck out, however.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2.5-note.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2.5-note.png)
 
 It appeared that one of the server owners had left the other a note.  The file `note.txt` mentioned two potential usernames: `pain` and `chiv` and also mentioned that there is a backup site. 
 
@@ -75,7 +76,7 @@ It appeared that one of the server owners had left the other a note.  The file `
 Ippsec's video on [`HTB - Player`](%20https://www.youtube.com/watch?v=JpzREo7XLOY) describes "vhost enumeration" and explains how to search for other virtual hosts which map to the same IP address. From watching this video before I knew that you could enumerate these sites using the tool `gobuster`: 
 
 ```text
-zweilos@kalimaa:~/htb/forwardslash$ gobuster vhost -u http://forwardslash.htb -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt 
+kac0@kalimaa:~/htb/forwardslash$ gobuster vhost -u http://forwardslash.htb -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt 
 ===============================================================
 Gobuster v3.0.1
 by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
@@ -98,15 +99,15 @@ I used a wordlist of the top 110,000 most common subdomain names, and quickly fo
 
 ### The Backup site
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-backup-site.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-backup-site.png)
 
 Navigating to `http://backup.forwardslash.htb` auto-redirected me once again, this time to a login page at [http://backup.forwardslash.htb/login.php](http://backup.forwardslash.htb/login.php).  Since I did not have any credentials, I signed up for a new account and logged in.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-new-account.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-new-account.png)
 
 Once I was logged in, I was greeted by this page.  This so-called dashboard did not offer much to do.
 
-![Breaking the fourth wall](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-fun-fact.png)
+![Breaking the fourth wall](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-fun-fact.png)
 
 The machine creator left behind a message for everyone playing with a friendly public service announcement.  Don't smoke, folks.  Its disgusting and think of all of the cat-girls you can save.
 
@@ -120,15 +121,15 @@ This is a good habit to get into: always add new sites to `cewl` word list just 
 
 ### Dirbuster redux - backup.forwardslash.htb
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-enumerating-backup.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-enumerating-backup.png)
 
 Around this time my Dirbuster report from this new subdomain had finished.  There were a lot of results to go through, so I decided to finish going through the ones I had seen when I logged in before exploring further.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-fileupload.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-fileupload.png)
 
 The URL and Submit sections on the [http://backup.forwardslash.htb/profilepicture.php](http://backup.forwardslash.htb/profilepicture.php) page were disabled, but I wondered if it was something I could easily bypass by checking the HTML code.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-disabled.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-disabled.png)
 
  As I suspected, they had simply used the "disabled" attribute for the two sections.  Removing this code made it so the fields were again active.  
 
@@ -141,7 +142,7 @@ The URL and Submit sections on the [http://backup.forwardslash.htb/profilepictur
 
 used burp to enumerate the potential for LFI
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-etc-passwd.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-etc-passwd.png)
 
 got `/etc/passwd`
 
@@ -491,7 +492,7 @@ Tried to decrypt the password at first, though it was not a hash despite its loo
 pain@forwardslash:~$ ls
 encryptorinator  note.txt  user.txt
 pain@forwardslash:~$ cat user.txt 
-cd2c****8cf8
+cd2c************************8cf8
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -544,7 +545,7 @@ UnicodeDecodeError: 'utf-8' codec can't decode byte 0xf1 in position 932: invali
 recieved error: while trying to decrypt. \(have seen this with rockyou.txt in the past as well\).  [https://github.com/wpscanteam/wpscan/issues/190](https://github.com/wpscanteam/wpscan/issues/190) - encoding problems with rockyou.txt and ciphertext solved by using `'latin'` encoding
 
 ```text
-zweilos@kalimaa:~/htb/forwardslash$ vi -c 'let $enc = &fileencoding | execute "!echo Encoding:  $enc" | q' ciphertext 
+kac0@kalimaa:~/htb/forwardslash$ vi -c 'let $enc = &fileencoding | execute "!echo Encoding:  $enc" | q' ciphertext 
 
 Encoding: latin1
 
@@ -607,7 +608,7 @@ if (__name__ == '__main__'):
 Python script ouput
 
 ```text
-zweilos@kalimaa:~/htb/forwardslash$ python3 ./decryptor.py
+kac0@kalimaa:~/htb/forwardslash$ python3 ./decryptor.py
 plaintext found: ©¹b`ÛºK§T=ox&yorSÔaé[8vá[(ý;fryption tool, pretty secure hÏäþð5ÖMG3õzhere is the key to the encrypted image from /var/backups/recovery: cB!6%sdHòj^@Y*$C2cf
 The key was: theroadtorainbows
 ```
@@ -668,7 +669,7 @@ I now had an SSH key.  Since neither `pain` or `chiv` needed an RSA key to login
 Trying to login with this key, I encountered an error I had seen before.
 
 ```text
-zweilos@kalimaa:~/htb/forwardslash$ ssh -i root.id_rsa root@<YOUR_IP>
+kac0@kalimaa:~/htb/forwardslash$ ssh -i root.id_rsa root@<YOUR_IP>
 load pubkey "root.id_rsa": invalid format
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
@@ -683,11 +684,11 @@ root@<YOUR_IP>'s password:
 I knew I was right that this was root's key.  _Though, as always, you have to make sure to apply `chmod 600 <file>` to your SSH private keys before use!_
 
 ```text
-zweilos@kalimaa:~/htb/forwardslash$ chmod 600 root.id_rsa 
+kac0@kalimaa:~/htb/forwardslash$ chmod 600 root.id_rsa 
 
-zweilos@kalimaa:~/htb/forwardslash$ ssh -i root.id_rsa root@<YOUR_IP>
+kac0@kalimaa:~/htb/forwardslash$ ssh -i root.id_rsa root@<YOUR_IP>
 load pubkey "root.id_rsa": invalid format
 Welcome to Ubuntu 18.04.4 LTS (GNU/Linux 4.15.0-91-generic x86_64)
 root@forwardslash:~# cat root.txt 
-a6a9****2287
+a6a9************************2287
 ```

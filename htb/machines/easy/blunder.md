@@ -9,6 +9,7 @@ avatar: assets/htb/blunder.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Blunder
 ---
+
 ## Overview
 
 This easy difficulty Linux machine featured a content management system that was new to me, and a simple to use but interesting way to bypass a common configuration used by system administrators to grant permissions without allowing root access.  It required writing a Python script to brute force a login, and had multiple ways to exploit the vulnerable service to gain access.  The root privilege escalation method was very realistic, but so simple and easy to do it was almost disappointing to complete this machine so quickly.
@@ -36,7 +37,7 @@ This easy difficulty Linux machine featured a content management system that was
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kali:~/htb/blunder$ nmap -p- -sC -sV -oN blunder <YOUR_IP>
+kac0@kali:~/htb/blunder$ nmap -p- -sC -sV -oN blunder <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-06 19:11 EDT
 Nmap scan report for <YOUR_IP>
 Host is up (0.044s latency).
@@ -54,7 +55,7 @@ Nmap done: 1 IP address (1 host up) scanned in 379.53 seconds
 
 There was not much to work with from my nmap scan as only port 80 was open.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-bluder-site.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-bluder-site.png)
 
 Since there was nothing else I could do, I navigated my web browser to the HTTP site hosted on port 80 and found a website of random facts about random subjects.
 
@@ -130,11 +131,11 @@ Since there was nothing else I could do, I navigated my web browser to the HTTP 
 
 While manually checking out the site I ran `nikto`, which revealed a lot of security misconfigurations though not many seemed accessible without credentials. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-admin-page%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-admin-page%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
 
 The `nikto` scan did reveal an `/admin/` directory, at which I found a login page. I wasn't able to find anything useful and couldn't login without credentials.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-gitignore.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-gitignore.png)
 
 There was also a `.gitignore` file that revealed a potential internal directory structure. Searching for `bl-plugins` led to [https://docs.bludit.com/en/getting-started/plugins](https://docs.bludit.com/en/getting-started/plugins).  Bludit turned out to be a content management system for hosting blogs.  
 
@@ -146,11 +147,11 @@ There was also a `.gitignore` file that revealed a potential internal directory 
 Don't Google **`bl-content`** to find information about this site.  I will not bring up what you are looking for!
 {% endhint %}
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-already-installed.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-already-installed.png)
 
 Using dirbuster I found `install.php` which reported that Bludit is already installed.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-todo.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-todo.png)
 
 I also found the file `todo.txt` which contained a potential username `fergus` and some hardening steps that were taken to secure the site.
 
@@ -303,20 +304,20 @@ if __name__ == '__main__':
 
 After writing my python brute-force program based off the one in the POC, I loaded it with `rockyou.txt` and let it run. After it ran most of the day and didn't get any results, I decided to try another direction. Since the site had plenty of text on it I decided to run `cewl` against it to build a custom wordlist. I also included all of the pages I had enumerated with `dirbuster`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-password-found.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-password-found.png)
 
 This worked much faster. It still had to go through a few thousand tries, but for my multi-threaded script it didn't take long.
 
 ## Initial Foothold
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-upload-vuln.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-upload-vuln.png)
 
 Now that I had a working username and password to the `/admin/` page I was able to use the exploit I had found. I poked around on the site a bit and found an upload page that looked interesting, but after a bit of quick searching I found out that there was a nice and easy MetaSploit module so I fired up `msfconsole`. 
 
 [https://github.com/rapid7/metasploit-framework/pull/12542/files](https://github.com/rapid7/metasploit-framework/pull/12542/files)
 
 ```text
-zweilos@kali:~/htb/blunder$ msfconsole
+kac0@kali:~/htb/blunder$ msfconsole
 
       .:okOOOkdc'           'cdkOOOko:.
     .xOOOOOOOOOOOOc       cOOOOOOOOOOOOx.
@@ -520,7 +521,7 @@ The file `users.php` in the `/var/www/bludit-3.9.2/bl-content/databases/` folder
 It contained what looked like a hash and salt value for an `Administrator` user. I loaded the hash into the program `hash-identifier` to see what it was.
 
 ```text
-zweilos@kali:~/htb/blunder$ hash-identifier 
+kac0@kali:~/htb/blunder$ hash-identifier 
    #########################################################################
    #     __  __                     __           ______    _____           #
    #    /\ \/\ \                   /\ \         /\__  _\  /\  _ `\         #
@@ -685,7 +686,7 @@ Mode             Size  Type  Last modified              Name
 40755/rwxr-xr-x  4096  dir   2020-04-28 07:13:35 -0400  shaun
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-password-cracked.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-password-cracked.png)
 
 The first hash cracking website I tried the hash on immediately revealed the password as `Password120`.
 
@@ -712,7 +713,7 @@ hugo@blunder:/var/www/bludit-3.9.2/bl-content/databases$ cd ~
 cd ~
 hugo@blunder:~$ cat user.txt
 cat user.txt
-dcf1****8a77
+dcf1************************8a77
 ```
 
 Once I got a system shell, I used my standard shell upgrade steps, but it didn't quite work the way I wanted, so I was stuck with a half-functional shell.  Despite this I was able to switch users to `hugo` and collect my `user.txt` proof.  
@@ -903,6 +904,6 @@ uid=1000(shaun) gid=1000(shaun) groups=1000(shaun),4(adm),24(cdrom),30(dip),46(p
 root@blunder:/dev/shm# id
 uid=0(root) gid=1001(hugo) groups=1001(hugo)
 root@blunder:/dev/shm# cat /root/root.txt 
-e650****f5f7
+e650************************f5f7
 root@blunder:/dev/shm#
 ```

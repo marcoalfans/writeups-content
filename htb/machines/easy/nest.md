@@ -9,6 +9,7 @@ avatar: assets/htb/nest.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Nest
 ---
+
 ## Overview
 
 This was a fairly easy Windows box that required a bit of back-and-forth between locations and also a little bit of .NET-fu to proceed.  Luckily there are tools and websites out there that make disassembling and compiling easy for those who aren't fluent in VB.Net or C\#.
@@ -59,7 +60,7 @@ I started off my enumeration with an nmap scan of `<YOUR_IP>`. The options I reg
 At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally. The scan only showed one port open during my initial scan so I ran it again to verify, and it came back with the same results.
 
 ```bash
-zweilos@kalimaa:~/htb/nest$ nmap -p- -A -oA nest.full <YOUR_IP> -Pn
+kac0@kalimaa:~/htb/nest$ nmap -p- -A -oA nest.full <YOUR_IP> -Pn
 
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-05-30 15:47 EDT
 Nmap scan report for <YOUR_IP>
@@ -86,7 +87,7 @@ Nmap done: 1 IP address (1 host up) scanned in 330.76 seconds
 Well, nothing else to do but try to connect to SMB without any credentials:
 
 ```text
-zweilos@kalimaa:~/htb/nest$ smbclient -U "" -L \\<YOUR_IP>\
+kac0@kalimaa:~/htb/nest$ smbclient -U "" -L \\<YOUR_IP>\
 > 
 Enter WORKGROUP\'s password: 
 
@@ -104,7 +105,7 @@ SMB1 disabled -- no workgroup available
 Luckily it worked, and I got back a listing of the shares on this machine. `Data`, `Secure$`, and `Users` all sound interesting as they are not default shares. I first tried connecting to `Secure$` but was denied. Next I tried to connect to `Data`.
 
 ```text
-zweilos@kalimaa:~/htb/nest$ smbclient -U "" \\\\<YOUR_IP>\\Data
+kac0@kalimaa:~/htb/nest$ smbclient -U "" \\\\<YOUR_IP>\\Data
 Enter WORKGROUP\'s password: 
 Try "help" to get a list of possible commands.
 smb: \> ls
@@ -122,7 +123,7 @@ smb: \>
 After searching around in the various folders, I found one file that had some interesting information in the `Shared\Templates\HR\` folder.
 
 ```text
-zweilos@kalimaa:~/htb/nest$ cat 'Shared\Templates\HR\Welcome Email.txt' 
+kac0@kalimaa:~/htb/nest$ cat 'Shared\Templates\HR\Welcome Email.txt' 
 
 We would like to extend a warm welcome to our newest member of staff, <FIRSTNAME> <SURNAME>
 
@@ -144,7 +145,7 @@ HR
 The file `"Welcome Email.txt"` contained a set of credentials for the user `TempUser`, the location of the user's folder, and the hostname of the machine: `HTB-NEST`. Using this information I once again used `smbclient` and logged into the `Users` share.
 
 ```text
-zweilos@kalimaa:~/htb/nest$ smbclient -W HTB-NEST -U TempUser \\\\<YOUR_IP>\\Users
+kac0@kalimaa:~/htb/nest$ smbclient -W HTB-NEST -U TempUser \\\\<YOUR_IP>\\Users
 Enter HTB-NEST\TempUser's password: 
 Try "help" to get a list of possible commands.
 smb: \> ls
@@ -246,7 +247,7 @@ Inside this file was some useful information.
 I now had credentials for another user `c.smith`for what appeared to be LDAP \(port 389\), but the password was obfuscated. It seemed to be Base64, so I decoded it and got this:
 
 ```text
-zweilos@kalimaa:~/htb/nest$ echo "fTEzAfYDoz1YzkqhQkH6GQFYKp1XY5hm7bjOP86yYxE=" | base64 -d
+kac0@kalimaa:~/htb/nest$ echo "fTEzAfYDoz1YzkqhQkH6GQFYKp1XY5hm7bjOP86yYxE=" | base64 -d
 }13��=X�J�BA�X*�Wc�f���?βc
 ```
 
@@ -305,13 +306,13 @@ I copied the whole `VB Projects` folder to my computer and opened the solution f
 
 > `mget` will now allow the whole folder and subfolders to be copied recursively to your local `pwd` \(wherever you were before you logged into smbclient\).
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/Screenshot_2020-06-13_13-05-14.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/Screenshot_2020-06-13_13-05-14.png)
 
 In the `Main()` function I could see that the program was supposed to read the `RU_config.xml` file that we found earlier with `c.smith`'s password in it, then decrypt it using the `Utils.DecryptString()` function.
 
 ```text
 Sub Main()
-        Dim Config As ConfigFile = ConfigFile.LoadFromFile("/home/zweilos/htb/nest/RU_Config.xml")
+        Dim Config As ConfigFile = ConfigFile.LoadFromFile("/home/kac0/htb/nest/RU_Config.xml")
         Dim test As New SsoIntegration With {.Username = Config.Username, .Password = Utils.DecryptString(Config.Password)}
     End Sub
 ```
@@ -400,7 +401,7 @@ Public Function Main()
     End Function
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/user_csmith_decrypt.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/user_csmith_decrypt.png)
 
 As you can see, my shortened program worked and gave me the password for `c.smith`, which is `xRxRxPANCAK3SxRxRx`!
 
@@ -409,7 +410,7 @@ As you can see, my shortened program worked and gave me the password for `c.smit
 Now that I had credentials as another user, time to see if I could find that `user.txt`. It was in the `Users` share, right in the `c.smith` folder.
 
 ```text
-zweilos@kalimaa:~/htb/nest$ smbclient -W HTB-NEST -U c.smith \\\\<YOUR_IP>\\Users xRxRxPANCAK3SxRxRx
+kac0@kalimaa:~/htb/nest$ smbclient -W HTB-NEST -U c.smith \\\\<YOUR_IP>\\Users xRxRxPANCAK3SxRxRx
 Try "help" to get a list of possible commands.
 smb: \> cd c.smith
 smb: \c.smith\> ls
@@ -422,8 +423,8 @@ smb: \c.smith\> ls
 ```
 
 ```text
-zweilos@kalimaa:~/htb/nest$ cat 'c.smith\user.txt'
-8196****4cbe
+kac0@kalimaa:~/htb/nest$ cat 'c.smith\user.txt'
+8196************************4cbe
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -472,14 +473,14 @@ stream: [:Password:$DATA], 15 bytes
 smb: \C.Smith\HQK Reporting\> get "Debug Mode Password.txt:Password:$DATA"
 smb: exit
 
-zweilos@kalimaa:~/htb/nest$ cat 'Debug Mode Password.txt:Password:$DATA' 
+kac0@kalimaa:~/htb/nest$ cat 'Debug Mode Password.txt:Password:$DATA' 
 WBQ201953D8w
 ```
 
 Well now I had a password to something called `Debug Mode` but I had no idea where to use it.  Next I opened the `HQK_Config_Backup.xml` file.  
 
 ```markup
-zweilos@kalimaa:~/htb/nest$ cat HQK\ Reporting\\HQK_Config_Backup.xml
+kac0@kalimaa:~/htb/nest$ cat HQK\ Reporting\\HQK_Config_Backup.xml
 
 <?xml version="1.0"?>
 <ServiceSettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -493,7 +494,7 @@ zweilos@kalimaa:~/htb/nest$ cat HQK\ Reporting\\HQK_Config_Backup.xml
 `HQK_Config_Backup.xml` mentioned port 4386, which I didn't recognize.  A quick internet search revealed nothing about this port other than it was in an unassigned block.  There are generally three things to try when dealing with unknown ports...netcat, telnet, and ssh.  In this case, `nc` simply reported back the banner `HQK Reporting Service V1.2` and nothing else. `Telnet` however gave me an interactive prompt.
 
 ```text
-zweilos@kalimaa:~/htb/nest$ telnet <YOUR_IP> 4386
+kac0@kalimaa:~/htb/nest$ telnet <YOUR_IP> 4386
 Trying <YOUR_IP>...
 Connected to <YOUR_IP>.
 Escape character is '^]'.
@@ -635,7 +636,7 @@ The `showquery` command was a bit more useful than the `runquery` command earlie
 
 The first thing I tried after finding the encrypted password was to use the `decrypt()` function I had made from the Visual Basic project earlier.  Unfortunately, this password seemed to be in a different format, as I got the error `Padding is invalid and cannot be removed.` Either I was missing some input values, or this was not the correct program to decrypt this password. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/Screenshot_2020-06-14_04-38-04.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/Screenshot_2020-06-14_04-38-04.png)
 
 ```text
 Run-time exception (line -1): Padding is invalid and cannot be removed.
@@ -660,7 +661,7 @@ I used `ILSpy` to disassemble the executable file into readable .NET code \(in t
 
 I found the relevant decryption methods under the `HqkLdap.CR` namespace. This program was actually structured quite similarly to the VB project `RU Scanner` from before, so it didn't take much effort to find the code I needed, even with the method names stripped and replaced with simple two-letter names.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/Screenshot_2020-06-13_14-40-12.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/Screenshot_2020-06-13_14-40-12.png)
 
 Like before, I cut out only the function that I needed to decrypt the password.  I wrote a simple `Main()` function that would write the decrypted password to the console.  Like the `Decrypt()` function from before, this one had hardcoded initialization vector and salt values included in the source code.  This is bad practice in real-world situations and should be avoided. 
 
@@ -718,7 +719,7 @@ public class CR
 
 After cleaning up the code a bit, I once again copied it over to .NET Fiddle, this time selecting C\# as the language.  
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/user_Administrator_C%23_decrypt.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/user_Administrator_C%23_decrypt.png)
 
 After clicking `> Run` the function provided me with the Administrator password `XtH4nkS4Pl4y1nGX`
 
@@ -727,6 +728,6 @@ After clicking `> Run` the function provided me with the Administrator password 
 Once I had the Administrator password, it was simple to find the root flag.  It was in the `Administrator\Desktop\` folder in the `Users` share.
 
 ```text
-zweilos@kalimaa:~/htb/nest$ cat 'Administrator\Desktop\root.txt' 
-2f1f****3da1
+kac0@kalimaa:~/htb/nest$ cat 'Administrator\Desktop\root.txt' 
+2f1f************************3da1
 ```

