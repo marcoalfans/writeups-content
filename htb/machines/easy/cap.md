@@ -9,7 +9,6 @@ avatar: assets/htb/cap.png
 tags: [Clear Text Credentials, File System Configuration, Insecure Direct Object Reference (IDOR), Packet Capture Analysis, Password Reuse, SUID Exploitation, Python, Vulnerability Assessment]
 htb_url: https://app.hackthebox.com/machines/Cap
 ---
-
 <details>
 
 <summary>About</summary>

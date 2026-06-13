@@ -9,7 +9,6 @@ avatar: assets/htb/sunday.png
 tags: [Weak Credentials, Misconfiguration, Reconnaissance, User Enumeration, Password Cracking, Brute Force Attack, SUDO Exploitation, SSH]
 htb_url: https://app.hackthebox.com/machines/Sunday
 ---
-
 <details>
 
 <summary>About</summary>

@@ -9,7 +9,6 @@ avatar: assets/htb/bashed.png
 tags: [OS Command Injection, Code Execution, Reconnaissance, Web Site Structure Discovery, SUDO Exploitation, Scheduled Job Abuse, Apache, Web Application]
 htb_url: https://app.hackthebox.com/machines/Bashed
 ---
-
 ## Summary
 
 Bashed is an Easy Linux (Ubuntu) machine that hosts Arrexel's development site on port 80. The site exposes a web-based PHP shell (`phpbash.php`) under `/dev`, which gives an immediate `www-data` foothold. From there, `sudo` rights allow running commands as `scriptmanager`, who owns a `/scripts` directory containing a `test.py` executed every minute by a root cron job — overwriting that script with a reverse shell yields root.

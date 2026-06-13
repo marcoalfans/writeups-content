@@ -9,7 +9,6 @@ avatar: assets/htb/bizness.png
 tags: [Weak Credentials, Remote Code Execution, Misconfiguration, Insecure Design, Reconnaissance, Web Site Structure Discovery, Configuration Analysis, Password Reuse]
 htb_url: https://app.hackthebox.com/machines/Bizness
 ---
-
 <details>
 
 <summary>About</summary>

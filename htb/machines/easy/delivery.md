@@ -9,7 +9,6 @@ avatar: assets/htb/delivery.png
 tags: [Weak Credentials, TicketTrick, Impersonation, Web Application, Vulnerability Assessment, Common Applications, Broken Authentication and Authorization, Software & OS exploitation]
 htb_url: https://app.hackthebox.com/machines/Delivery
 ---
-
 ## Summary
 
 Delivery is an Easy-difficulty machine running a Linux host (TTL ~64) that exposes SSH, an nginx web server, and a Mattermost instance on port 8065. The web front end funnels visitors toward a Help Desk and a Mattermost chat server, which provide the path to initial access; from there the flags are located and read off the filesystem to obtain both user and root.

@@ -9,7 +9,6 @@ avatar: assets/htb/sau.png
 tags: [OS Command Injection, Server Side Request Forgery (SSRF), Reconnaissance, SUDO Exploitation, Bash, Maltrail, Request Baskets, Web Application]
 htb_url: https://app.hackthebox.com/machines/Sau
 ---
-
 <details>
 
 <summary>About</summary>

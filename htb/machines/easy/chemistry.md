@@ -9,7 +9,6 @@ avatar: assets/htb/chemistry.png
 tags: [Arbitrary File Read, Remote Code Execution, Python, Web Application, Custom Applications]
 htb_url: https://app.hackthebox.com/machines/Chemistry
 ---
-
 ## Summary
 
 Chemistry is an Easy Linux box centred on a Gunicorn-hosted "Security Dashboard" web application. The application exposes packet captures through a sequential `/data/<id>` path that is vulnerable to an Insecure Direct Object Reference (IDOR), letting me retrieve another user's PCAP. That capture leaks the user Nathan's FTP credentials in cleartext, which are reused over SSH to obtain a shell. From there, the `cap_setuid` capability on `/usr/bin/python3.8` is abused to set the UID to 0 and pop a root shell.

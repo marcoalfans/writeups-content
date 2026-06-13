@@ -9,7 +9,6 @@ avatar: assets/htb/analytics.png
 tags: [Remote Code Execution, Clear Text Credentials, Information Disclosure, Insecure Design, Reconnaissance, Configuration Analysis, Password Reuse, Kernel Exploitation]
 htb_url: https://app.hackthebox.com/machines/Analytics
 ---
-
 ## Summary
 
 Analytics is an Easy Linux (Ubuntu 22.04) machine. The web server hosts a Metabase instance (v0.46.6) on a subdomain that is vulnerable to a pre-authentication remote code execution flaw (CVE-2023-38646), which I leveraged to land a shell inside the Metabase container. Credentials leaked through environment variables let me pivot to the `metalytics` user over SSH, and a dated kernel left the host exposed to the GameOver(lay) OverlayFS privilege escalation (CVE-2023-2640 / CVE-2023-32629), giving me root.
