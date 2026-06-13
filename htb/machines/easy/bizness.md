@@ -10,10 +10,6 @@ tags: [Weak Credentials, Remote Code Execution, Misconfiguration, Insecure Desig
 htb_url: https://app.hackthebox.com/machines/Bizness
 ---
 
-# Bizness
-
-🔗 [Bizness](https://www.hackthebox.com/machines/bizness)
-
 <details>
 
 <summary>About</summary>
@@ -294,6 +290,3 @@ cat root.txt
 ```
 
 ---
-
-# Agent Instructions
-This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.

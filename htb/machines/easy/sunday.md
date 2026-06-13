@@ -10,10 +10,6 @@ tags: [Weak Credentials, Misconfiguration, Reconnaissance, User Enumeration, Pas
 htb_url: https://app.hackthebox.com/machines/Sunday
 ---
 
-# Sunday
-
-🔗 [Sunday](https://www.hackthebox.com/machines/sunday)
-
 <details>
 
 <summary>About</summary>
@@ -266,6 +262,3 @@ c4fc************************aea7
 ```
 
 ---
-
-# Agent Instructions
-This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.

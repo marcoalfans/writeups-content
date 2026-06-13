@@ -10,10 +10,6 @@ tags: [Clear Text Credentials, File System Configuration, Insecure Direct Object
 htb_url: https://app.hackthebox.com/machines/Cap
 ---
 
-# Cap
-
-🔗 [Cap](https://www.hackthebox.com/machines/cap)
-
 <details>
 
 <summary>About</summary>
@@ -293,6 +289,3 @@ cat /root/root.txt
 ```
 
 ---
-
-# Agent Instructions
-This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.

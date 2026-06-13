@@ -10,10 +10,6 @@ tags: [OS Command Injection, Server Side Request Forgery (SSRF), Reconnaissance,
 htb_url: https://app.hackthebox.com/machines/Sau
 ---
 
-# Sau
-
-🔗 [Sau](https://www.hackthebox.com/machines/sau)
-
 <details>
 
 <summary>About</summary>
@@ -235,6 +231,3 @@ c4fc************************aea7
 ```
 
 ---
-
-# Agent Instructions
-This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.

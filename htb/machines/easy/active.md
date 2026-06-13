@@ -10,10 +10,6 @@ tags: [Default Credentials, Weak Permissions, Anonymous/Guest Access, Reconnaiss
 htb_url: https://app.hackthebox.com/machines/Active
 ---
 
-# Active
-
-🔗 [Active](https://app.hackthebox.com/machines/Active)
-
 ## Summary
 
 Active is an Easy Windows box running Microsoft IIS 7.5 and Microsoft FTP. Anonymous FTP login is permitted and the FTP root maps directly to the IIS webroot, so an `.aspx` reverse-shell payload can be uploaded and then executed through the web server to land a shell as `iis apppool\web`. The host runs an old build of Windows (6.1.7600), which is vulnerable to a local privilege escalation exploit (EDB 40564) that hands over `nt authority\system`.
@@ -304,6 +300,3 @@ cb43************************2f32
 </details>
 
 ---
-
-# Agent Instructions
-This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.

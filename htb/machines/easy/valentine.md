@@ -10,10 +10,6 @@ tags: [Weak Permissions, Web Site Structure Discovery, SSL, Web Application, Vul
 htb_url: https://app.hackthebox.com/machines/Valentine
 ---
 
-# Valentine
-
-🔗 [Valentine](https://www.hackthebox.com/machines/Valentine)
-
 ## Summary
 
 Valentine is an easy Linux box themed around the 2014 Heartbleed vulnerability. The Apache server on port 443 runs a vulnerable OpenSSL build (CVE-2014-0160), which leaks an encoded passphrase out of memory. Combined with an encrypted RSA private key exposed under a hidden `/dev` web directory, this gives SSH access as the `hype` user. Privilege escalation to root comes from an existing detached `tmux` session running as root that `hype` can attach to.
@@ -190,6 +186,3 @@ cat /root/root.txt
 ```
 
 ---
-
-# Agent Instructions
-This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.

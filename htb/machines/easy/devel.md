@@ -10,10 +10,6 @@ tags: [Remote Code Execution, Arbitrary File Upload, ASP, IIS, FTP, Enterprise N
 htb_url: https://app.hackthebox.com/machines/Devel
 ---
 
-# Devel
-
-🔗 [Devel](https://app.hackthebox.com/machines/Devel)
-
 ## Summary
 
 Devel is an easy Windows box running IIS 7.5 and Microsoft FTP. Anonymous FTP access maps directly to the webroot, so I uploaded an ASPX reverse shell and got code execution as the low-privileged IIS app pool account. From there an old kernel (Windows build 6.1.7600) let me escalate to `nt authority\system` with a public local privilege-escalation exploit and grab both flags.
@@ -305,6 +301,3 @@ cb43************************2f32
 </details>
 
 ---
-
-# Agent Instructions
-This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.

@@ -10,10 +10,6 @@ tags: [Weak Credentials, TicketTrick, Impersonation, Web Application, Vulnerabil
 htb_url: https://app.hackthebox.com/machines/Delivery
 ---
 
-# Delivery
-
-🔗 [Delivery](https://app.hackthebox.com/machines/Delivery)
-
 ## Summary
 
 Delivery is an Easy-difficulty machine running a Linux host (TTL ~64) that exposes SSH, an nginx web server, and a Mattermost instance on port 8065. The web front end funnels visitors toward a Help Desk and a Mattermost chat server, which provide the path to initial access; from there the flags are located and read off the filesystem to obtain both user and root.
@@ -284,6 +280,3 @@ cb43************************2f32
 With the Administrator flag read, the box is fully owned.
 
 ---
-
-# Agent Instructions
-This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.
