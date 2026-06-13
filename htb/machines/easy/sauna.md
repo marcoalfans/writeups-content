@@ -8,7 +8,6 @@ date: 2020-02-15
 avatar: assets/htb/sauna.png
 htb_url: https://app.hackthebox.com/machines/Sauna
 ---
-
 ## Overview
 
 A relatively straightforward Windows box where the only real challenge is some lateral thinking to land the initial foothold. Once you're in, basic enumeration hands you the rest.

@@ -8,7 +8,6 @@ date: 2020-04-11
 avatar: assets/htb/servmon.png
 htb_url: https://app.hackthebox.com/machines/Servmon
 ---
-
 ## Overview
 
 An easy Windows box, though there are plenty of rabbit holes here to waste your time on.

@@ -8,7 +8,6 @@ date: 2020-02-22
 avatar: assets/htb/book.png
 htb_url: https://app.hackthebox.com/machines/Book
 ---
-
 ## Overview
 
 A medium-difficulty Linux box that I found mostly approachable, yet engaging enough to demonstrate a few clever twists on otherwise 'standard' attack techniques.

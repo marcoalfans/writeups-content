@@ -8,7 +8,6 @@ date: 2020-04-25
 avatar: assets/htb/quick.png
 htb_url: https://app.hackthebox.com/machines/Quick
 ---
-
 ## Useful Skills and Tools
 
 ### Connecting to HTTPS through UDP \(QUIC protocol\)

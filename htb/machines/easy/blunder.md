@@ -8,7 +8,6 @@ date: 2020-05-30
 avatar: assets/htb/blunder.png
 htb_url: https://app.hackthebox.com/machines/Blunder
 ---
-
 ## Overview
 
 This easy Linux box introduced me to a CMS I hadn't worked with before, along with a neat and easy trick for sidestepping a sudo configuration that admins commonly use to delegate permissions without handing out root. Getting in meant scripting a login brute force in Python, and the vulnerable service could be exploited in more than one way. The root escalation felt very true-to-life, yet it was so quick and trivial that finishing the box this fast was almost anticlimactic.

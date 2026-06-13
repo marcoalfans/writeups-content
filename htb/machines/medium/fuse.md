@@ -8,7 +8,6 @@ date: 2020-06-13
 avatar: assets/htb/fuse.png
 htb_url: https://app.hackthebox.com/machines/Fuse
 ---
-
 ## Overview
 
 This medium Windows box let me go after a service that training material constantly flags as a blind spot for many enterprises: printer management.  No actual print spooler exploit was involved here, but the box did highlight how dangerous misconfigurations can be, particularly when credentialed service accounts are in the mix.

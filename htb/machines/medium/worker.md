@@ -8,7 +8,6 @@ date: 2020-08-15
 avatar: assets/htb/worker.png
 htb_url: https://app.hackthebox.com/machines/Worker
 ---
-
 ## Useful Skills and Tools
 
 ### Interactive Windows Command/Tool List

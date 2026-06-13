@@ -8,7 +8,6 @@ date: 2020-07-18
 avatar: assets/htb/buff.png
 htb_url: https://app.hackthebox.com/machines/Buff
 ---
-
 ## Useful Skills and Tools
 
 ### Edit a text file in PowerShell

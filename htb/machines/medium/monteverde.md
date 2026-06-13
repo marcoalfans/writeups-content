@@ -8,7 +8,6 @@ date: 2020-01-11
 avatar: assets/htb/monteverde.png
 htb_url: https://app.hackthebox.com/machines/Monteverde
 ---
-
 ## 
 Useful Skills and Tools
 

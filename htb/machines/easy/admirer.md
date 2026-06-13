@@ -8,7 +8,6 @@ date: 2020-05-02
 avatar: assets/htb/admirer.png
 htb_url: https://app.hackthebox.com/machines/Admirer
 ---
-
 ## Overview
 
 This easy Linux box features a clever database-manipulation trick that yields a local file inclusion vulnerability.  It also showed me a new-to-me method of abusing sudo privileges for privilege escalation.  Overall, an enjoyable machine that taught me a couple of fresh techniques!

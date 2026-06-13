@@ -8,7 +8,6 @@ date: 2020-05-23
 avatar: assets/htb/dyplesher.png
 htb_url: https://app.hackthebox.com/machines/Dyplesher
 ---
-
 ## Overview
 
 Dyplesher is an insane Linux box that exercises web enumeration alongside the ability to read and author code. Getting in meant abusing several Git repositories full of source code, the Memcache service, and a Minecraft server. Working through it taught me a fair amount about how a Minecraft server operates internally and how its plugins function.

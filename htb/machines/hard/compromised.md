@@ -8,7 +8,6 @@ date: 2020-09-12
 avatar: assets/htb/compromised.png
 htb_url: https://app.hackthebox.com/machines/Compromised
 ---
-
 ## Enumeration
 
 ### Nmap scan

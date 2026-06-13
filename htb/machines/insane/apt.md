@@ -8,7 +8,6 @@ date: 2020-10-31
 avatar: assets/htb/apt.png
 htb_url: https://app.hackthebox.com/machines/APT
 ---
-
 ## Enumeration
 
 ### Nmap scan

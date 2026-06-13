@@ -8,7 +8,6 @@ date: 2020-05-09
 avatar: assets/htb/cache.png
 htb_url: https://app.hackthebox.com/machines/Cache
 ---
-
 ## Enumeration
 
 ### Nmap scan

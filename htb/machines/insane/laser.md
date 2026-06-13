@@ -8,7 +8,6 @@ date: 2020-08-08
 avatar: assets/htb/laser.png
 htb_url: https://app.hackthebox.com/machines/Laser
 ---
-
 ## Overview
 
 Reaching the foothold on this Insane box from [Hack The Box](https://www.linkedin.com/company/hackthebox/) took me longer than rooting most other machines! The attack paths here were unusual and a far cry from the typical enumerate-and-pivot flow that lower-difficulty boxes rely on. Just getting started meant learning protocols I hadn't touched before, and by the end I'd written five python scripts to drive the foothold and the later privilege escalation. Overall a fun but genuinely tough run!

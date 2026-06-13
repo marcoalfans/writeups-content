@@ -8,7 +8,6 @@ date: 2020-08-22
 avatar: assets/htb/omni.png
 htb_url: https://app.hackthebox.com/machines/Omni
 ---
-
 ## Enumeration
 
 ### Nmap scan

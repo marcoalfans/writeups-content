@@ -8,7 +8,6 @@ date: 2020-02-29
 avatar: assets/htb/oouch.png
 htb_url: https://app.hackthebox.com/machines/Oouch
 ---
-
 ## Overview
 
 This hard Linux box gave me a deep dive into how a federated access control system operates under the hood, in this case an Oauth2 deployment. Getting through it demanded patience and a willingness to read error messages carefully and act on what they revealed.

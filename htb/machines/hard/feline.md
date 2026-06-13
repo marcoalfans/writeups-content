@@ -8,7 +8,6 @@ date: 2020-08-29
 avatar: assets/htb/feline.png
 htb_url: https://app.hackthebox.com/machines/Feline
 ---
-
 ## Enumeration
 
 ### Nmap scan

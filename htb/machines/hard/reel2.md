@@ -8,7 +8,6 @@ date: 2020-10-03
 avatar: assets/htb/reel2.png
 htb_url: https://app.hackthebox.com/machines/Reel2
 ---
-
 ## HTB - Reel2
 
 ### Overview

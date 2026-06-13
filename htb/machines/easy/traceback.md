@@ -8,7 +8,6 @@ date: 2020-03-14
 avatar: assets/htb/traceback.png
 htb_url: https://app.hackthebox.com/machines/Traceback
 ---
-
 ## Overview
 
 Traceback is an easy Linux box that serves as a solid intro to web shells, and to retracing the path a prior attacker took to break into a server \(and then deface it!\).  

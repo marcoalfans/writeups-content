@@ -8,7 +8,6 @@ date: 2020-03-28
 avatar: assets/htb/cascade.png
 htb_url: https://app.hackthebox.com/machines/Cascade
 ---
-
 ## Overview
 
 This medium Windows box revisited several ideas and techniques I had already met on other targets \(like [Nest](nest-write-up.md)\), while also throwing in some fresh material that kept it genuinely entertaining. Thorough enumeration makes it a reasonably approachable challenge, though how easy it feels depends on your comfort with certain parts \(reading C\# source, for example\).

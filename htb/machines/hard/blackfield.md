@@ -8,7 +8,6 @@ date: 2020-06-06
 avatar: assets/htb/blackfield.png
 htb_url: https://app.hackthebox.com/machines/Blackfield
 ---
-
 ## Enumeration
 
 ### Nmap scan

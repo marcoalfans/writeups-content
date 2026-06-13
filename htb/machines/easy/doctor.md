@@ -8,7 +8,6 @@ date: 2020-09-26
 avatar: assets/htb/doctor.png
 htb_url: https://app.hackthebox.com/machines/Doctor
 ---
-
 ## Enumeration
 
 ### Nmap scan

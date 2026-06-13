@@ -8,7 +8,6 @@ date: 2020-04-18
 avatar: assets/htb/magic.png
 htb_url: https://app.hackthebox.com/machines/Magic
 ---
-
 ## Enumeration
 
 ### Nmap scan

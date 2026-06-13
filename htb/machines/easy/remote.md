@@ -8,7 +8,6 @@ date: 2020-03-21
 avatar: assets/htb/remote.png
 htb_url: https://app.hackthebox.com/machines/Remote
 ---
-
 ## Useful Skills and Tools
 
 ### Connect to and mount a remote network file share - port 2049

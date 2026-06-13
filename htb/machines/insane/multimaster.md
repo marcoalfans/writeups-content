@@ -8,7 +8,6 @@ date: 2020-03-07
 avatar: assets/htb/multimaster.png
 htb_url: https://app.hackthebox.com/machines/Multimaster
 ---
-
 ## Enumeration
 
 ### Nmap scan

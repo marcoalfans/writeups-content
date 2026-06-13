@@ -8,7 +8,6 @@ date: 2020-11-28
 avatar: assets/htb/luanne.png
 htb_url: https://app.hackthebox.com/machines/Luanne
 ---
-
 ## Useful Skills and Tools
 
 ### Decrypt `.enc` file in BSD

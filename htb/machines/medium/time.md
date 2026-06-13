@@ -8,7 +8,6 @@ date: 2020-10-24
 avatar: assets/htb/time.png
 htb_url: https://app.hackthebox.com/machines/Time
 ---
-
 ## Enumeration
 
 ### Nmap scan

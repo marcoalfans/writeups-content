@@ -8,7 +8,6 @@ date: 2020-01-25
 avatar: assets/htb/nest.png
 htb_url: https://app.hackthebox.com/machines/Nest
 ---
-
 ## Overview
 
 A relatively gentle Windows box that involved hopping back and forth between several locations, plus a touch of .NET reverse engineering. Thankfully there are tools and online services that make disassembling and recompiling painless even if you don't know VB.Net or C\#.

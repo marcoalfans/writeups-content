@@ -8,7 +8,6 @@ date: 2020-05-16
 avatar: assets/htb/travel.png
 htb_url: https://app.hackthebox.com/machines/Travel
 ---
-
 ## HTB - Travel
 
 ### Overview

@@ -8,7 +8,6 @@ date: 2020-09-19
 avatar: assets/htb/crossfit.png
 htb_url: https://app.hackthebox.com/machines/Crossfit
 ---
-
 ## Overview
 
 This Insane box from Hack The Box ate up more time than I expected, mainly because the final exploit kept tripping me up. After grabbing user.txt I set it aside out of frustration and to make headway on other targets. Crossfit stretched me across several fronts: inventive enumeration, source and binary review, and writing "exploits" in unfamiliar languages \(JavaScript and C!\). A few months later I returned with a clear head and quickly spotted the mistakes I'd been making \(plus enough patience to deal with the aggressive cleanup script the authors deployed!\). Wrapping all the moving parts of the final exploit into an automation script finally got me there and I rooted the machine. 

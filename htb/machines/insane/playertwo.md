@@ -8,7 +8,6 @@ date: 2019-12-14
 avatar: assets/htb/playertwo.png
 htb_url: https://app.hackthebox.com/machines/PlayerTwo
 ---
-
 ## Overview
 
 This Insane Linux box really stretched my web skills, and forced me to research unfamiliar protocols and services to a degree equal to three or four easier boxes combined.  Spotting the next route forward was straightforward enough with solid enumeration, but actually clearing each stage demanded patience and plenty of documentation reading.  

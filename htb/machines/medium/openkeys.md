@@ -8,7 +8,6 @@ date: 2020-07-25
 avatar: assets/htb/openkeys.png
 htb_url: https://app.hackthebox.com/machines/OpenKeyS
 ---
-
 ## Useful Skills and Tools
 
 #### Recover a file from a vim .swp file

@@ -8,7 +8,6 @@ date: 2020-06-20
 avatar: assets/htb/tabby.png
 htb_url: https://app.hackthebox.com/machines/Tabby
 ---
-
 ## Enumeration
 
 ### Nmap scan

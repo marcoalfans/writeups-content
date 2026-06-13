@@ -8,7 +8,6 @@ date: 2019-12-07
 avatar: assets/htb/resolute.png
 htb_url: https://app.hackthebox.com/machines/Resolute
 ---
-
 ## Overview
 
 A reasonably approachable medium Windows machine. Getting to root meant pivoting through two separate users and abusing Windows domain group membership. The final escalation came down to a straightforward DLL injection plus moving fast once the shell was live.

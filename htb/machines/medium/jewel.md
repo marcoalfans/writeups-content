@@ -8,7 +8,6 @@ date: 2020-10-10
 avatar: assets/htb/jewel.png
 htb_url: https://app.hackthebox.com/machines/Jewel
 ---
-
 ## Useful Skills and Tools
 
 ### Execute a shell script payload without writing to disk
