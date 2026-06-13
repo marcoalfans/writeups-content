@@ -2,9 +2,12 @@
 title: "Eighteen"
 difficulty: Hard
 os: Windows Server 2025
+points: 20
+rating: 2.4
 date: 2026-04-11
 tags: [windows-server-2025, assume-breach, mssql-impersonation, bad-successor, dmsa, cve-2025-53779, werkzeug-pbkdf2, winrm]
 source: https://github.com/momenbasel/htb-writeups (MIT)
+htb_url: https://app.hackthebox.com/machines/Eighteen
 ---
 ## Summary
 

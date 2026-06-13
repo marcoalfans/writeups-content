@@ -2,9 +2,12 @@
 title: "VariaType"
 difficulty: Medium
 os: Linux
+points: 30
+rating: 3.8
 date: 2026-03-15 (Season 10, Week 7)
 tags: [git-disclosure, fonttools, fontforge, setuptools, path-traversal, cve-2025-66034, cve-2024-25082, cve-2025-47273]
 source: https://github.com/momenbasel/htb-writeups (MIT)
+htb_url: https://app.hackthebox.com/machines/VariaType
 ---
 ## Summary
 

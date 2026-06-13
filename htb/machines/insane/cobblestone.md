@@ -2,9 +2,12 @@
 title: "Cobblestone"
 difficulty: Insane
 os: Debian 12
+points: 50
+rating: 3.3
 date: 2025 (Season 8)
 tags: [second-order-sqli, load_file, xss, ssti, twig, hash-crack, cobbler, cve-2024-47533]
 source: https://github.com/momenbasel/htb-writeups (MIT)
+htb_url: https://app.hackthebox.com/machines/Cobblestone
 ---
 ## Summary
 

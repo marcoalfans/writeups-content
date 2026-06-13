@@ -2,8 +2,13 @@
 title: "Sink"
 difficulty: Insane
 os: Linux
+points: 50
+rating: 4.9
+date: 2021-01-30
+avatar: assets/htb/sink.png
 tags: [web, http-smuggling, aws, cloud, gitea, secrets-management]
 source: https://github.com/momenbasel/htb-writeups (MIT)
+htb_url: https://app.hackthebox.com/machines/Sink
 ---
 ## Summary
 

@@ -85,12 +85,26 @@ def main():
         if isinstance(rel, str) and "T" in rel:
             rel = rel.split("T")[0]
         if av:
+            # API reports "/avatars/<hash>.png" but the file is served from /storage/avatars/
+            if av.startswith("/avatars/"):
+                url = CDN + "/storage" + av
+            elif av.startswith("/"):
+                url = CDN + av
+            else:
+                url = av
             try:
-                png = fetch(CDN + av if av.startswith("/") else av, TOKEN, binary=True)
-                open(avatar_abs, "wb").write(png)
-                fm["avatar"] = avatar_rel
+                png = fetch(url, TOKEN, binary=True)
+                if len(png) < 2048:        # HTB's 1-bit default placeholder — prefer our themed cube
+                    fm.pop("avatar", None)
+                    if os.path.exists(avatar_abs):
+                        os.remove(avatar_abs)
+                    print("placeholder avatar for %s (%db) — using fallback" % (name, len(png)))
+                else:
+                    open(avatar_abs, "wb").write(png)
+                    fm["avatar"] = avatar_rel
             except Exception as e:
-                print("avatar download failed for %s: %s" % (name, e))
+                fm.pop("avatar", None)     # 404 etc. — no custom avatar available
+                print("no avatar for %s: %s" % (name, e))
         if pts: fm["points"] = pts
         if rating: fm["rating"] = rating
         if os_ and not fm.get("os"): fm["os"] = os_

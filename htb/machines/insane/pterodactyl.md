@@ -2,9 +2,12 @@
 title: "Pterodactyl"
 difficulty: Insane
 os: openSUSE Linux
+points: 30
+rating: 3
 date: 2026-05-16
 tags: [pterodactyl-panel, cve-2025-49132, pear, pearcmd, lfi, pam, polkit, suse]
 source: https://github.com/momenbasel/htb-writeups (MIT)
+htb_url: https://app.hackthebox.com/machines/Pterodactyl
 ---
 ## Summary
 

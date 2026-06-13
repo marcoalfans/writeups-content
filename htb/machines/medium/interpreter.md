@@ -2,9 +2,12 @@
 title: "Interpreter"
 difficulty: Medium
 os: Linux (Debian 12)
+points: 30
+rating: 3.1
 date: 2026-02-21 (Season 10, Week 4)
 tags: [mirth-connect, cve-2023-43208, xstream, java-deserialization, python-eval, mysql]
 source: https://github.com/momenbasel/htb-writeups (MIT)
+htb_url: https://app.hackthebox.com/machines/Interpreter
 ---
 ## Summary
 

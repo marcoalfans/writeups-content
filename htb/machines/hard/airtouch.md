@@ -2,9 +2,12 @@
 title: "AirTouch"
 difficulty: Hard
 os: Linux (Ubuntu)
+points: 30
+rating: 4.4
 date: 2026-04-18
 tags: [802.11, wpa2-psk, evil-twin, peap-mschapv2, eaphammer, aircrack-ng, wifi]
 source: https://github.com/momenbasel/htb-writeups (MIT)
+htb_url: https://app.hackthebox.com/machines/AirTouch
 ---
 ## Summary
 

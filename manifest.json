@@ -134,6 +134,10 @@
       "difficulty": "Easy",
       "os": "Linux",
       "date": "2025-08-02",
+      "points": "20",
+      "rating": "4",
+      "avatar": "assets/htb/code.png",
+      "htb_url": "https://app.hackthebox.com/machines/Code",
       "tags": [
         "python",
         "sandbox-escape",
@@ -155,6 +159,9 @@
       "difficulty": "Easy",
       "os": "Linux (Ubuntu)",
       "date": "2026-01-31 (Season 10, Week 1)",
+      "points": "20",
+      "rating": "4.5",
+      "htb_url": "https://app.hackthebox.com/machines/Facts",
       "tags": [
         "web",
         "idor",
@@ -177,6 +184,9 @@
       "difficulty": "Easy",
       "os": "Linux",
       "date": "2026-03-21 (Season 10, Week 8)",
+      "points": "20",
+      "rating": "3.8",
+      "htb_url": "https://app.hackthebox.com/machines/Kobold",
       "tags": [
         "mcp",
         "ai",
@@ -198,6 +208,9 @@
       "difficulty": "Hard",
       "os": "Linux (Ubuntu)",
       "date": "2026-04-18",
+      "points": "30",
+      "rating": "4.4",
+      "htb_url": "https://app.hackthebox.com/machines/AirTouch",
       "tags": [
         "802.11",
         "wpa2-psk",
@@ -220,6 +233,9 @@
       "difficulty": "Hard",
       "os": "Windows Server 2025",
       "date": "2026-04-11",
+      "points": "20",
+      "rating": "2.4",
+      "htb_url": "https://app.hackthebox.com/machines/Eighteen",
       "tags": [
         "windows-server-2025",
         "assume-breach",
@@ -243,6 +259,9 @@
       "difficulty": "Hard",
       "os": "Windows (Multi-Forest AD)",
       "date": "2026-04-25 (Season 10, Final Week)",
+      "points": "50",
+      "rating": "4.8",
+      "htb_url": "https://app.hackthebox.com/machines/PingPong",
       "tags": [
         "active-directory",
         "cross-forest-trust",
@@ -265,6 +284,9 @@
       "difficulty": "Hard",
       "os": "Windows Server 2019",
       "date": "2026-02-28 (Season 10, Week 5)",
+      "points": "40",
+      "rating": "4.7",
+      "htb_url": "https://app.hackthebox.com/machines/Pirate",
       "tags": [
         "active-directory",
         "pre2k",
@@ -289,6 +311,9 @@
       "difficulty": "Insane",
       "os": "Debian 12",
       "date": "2025 (Season 8)",
+      "points": "50",
+      "rating": "3.3",
+      "htb_url": "https://app.hackthebox.com/machines/Cobblestone",
       "tags": [
         "second-order-sqli",
         "load_file",
@@ -312,6 +337,9 @@
       "difficulty": "Insane",
       "os": "Windows",
       "date": "2026-05-23",
+      "points": "20",
+      "rating": "3.6",
+      "htb_url": "https://app.hackthebox.com/machines/MonitorsFour",
       "tags": [
         "cacti",
         "php-type-juggling",
@@ -332,6 +360,9 @@
       "difficulty": "Insane",
       "os": "openSUSE Linux",
       "date": "2026-05-16",
+      "points": "30",
+      "rating": "3",
+      "htb_url": "https://app.hackthebox.com/machines/Pterodactyl",
       "tags": [
         "pterodactyl-panel",
         "cve-2025-49132",
@@ -354,6 +385,11 @@
       "file": "htb/machines/insane/sink.md",
       "difficulty": "Insane",
       "os": "Linux",
+      "date": "2021-01-30",
+      "points": "50",
+      "rating": "4.9",
+      "avatar": "assets/htb/sink.png",
+      "htb_url": "https://app.hackthebox.com/machines/Sink",
       "tags": [
         "web",
         "http-smuggling",
@@ -375,6 +411,10 @@
       "difficulty": "Insane",
       "os": "Linux",
       "date": "2026-04-25",
+      "points": "50",
+      "rating": "4.6",
+      "avatar": "assets/htb/sorcery.png",
+      "htb_url": "https://app.hackthebox.com/machines/Sorcery",
       "tags": [
         "cypher-injection",
         "neo4j",
@@ -396,6 +436,9 @@
       "difficulty": "Medium",
       "os": "Linux",
       "date": "2026-05-08",
+      "points": "30",
+      "rating": "4.5",
+      "htb_url": "https://app.hackthebox.com/machines/Helix",
       "tags": [
         "apache-nifi",
         "h2-database",
@@ -417,6 +460,9 @@
       "difficulty": "Medium",
       "os": "Linux (Debian 12)",
       "date": "2026-02-21 (Season 10, Week 4)",
+      "points": "30",
+      "rating": "3.1",
+      "htb_url": "https://app.hackthebox.com/machines/Interpreter",
       "tags": [
         "mirth-connect",
         "cve-2023-43208",
@@ -438,6 +484,9 @@
       "difficulty": "Medium",
       "os": "Linux",
       "date": "2026-03-15 (Season 10, Week 7)",
+      "points": "30",
+      "rating": "3.8",
+      "htb_url": "https://app.hackthebox.com/machines/VariaType",
       "tags": [
         "git-disclosure",
         "fonttools",

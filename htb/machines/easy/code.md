@@ -2,9 +2,13 @@
 title: "Code"
 difficulty: Easy
 os: Linux
+points: 20
+rating: 4
 date: 2025-08-02
+avatar: assets/htb/code.png
 tags: [python, sandbox-escape, keyword-filter, subprocess, backy, sudo]
 source: https://github.com/momenbasel/htb-writeups (MIT)
+htb_url: https://app.hackthebox.com/machines/Code
 ---
 ## Summary
 
