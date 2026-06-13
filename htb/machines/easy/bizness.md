@@ -1,8 +1,14 @@
 ---
 title: "Bizness"
 difficulty: Easy
+os: Linux
+points: 20
+rating: 2.8
+date: 2024-01-06
+avatar: assets/htb/bizness.png
+tags: [Weak Credentials, Remote Code Execution, Misconfiguration, Insecure Design, Reconnaissance, Web Site Structure Discovery, Configuration Analysis, Password Reuse]
+htb_url: https://app.hackthebox.com/machines/Bizness
 ---
-
 # Bizness
 
 🔗 [Bizness](https://www.hackthebox.com/machines/bizness)

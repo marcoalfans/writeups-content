@@ -1,7 +1,34 @@
 {
   "version": 1,
-  "count": 55,
+  "count": 66,
   "entries": [
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "active",
+      "title": "Active",
+      "file": "htb/machines/easy/active.md",
+      "difficulty": "Easy",
+      "os": "Windows",
+      "date": "2018-07-28",
+      "points": "20",
+      "rating": "4.9",
+      "avatar": "assets/htb/active.png",
+      "htb_url": "https://app.hackthebox.com/machines/Active",
+      "tags": [
+        "Default Credentials",
+        "Weak Permissions",
+        "Anonymous/Guest Access",
+        "Reconnaissance",
+        "Password Cracking",
+        "Kerberoasting",
+        "SMB",
+        "Kerberos"
+      ]
+    },
     {
       "space": "htb",
       "category": [
@@ -27,6 +54,87 @@
         "Bash",
         "Apache",
         "MariaDB"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "analytics",
+      "title": "Analytics",
+      "file": "htb/machines/easy/analytics.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "date": "2023-10-07",
+      "points": "20",
+      "rating": "4.1",
+      "avatar": "assets/htb/analytics.png",
+      "htb_url": "https://app.hackthebox.com/machines/Analytics",
+      "tags": [
+        "Remote Code Execution",
+        "Clear Text Credentials",
+        "Information Disclosure",
+        "Insecure Design",
+        "Reconnaissance",
+        "Configuration Analysis",
+        "Password Reuse",
+        "Kernel Exploitation"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "bashed",
+      "title": "Bashed",
+      "file": "htb/machines/easy/bashed.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "date": "2017-12-09",
+      "points": "20",
+      "rating": "4.7",
+      "avatar": "assets/htb/bashed.png",
+      "htb_url": "https://app.hackthebox.com/machines/Bashed",
+      "tags": [
+        "OS Command Injection",
+        "Code Execution",
+        "Reconnaissance",
+        "Web Site Structure Discovery",
+        "SUDO Exploitation",
+        "Scheduled Job Abuse",
+        "Apache",
+        "Web Application"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "bizness",
+      "title": "Bizness",
+      "file": "htb/machines/easy/bizness.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "date": "2024-01-06",
+      "points": "20",
+      "rating": "2.8",
+      "avatar": "assets/htb/bizness.png",
+      "htb_url": "https://app.hackthebox.com/machines/Bizness",
+      "tags": [
+        "Weak Credentials",
+        "Remote Code Execution",
+        "Misconfiguration",
+        "Insecure Design",
+        "Reconnaissance",
+        "Web Site Structure Discovery",
+        "Configuration Analysis",
+        "Password Reuse"
       ]
     },
     {
@@ -89,6 +197,57 @@
         "machines",
         "easy"
       ],
+      "slug": "cap",
+      "title": "Cap",
+      "file": "htb/machines/easy/cap.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "date": "2021-06-05",
+      "points": "20",
+      "rating": "4.6",
+      "avatar": "assets/htb/cap.png",
+      "htb_url": "https://app.hackthebox.com/machines/Cap",
+      "tags": [
+        "Clear Text Credentials",
+        "File System Configuration",
+        "Insecure Direct Object Reference (IDOR)",
+        "Packet Capture Analysis",
+        "Password Reuse",
+        "SUID Exploitation",
+        "Python",
+        "Vulnerability Assessment"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "chemistry",
+      "title": "Chemistry",
+      "file": "htb/machines/easy/chemistry.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "date": "2024-10-19",
+      "points": "20",
+      "rating": "4.4",
+      "avatar": "assets/htb/chemistry.png",
+      "htb_url": "https://app.hackthebox.com/machines/Chemistry",
+      "tags": [
+        "Arbitrary File Read",
+        "Remote Code Execution",
+        "Python",
+        "Web Application",
+        "Custom Applications"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
       "slug": "code",
       "title": "Code",
       "file": "htb/machines/easy/code.md",
@@ -108,6 +267,59 @@
         "SUDO Exploitation",
         "Python",
         "SQL"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "delivery",
+      "title": "Delivery",
+      "file": "htb/machines/easy/delivery.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "date": "2021-01-09",
+      "points": "20",
+      "rating": "4.6",
+      "avatar": "assets/htb/delivery.png",
+      "htb_url": "https://app.hackthebox.com/machines/Delivery",
+      "tags": [
+        "Weak Credentials",
+        "TicketTrick",
+        "Impersonation",
+        "Web Application",
+        "Vulnerability Assessment",
+        "Common Applications",
+        "Broken Authentication and Authorization",
+        "Software & OS exploitation"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "devel",
+      "title": "Devel",
+      "file": "htb/machines/easy/devel.md",
+      "difficulty": "Easy",
+      "os": "Windows",
+      "date": "2017-03-15",
+      "points": "20",
+      "rating": "4.8",
+      "avatar": "assets/htb/devel.png",
+      "htb_url": "https://app.hackthebox.com/machines/Devel",
+      "tags": [
+        "Remote Code Execution",
+        "Arbitrary File Upload",
+        "ASP",
+        "IIS",
+        "FTP",
+        "Enterprise Network",
+        "Protocols"
       ]
     },
     {
@@ -356,6 +568,33 @@
         "machines",
         "easy"
       ],
+      "slug": "sau",
+      "title": "Sau",
+      "file": "htb/machines/easy/sau.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "date": "2023-07-08",
+      "points": "20",
+      "rating": "4.6",
+      "avatar": "assets/htb/sau.png",
+      "htb_url": "https://app.hackthebox.com/machines/Sau",
+      "tags": [
+        "OS Command Injection",
+        "Server Side Request Forgery (SSRF)",
+        "Reconnaissance",
+        "SUDO Exploitation",
+        "Bash",
+        "Maltrail",
+        "Request Baskets",
+        "Web Application"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
       "slug": "sauna",
       "title": "Sauna",
       "file": "htb/machines/easy/sauna.md",
@@ -410,6 +649,33 @@
         "machines",
         "easy"
       ],
+      "slug": "sunday",
+      "title": "Sunday",
+      "file": "htb/machines/easy/sunday.md",
+      "difficulty": "Easy",
+      "os": "Solaris",
+      "date": "2018-04-28",
+      "points": "20",
+      "rating": "4.3",
+      "avatar": "assets/htb/sunday.png",
+      "htb_url": "https://app.hackthebox.com/machines/Sunday",
+      "tags": [
+        "Weak Credentials",
+        "Misconfiguration",
+        "Reconnaissance",
+        "User Enumeration",
+        "Password Cracking",
+        "Brute Force Attack",
+        "SUDO Exploitation",
+        "SSH"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
       "slug": "tabby",
       "title": "Tabby",
       "file": "htb/machines/easy/tabby.md",
@@ -420,7 +686,16 @@
       "rating": "4.2",
       "avatar": "assets/htb/tabby.png",
       "htb_url": "https://app.hackthebox.com/machines/Tabby",
-      "tags": []
+      "tags": [
+        "Local File Inclusion",
+        "Misconfiguration",
+        "Reconnaissance",
+        "Password Cracking",
+        "Privilege Abuse",
+        "JSP",
+        "Tomcat",
+        "LXD"
+      ]
     },
     {
       "space": "htb",
@@ -447,6 +722,32 @@
         "PHP",
         "Lua",
         "Apache"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "valentine",
+      "title": "Valentine",
+      "file": "htb/machines/easy/valentine.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "date": "2018-02-17",
+      "points": "20",
+      "rating": "4.8",
+      "avatar": "assets/htb/valentine.png",
+      "htb_url": "https://app.hackthebox.com/machines/Valentine",
+      "tags": [
+        "Weak Permissions",
+        "Web Site Structure Discovery",
+        "SSL",
+        "Web Application",
+        "Vulnerability Assessment",
+        "Session Management and Hijacking",
+        "Software & OS exploitation"
       ]
     },
     {
@@ -844,7 +1145,16 @@
       "rating": "4.1",
       "avatar": "assets/htb/dyplesher.png",
       "htb_url": "https://app.hackthebox.com/machines/Dyplesher",
-      "tags": []
+      "tags": [
+        "Remote Code Execution",
+        "Clear Text Credentials",
+        "Arbitrary File Write",
+        "Hard-coded Credentials",
+        "Reconnaissance",
+        "Web Site Structure Discovery",
+        "Packet Capture Analysis",
+        "Password Cracking"
+      ]
     },
     {
       "space": "htb",
@@ -1259,7 +1569,16 @@
       "rating": "4.4",
       "avatar": "assets/htb/monteverde.png",
       "htb_url": "https://app.hackthebox.com/machines/Monteverde",
-      "tags": []
+      "tags": [
+        "Weak Credentials",
+        "Misconfiguration",
+        "Anonymous/Guest Access",
+        "User Enumeration",
+        "Password Reuse",
+        "Password Spraying",
+        "Azure Enumeration",
+        "Powershell"
+      ]
     },
     {
       "space": "htb",

@@ -1,8 +1,14 @@
 ---
 title: "Chemistry"
 difficulty: Easy
+os: Linux
+points: 20
+rating: 4.4
+date: 2024-10-19
+avatar: assets/htb/chemistry.png
+tags: [Arbitrary File Read, Remote Code Execution, Python, Web Application, Custom Applications]
+htb_url: https://app.hackthebox.com/machines/Chemistry
 ---
-
 # Chemistry %
 
 🔗 [Cap](https://www.hackthebox.com/machines/cap)

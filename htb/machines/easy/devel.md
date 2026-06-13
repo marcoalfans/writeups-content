@@ -1,8 +1,14 @@
 ---
 title: "Devel"
 difficulty: Easy
+os: Windows
+points: 20
+rating: 4.8
+date: 2017-03-15
+avatar: assets/htb/devel.png
+tags: [Remote Code Execution, Arbitrary File Upload, ASP, IIS, FTP, Enterprise Network, Protocols]
+htb_url: https://app.hackthebox.com/machines/Devel
 ---
-
 # Devel
 
 🔗 [Devel](https://app.hackthebox.com/machines/Devel)

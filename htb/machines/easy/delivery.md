@@ -1,8 +1,14 @@
 ---
 title: "Delivery"
 difficulty: Easy
+os: Linux
+points: 20
+rating: 4.6
+date: 2021-01-09
+avatar: assets/htb/delivery.png
+tags: [Weak Credentials, TicketTrick, Impersonation, Web Application, Vulnerability Assessment, Common Applications, Broken Authentication and Authorization, Software & OS exploitation]
+htb_url: https://app.hackthebox.com/machines/Delivery
 ---
-
 # Delivery
 
 🔗 [Delivery](https://app.hackthebox.com/machines/Delivery)

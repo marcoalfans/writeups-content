@@ -1,8 +1,14 @@
 ---
 title: "Active"
 difficulty: Easy
+os: Windows
+points: 20
+rating: 4.9
+date: 2018-07-28
+avatar: assets/htb/active.png
+tags: [Default Credentials, Weak Permissions, Anonymous/Guest Access, Reconnaissance, Password Cracking, Kerberoasting, SMB, Kerberos]
+htb_url: https://app.hackthebox.com/machines/Active
 ---
-
 # Active
 
 🔗 [Active](https://app.hackthebox.com/machines/Active)

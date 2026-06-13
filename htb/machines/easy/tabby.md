@@ -6,6 +6,7 @@ points: 20
 rating: 4.2
 date: 2020-06-20
 avatar: assets/htb/tabby.png
+tags: [Local File Inclusion, Misconfiguration, Reconnaissance, Password Cracking, Privilege Abuse, JSP, Tomcat, LXD]
 htb_url: https://app.hackthebox.com/machines/Tabby
 ---
 ## Enumeration

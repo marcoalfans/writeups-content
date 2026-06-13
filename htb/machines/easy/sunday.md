@@ -1,8 +1,14 @@
 ---
 title: "Sunday"
 difficulty: Easy
+os: Solaris
+points: 20
+rating: 4.3
+date: 2018-04-28
+avatar: assets/htb/sunday.png
+tags: [Weak Credentials, Misconfiguration, Reconnaissance, User Enumeration, Password Cracking, Brute Force Attack, SUDO Exploitation, SSH]
+htb_url: https://app.hackthebox.com/machines/Sunday
 ---
-
 # Sunday
 
 🔗 [Sunday](https://www.hackthebox.com/machines/sunday)

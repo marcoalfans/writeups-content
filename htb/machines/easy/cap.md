@@ -1,8 +1,14 @@
 ---
 title: "Cap"
 difficulty: Easy
+os: Linux
+points: 20
+rating: 4.6
+date: 2021-06-05
+avatar: assets/htb/cap.png
+tags: [Clear Text Credentials, File System Configuration, Insecure Direct Object Reference (IDOR), Packet Capture Analysis, Password Reuse, SUID Exploitation, Python, Vulnerability Assessment]
+htb_url: https://app.hackthebox.com/machines/Cap
 ---
-
 # Cap
 
 🔗 [Cap](https://www.hackthebox.com/machines/cap)

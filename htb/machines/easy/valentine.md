@@ -1,8 +1,14 @@
 ---
 title: "Valentine"
 difficulty: Easy
+os: Linux
+points: 20
+rating: 4.8
+date: 2018-02-17
+avatar: assets/htb/valentine.png
+tags: [Weak Permissions, Web Site Structure Discovery, SSL, Web Application, Vulnerability Assessment, Session Management and Hijacking, Software & OS exploitation]
+htb_url: https://app.hackthebox.com/machines/Valentine
 ---
-
 # Valentine
 
 🔗 [Valentine](https://www.hackthebox.com/machines/Valentine)

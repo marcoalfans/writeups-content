@@ -1,8 +1,14 @@
 ---
 title: "Analytics"
 difficulty: Easy
+os: Linux
+points: 20
+rating: 4.1
+date: 2023-10-07
+avatar: assets/htb/analytics.png
+tags: [Remote Code Execution, Clear Text Credentials, Information Disclosure, Insecure Design, Reconnaissance, Configuration Analysis, Password Reuse, Kernel Exploitation]
+htb_url: https://app.hackthebox.com/machines/Analytics
 ---
-
 # Analytics
 
 🔗 [Analytics](https://www.hackthebox.com/machines/analytics)

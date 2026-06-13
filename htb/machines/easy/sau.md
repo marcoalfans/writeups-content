@@ -1,8 +1,14 @@
 ---
 title: "Sau"
 difficulty: Easy
+os: Linux
+points: 20
+rating: 4.6
+date: 2023-07-08
+avatar: assets/htb/sau.png
+tags: [OS Command Injection, Server Side Request Forgery (SSRF), Reconnaissance, SUDO Exploitation, Bash, Maltrail, Request Baskets, Web Application]
+htb_url: https://app.hackthebox.com/machines/Sau
 ---
-
 # Sau
 
 🔗 [Sau](https://www.hackthebox.com/machines/sau)

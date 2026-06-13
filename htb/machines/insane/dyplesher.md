@@ -6,6 +6,7 @@ points: 50
 rating: 4.1
 date: 2020-05-23
 avatar: assets/htb/dyplesher.png
+tags: [Remote Code Execution, Clear Text Credentials, Arbitrary File Write, Hard-coded Credentials, Reconnaissance, Web Site Structure Discovery, Packet Capture Analysis, Password Cracking]
 htb_url: https://app.hackthebox.com/machines/Dyplesher
 ---
 ## Overview

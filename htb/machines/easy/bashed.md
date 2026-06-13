@@ -1,8 +1,14 @@
 ---
 title: "Bashed"
 difficulty: Easy
+os: Linux
+points: 20
+rating: 4.7
+date: 2017-12-09
+avatar: assets/htb/bashed.png
+tags: [OS Command Injection, Code Execution, Reconnaissance, Web Site Structure Discovery, SUDO Exploitation, Scheduled Job Abuse, Apache, Web Application]
+htb_url: https://app.hackthebox.com/machines/Bashed
 ---
-
 # Bashed
 
 🔗 [Bashed](https://www.hackthebox.com/machines/bashed)

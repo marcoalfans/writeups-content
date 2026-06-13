@@ -6,6 +6,7 @@ points: 30
 rating: 4.4
 date: 2020-01-11
 avatar: assets/htb/monteverde.png
+tags: [Weak Credentials, Misconfiguration, Anonymous/Guest Access, User Enumeration, Password Reuse, Password Spraying, Azure Enumeration, Powershell]
 htb_url: https://app.hackthebox.com/machines/Monteverde
 ---
 ## 
