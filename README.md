@@ -1,6 +1,9 @@
 # writeups-content
 
-Content store for the **Writeups**.
+Content store for the **Writeups** section of
+[marcoalfans.github.io](https://marcoalfans.github.io/writeups/). Kept in a
+separate repo so the portfolio repo stays UI-only — the site fetches this
+content at runtime (raw URLs) and renders it client-side.
 
 ## Layout
 
@@ -47,7 +50,8 @@ are preserved in [`LICENSE`](LICENSE):
 
 - [**momenbasel/htb-writeups**](https://github.com/momenbasel/htb-writeups) — Moamen Basel (MIT)
 - [**zweilosec/htb-writeups**](https://github.com/zweilosec/htb-writeups) — zweilosec (MIT)
+- [**dev-angelist/writeups-and-walkthroughs**](https://dev-angelist.gitbook.io/writeups-and-walkthroughs/hackthebox) — dev-angelist (no explicit license; included with attribution and paraphrased)
 
-Sincere thanks to both authors. Where their material was used, the prose was
-rewritten and machine metadata (difficulty, OS, points, rating, avatar) was
+Sincere thanks to all authors. Where their material was used, the prose was
+rewritten and machine metadata (difficulty, OS, points, rating, avatar, tags) was
 re-sourced from the official HackTheBox API.
