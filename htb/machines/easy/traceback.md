@@ -9,7 +9,6 @@ avatar: assets/htb/traceback.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Traceback
 ---
-
 ## Overview
 
 Traceback is an easy difficulty Linux machine that gives a good introduction to web shells and tracing the steps of how an attacker compromised a server \(then defaced it!\).  

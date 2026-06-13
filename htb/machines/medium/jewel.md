@@ -9,7 +9,6 @@ avatar: assets/htb/jewel.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Jewel
 ---
-
 ## Overview
 
 TODO: finish writeup and clean up

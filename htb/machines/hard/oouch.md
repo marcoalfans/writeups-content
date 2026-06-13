@@ -9,7 +9,6 @@ avatar: assets/htb/oouch.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Oouch
 ---
-
 ## Overview
 
 This had difficulty Linux machine taught me a lot about the internal workings of a federated access control system, specifically an implementation of Oauth2.  Persistence and the ability to take error messages and learn from them were necessary to progress through this machine.

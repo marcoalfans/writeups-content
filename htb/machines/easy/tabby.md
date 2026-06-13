@@ -9,7 +9,6 @@ avatar: assets/htb/tabby.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Tabby
 ---
-
 ## Overview
 
 TODO: Finish writeup and clean up

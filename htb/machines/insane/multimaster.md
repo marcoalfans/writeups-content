@@ -9,7 +9,6 @@ avatar: assets/htb/multimaster.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Multimaster
 ---
-
 ## Overview
 
 Hold on to your seats, because this Insane Windows machine is a wild ride. TODO:Finish this writeup, there are more notes and stuff in the notes app if anything is missing...

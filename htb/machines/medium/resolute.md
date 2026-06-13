@@ -9,7 +9,6 @@ avatar: assets/htb/resolute.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Resolute
 ---
-
 ## Overview
 
 A medium-difficulty Windows box that was fairly straightforward.  Privilege escalation required going through two different users and taking advantage of Windows domain group permissions.  It ended with a privilege escalation route that required a simple dll injection, and a bit of quick reaction.

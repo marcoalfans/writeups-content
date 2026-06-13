@@ -9,7 +9,6 @@ avatar: assets/htb/blackfield.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Blackfield
 ---
-
 ## Enumeration
 
 ### Nmap scan

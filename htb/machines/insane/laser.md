@@ -9,7 +9,6 @@ avatar: assets/htb/laser.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Laser
 ---
-
 ## Overview
 
 This Insane-difficulty machine from [Hack The Box](https://www.linkedin.com/company/hackthebox/) took me a lot longer to progress to the initial foothold than most boxes take to root!  This machine had some very interesting avenues of approach that greatly differed from the standard enumeration and progression that most of the lower difficulty machines require. I had to research new protocols just to begin, and by the end had to write five python scripts to progress through the initial foothold and for later privilege escalation.  All in all it was a fun, but very challenging ride!

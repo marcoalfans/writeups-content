@@ -9,7 +9,6 @@ avatar: assets/htb/nest.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Nest
 ---
-
 ## Overview
 
 This was a fairly easy Windows box that required a bit of back-and-forth between locations and also a little bit of .NET-fu to proceed.  Luckily there are tools and websites out there that make disassembling and compiling easy for those who aren't fluent in VB.Net or C\#.

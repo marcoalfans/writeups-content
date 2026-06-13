@@ -9,7 +9,6 @@ avatar: assets/htb/omni.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Omni
 ---
-
 ## Enumeration
 
 ### Nmap scan

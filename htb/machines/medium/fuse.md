@@ -9,7 +9,6 @@ avatar: assets/htb/fuse.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Fuse
 ---
-
 ## Overview
 
 This medium-difficulty Windows machine gave me a chance to exploit a vulnerable service that we hear of often in training as being an overlooked problem for many Enterprises: printer management.  While this challenge did not involve exploiting an actual print spooler service, it drew attention to the problems that misconfigurations can cause especially when dealing with credentialed service accounts.

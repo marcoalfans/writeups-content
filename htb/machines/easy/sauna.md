@@ -9,7 +9,6 @@ avatar: assets/htb/sauna.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Sauna
 ---
-
 ## Overview
 
 A fairly easy Windows machine that requires a little 'outside the box' thinking in order to get the initial foothold.  After that, simple enumeration will give everything else that is needed.

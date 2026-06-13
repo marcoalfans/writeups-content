@@ -9,7 +9,6 @@ avatar: assets/htb/servmon.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Servmon
 ---
-
 ## Overview
 
 This was an easy Windows machine....but don't get stuck chasing the rabbits!
