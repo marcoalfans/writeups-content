@@ -323,7 +323,7 @@ Grabbed the user flag straight off `shaun`'s desktop!
 
 ## Path to Power \(Gaining Administrator Access\)
 
-### Further enumeration as `shaun` 🐇🐇
+### Further enumeration as `shaun` 
 
 Warning...rabbit holes ahead. Jump [here](buff-write-up.md#cloudme_-1112-exe) if you'd rather skip the huge detour I went down. It looked so promising at the time...
 
@@ -439,7 +439,7 @@ The `xampp-control.log` file revealed that `xampp` wanted administrative rights 
 
 > `(Get-Content .\input.txt ).Replace('text','fun') | Out-File .\output.txt`
 
-_No idea why I noted this...handy, but I was probably off chasing yet another rabbit_  🐇🐇
+_No idea why I noted this...handy, but I was probably off chasing yet another rabbit_  
 
 ```text
 PS C:\xampp> cat passwords.txt
@@ -590,7 +590,7 @@ These installers include the next components:
 Enjoy!
 ```
 
-End of the rabbit hole of doom...🐇🐇
+End of the rabbit hole of doom...
 
 ### CloudMe\_1112.exe
 

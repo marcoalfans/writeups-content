@@ -13,7 +13,7 @@ htb_url: https://app.hackthebox.com/machines/Devel
 
 Devel is an easy Windows box running IIS 7.5 and Microsoft FTP. Anonymous FTP access maps directly to the webroot, so I uploaded an ASPX reverse shell and got code execution as the low-privileged IIS app pool account. From there an old kernel (Windows build 6.1.7600) let me escalate to `nt authority\system` with a public local privilege-escalation exploit and grab both flags.
 
-🎯 Target IP: `<YOUR_IP>`
+Target IP: `<YOUR_IP>`
 
 I set up a host entry and a working directory for scans before getting started:
 
@@ -272,7 +272,7 @@ Printing the user.txt flag with the `type` command (the Windows equivalent of `c
 type C:\Users\babis\Desktop\user.txt
 ```
 
-🚩 **user.txt** — `5d3f************************16bd`
+**user.txt** — `5d3f************************16bd`
 
 The same approach gets us the root flag:
 
@@ -285,6 +285,6 @@ C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
 ```
 
-🚩 **root.txt** — `cb43************************2f32`
+**root.txt** — `cb43************************2f32`
 
 ---

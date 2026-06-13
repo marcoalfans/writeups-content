@@ -444,7 +444,7 @@ Next I had it append my SSH public key to `root`'s `authorized_keys` file. The s
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/time]
-└─$ nc -lvnp 8082                                                                             148 ⨯ 1 ⚙
+└─$ nc -lvnp 8082                                                                             148 ⨯ 1 
 listening on [any] 8082 ...
 connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 33236
 Key away! Try to log in through SSH.
@@ -454,7 +454,7 @@ Key away! Try to log in through SSH.
 
 ```text
 ┌──(kac0㉿kali)-[~/htb/time]
-└─$ ssh root@<YOUR_IP> -i root.key                                                               1 ⚙
+└─$ ssh root@<YOUR_IP> -i root.key                                                               1 
 The authenticity of host '<YOUR_IP> (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:sMBq2ECkw0OgfWnm+CdzEgN36He1XtCyD76MEhD/EKU.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes

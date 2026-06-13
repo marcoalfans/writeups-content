@@ -261,7 +261,7 @@ tomcat@tabby:/var/lib/tomcat9$ ^Z
 zsh: suspended  nc -lvnp 12543
 
 ┌──(kac0㉿kali)-[~/htb/tabby]
-└─$ stty raw -echo                                                                            148 ⨯ 1 ⚙
+└─$ stty raw -echo                                                                            148 ⨯ 1 
 
 ┌──(kac0㉿kali)-[~/htb/tabby]
                                    └─$                                                                  fg                        

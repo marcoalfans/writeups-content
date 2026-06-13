@@ -50,7 +50,7 @@ Sau is an Easy Linux machine running Ubuntu. The attack chain starts with a Requ
 
 Before scanning, I set up a working layout and add the target to my hosts file. The last `sed` line is just a reminder to clean the entry out of `/etc/hosts` once I'm done with the box.
 
-🎯 Target IP: `<YOUR_IP>`
+Target IP: `<YOUR_IP>`
 
 ```bash
 su

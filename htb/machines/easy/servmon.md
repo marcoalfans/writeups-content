@@ -46,7 +46,7 @@ I kicked things off by running an nmap scan against `<YOUR_IP>`. My go-to flags 
 
 ```text
 kac0@kalimaa:~/htb/servmon$ nmap -p- -sC -sV -Pn -oN servmon.nmap <YOUR_IP>
-                           
+
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-19 22:24 EDT                                        
 Nmap scan report for <YOUR_IP>                                                                      
 Host is up (0.047s latency).                                                                           
@@ -263,7 +263,7 @@ Nadine
 
 `Nadine`'s `Confidential.txt` brought even better news: she had dropped a passwords file onto `Nathan`'s desktop. That is quite possibly one of the "secret files" `Nathan` still intended to stash away in SharePoint. 
 
-### HTTP - Port 80 🐇🐇
+### HTTP - Port 80 
 
 Still without a foothold, I turned to HTTP on port 80 next. Hitting `http://<YOUR_IP>` bounced me to `http://<YOUR_IP>/Pages/login.htm`, whose title was `NVMS-1000`. This appears to be the publicly accessible page that `Nathan`'s to-do list referred to.  
 
@@ -557,7 +557,7 @@ configuration:
 	C:\Program Files\NSClient++>whoami
 	whoami
 	nt authority\system
-	
+
 Risk:
 The vulnerability allows local attackers to escalate privileges and execute 
 arbitrary code as Local System

