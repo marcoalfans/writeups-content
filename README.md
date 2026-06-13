@@ -1,9 +1,6 @@
 # writeups-content
 
-Content store for the **Writeups** section of
-[marcoalfans.github.io](https://marcoalfans.github.io/writeups/). Kept in a
-separate repo so the portfolio repo stays UI-only — the site fetches this
-content at runtime (raw URLs) and renders it client-side.
+Content store for the **Writeups**.
 
 ## Layout
 
