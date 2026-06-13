@@ -9,10 +9,7 @@ avatar: assets/htb/sunday.png
 tags: [Weak Credentials, Misconfiguration, Reconnaissance, User Enumeration, Password Cracking, Brute Force Attack, SUDO Exploitation, SSH]
 htb_url: https://app.hackthebox.com/machines/Sunday
 ---
-<details>
-
-<summary>About</summary>
-
+**About**
 ### Machine Description
 
 Sunday is a relatively straightforward box, though it runs rather dated software and can behave inconsistently now and then. Its core themes are abusing the Finger service and leveraging weak credentials.
@@ -36,8 +33,6 @@ Nmap Zenmap John finger-user-enum
 ### Techniques
 
 Reconnaissance User Enumeration Password Cracking Brute Force Attack SUDO Exploitation
-
-</details>
 
 ## Summary
 

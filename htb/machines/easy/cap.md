@@ -9,10 +9,7 @@ avatar: assets/htb/cap.png
 tags: [Clear Text Credentials, File System Configuration, Insecure Direct Object Reference (IDOR), Packet Capture Analysis, Password Reuse, SUID Exploitation, Python, Vulnerability Assessment]
 htb_url: https://app.hackthebox.com/machines/Cap
 ---
-<details>
-
-<summary>About</summary>
-
+**About**
 ### Machine Description
 
 Cap is an easy Linux box that hosts an HTTP service offering admin features such as running network captures. Weak access controls expose an Insecure Direct Object Reference (IDOR), which lets us reach another user's capture. That capture holds credentials in plaintext, and reusing them gives us a foothold. From there, a Linux capability is abused to escalate to root.
@@ -36,8 +33,6 @@ Python
 ### Techniques
 
 Packet Capture Analysis | Password Reuse | SUID Exploitation
-
-</details>
 
 ## Summary
 

@@ -272,13 +272,7 @@ Printing the user.txt flag with the `type` command (the Windows equivalent of `c
 type C:\Users\babis\Desktop\user.txt
 ```
 
-<details>
-
-<summary>🚩 Flag 1 (user.txt)</summary>
-
-5d3f************************16bd
-
-</details>
+🚩 **user.txt** — `5d3f************************16bd`
 
 The same approach gets us the root flag:
 
@@ -291,12 +285,6 @@ C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
 ```
 
-<details>
-
-<summary>🚩 Flag 2 (root.txt)</summary>
-
-cb43************************2f32
-
-</details>
+🚩 **root.txt** — `cb43************************2f32`
 
 ---

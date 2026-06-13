@@ -9,10 +9,7 @@ avatar: assets/htb/bizness.png
 tags: [Weak Credentials, Remote Code Execution, Misconfiguration, Insecure Design, Reconnaissance, Web Site Structure Discovery, Configuration Analysis, Password Reuse]
 htb_url: https://app.hackthebox.com/machines/Bizness
 ---
-<details>
-
-<summary>About</summary>
-
+**About**
 ### Machine Description
 
 Bizness is an easy Linux box centered on a pre-authentication remote code execution (RCE) flaw in Apache OFBiz, tracked as `[CVE-2023-49070](https://nvd.nist.gov/vuln/detail/CVE-2023-49070)`. We abuse that bug to land a shell, then digging through the OFBiz configuration surfaces a hashed password stored in the service's Derby database. With a bit of research and code review, that hash is reshaped into a more standard form that common tools can crack. The recovered password then lets us log in as root.
@@ -44,8 +41,6 @@ ReconnaissanceWeb Site Structure DiscoveryConfiguration AnalysisPassword ReusePa
 ### CVE
 
 CVE-2023-49070
-
-</details>
 
 ## Summary
 
