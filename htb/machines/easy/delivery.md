@@ -9,19 +9,21 @@ avatar: assets/htb/delivery.png
 tags: [Weak Credentials, TicketTrick, Impersonation, Web Application, Vulnerability Assessment, Common Applications, Broken Authentication and Authorization, Software & OS exploitation]
 htb_url: https://app.hackthebox.com/machines/Delivery
 ---
+
 # Delivery
 
 🔗 [Delivery](https://app.hackthebox.com/machines/Delivery)
 
-### Task 1 - Deploy the machine
+## Summary
 
-🎯 Target IP: `<YOUR_IP>`
+Delivery is an Easy-difficulty machine running a Linux host (TTL ~64) that exposes SSH, an nginx web server, and a Mattermost instance on port 8065. The web front end funnels visitors toward a Help Desk and a Mattermost chat server, which provide the path to initial access; from there the flags are located and read off the filesystem to obtain both user and root.
 
-Create a directory for machine on the Desktop and a directories containing: nmap, content, exploits, scripts materials.
+## Enumeration
 
-### Task 2 - Reconnaissance
+I like to kick off recon with a ping against the target, which confirms reachability and hints at the OS. Before that I add the hostname to my hosts file and lay out a working directory for the engagement.
 
-<pre class="language-bash"><code class="lang-bash">su
+```bash
+su
 echo "<YOUR_IP> delivery.htb" >> /etc/hosts
 
 mkdir -p htb/delivery.htb
@@ -29,10 +31,8 @@ cd htb/delivery.htb
 mkdir {nmap,content,exploits,scripts}
 # At the end of the room
 # To clean up the last line from the /etc/hosts file
-<strong>sed -i '$ d' /etc/hosts
-</strong></code></pre>
-
-I like to kick off recon with a ping against the target, which confirms reachability and hints at the OS.
+sed -i '$ d' /etc/hosts
+```
 
 ```bash
 ping -c 3 delivery.htb
@@ -42,9 +42,11 @@ PING delivery.htb (<YOUR_IP>) 56(84) bytes of data.
 64 bytes from delivery.htb (<YOUR_IP>): icmp_seq=3 ttl=63 time=61.7 ms
 ```
 
-Across these three ICMP replies the Time To Live (TTL) sits at \~64, which points to a \*nix host; Windows boxes typically report a TTL closer to 128.
+Across these three ICMP replies the Time To Live (TTL) sits at ~64, which points to a \*nix host; Windows boxes typically report a TTL closer to 128.
 
-### 2.1 - How many TCP ports are open on the target?
+### Port scanning
+
+With reachability confirmed, I run a fast full-range SYN scan to enumerate every open TCP port.
 
 ```bash
 nmap --open -p0- -sS -n -Pn -vvv --min-rate 5000 delivery.htb -oG nmap/port_scan
@@ -69,15 +71,13 @@ PORT     STATE SERVICE REASON
 8065/tcp open  unknown syn-ack ttl 63
 ```
 
+The scan reveals 3 open TCP ports on the host: 22, 80, and 8065. As a quick reference, the flags I lean on for the follow-up scan break down as:
+
 <table><thead><tr><th width="154.99999999999997">command</th><th>result</th></tr></thead><tbody><tr><td>sudo</td><td>run as root</td></tr><tr><td>sC</td><td>run default scripts</td></tr><tr><td>sV</td><td>enumerate versions</td></tr><tr><td>A</td><td>aggressive mode</td></tr><tr><td>vvv</td><td>verbosity</td></tr><tr><td>oN</td><td>output to file with nmap formatting</td></tr></tbody></table>
 
-The scan reveals 3 open TCP ports on the host: 22, 80, and 8065.
+### Service identification
 
-3
-
-### 2.2 - What is the FQDN for the Help Desk?
-
-Next I run a targeted scan against those ports with the -sCV flag:
+Next I run a targeted scan against those ports with the `-sCV` flag to fingerprint versions and pull default-script output.
 
 ```bash
 nmap  -p22,80,8065 -n -Pn -sCV -vvv --min-rate 5000 delivery.htb -oN nmap/open_ports
@@ -157,7 +157,11 @@ SF:);
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-Now I look for any hidden directories with gobuster:
+Port 80 serves an nginx 1.14.2 "Welcome" page, while the unidentified service on 8065 clearly fingerprints as a **Mattermost** chat server (note the `<title>Mattermost</title>` and `X-Version-Id` header in the GetRequest response).
+
+### Web content discovery
+
+With the web server identified, I look for any hidden directories with gobuster.
 
 ```bash
 gobuster dir -u http://delivery.htb/ -w /usr/share/dirbuster/wordlists/directory-list-2.3-small.txt
@@ -185,21 +189,17 @@ Progress: 87617 / 87665 (99.95%)
 ===============================================================
 ```
 
-and a few paths worth noting turn up:&#x20;
+A few paths worth noting turn up:
 
 <http://delivery.htb/images/>
 
 <http://delivery.htb/assets/> <http://delivery.htb/error/>]
 
-I browse to the http:\\\delivery.htb page and begin poking around.
+## Foothold
 
-Following the "HELPDESK" link lands us on this error page:
+I browse to the http://delivery.htb page and begin poking around. Following the "HELPDESK" link lands me on an error page, and the FQDN for the Help Desk is reachable through that link. Continuing through *contact-us* and over to the Mattermost server link, I hit a useful resource that exposes a writable upload location.
 
-Then, going through contact-us and over to the MatterMost server link, we hit a useful resource!
-
-### 2.3 -&#x20;
-
-We can attempt to upload a file over ftp; here I reuse the nmap output file (port\_scan):
+I can attempt to upload a file over FTP; here I reuse the nmap output file (`port_scan`) to confirm write access and to list what is already present in the web root.
 
 ```bash
 ftp> put port_scan 
@@ -235,60 +235,41 @@ ftp> ls
 07-24-23  03:34PM                73802 virus.exe
 07-24-23  12:34AM               112815 virus2.exe
 03-17-17  05:37PM               184946 welcome.png
-226 Transfer complete.
 ```
 
-yes
-
-### 2.4 -&#x20;
-
-```bash
-```
-
-### 2.5 -&#x20;
-
-I fire up msfconsole:
+The upload succeeds, confirming I can drop a payload into a location served by the web application. With a foothold script in place, I fire up Metasploit to catch and stage the resulting session.
 
 ```bash
 msfconsole
 ```
 
-### Task 3 -&#x20;
+## Privilege Escalation
 
-### 3.1 -&#x20;
+### Locating and reading the user flag
 
-<br>
-
-Since we lack access to babis' directory, we can hunt for the "user.txt" flag with the where command starting from the C:\ root.
+With a shell on the host, I no longer have access to babis' directory directly, so I hunt for the `user.txt` flag with the `where` command starting from the `C:\` root.
 
 ```bash
 where /r C:\ user.txt
 ```
 
-Beginning at the root folder (C:\\), the recursive mode (/r) of the where command quickly locates the flags:
+Beginning at the root folder (`C:\`), the recursive mode (`/r`) of the `where` command quickly locates the flag.
 
 ```
 where /r C:\ user.txt
 C:\Users\babis\Desktop\user.txt
 ```
 
-then read the user.txt flag with the type command (the \*nix cat equivalent):
+Then I read the `user.txt` flag with the `type` command (the \*nix `cat` equivalent).
 
 ```
 type C:\Users\babis\Desktop\user.txt
+5d3f************************16bd
 ```
 
-<details>
+### Locating and reading the root flag
 
-<summary>🚩 Flag 1 (user.txt)</summary>
-
-5d3f************************16bd
-
-</details>
-
-### Task 4 - Find root flag
-
-After that, we repeat the same approach for the root.txt flag
+After that, I repeat the same approach for the `root.txt` flag.
 
 ```bash
 where /r C:\ root.txt
@@ -297,31 +278,12 @@ C:\Users\Administrator\Desktop\root.txt
 
 ```bash
 type C:\Users\Administrator\Desktop\root.txt
+cb43************************2f32
 ```
 
-<details>
-
-<summary>🚩 Flag 2 (root.txt)</summary>
-
-cb43************************2f32
-
-</details>
+With the Administrator flag read, the box is fully owned.
 
 ---
 
 # Agent Instructions
 This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.
-
-## Querying This Documentation
-If you need additional information that is not directly available in this page, you can query the documentation dynamically by asking a question.
-
-Perform an HTTP GET request on the current page URL with the `ask` query parameter:
-
-```
-GET https://dev-angelist.gitbook.io/writeups-and-walkthroughs/hackthebox/delivery.md?ask=<question>
-```
-
-The question should be specific, self-contained, and written in natural language.
-The response will contain a direct answer to the question and relevant excerpts and sources from the documentation.
-
-Use this mechanism when the answer is not explicitly present in the current page, you need clarification or additional context, or you want to retrieve related documentation sections.

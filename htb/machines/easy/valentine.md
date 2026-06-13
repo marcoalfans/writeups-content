@@ -9,28 +9,30 @@ avatar: assets/htb/valentine.png
 tags: [Weak Permissions, Web Site Structure Discovery, SSL, Web Application, Vulnerability Assessment, Session Management and Hijacking, Software & OS exploitation]
 htb_url: https://app.hackthebox.com/machines/Valentine
 ---
+
 # Valentine
 
 🔗 [Valentine](https://www.hackthebox.com/machines/Valentine)
 
-### Task 1 - Deploy the machine
+## Summary
 
-🎯 Target IP: `<YOUR_IP>`
+Valentine is an easy Linux box themed around the 2014 Heartbleed vulnerability. The Apache server on port 443 runs a vulnerable OpenSSL build (CVE-2014-0160), which leaks an encoded passphrase out of memory. Combined with an encrypted RSA private key exposed under a hidden `/dev` web directory, this gives SSH access as the `hype` user. Privilege escalation to root comes from an existing detached `tmux` session running as root that `hype` can attach to.
 
-On the Desktop, set up a folder named after the machine, and within it add a sub-folder to hold all the assets and output produced during the engagement, such as the nmap scans.
+## Enumeration
 
-### Task 2 - Reconnaissance
+Before scanning, I add the host to `/etc/hosts` and lay out a working directory for the engagement's assets and output.
 
-<pre class="language-bash"><code class="lang-bash">su
-<strong>echo "<YOUR_IP> valentine.htb" >> /etc/hosts
-</strong>
+```bash
+su
+echo "<YOUR_IP> valentine.htb" >> /etc/hosts
+
 mkdir -p htb/valentine.htb
 cd htb/valentine.htb
 mkdir {nmap,content,exploits,scripts}
 # At the end of the room
 # To clean up the last line from the /etc/hosts file
-<strong>sed -i '$ d' /etc/hosts
-</strong></code></pre>
+sed -i '$ d' /etc/hosts
+```
 
 My usual first move is to ping the host, which confirms connectivity and hints at the operating system.
 
@@ -44,7 +46,9 @@ PING valentine.htb (<YOUR_IP>) 56(84) bytes of data.
 
 The three ICMP replies show a TTL close to 64, which points to a \*nix host. Windows boxes typically report a TTL around 128.
 
-### 2.1 - How many TCP ports are open on the remote host?
+### Port scanning
+
+I start with a full TCP SYN scan to see what's listening.
 
 ```bash
 nmap -p0- -sS -Pn -vvv valentine.htb -oN nmap/tcp_port_scan
@@ -57,15 +61,11 @@ PORT    STATE SERVICE REASON
 443/tcp open  https   syn-ack ttl 63
 ```
 
-<table><thead><tr><th width="154.99999999999997">command</th><th>result</th></tr></thead><tbody><tr><td>sS</td><td>SynScan</td></tr><tr><td>sC</td><td>run default scripts</td></tr><tr><td>sV</td><td>enumerate versions</td></tr><tr><td>A</td><td>aggressive mode</td></tr><tr><td>T4</td><td>run a bit faster</td></tr><tr><td>oN</td><td>output to file with nmap formatting</td></tr></tbody></table>
-
 The scan reveals 3 open TCP ports on the host: 22, 80, 443.
 
-3
+<table><thead><tr><th width="154.99999999999997">command</th><th>result</th></tr></thead><tbody><tr><td>sS</td><td>SynScan</td></tr><tr><td>sC</td><td>run default scripts</td></tr><tr><td>sV</td><td>enumerate versions</td></tr><tr><td>A</td><td>aggressive mode</td></tr><tr><td>T4</td><td>run a bit faster</td></tr><tr><td>oN</td><td>output to file with nmap formatting</td></tr></tbody></table>
 
-### 2.2 - Which flag is used with nmap to execute its vulnerability discovery scripts (with the category "vuln") on the target??
-
-Next we run a more targeted scan with the -sCV flags to grab service versions and run the standard scripts.
+Next I run a more targeted scan with `-sCV` to grab service versions and run the default scripts, adding `--script vuln` to have nmap execute its vulnerability-discovery scripts (the `vuln` category) against the target.
 
 ```bash
 nmap -p22,80,443 -sS -Pn -n -v -sCV --script vuln -T4 valentine.htb -oN nmap/port_scan
@@ -96,11 +96,11 @@ PORT    STATE    SERVICE   VERSION
 |_ssl-date: 2024-07-14T09:44:55+00:00; 0s from scanner time.
 ```
 
-With no SSH credentials in hand, our starting point will be the web services on ports 80 and 443.
+With no SSH credentials in hand, my starting point is the web services on ports 80 and 443.
 
-#### Port 80 and 443
+### Web discovery
 
-Browsing the site turns up nothing notable, so we run whatweb and a gobuster directory scan against each of the ports.
+Browsing the site turns up nothing notable, so I run whatweb and a gobuster directory scan against the host.
 
 ```bash
 whatweb valentine.htb
@@ -113,15 +113,11 @@ gobuster dir -u http://valentine.htb -w /usr/share/wordlists/dirb/common.txt
 
 A few interesting directories show up, which I'll come back to later.
 
-This question isn't about the box itself; it's a general one about nmap's options.
+## Foothold
 
-\--script vuln
+### Heartbleed (CVE-2014-0160)
 
-### 2.3 - What is the 2014 CVE ID for an information disclosure vulnerability that the service on port 443 is vulnerable to?
-
-These questions, along with the earlier one, point toward running the `--script vuln` flag against port 443. A quick search surfaces likely vulnerabilities, and we then look for one tied to the machine's theme (Valentine) and the image shown on the index page.
-
-nmap ships with a dedicated script for checking the Heartbleed vulnerability:
+The `--script vuln` results, combined with the machine's theme (Valentine) and the image shown on the index page, point straight at Heartbleed. nmap ships with a dedicated script for checking it, so I confirm against port 443.
 
 ```bash
 nmap -p443 -Pn --script ssl-heartbleed -T4 valentine.htb -oN nmap/vuln
@@ -143,105 +139,57 @@ PORT    STATE SERVICE
 |_      http://cvedetails.com/cve/2014-0160/
 ```
 
-CVE-2014-0160
+The information-disclosure flaw on port 443 is CVE-2014-0160. A PoC and working exploit live in a public github repo, and pulling sensitive data out of memory is straightforward — run it a handful of times and a base64-encoded string eventually appears.
 
-### 2.4 -  What password can be leaked using (CVE-2014-0160)?
-
-A PoC and working exploit for the flaw live in this github repo:
-
-With that exploit, pulling sensitive data out of memory is quite easy. Run it a handful of times and a base64-encoded string eventually appears.
-
-Here, we opt to exploit it through the metasploit module built for this vulnerability:
-
-The `spool memory_leak.txt` command saves the output locally, and repeated runs let us observe different chunks of memory.
-
-Doing so surfaces this notable string:&#x20;
+Here, I opt to exploit it through the Metasploit module built for this vulnerability. The `spool memory_leak.txt` command saves the output locally, and repeated runs let me observe different chunks of memory. Doing so surfaces this notable string:
 
 ```
 $text=aGVhcnRibGVlZGJlbGlldmV0aGVoeXBlCg==
 ```
 
-that is a base64 string.
+That is a base64 string, which decodes to the password `heartbleedbelievethehype`.
 
-heartbleedbelievethehype
+### Exposed RSA key
 
-### 2.5 - What is the relative path of a folder on the website that contains two interesting files, including note.txt?
+Visiting the hidden web directory gobuster found, `/dev`, I spot two files worth a look: `notes.txt` and `hype_key`. The `hype_key` file is the RSA key referenced on the site.
 
-Visiting the 'hidden' web directory gobuster found, /dev, we spot two files worth a look:
+`hype_key` is hex-encoded, so I decode it from hex into ASCII, which gives an encrypted RSA private key — likely an `id_rsa` for SSH access — and save it as `id_rsa_psw`. Since I already have a candidate password, `heartbleedbelievethehype`, I can decrypt it.
 
-notes.txt
+```bash
+openssl rsa -in id_rsa_psw
+```
 
-hype\_key
+With the decrypted key I authenticate over SSH as `hype`.
 
-/dev
+```bash
+ssh hype@valentine.htb -i id_rsa
+```
 
-### 2.6 -  What is the filename of the RSA key found on the website?
+That lands a shell as the `hype` user, and the user flag is in the home directory.
 
-hype\_key
-
-hype\_key
-
-### Task 3 - Find user flag
-
-### 3.1 - Submit the flag located in the hype user's home directory.
-
-We can decode hype\_key from hex into ASCII
-
-which gives us an encrypted RSA private key (likely an id\_rsa for SSH access), which we save as id\_rsa\_psw.
-
-Since we already have a candidate password, heartbleedbelievethehype, we can attempt to decrypt it:
-
-`openssl rsa -in id_rsa_psw`
-
-`ssh hype@valentine.htb -i id_rsa`
-
-<details>
-
-<summary>🚩 Flag 1 (user.txt)</summary>
-
+```bash
+cat user.txt
 5d03************************97b9
+```
 
-</details>
+## Privilege Escalation
 
-### 3.2 - What is the name of the terminal multiplexing software that the hype user has run previously?
+### Root tmux session
 
-tmux
+Looking at the `hype` user's history shows the terminal multiplexing software `tmux` has been run previously, with a session bound to a socket file at `/.devs/dev_sess`. That session is running as root, so I attach to the existing socket to inherit a root shell.
 
-### 3.3 - What is the full path to the socket file used by the tmux session?
+```bash
+tmux -S /.devs/dev_sess
+```
 
-/.devs/dev\_sess
+This drops me into a root session, where the final flag is in root's home directory.
 
-### 3.4 - What user is that tmux session running as?
-
-root
-
-### Task 4 - Find root flag
-
-### 4.1 - Submit the flag located in root's home directory.
-
-<details>
-
-<summary>🚩 Flag 2 (root.txt)</summary>
-
+```bash
+cat /root/root.txt
 2ec3************************a477
-
-</details>
+```
 
 ---
 
 # Agent Instructions
 This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.
-
-## Querying This Documentation
-If you need additional information that is not directly available in this page, you can query the documentation dynamically by asking a question.
-
-Perform an HTTP GET request on the current page URL with the `ask` query parameter:
-
-```
-GET https://dev-angelist.gitbook.io/writeups-and-walkthroughs/hackthebox/valentine.md?ask=<question>
-```
-
-The question should be specific, self-contained, and written in natural language.
-The response will contain a direct answer to the question and relevant excerpts and sources from the documentation.
-
-Use this mechanism when the answer is not explicitly present in the current page, you need clarification or additional context, or you want to retrieve related documentation sections.

