@@ -9,7 +9,6 @@ avatar: assets/htb/active.png
 tags: [Default Credentials, Weak Permissions, Anonymous/Guest Access, Reconnaissance, Password Cracking, Kerberoasting, SMB, Kerberos]
 htb_url: https://app.hackthebox.com/machines/Active
 ---
-
 ## Summary
 
 Active is an Easy Windows box running Microsoft IIS 7.5 and Microsoft FTP. Anonymous FTP login is permitted and the FTP root maps directly to the IIS webroot, so an `.aspx` reverse-shell payload can be uploaded and then executed through the web server to land a shell as `iis apppool\web`. The host runs an old build of Windows (6.1.7600), which is vulnerable to a local privilege escalation exploit (EDB 40564) that hands over `nt authority\system`.
