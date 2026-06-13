@@ -15,6 +15,8 @@ import os, re, json, glob, time, urllib.request, urllib.error
 TOKEN = os.environ.get("HTB_TOKEN", "").strip()
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 API = "https://labs.hackthebox.com/api/v4/machine/profile/"
+TAGS = "https://labs.hackthebox.com/api/v4/machine/tags/"
+TAG_ORDER = {"Vulnerability": 0, "Technique": 1, "Language": 2, "Technology": 3, "Area of Interest": 4}
 CDN = "https://labs.hackthebox.com"
 UA = "Mozilla/5.0 (writeups-content enrich)"
 
@@ -131,6 +133,26 @@ def main():
         if diff: fm["difficulty"] = diff
         if rel: fm["date"] = rel
         fm.setdefault("htb_url", "https://app.hackthebox.com/machines/%s" % urllib.request.quote(name))
+
+        # official HTB tags (authoritative) -> frontmatter tags, ordered + capped
+        mid = info.get("id")
+        if mid:
+            for attempt in range(4):
+                try:
+                    td = fetch(TAGS + str(mid), TOKEN)
+                    tl = td.get("info", []) if isinstance(td, dict) else (td if isinstance(td, list) else [])
+                    tl = sorted([t for t in tl if t.get("name")], key=lambda t: TAG_ORDER.get(t.get("category"), 9))
+                    names = []
+                    for t in tl:
+                        if t["name"] not in names: names.append(t["name"])
+                    if names: fm["tags"] = "[" + ", ".join(names[:8]) + "]"
+                    break
+                except urllib.error.HTTPError as e:
+                    if e.code in (429, 500, 502, 503) and attempt < 3: time.sleep(3 * (attempt + 1)); continue
+                    break
+                except Exception:
+                    if attempt < 3: time.sleep(3 * (attempt + 1)); continue
+                    break
 
         # re-file into the correct difficulty folder if HTB disagrees with our path
         dest = path
