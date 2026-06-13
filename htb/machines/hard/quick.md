@@ -87,7 +87,7 @@ That left me with four entries on my shortlist of likely usernames.
 
 The "Get Started" link took me to a login page at [http://<YOUR_IP>:9001/login.php](http://<YOUR_IP>:9001/login.php). I tried feeding these names in to see whether any produced an error confirming a valid account, but the form expected email addresses instead of usernames, so nothing came of it.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-dirbuster-quick%2520%25281%2529.png)
+![](assets/wu/quick/fix-23.png)
 
 My dirbuster scan revealed an exposed `db.php`, but I wasn't sure how to interact with it.  Browsing to it just returned a blank page.
 
@@ -1290,7 +1290,7 @@ srvadm@quick:~$ sudo -l
 [sudo] password for srvadm:
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/29-viminfo%2520%25281%2529.png)
+![](assets/wu/quick/fix-24.png)
 
 ```text
 srvadm@quick:~/.local/share/nano$cat search_history
@@ -1346,7 +1346,7 @@ Connection closed by foreign host.
 
  [https://portswigger.net/web-security/request-smuggling](https://portswigger.net/web-security/request-smuggling)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/30-printer-auth%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/quick/fix-25.png)
 
 ```text
 srvadm@quick:~/.cache$ ls -la

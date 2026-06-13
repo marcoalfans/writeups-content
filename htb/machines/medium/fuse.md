@@ -109,7 +109,7 @@ Hitting port 80 redirected me to [http://fuse.fabricorp.local/papercut/logs/html
 
 ![](assets/wu/fuse/img-2.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/1-30may%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/fuse/fix-7.png)
 
 ![](assets/wu/fuse/img-4.png)
 

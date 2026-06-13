@@ -382,7 +382,7 @@ once authenticated I saw a notable message along the lines of: "The last time yo
 
 A banner also warned that the admin account wasn't `.htpasswd` protected
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-upload-success%2520%25281%2529.png)
+![](assets/wu/compromised/fix-37.png)
 
 In the bottom corner of the page I spotted that the LiteCart version was 2.1.2, so I checked for any known vulnerabilities tied to that release
 
@@ -422,7 +422,7 @@ By disguising my web-shell as an xml file with burp, I managed to upload it and 
 
  The upload succeeded
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-command-timeout%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/compromised/fix-38.png)
 
 No commands would execute - every one timed out, leading me to suspect a firewall or similar was blocking them
 
@@ -507,7 +507,7 @@ Listed the databases
 
 Enumerated the tables within the `ecom` database.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-mysql-code-exec%2520%25281%2529.png)
+![](assets/wu/compromised/fix-39.png)
 
 achieved code execution with `GET /shop/vqmod/xml/cantfindmyshell.php?var=mysql+-u+root+-pchangethis+-v+-e+"system+id"+ecom HTTP/1.1`
 

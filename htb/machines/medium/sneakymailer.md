@@ -645,11 +645,11 @@ Please notify me when you do it
 
 Now that I had credentials, my best guess was that they'd work against the PyPI server I'd found earlier.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in%2520%25281%2529.png)
+![](assets/wu/sneakymailer/fix-22.png)
 
 no packages present
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in2%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529.png)
+![](assets/wu/sneakymailer/fix-23.png)
 
 and nothing on the index page either
 
@@ -1023,9 +1023,9 @@ Stopped: Wed Nov 11 15:55:16 2020
 
 That password got me into `http://pypi.sneakycorp.htb:8080/` using the creds `pypi:soufianeelhaoui`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/sneakymailer/fix-24.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-pypi-loggged-in2%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25281%2529.png)
+![](assets/wu/sneakymailer/fix-25.png)
 
 Neither of the sites linked from this page had anything useful, though. 
 

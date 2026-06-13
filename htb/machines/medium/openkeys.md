@@ -104,7 +104,7 @@ Just two open ports: 22 for SSH and 80 for HTTP.
 
 The web server presents a login page.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-dirbuster%2520%25281%2529.png)
+![](assets/wu/openkeys/fix-12.png)
 
 ![](assets/wu/openkeys/img-3.png)
 

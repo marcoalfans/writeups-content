@@ -106,13 +106,13 @@ Browsing to port 8080 popped a basic auth prompt labelled "Tomcat Manager Applic
 
 Submitting incorrect credentials kicked me to an unusually detailed 401 Unauthorized page.  [http://<YOUR_IP>:8080/docs/host-manager-howto.html](http://<YOUR_IP>:8080/docs/host-manager-howto.html)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-tomcat-users%2520%25281%2529.png)
+![](assets/wu/tabby/fix-11.png)
 
 `<user username="tomcat" password="$3cureP4s5w0rd123!" roles="admin-gui,manager-script"> </user>`
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-complete-server-status%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/tabby/fix-12.png)
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-server-information%2520%25281%2529.png)
+![](assets/wu/tabby/fix-13.png)
 
 ![](assets/wu/tabby/img-9.png)
 

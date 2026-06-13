@@ -315,7 +315,7 @@ kac0@kali:/etc/mysql/conf.d$ service mysql start
 
 After switching the server's `bind-address` to `0.0.0.0`, I restarted the `mysql` service so the change would take effect. From there I could log into my database through the Adminer portal.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/6-adminer-login%2520%25281%2529.png)
+![](assets/wu/admirer/fix-18.png)
 
 ### Finding user creds
 
@@ -329,7 +329,7 @@ INTO TABLE admirer.test
 FIELDS TERMINATED BY "\n"
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/7-failed-local-inclusion%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25282%2529%2520%25281%2529.png)
+![](assets/wu/admirer/fix-19.png)
 
 To test the local file inclusion, I first went after `/etc/passwd` but was denied access to it. Reasonably confident the portal was still running as `www-data`, I switched to a file I knew I could read: `index.php`.
 

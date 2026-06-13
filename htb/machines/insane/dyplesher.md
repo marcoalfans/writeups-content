@@ -902,7 +902,7 @@ This repo was packed with files. I began with `craftbukkit.jar`, which proved to
 >
 > Get Bukkit strives to be available 24 hours a day and 7 days a week for server owners, hosts, and the general public, providing the safest and most trusted third-party Minecraft server mirror.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-bukkit-conf%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/dyplesher/fix-41.png)
 
 `bukkit.yml` held what looked like database login details, but I couldn't work out how to connect with them.
 
@@ -1156,7 +1156,7 @@ Capturing on 'any'
 
 With no GUI available, I ran tshark to check for interesting traffic on the host. I saved the capture to a .pcapng file and, after a few minutes, exfiltrated it to my machine.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-wireshark-erlang-rabbit%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/dyplesher/fix-42.png)
 
 I quickly spotted Erlang Port Mapper traffic flagging port 25672 as a RabbitMQ node.
 
@@ -1164,7 +1164,7 @@ I quickly spotted Erlang Port Mapper traffic flagging port 25672 as a RabbitMQ n
 
 I also picked out traffic carrying the same memcache data I'd pulled from that service earlier. It seemed a `backup.sh` shell script was running, either reading or writing the email, username, and password keys to memcache.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/17-wireshark-amqp%2520%25281%2529.png)
+![](assets/wu/dyplesher/fix-43.png)
 
 My next discovery in the capture was the jackpot: a complete batch of user records flowing over AMQP, including names, emails, and passwords for a list of users, plus other details.
 

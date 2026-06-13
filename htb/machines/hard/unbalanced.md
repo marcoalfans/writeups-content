@@ -555,7 +555,7 @@ I ran nikto to look for vulnerabilities; it flagged several backdoors, but these
 * Connection #0 to host <YOUR_IP> left intact
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/5-unbalanced-intranet%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/unbalanced/fix-15.png)
 
 while connecting to `intranet.unbalanced.htb` I noticed and added `intranet-host3.unbalanced.htb` to hosts, but access was denied.
 
@@ -1182,7 +1182,7 @@ dnsmasq:x:107:65534:dnsmasq,,,:/var/lib/misc:/usr/sbin/nologin
 
 Only `bryan` and `root` have login shells
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/9-dnsmasq%2520%25281%2529.png)
+![](assets/wu/unbalanced/fix-16.png)
 
 `dnsmasq.conf` carried a listen address of 172.31.0.1 - the same docker container address I'd come across earlier
 

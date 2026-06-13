@@ -472,7 +472,7 @@ chmod +x /dev/shm/nc
 
 When the script ran, it would reach back and grab netcat \(in case the machine's version lacked `-e` support\).  It then made `nc` executable and fired a reverse shell back to my waiting listener.  
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/16-got-shell%2520%25281%2529.png)
+![](assets/wu/playertwo/fix-17.png)
 
 ## Road to User
 

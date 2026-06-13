@@ -70,7 +70,7 @@ message submission results in url
 + 1 host(s) tested
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/2-login-page%2520%25281%2529.png)
+![](assets/wu/cache/fix-26.png)
 
 login.html seems to be rabbit hole. Never attempts to actually send data. 
 
@@ -254,7 +254,7 @@ ran dirbuster: shows admin.php
 
 which shows the version of this site. \(5.0.1\(3\)\) Searching for a vulnerability for this site leads to CVE-2019-8371 [https://www.cvedetails.com/cve/CVE-2019-8371/](https://www.cvedetails.com/cve/CVE-2019-8371/) 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/29-vuln-reportpdf%2520%25281%2529.png)
+![](assets/wu/cache/fix-27.png)
 
 I also turned up a vulnerability report covering this exact version \(5.0.1.3\). [https://www.open-emr.org/wiki/images/1/11/Openemr\_insecurity.pdf](https://www.open-emr.org/wiki/images/1/11/Openemr_insecurity.pdf) Per the report, `admin.php` will show an unauthenticated visitor the database name, the site ID, and the running OpenEMR version.
 
@@ -280,7 +280,7 @@ The patient portal didn't appear to hold anything useful, so I moved on to the S
 http://hms.htb/portal/find_appt_popup_user.php?catid=1' AND (SELECT 0 FROM(SELECT COUNT(*),CONCAT(@@VERSION,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.PLUGINS GROUP BY x)a)-- -
 ```
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/18-system-user%2520%25281%2529.png)
+![](assets/wu/cache/fix-28.png)
 
 ```text
 /portal/add_edit_event_user.php?eid=1 AND EXTRACTVALUE(0,CONCAT(0x5c,VERSION()))

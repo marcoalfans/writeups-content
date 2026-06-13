@@ -470,7 +470,7 @@ I also fat-fingered the SUBSTR method, and the tedium of firing single queries t
 
 To check the idea, I used Burp's Intruder to brute force the first character of the 'secret' string across all alpha-numeric characters.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/8-intruder-test%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/intense/fix-22.png)
 
 I configured Intruder to fuzz only one character of the query at a time.
 

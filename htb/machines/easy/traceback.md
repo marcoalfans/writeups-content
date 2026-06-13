@@ -55,7 +55,7 @@ I couldn't authenticate, but the login banner revealed that the box had been com
 
 ### HTTP
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/screenshot_2020-06-21_16-48-34%2520%25281%2529.png)
+![](assets/wu/traceback/fix-5.png)
 
 Browsing to port 80 presented a nearly identical message. It also mentioned a backdoor, so with no other leads to follow I launched `gobuster` to hunt for additional pages.  
 

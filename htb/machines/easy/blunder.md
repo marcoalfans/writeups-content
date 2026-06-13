@@ -130,7 +130,7 @@ With nothing else available, I pointed my browser at the HTTP service on port 80
 
 While poking around the site by hand, I also ran `nikto`, which surfaced plenty of security misconfigurations, though few looked reachable without credentials. 
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/3-admin-page%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/blunder/fix-8.png)
 
 The `nikto` scan did point me to an `/admin/` directory, where I found a login page. Without credentials there was nothing useful I could do and no way to log in.
 

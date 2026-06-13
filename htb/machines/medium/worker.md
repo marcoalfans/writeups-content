@@ -387,7 +387,7 @@ Since none of the usernames or candidate passwords led anywhere, I turned my foc
 
 lots of screenshots -&gt; description - had to: 1. create new branch 2. upload file to new branch 3. add work item to commit 4. approve commit 5. wait for build to complete 6. merge with master 7. navigate to webshell
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/11-nopull%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529%2520%25281%2529.png)
+![](assets/wu/worker/fix-29.png)
 
 ```text
 TF402455: Pushes to this branch are not permitted; you must use a pull request to update this branch.
@@ -1045,7 +1045,7 @@ Despite enumerating thoroughly and looking everywhere, I came up empty.
 
 I attempted to switch over to `robisl` within the `devops` portal.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/13-sign-inas-fail%2520%25281%2529.png)
+![](assets/wu/worker/fix-30.png)
 
 Switching users in the `devops` page I still had open produced an error stating this account lacked the permissions to see project-level details.
 
@@ -1062,11 +1062,11 @@ Switching users in the `devops` page I still had open produced an error stating 
 
 This looks like a promising route to code execution...I wonder whether it can be run as `Administrator`?  I dropped some code into `azure-pipelines.yml` that I expected would fire and fetch my reverse shell script.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-build-failed%2520%25281%2529.png)
+![](assets/wu/worker/fix-31.png)
 
 That attempt failed.  More reading taught me I first had to assign an agent from the pool to build the project.
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/14-agent-pool-setup%2520%25281%2529.png)
+![](assets/wu/worker/fix-32.png)
 
 Agetnt pool selection
 
@@ -1078,11 +1078,11 @@ Assign the job to the agent
 
 Save and run
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-building%2520%25281%2529.png)
+![](assets/wu/worker/fix-33.png)
 
 The build job kicked off
 
-![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/15-success%2520%25281%2529.png)
+![](assets/wu/worker/fix-34.png)
 
 The build completed, but my script didn't execute. I double-checked all my syntax, confirmed I had followed every step correctly, and gave it another go.
 
