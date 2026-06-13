@@ -1,10 +1,10 @@
 ---
 title: "MonitorsFour"
-difficulty: Insane
+difficulty: Easy
 os: Windows
 points: 20
 rating: 3.6
-date: 2026-05-23
+date: 2025-12-06
 avatar: assets/htb/monitorsfour.png
 tags: [cacti, php-type-juggling, cve-chain, docker-api, container-escape]
 source: https://github.com/momenbasel/htb-writeups (MIT)

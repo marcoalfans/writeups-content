@@ -1,10 +1,10 @@
 ---
 title: "PingPong"
-difficulty: Hard
-os: Windows (Multi-Forest AD)
+difficulty: Insane
+os: Windows
 points: 50
 rating: 4.8
-date: 2026-04-25 (Season 10, Final Week)
+date: 2026-04-25
 avatar: assets/htb/pingpong.png
 tags: [active-directory, cross-forest-trust, kerberos-only, mssql-delegation, adcs, aes256, no-ntlm]
 source: https://github.com/momenbasel/htb-writeups (MIT)

@@ -85,8 +85,6 @@ def main():
         name = (fm.get("title") or slug).strip('"')
         avatar_rel = "assets/htb/%s.png" % slug
         avatar_abs = os.path.join(ROOT, avatar_rel)
-        if os.path.exists(avatar_abs) and fm.get("points"):
-            print("skip (already enriched):", slug); continue
         try:
             data = fetch(API + urllib.request.quote(name), TOKEN)
         except urllib.error.HTTPError as e:
@@ -106,23 +104,35 @@ def main():
         if isinstance(rel, str) and "T" in rel:
             rel = rel.split("T")[0]
         if av:
-            png = download_avatar(av, TOKEN)
-            if png:
-                open(avatar_abs, "wb").write(png)
-                fm["avatar"] = avatar_rel
+            if os.path.exists(avatar_abs):
+                fm["avatar"] = avatar_rel          # already downloaded — keep it
             else:
-                fm.pop("avatar", None)     # no real avatar found — use themed fallback
-                if os.path.exists(avatar_abs):
-                    os.remove(avatar_abs)
-                print("no real avatar for %s — using fallback" % name)
+                png = download_avatar(av, TOKEN)
+                if png:
+                    open(avatar_abs, "wb").write(png)
+                    fm["avatar"] = avatar_rel
+                else:
+                    fm.pop("avatar", None)         # no real avatar — use themed fallback
+                    print("no real avatar for %s — using fallback" % name)
+        # HTB API is the source of truth — OVERRIDE local values so folder/badge can't drift
         if pts: fm["points"] = pts
         if rating: fm["rating"] = rating
-        if os_ and not fm.get("os"): fm["os"] = os_
-        if diff and not fm.get("difficulty"): fm["difficulty"] = diff
-        if rel and not fm.get("date"): fm["date"] = rel
+        if os_: fm["os"] = os_
+        if diff: fm["difficulty"] = diff
+        if rel: fm["date"] = rel
         fm.setdefault("htb_url", "https://app.hackthebox.com/machines/%s" % urllib.request.quote(name))
-        write_frontmatter(path, fm, body)
-        print("enriched:", slug, "| pts:", pts, "rating:", rating)
+
+        # re-file into the correct difficulty folder if HTB disagrees with our path
+        dest = path
+        m = re.match(r"(.*/htb/machines/)([^/]+)(/.+\.md)$", path.replace(os.sep, "/"))
+        if m and diff and diff.lower() in ("easy", "medium", "hard", "insane") and m.group(2).lower() != diff.lower():
+            dest = os.path.join(ROOT, "htb", "machines", diff.lower(), os.path.basename(path))
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            print("re-filed %s: %s -> %s" % (slug, m.group(2), diff.lower()))
+        write_frontmatter(dest, fm, body)
+        if dest != path:
+            os.remove(path)
+        print("enriched:", slug, "| diff:", diff, "| pts:", pts, "rating:", rating)
         time.sleep(0.5)                    # be gentle with the API
 
 if __name__ == "__main__":

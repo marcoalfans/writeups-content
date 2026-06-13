@@ -4,7 +4,7 @@ difficulty: Easy
 os: Linux
 points: 20
 rating: 4
-date: 2025-08-02
+date: 2025-03-22
 avatar: assets/htb/code.png
 tags: [python, sandbox-escape, keyword-filter, subprocess, backy, sudo]
 source: https://github.com/momenbasel/htb-writeups (MIT)

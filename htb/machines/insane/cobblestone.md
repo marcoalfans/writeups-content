@@ -1,10 +1,10 @@
 ---
 title: "Cobblestone"
 difficulty: Insane
-os: Debian 12
+os: Linux
 points: 50
 rating: 3.3
-date: 2025 (Season 8)
+date: 2025-08-09
 avatar: assets/htb/cobblestone.png
 tags: [second-order-sqli, load_file, xss, ssti, twig, hash-crack, cobbler, cve-2024-47533]
 source: https://github.com/momenbasel/htb-writeups (MIT)

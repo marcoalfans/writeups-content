@@ -1,10 +1,10 @@
 ---
 title: "Pterodactyl"
-difficulty: Insane
-os: openSUSE Linux
+difficulty: Medium
+os: linux
 points: 30
 rating: 3
-date: 2026-05-16
+date: 2026-02-07
 avatar: assets/htb/pterodactyl.png
 tags: [pterodactyl-panel, cve-2025-49132, pear, pearcmd, lfi, pam, polkit, suse]
 source: https://github.com/momenbasel/htb-writeups (MIT)

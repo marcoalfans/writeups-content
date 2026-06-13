@@ -4,7 +4,7 @@ difficulty: Insane
 os: Linux
 points: 50
 rating: 4.6
-date: 2026-04-25
+date: 2025-06-14
 avatar: assets/htb/sorcery.png
 tags: [cypher-injection, neo4j, webauthn, passkey, kafka, freeipa]
 source: https://github.com/momenbasel/htb-writeups (MIT)

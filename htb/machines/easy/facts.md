@@ -1,10 +1,10 @@
 ---
 title: "Facts"
 difficulty: Easy
-os: Linux (Ubuntu)
+os: Linux
 points: 20
 rating: 4.5
-date: 2026-01-31 (Season 10, Week 1)
+date: 2026-01-31
 avatar: assets/htb/facts.png
 tags: [web, idor, path-traversal, s3, minio, ruby, sudo]
 source: https://github.com/momenbasel/htb-writeups (MIT)

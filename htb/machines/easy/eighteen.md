@@ -1,10 +1,10 @@
 ---
 title: "Eighteen"
-difficulty: Hard
-os: Windows Server 2025
+difficulty: Easy
+os: Windows
 points: 20
 rating: 2.4
-date: 2026-04-11
+date: 2025-11-15
 avatar: assets/htb/eighteen.png
 tags: [windows-server-2025, assume-breach, mssql-impersonation, bad-successor, dmsa, cve-2025-53779, werkzeug-pbkdf2, winrm]
 source: https://github.com/momenbasel/htb-writeups (MIT)
