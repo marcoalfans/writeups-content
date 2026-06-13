@@ -161,6 +161,7 @@
       "date": "2026-01-31 (Season 10, Week 1)",
       "points": "20",
       "rating": "4.5",
+      "avatar": "assets/htb/facts.png",
       "htb_url": "https://app.hackthebox.com/machines/Facts",
       "tags": [
         "web",
@@ -186,6 +187,7 @@
       "date": "2026-03-21 (Season 10, Week 8)",
       "points": "20",
       "rating": "3.8",
+      "avatar": "assets/htb/kobold.png",
       "htb_url": "https://app.hackthebox.com/machines/Kobold",
       "tags": [
         "mcp",
@@ -210,6 +212,7 @@
       "date": "2026-04-18",
       "points": "30",
       "rating": "4.4",
+      "avatar": "assets/htb/airtouch.png",
       "htb_url": "https://app.hackthebox.com/machines/AirTouch",
       "tags": [
         "802.11",
@@ -235,6 +238,7 @@
       "date": "2026-04-11",
       "points": "20",
       "rating": "2.4",
+      "avatar": "assets/htb/eighteen.png",
       "htb_url": "https://app.hackthebox.com/machines/Eighteen",
       "tags": [
         "windows-server-2025",
@@ -261,6 +265,7 @@
       "date": "2026-04-25 (Season 10, Final Week)",
       "points": "50",
       "rating": "4.8",
+      "avatar": "assets/htb/pingpong.png",
       "htb_url": "https://app.hackthebox.com/machines/PingPong",
       "tags": [
         "active-directory",
@@ -286,6 +291,7 @@
       "date": "2026-02-28 (Season 10, Week 5)",
       "points": "40",
       "rating": "4.7",
+      "avatar": "assets/htb/pirate.png",
       "htb_url": "https://app.hackthebox.com/machines/Pirate",
       "tags": [
         "active-directory",
@@ -313,6 +319,7 @@
       "date": "2025 (Season 8)",
       "points": "50",
       "rating": "3.3",
+      "avatar": "assets/htb/cobblestone.png",
       "htb_url": "https://app.hackthebox.com/machines/Cobblestone",
       "tags": [
         "second-order-sqli",
@@ -339,6 +346,7 @@
       "date": "2026-05-23",
       "points": "20",
       "rating": "3.6",
+      "avatar": "assets/htb/monitorsfour.png",
       "htb_url": "https://app.hackthebox.com/machines/MonitorsFour",
       "tags": [
         "cacti",
@@ -362,6 +370,7 @@
       "date": "2026-05-16",
       "points": "30",
       "rating": "3",
+      "avatar": "assets/htb/pterodactyl.png",
       "htb_url": "https://app.hackthebox.com/machines/Pterodactyl",
       "tags": [
         "pterodactyl-panel",
@@ -438,6 +447,7 @@
       "date": "2026-05-08",
       "points": "30",
       "rating": "4.5",
+      "avatar": "assets/htb/helix.png",
       "htb_url": "https://app.hackthebox.com/machines/Helix",
       "tags": [
         "apache-nifi",
@@ -462,6 +472,7 @@
       "date": "2026-02-21 (Season 10, Week 4)",
       "points": "30",
       "rating": "3.1",
+      "avatar": "assets/htb/interpreter.png",
       "htb_url": "https://app.hackthebox.com/machines/Interpreter",
       "tags": [
         "mirth-connect",
@@ -486,6 +497,7 @@
       "date": "2026-03-15 (Season 10, Week 7)",
       "points": "30",
       "rating": "3.8",
+      "avatar": "assets/htb/variatype.png",
       "htb_url": "https://app.hackthebox.com/machines/VariaType",
       "tags": [
         "git-disclosure",

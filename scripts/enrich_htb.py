@@ -20,11 +20,32 @@ UA = "Mozilla/5.0 (writeups-content enrich)"
 
 CANON = ["title", "difficulty", "os", "points", "rating", "date", "avatar", "tags", "source", "kind", "htb_url"]
 
-def fetch(url, token, binary=False):
-    req = urllib.request.Request(url, headers={
-        "Authorization": "Bearer " + token, "User-Agent": UA, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=25) as r:
+S3 = "https://htb-mp-prod-public-storage.s3.eu-central-1.amazonaws.com/avatars/"
+
+def fetch(url, token, binary=False, auth=True):
+    headers = {"User-Agent": UA, "Accept": "application/json"}
+    if auth and token:
+        headers["Authorization"] = "Bearer " + token
+    with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=25) as r:
         return r.read() if binary else json.loads(r.read())
+
+def download_avatar(av, token):
+    """Avatars live on the public S3 bucket (most machines) or the labs CDN.
+    Return image bytes >= 2KB (skips HTB's 1-bit default placeholder), else None."""
+    base = av.split("/")[-1]
+    candidates = [(S3 + base, False)]
+    if av.startswith("/avatars/"):
+        candidates.append((CDN + "/storage" + av, True))
+    elif av.startswith("/"):
+        candidates.append((CDN + av, True))
+    for url, auth in candidates:
+        try:
+            png = fetch(url, token, binary=True, auth=auth)
+            if png and len(png) >= 2048:
+                return png
+        except Exception:
+            pass
+    return None
 
 def read_frontmatter(path):
     text = open(path, encoding="utf-8").read()
@@ -85,26 +106,15 @@ def main():
         if isinstance(rel, str) and "T" in rel:
             rel = rel.split("T")[0]
         if av:
-            # API reports "/avatars/<hash>.png" but the file is served from /storage/avatars/
-            if av.startswith("/avatars/"):
-                url = CDN + "/storage" + av
-            elif av.startswith("/"):
-                url = CDN + av
+            png = download_avatar(av, TOKEN)
+            if png:
+                open(avatar_abs, "wb").write(png)
+                fm["avatar"] = avatar_rel
             else:
-                url = av
-            try:
-                png = fetch(url, TOKEN, binary=True)
-                if len(png) < 2048:        # HTB's 1-bit default placeholder — prefer our themed cube
-                    fm.pop("avatar", None)
-                    if os.path.exists(avatar_abs):
-                        os.remove(avatar_abs)
-                    print("placeholder avatar for %s (%db) — using fallback" % (name, len(png)))
-                else:
-                    open(avatar_abs, "wb").write(png)
-                    fm["avatar"] = avatar_rel
-            except Exception as e:
-                fm.pop("avatar", None)     # 404 etc. — no custom avatar available
-                print("no avatar for %s: %s" % (name, e))
+                fm.pop("avatar", None)     # no real avatar found — use themed fallback
+                if os.path.exists(avatar_abs):
+                    os.remove(avatar_abs)
+                print("no real avatar for %s — using fallback" % name)
         if pts: fm["points"] = pts
         if rating: fm["rating"] = rating
         if os_ and not fm.get("os"): fm["os"] = os_

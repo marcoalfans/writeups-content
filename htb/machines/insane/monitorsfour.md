@@ -5,6 +5,7 @@ os: Windows
 points: 20
 rating: 3.6
 date: 2026-05-23
+avatar: assets/htb/monitorsfour.png
 tags: [cacti, php-type-juggling, cve-chain, docker-api, container-escape]
 source: https://github.com/momenbasel/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/MonitorsFour

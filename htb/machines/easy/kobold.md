@@ -5,6 +5,7 @@ os: Linux
 points: 20
 rating: 3.8
 date: 2026-03-21 (Season 10, Week 8)
+avatar: assets/htb/kobold.png
 tags: [mcp, ai, cve-2026-23744, rce, docker-escape, busybox]
 source: https://github.com/momenbasel/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Kobold
