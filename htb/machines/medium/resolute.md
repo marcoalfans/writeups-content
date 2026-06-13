@@ -9,6 +9,7 @@ avatar: assets/htb/resolute.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Resolute
 ---
+
 ## Overview
 
 A medium-difficulty Windows box that was fairly straightforward.  Privilege escalation required going through two different users and taking advantage of Windows domain group permissions.  It ended with a privilege escalation route that required a simple dll injection, and a bit of quick reaction.
@@ -1337,7 +1338,7 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 
 *Evil-WinRM* PS C:\Users\melanie\Desktop> cat user.txt
-****
+fc92****11ee
 ```
 
 ### user.txt
@@ -1611,5 +1612,5 @@ After escalating to `Domain Admin` it was simple to find the root flag on the Ad
 
 ```text
 *Evil-WinRM* PS C:\Users\ryan\Documents> cat ../../Administrator/Desktop/root.txt
-****
+ebdd****465c
 ```

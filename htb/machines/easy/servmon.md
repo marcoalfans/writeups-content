@@ -9,6 +9,7 @@ avatar: assets/htb/servmon.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Servmon
 ---
+
 ## Overview
 
 This was an easy Windows machine....but don't get stuck chasing the rabbits!
@@ -412,7 +413,7 @@ nadine@SERVMON C:\Users\Nadine\Desktop>dir
                2 Dir(s)  27,815,362,560 bytes free
 
 nadine@SERVMON C:\Users\Nadine\Desktop>type user.txt
-****
+5ee1****ad52
 ```
 
 ### Metagaming - Other user's artifacts
@@ -759,5 +760,5 @@ _Oops. Apparently in a `cmd.exe` shell the direction of the slash is important w
 ```text
 C:\Program Files\NSClient++>type C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
-****
+3e42****a639
 ```

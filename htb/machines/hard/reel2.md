@@ -9,6 +9,7 @@ avatar: assets/htb/reel2.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Reel2
 ---
+
 ## HTB - Reel2
 
 ### Overview
@@ -659,7 +660,7 @@ d-----        2/12/2021   5:12 PM                WinDirStatPortable
 -ar---        2/15/2021  11:33 PM             34 user.txt
 
 [<YOUR_IP>]: P> .{type user.txt}
-****
+88fe****20de
 ```
 
 On `k.svensson`'s Desktop I found the `user.txt` proof file.
@@ -1196,7 +1197,7 @@ Instead, I created a new folder inside `C:\ProgramData\` called `\Desk` which li
 
 ```text
 [<YOUR_IP>]: PS>Check-File C:\ProgramData\Desk\Desktop\root.txt                                     
-****
+e145****dbba
 ```
 
 I was then able to use `Check-File` to read the contents of the `root.txt` by referencing the linked version inside `C:\ProgramData\Desk\Desktop\`.  
@@ -1208,9 +1209,5 @@ After going through all of the trouble to create a link to the folders, I realiz
 ```text
 [<YOUR_IP>]: PS>Check-File C:\ProgramData\..\Users\Administrator\Desktop\root.txt
 
-****
+e145****dbba
 ```
-
-Since the custom function was looking for a path with the `-Like` parameter and a `*` wildcard, anything could be put after the path `C:\ProgramData\`. This includes directory traversal paths such as `..\`. 
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-reel2-pwned.png)

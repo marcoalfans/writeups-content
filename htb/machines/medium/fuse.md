@@ -9,6 +9,7 @@ avatar: assets/htb/fuse.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Fuse
 ---
+
 ## Overview
 
 This medium-difficulty Windows machine gave me a chance to exploit a vulnerable service that we hear of often in training as being an overlooked problem for many Enterprises: printer management.  While this challenge did not involve exploiting an actual print spooler service, it drew attention to the problems that misconfigurations can cause especially when dealing with credentialed service accounts.
@@ -710,7 +711,7 @@ Mode                LastWriteTime         Length Name
 -ar---        9/25/2020   1:23 PM             34 user.txt
 
 *Evil-WinRM* PS C:\users\svc-print\Desktop> type user.txt
-****
+cea5****6553
 ```
 
 `tree` gave some odd looking output, but showed me that the `user.txt` proof was right there in my service account user's Desktop! \(Why a service account has a Desktop I am not sure...\)
@@ -1072,9 +1073,5 @@ dir
 
 c:\Users\Administrator\Desktop>type root.txt
 type root.txt
-****
+9955****6944
 ```
-
-{% hint style="info" %}
-I didn't remember this until after I was doing my write-up, but I totally forgot to finish exploiting this machine.  I had found out while enumerating through RPC that the user **`sthompson`** was a Domain Administrator, so this should have been my end goal.  If you get this far, try to see if you can go for the king of the hill and fully compromise this \(non-existent\) domain!
-{% endhint %}

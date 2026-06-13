@@ -9,6 +9,7 @@ avatar: assets/htb/sauna.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Sauna
 ---
+
 ## Overview
 
 A fairly easy Windows machine that requires a little 'outside the box' thinking in order to get the initial foothold.  After that, simple enumeration will give everything else that is needed.
@@ -393,7 +394,7 @@ Luckily for me `fsmith` was a member of the `Remote Management Users` group and 
 
 ```text
 *Evil-WinRM* PS C:\Users\FSmith\Desktop> cat user.txt
-****
+1b55****70cf
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -566,5 +567,5 @@ The final thing to do after gaining full control over this machine was to get my
 ```text
 C:\Windows\system32>cat C:\users\administrator\desktop\root.txt
 
-****
+f3ee****881f
 ```

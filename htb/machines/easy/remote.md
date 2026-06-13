@@ -9,9 +9,8 @@ avatar: assets/htb/remote.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Remote
 ---
-## Overview
 
-Short description to include any strange things to be dealt with
+## Overview
 
 TODO: finish writeup, add images, clean up...wow my notes were bad on this one!
 
@@ -22,10 +21,6 @@ TODO: finish writeup, add images, clean up...wow my notes were bad on this one!
 * `showmount -e <YOUR_IP>`to show NFS shares 
 * `mkdir /tmp/remote` to make a local folder to mount the remote drive to
 * `mount <YOUR_IP>:/site_backups /tmp/remote` to mount the available share directory onto the host machine.
-
-#### Useful thing 2
-
-description with generic example
 
 ## Enumeration
 
@@ -686,7 +681,7 @@ didnt realize for a long time that I already was logged in as a user with access
 ```text
 PS C:\Users\Public> type user.txt
 type user.txt
-****
+2224****e36a
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -824,5 +819,5 @@ meterpreter > run post/windows/gather/credentials/teamviewer_passwords
 
 ```text
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> type root.txt
-****
+ed57****a77d
 ```

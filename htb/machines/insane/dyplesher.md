@@ -9,6 +9,7 @@ avatar: assets/htb/dyplesher.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Dyplesher
 ---
+
 ## Overview
 
 Dyplesher was an insane difficulty Linux machine that tested both web enumeration skills, and code review and writing skills. Multiple Git repositories containing source code, the Memcache service, and a Minecraft server were all exploited to gain access to this machine.  I learned quite a bit about the inner workings of a Minecraft server and how their plugins work during the course of this challenge!
@@ -1071,7 +1072,7 @@ I created a new SSH key to use to try to log in to each user on the machine.
 ```java
 /**
  * key-writer plugin for dyplesher
- *
+
  * @author zweilos
  */
 import org.bukkit.plugin.java.JavaPlugin;
@@ -1407,7 +1408,7 @@ Sorry, user felamos may not run sudo on dyplesher.
 
 ```text
 felamos@dyplesher:~$ cat user.txt 
-****
+a8ff****9dc8
 ```
 
 However, I was happy to find the `user.txt` file under this user's home directory.
@@ -1749,9 +1750,5 @@ root@dyplesher:~# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 dyplesher
 root@dyplesher:~# cat root.txt 
-****
+a0a4****74f0
 ```
-
-After writing my public key to `root` it was simple to login using SSH and collect my hard-earned proof!
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/21-pwned-.png)

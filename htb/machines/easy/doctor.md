@@ -9,21 +9,6 @@ avatar: assets/htb/doctor.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Doctor
 ---
-## Overview
-
-Short description to include any strange things to be dealt with
-
-TODO: Finish writing and clean up
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -344,8 +329,6 @@ and executing my shell script
 
 I got a connection back from the remote host which downloaded my shell script
 
-## Initial Foothold
-
 ## Road to User
 
 ```text
@@ -556,7 +539,7 @@ drwxrwxr-x 3 shaun shaun 4096 Sep  6 18:01 .local
 -r-------- 1 shaun shaun   33 Feb 12 07:04 user.txt
 shaun@doctor:~$ cat user.txt    
 cat user.txt
-****
+d1d5****ffad
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -662,35 +645,5 @@ root@doctor:/# cd /root
 cd /root
 root@doctor:/root# cat root.txt
 cat root.txt
-****
+3ce7****649f
 ```
-
-Got a root shell back, and collected my proof
-
-Note: After finding the username of shaun, my password brute force method would have actually proved useful had I been a patient attacker. The vulnerable version of splunkd used here does not lock out accounts, so brute force is entirely feasible. The only problem is shown below.
-
-```bash
-┌──(zweilos㉿kali-[~/htb/doctor]
-└─$ grep -n Guitar123 ~/rockyou_utf8.txt
-2136945:Guitar123
-```
-
-I used grep to figure out whether `shaun`'s password existed in rockyou.txt, and found that it did indeed exist, but was on line 2,136,945!
-
-```bash
-┌──(zweilos㉿kali)-[~/htb/doctor]
-└─$ python3 password-brute.py       
-Starting password brute force...
-
-Trying: Guitar123
-Password found in: 0.26 seconds
-Thank you for using this service!
-```
-
-Using my python brute force script it took roughly a quarter of a second per try. 
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/brute-force_calc.png)
-
-This would have taken over 154 hours to guess the correct password \(this is assuming single threaded attempts\). So, if the attacker had not been able to get a shell on the box as the web user and used the privilege escalation route, simply getting the username from `/etc/passwd` would have eventually provided access to a determined attacker!
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-doctor-pwned.png)

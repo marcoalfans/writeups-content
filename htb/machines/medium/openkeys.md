@@ -9,19 +9,12 @@ avatar: assets/htb/openkeys.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/OpenKeyS
 ---
-## Overview
-
-Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
 
 #### Recover a file from a vim .swp file
 
 * `vim -r file-to-recover.swp`
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -368,10 +361,7 @@ So the system seemed like it was vulnerable, but I was still not sure how to exp
 
  CVE-2019-19521: Authentication bypass
 
-> This is the second piece of the puzzle: if an attacker specifies the
- username "-schallenge" \(or "-schallenge:passwd" to force a passwd-style
- authentication\), then the authentication is automatically successful and
- therefore bypassed.
+> This is the second piece of the puzzle: if an attacker specifies the username "-schallenge" \(or "-schallenge:passwd" to force a passwd-style authentication\), then the authentication is automatically successful and therefore bypassed.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-schallenge.png)
 
@@ -518,7 +508,7 @@ drwx------  2 jennifer  jennifer    512 Jan 13  2020 .ssh
 -rwxr-xr-x  1 jennifer  jennifer  14768 Nov 12 17:55 swrast_dri.so
 -rw-r-----  1 jennifer  jennifer     33 Jan 14  2020 user.txt
 openkeys$ cat user.txt                                                                                
-****
+36ab****2b10
 ```
 
 `jennifer` had the user.txt flag in the user's folder
@@ -908,7 +898,7 @@ uid=0(root) gid=0(wheel) groups=0(wheel), 2(kmem), 3(sys), 4(tty), 5(operator), 
 openkeys.htb
 
 openkeys# cat /root/root.txt
-****
+f3a5****6efa
 
 openkeys# cat /etc/shadow
 cat: /etc/shadow: No such file or directory
@@ -982,5 +972,3 @@ nobody:*:32767:32767:Unprivileged user:/nonexistent:/sbin/nologin
 _gitdaemon:*:778:778:GIT Daemon:/nonexistent:/sbin/nologin
 jennifer:*:1001:1001:Jennifer Miller,,,:/home/jennifer:/bin/ksh
 ```
-
-There was no `/etc/shadow` file, and the passwords were not stored in `/etc/passwd`.  I will need to look up where OpenBSD stores it's password hashes at some point...

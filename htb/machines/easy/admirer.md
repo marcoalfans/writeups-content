@@ -9,6 +9,7 @@ avatar: assets/htb/admirer.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Admirer
 ---
+
 ## Overview
 
 An easy difficulty Linux machine that has an interesting take on database manipulation to obtain a local file inclusion vulnerability.  It also has an interesting new \(to me\) way to leverage sudo privileges to gain privilege escalation.  In all, this was a fun machine that taught me some interesting new tricks!
@@ -376,7 +377,7 @@ Last login: Wed Apr 29 10:56:59 2020 from 10.10.14.3
 waldo@admirer:~$ ls
 user.txt
 waldo@admirer:~$ cat user.txt
-****
+e9d4****af9a
 ```
 
 Luckily it logged me right in, and I was able to collect my hard-earned loot!
@@ -737,5 +738,5 @@ connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 60956
 whoami
 root
 cat /root/root.txt
-****
+0f4b****b877
 ```

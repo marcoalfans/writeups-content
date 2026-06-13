@@ -9,19 +9,6 @@ avatar: assets/htb/intense.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Intense
 ---
-## Overview - TODO: finish cleaning up notes
-
-Short description to include any strange things to be dealt with - Linux hard difficulty
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -1116,9 +1103,5 @@ uid=0(root) gid=0(root) groups=0(root)
 $ hostname
 intense
 $ cat /root/root.txt
-****
+b3e4****21d7
 ```
-
-sdg
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-pwned.png)

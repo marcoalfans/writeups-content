@@ -9,21 +9,10 @@ avatar: assets/htb/unbalanced.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Unbalanced
 ---
+
 ## Overview
 
-Short description to include any strange things to be dealt with
-
 TODO: finish writing and do cleanup
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -961,8 +950,6 @@ Use credentials: sarah:sarah4evah
 
 For some reason I had to strip off extra `'` characters from the passwords. I suppose the server was returning the same message for a '\`' as it was for a valid character. I could have done a check and removed tests for a single quote, but if the password contained that character I would have missed it, so I left them on and stripped them at the end.
 
-## Initial Foothold
-
 ## Road to User
 
 ### Further enumeration
@@ -1008,7 +995,7 @@ drwx------ 3 bryan bryan 4096 Apr  2  2020 .gnupg
 -rw-r--r-- 1 bryan bryan  798 Jun 17 11:35 TODO
 -rw-r--r-- 1 root  root    33 Nov 13 09:52 user.txt
 bryan@unbalanced:~$ cat user.txt 
-****
+3634****bc51
 ```
 
 Luckily, this was also the user with the flag!
@@ -1469,9 +1456,5 @@ root@unbalanced:/home/bryan# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 unbalanced
 root@unbalanced:/home/bryan# cat /root/root.txt 
-****
+1f44****82d7
 ```
-
-Finally!
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/13-pwned.png)

@@ -9,21 +9,10 @@ avatar: assets/htb/compromised.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Compromised
 ---
+
 ## Overview
 
-Short description to include any strange things to be dealt with
-
 TODO: finish writeup, and clean up
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -788,7 +777,7 @@ lrwxrwxrwx 1 root sysadmin    9 May 13  2020 .bash_history -> /dev/null
 -rw-r--r-- 1 root sysadmin  807 May 13  2020 .profile
 -r--r----- 1 root sysadmin   33 Dec 25 05:48 user.txt
 sysadmin@compromised:~$ cat user.txt 
-****
+50df****e03d
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -1002,9 +991,5 @@ And that was it! I was logged in as root.
 
 ```text
 root@compromised:~# cat root.txt 
-****
+5ecd****aec7
 ```
-
-After that it was a simple matter to collect my proof!
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-compromised-pwned.png)

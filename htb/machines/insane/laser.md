@@ -9,6 +9,7 @@ avatar: assets/htb/laser.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Laser
 ---
+
 ## Overview
 
 This Insane-difficulty machine from [Hack The Box](https://www.linkedin.com/company/hackthebox/) took me a lot longer to progress to the initial foothold than most boxes take to root!  This machine had some very interesting avenues of approach that greatly differed from the standard enumeration and progression that most of the lower difficulty machines require. I had to research new protocols just to begin, and by the end had to write five python scripts to progress through the initial foothold and for later privilege escalation.  All in all it was a fun, but very challenging ride!
@@ -1127,7 +1128,7 @@ drwxr-xr-x 3 root root 4096 Jun 29 06:55 ..
 drwxr-xr-x 4 solr solr 4096 Jun 19  2020 feed_engine
 -r-------- 1 solr solr   33 Dec 18 05:49 user.txt
 solr@laser:/home/solr$ cat user.txt 
-****
+1cc8****c762
 ```
 
 The file `user.txt` was in `/home/solr` as expected, however I was confused at first since this was not the user's home directory.
@@ -1678,42 +1679,8 @@ Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your 
 
 Last login: Sat Dec 19 18:36:54 2020 from 10.10.15.98
 root@laser:~# cat root.txt 
-****
+fbc1****64c7
 root@laser:~# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 laser
 ```
-
-After that I logged in with the SSH key and collected my hard-earned proof!
-
-```text
-root@laser:~# cat clear.sh 
-#!/bin/sh
-
-# Clear cache
-echo 1 > /proc/sys/vm/drop_caches
-root@laser:~# cat update.sh 
-#!/bin/bash
-
-sshpass -p c413d115b3d87664499624e7826d8c5a scp /root/clear.sh root@172.18.0.2:/tmp/clear.sh
-sshpass -p c413d115b3d87664499624e7826d8c5a ssh root@172.18.0.2 /tmp/clear.sh
-sshpass -p c413d115b3d87664499624e7826d8c5a ssh root@172.18.0.2 rm /tmp/clear.sh
-root@laser:~# cat feed.sh 
-#!/bin/sh
-
-# To start printer ;)
-sudo -u printer /opt/printer/printer.py 9100 /opt/printer/jobs/ /opt/printer/logs/print.log 2>/dev/null &
-
-# Copy feeds to backup server
-/opt/updates/run.sh &
-
-# Start feed engine as solr
-cd /home/solr/feed_engine/src && sudo -u solr /home/solr/feed_engine/src/server.py &
-
-# Start solr if not
-service solr start
-```
-
-In the root directory I also found the scripts that explained how this machine worked.
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-laser-pwned.png)

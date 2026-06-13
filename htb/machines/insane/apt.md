@@ -9,19 +9,6 @@ avatar: assets/htb/apt.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/APT
 ---
-## Overview
-
-Short description to include any strange things to be dealt with - Windows Insane
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -891,7 +878,7 @@ Mode                LastWriteTime         Length Name
 -ar---        3/31/2021   3:46 PM             34 user.txt
 
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Desktop> type user.txt
-****
+0be8****a6ca
 ```
 
 I found the proof that I had made it inside, on the users Desktop
@@ -1440,7 +1427,5 @@ Mode                LastWriteTime         Length Name
 -ar---         4/1/2021   9:35 AM             34 root.txt
 
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\Administrator\Desktop> cat root.txt
-****
+366c****bd15
 ```
-
-After changing directories to the Desktop I was able to collect my proof!

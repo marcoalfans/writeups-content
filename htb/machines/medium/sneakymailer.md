@@ -9,19 +9,12 @@ avatar: assets/htb/sneakymailer.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/SneakyMailer
 ---
-## Overview
-
-Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
 
 #### Save a transcript of any session \(even remote nc sessions!\)
 
 * With the command `script $log_filename` you can save the output of any session, including stderr and output from programs such as nano and vim! This is extremely invaluable when you exit a session and have forgotten to copy or backup something you did. To stop the transcript type `exit` after exiting any shells you may have spawned during that session.
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -1202,7 +1195,7 @@ Matching Defaults entries for low on sneakymailer:
 User low may run the following commands on sneakymailer:
     (root) NOPASSWD: /usr/bin/pip3
 low@sneakymailer:~$ cat user.txt 
-****
+0610****0a88
 ```
 
 Next I tried logging in with the ssh key I had made and was successful!  I got that same temporary name resolution error when using `sudo -l`, where it seemed to hang for a minute, but this time I got a very interesting result!
@@ -1280,9 +1273,5 @@ drwxr-xr-x  3 root root 4096 May 14 12:57 .local
 -rwx------  1 root root   33 Nov 11 01:09 root.txt
 -rw-r--r--  1 root root   66 May 27 13:00 .selected_editor
 # cat root.txt
-****
+8133****2998
 ```
-
-fine
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/sneakymailer-pwned.png)

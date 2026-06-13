@@ -9,6 +9,7 @@ avatar: assets/htb/nest.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Nest
 ---
+
 ## Overview
 
 This was a fairly easy Windows box that required a bit of back-and-forth between locations and also a little bit of .NET-fu to proceed.  Luckily there are tools and websites out there that make disassembling and compiling easy for those who aren't fluent in VB.Net or C\#.
@@ -423,7 +424,7 @@ smb: \c.smith\> ls
 
 ```text
 zweilos@kalimaa:~/htb/nest$ cat 'c.smith\user.txt'
-****
+8196****4cbe
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -728,23 +729,5 @@ Once I had the Administrator password, it was simple to find the root flag.  It 
 
 ```text
 zweilos@kalimaa:~/htb/nest$ cat 'Administrator\Desktop\root.txt' 
-****
-```
-
-### Getting a shell
-
-After getting the root flag, I also went back to see if I could actually get a shell on the box to try to elevate to System privileges since this entire box had been completed in locked down quasi-shells the whole time.  I used the `psexec` module through Meterpreter with the Administrator credentials, and it returned a System shell right away.
-
-```text
-meterpreter > shell
-Process 1732 created.
-Channel 1 created.
-Microsoft Windows [Version 6.1.7601]
-Copyright (c) 2009 Microsoft Corporation.  All rights reserved.
-
-C:\Windows\system32>whoami
-whoami
-nt authority\system
-
-C:\Windows\system32>
+2f1f****3da1
 ```

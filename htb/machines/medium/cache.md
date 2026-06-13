@@ -9,19 +9,6 @@ avatar: assets/htb/cache.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Cache
 ---
-## Overview
-
-Short description to include any strange things to be dealt with
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -879,7 +866,7 @@ ash@cache:/dev/shm$
 
 ```text
 ash@cache:/dev/shm$ cat ~/user.txt
-****
+d123****2776
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -1164,5 +1151,5 @@ luffy@cache:~$ docker run -v /:/mnt --rm -it --privileged 2ca708c1c9cc chroot /m
 uid=0(root) gid=0(root) groups=0(root)
 5cbf7e7969b8
 # cat /root/root.txt
-****
+90c1****c458
 ```

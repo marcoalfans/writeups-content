@@ -9,6 +9,7 @@ avatar: assets/htb/traceback.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Traceback
 ---
+
 ## Overview
 
 Traceback is an easy difficulty Linux machine that gives a good introduction to web shells and tracing the steps of how an attacker compromised a server \(then defaced it!\).  
@@ -283,7 +284,7 @@ true    'exit'  0
 luvit  user.txt
 true    'exit'  0
 > os.execute("cat " .. "/home/sysadmin/user.txt")
-****
+6e0b****1419
 true    'exit'  0
 ```
 
@@ -426,5 +427,5 @@ Of course I couldn't forget to collect my hard-earned proof!
 
 ```text
 root@traceback:~# cat root.txt 
-****
+459b****cfa7
 ```

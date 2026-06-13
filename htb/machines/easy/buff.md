@@ -9,9 +9,8 @@ avatar: assets/htb/buff.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Buff
 ---
-## Overview
 
-Short description to include any strange things to be dealt with 
+## Overview
 
 TODO: finish writeup, clean up. - I wish I had taken better notes on this one, but I finished it during a pretty busy time.
 
@@ -326,7 +325,7 @@ Mode                LastWriteTime         Length Name
 
 PS C:\Users\shaun\desktop> cat user.txt
 cat user.txt
-****
+c414****cdc3
 ```
 
 Got the user flag from `shaun`'s desktop!
@@ -810,9 +809,5 @@ and then I was logged in as Administrator, with full privileges!
 ```text
 c:\Users\Administrator\Desktop>type root.txt
 type root.txt
-****
+b7f7****081b
 ```
-
-After getting an Administrator shell it was simple to collect my final proof.
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-buff-pwned.png)

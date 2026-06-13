@@ -9,19 +9,6 @@ avatar: assets/htb/blackfield.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Blackfield
 ---
-## Overview
-
-Short description to include any strange things to be dealt with
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -557,8 +544,6 @@ Stopped: Sat Oct  3 13:49:04 2020
 
 After searching for the correct hash type I fired up hashcat and very quickly cracked the password using the `rockyou.txt` wordlist. The password for support was `#00^BlackKnight`
 
-## Initial Foothold
-
 ## Road to User
 
 ```text
@@ -923,7 +908,7 @@ Mode                LastWriteTime         Length Name
 -ar---        10/3/2020   2:56 PM             34 user.txt
 
 *Evil-WinRM* PS C:\Users\svc_backup\Desktop> cat user.txt
-****
+5836****6fcf
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -1255,43 +1240,6 @@ Info: Download successful!
 
 *Evil-WinRM* PS C:\Users\Administrator\Documents> cd ../Desktop
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> cat root.txt
-****
+c1cb****2e83
 *Evil-WinRM* PS C:\Users\Administrator\Desktop>
 ```
-
-### Root.txt
-
-After collecting the flag, I went to verify the reason that I was unable to back up `root.txt`.
-
-```text
-*Evil-WinRM* PS C:\Users\Administrator\Desktop> cipher.exe /C
-
- Listing C:\Users\Administrator\Desktop\
- New files added to this directory will not be encrypted.
-
-U notes.txt
-E root.txt
-  Compatibility Level:
-    Windows Vista/Server 2008
-
-cipher.exe : Access is denied.
-    + CategoryInfo          : NotSpecified: (Access is denied.:String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
-Access is denied.
-  Key information cannot be retrieved.
-
-Access is denied.
-```
-
-Using the `cipher.exe` command I was indeed able to see that the file was encrypted. The PowerShell script `watcher.ps1` that I had seen earlier in the Administrator's documents folder when I logged in was the reason.
-
-```text
-sleep 30
-
-$file = "C:\Users\Administrator\Desktop\root.txt"
-$command = "(Get-Item -Path $file).Encrypt()"
-
-Invoke-Command -ComputerName LOCALHOST -ScriptBlock { $command }
-```
-
-The script `watcher.ps1` is the reason that root.txt was encrypted

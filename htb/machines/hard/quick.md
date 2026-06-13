@@ -9,9 +9,6 @@ avatar: assets/htb/quick.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Quick
 ---
-## Overview
-
-Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
 
@@ -20,7 +17,7 @@ Short description to include any strange things to be dealt with
 * quiche \[link\]
 * experimental curl features \[link\]
 * can also change settings in-browser experimental settings \[link\]
-* 
+
 ### Upgrading a limited shell to a full TTY
 
 1. Determine the installed version of python with `which python`.
@@ -665,7 +662,7 @@ The first thing to do after gaining access was to claim my proof.
 
 ```text
 sam@quick:~$ cat user.txt 
-****
+b57f****bd59
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -1403,5 +1400,5 @@ root@quick:~# whoami && uname -a
 root
 Linux quick 4.15.0-91-generic #92-Ubuntu SMP Fri Feb 28 11:09:48 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
 root@quick:~# cat root.txt 
-****
+d5d1****256a
 ```

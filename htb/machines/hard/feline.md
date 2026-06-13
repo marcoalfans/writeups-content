@@ -9,19 +9,6 @@ avatar: assets/htb/feline.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Feline
 ---
-## Overview
-
-Short description to include any strange things to be dealt with - Hard Linux
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -387,7 +374,7 @@ There was a docker container hosted
 ```text
 tomcat@VirusBucket:/dev/shm$ cd ~
 tomcat@VirusBucket:~$ cat user.txt 
-****
+a26d****ed37
 tomcat@VirusBucket:~$ ls -la
 total 24
 drwxr-xr-x 2 root   root   4096 Jun 17 05:14 .
@@ -398,7 +385,7 @@ lrwxrwxrwx 1 root   root      9 Jun 17 05:14 .bash_history -> /dev/null
 -rw-r--r-- 1 tomcat tomcat  807 Feb 25  2020 .profile
 -rw-r--r-- 1 root   root     33 Dec 13 16:52 user.txt
 tomcat@VirusBucket:~$ cat user.txt 
-****
+a26d****ed37
 ```
 
 The user `tomcat` ended up being the user with the `user.txt` flag!
@@ -822,7 +809,7 @@ drwx------    2 root     root          4096 Jun 30 09:10 .ssh
 drwxr-xr-x    3 root     root          4096 May 18  2020 snap
 /tmp # ^[[28;8Rcat root.txt
 cat root.txt
-****
+cadb****9e63
 /tmp # ^[[28;8Recho 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8emG+VqFZL/N0w=' >> .ssh/authorized_keys
 echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTY
 AAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8e
@@ -874,9 +861,5 @@ VirusBucket
 root@VirusBucket:~# ls
 root.txt  snap
 root@VirusBucket:~# cat root.txt
-****
+cadb****9e63
 ```
-
-I was in, and got my root proof!
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-feline-pwned.png)

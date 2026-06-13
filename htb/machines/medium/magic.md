@@ -9,14 +9,6 @@ avatar: assets/htb/magic.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Magic
 ---
-## Overview
-
-Short description to include any strange things to be dealt with
-
-## Useful Skills and Tools
-
-* description with generic example
-* description with generic example
 
 ## Enumeration
 
@@ -451,7 +443,7 @@ theseus@ubuntu:~$ ls
 Desktop    Downloads  Pictures  Templates  Videos
 Documents  Music      Public    user.txt
 theseus@ubuntu:~$ cat user.txt
-****
+123d****f87d
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -629,50 +621,5 @@ I also had to make sure to make the file was executable by root \(`+x` makes it 
 ```text
 root@ubuntu:/root# cat root.txt
 cat root.txt
-****
-```
-
-and here is the sysinfo binary code:
-
-```text
-root@ubuntu:/root# cat info.c
-cat info.c
-#include <unistd.h>
-#include <iostream>
-#include <cassert>
-#include <cstdio>
-#include <iostream>
-#include <memory>
-#include <stdexcept>
-#include <string>
-#include <array>
-
-using namespace std;
-
-std::string exec(const char* cmd) {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
-    if (!pipe) {
-        throw std::runtime_error("popen() failed!");
-    }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-    return result;
-}
-
-int main() {
-    setuid(0);
-    setgid(0);
-    cout << "====================Hardware Info====================" << endl;
-    cout << exec("lshw -short") << endl;
-    cout << "====================Disk Info====================" << endl;
-    cout << exec("fdisk -l") << endl;
-    cout << "====================CPU Info====================" << endl;
-    cout << exec("cat /proc/cpuinfo") << endl;
-    cout << "====================MEM Usage=====================" << endl;
-    cout << exec("free -h");
-    return(0);
-}
+80e2****0f37
 ```

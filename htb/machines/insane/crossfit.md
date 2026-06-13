@@ -9,6 +9,7 @@ avatar: assets/htb/crossfit.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Crossfit
 ---
+
 ## Overview
 
 This Insane-difficulty machine from Hack The Box took far longer to root than I would have liked, mostly due to getting hung up on the the final exploit. I took a break from it, after getting the user.txt, due to frustration and wanting to make progress elsewhere. This machine challenged me in a number of areas, from creative enumeration methods, to code and binary analysis, to "exploit" writing in a foreign language \(JavaScript and C!\). After taking a break for a few months, I came back with a fresh perspective and was able to quickly discover the errors I had been making. \(Along with fresh patience with the quick-clean script the authors used!\). A script to automate all of the moving pieces of the final exploit solved my issues and I was able to root the machine. 
@@ -1127,7 +1128,7 @@ lrwxrwxrwx 1 root root    9 May 13  2020 .mysql_history -> /dev/null
 -rw-r--r-- 1 hank hank  807 Apr 18  2019 .profile
 -r--r----- 1 root hank   33 Jan 15 00:50 user.txt
 hank@crossfit:~$ cat user.txt 
-****
+9e32****f446
 ```
 
 After cracking the hash to get the password I fired up SSH and logged in as `hank`.  The first thing I did was collect my hard-earned proof.
@@ -2295,20 +2296,5 @@ lrwxrwxrwx  1 root root    9 May  4  2020 .mysql_history -> /dev/null
 -rw-r--r--  1 root root   74 May  5  2020 .selected_editor
 drwx------  2 root root 4096 Sep  2  2020 .ssh
 root@crossfit:~# cat root.txt 
-****
+ee0a****8c80
 ```
-
-Finally! I had to keep trying to log in through SSH, as it wasn't until my files got deleted that I was successful. I was able to tell that my files got deleted because I suddenly began getting spammed with an error message from my script.
-
-```bash
-...snipped...
-./t: line 19: ./rand: No such file or directory
-./t: line 19: ./rand: No such file or directory
-./t: line 19: ./rand: No such file or directory
-./t: line 19: ./rand: No such file or directory
-./t: line 19: ./rand: No such file or directory
-```
-
-As you can see...I got tired of even typing out `test.sh` and simply called my script `t`. I almost was about to write another script that would send my files over, `chmod +x` them, and run the exploit script, but just before I did that the exploit finally worked!
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-crossfit-pwned.png)

@@ -9,11 +9,6 @@ avatar: assets/htb/worker.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Worker
 ---
-## Overview
-
-Short description to include any strange things to be dealt with
-
-TODO: Finish writing and clean up
 
 ## Useful Skills and Tools
 
@@ -22,10 +17,6 @@ TODO: Finish writing and clean up
 [https://wadcoms.github.io/](https://wadcoms.github.io/)
 
 > WADComs is an interactive cheat sheet, containing a curated list of offensive security tools and their respective commands, to be used against Windows/AD environments.
-
-### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -1040,7 +1031,7 @@ Mode                LastWriteTime         Length Name
 -ar---       12/12/2020  10:16 PM             34 user.txt
 
 *Evil-WinRM* PS C:\Users\robisl\Desktop> cat user.txt
-****
+6266****2a34
 ```
 
 On the user's desktop I found the `user.txt` flag
@@ -1202,9 +1193,5 @@ type C:\Administrator\Desktop\root.txt
 PS W:\agents\agent11\_work\10\s> cd C:\
 PS C:\> cd \users\Administrator\Desktop
 PS C:\users\Administrator\Desktop> type root.txt
-****
+8af8****9add
 ```
-
-I unfortunately had to recreate my session as some automated process deleted it after a short time, but after so much effort I was able to retrieve my proof!
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-worker-pwned.png)

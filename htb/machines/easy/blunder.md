@@ -9,6 +9,7 @@ avatar: assets/htb/blunder.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Blunder
 ---
+
 ## Overview
 
 This easy difficulty Linux machine featured a content management system that was new to me, and a simple to use but interesting way to bypass a common configuration used by system administrators to grant permissions without allowing root access.  It required writing a Python script to brute force a login, and had multiple ways to exploit the vulnerable service to gain access.  The root privilege escalation method was very realistic, but so simple and easy to do it was almost disappointing to complete this machine so quickly.
@@ -712,7 +713,7 @@ hugo@blunder:/var/www/bludit-3.9.2/bl-content/databases$ cd ~
 cd ~
 hugo@blunder:~$ cat user.txt
 cat user.txt
-****
+dcf1****8a77
 ```
 
 Once I got a system shell, I used my standard shell upgrade steps, but it didn't quite work the way I wanted, so I was stuck with a half-functional shell.  Despite this I was able to switch users to `hugo` and collect my `user.txt` proof.  
@@ -903,14 +904,6 @@ uid=1000(shaun) gid=1000(shaun) groups=1000(shaun),4(adm),24(cdrom),30(dip),46(p
 root@blunder:/dev/shm# id
 uid=0(root) gid=1001(hugo) groups=1001(hugo)
 root@blunder:/dev/shm# cat /root/root.txt 
-****
+e650****f5f7
 root@blunder:/dev/shm#
 ```
-
-First I ran `sudo /bin/bash` with user ID `'0'` to test the restriction on running commands as root to see if it could be bypassed by simply giving the ID number for root instead.  This did not work \(as expected\).  
-
-Next I used the invalid user ID number `'-1'` with the same command and compared my old `id` command output to my new effective user permissions.  I was now logged in as `root` and able to collect my proof.
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot-2020-10-27-201305.png)
-
-### Root.txt

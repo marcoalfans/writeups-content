@@ -9,15 +9,10 @@ avatar: assets/htb/luanne.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Luanne
 ---
-## Overview
-
-This easy difficulty BSD system...Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
 
 ### Decrypt `.enc` file in BSD
-
-* description with generic example
 
 ### Run commands as another user \(`sudo`\) in BSD
 
@@ -624,7 +619,7 @@ dr-xr-x---  4 r.michaels  users   512 Sep 16  2020 devel
 dr-x------  2 r.michaels  users   512 Sep 16  2020 public_html
 -r--------  1 r.michaels  users    33 Sep 16  2020 user.txt
 luanne$ cat user.txt
-****
+ea5f****ebc0
 ```
 
 got the user.txt flag
@@ -895,7 +890,7 @@ drwxr-xr-x  21 root  wheel   512 Sep 16  2020 ..
 # cat root      
 cat: root: No such file or directory
 # cat root.txt
-****
+7a9b****5f66
 # cat cleanup.sh
 #!/bin/sh
 
@@ -903,5 +898,3 @@ cat: root: No such file or directory
 /usr/bin/find / -name devel-2020-09-16 -exec rm -rf {} \;
 /usr/bin/find /tmp -exec rm -rf {} \;
 ```
-
-Note: `/etc/master.passwd` is where password hashes are stored in BSD, not /etc/shadow

@@ -9,6 +9,7 @@ avatar: assets/htb/cascade.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Cascade
 ---
+
 ## Overview
 
 This medium difficulty Windows machine was a good refresher on themes and techniques I had seen in other machines \(such as [Nest](nest-write-up.md)\), but also introduced new things and gave enough of a challenge to be quite fun. With proper enumeration this should be a fairly easy challenge, depending on the comfort level with some aspects \(such as reading C\# code\).
@@ -614,7 +615,7 @@ There were ne surprises in either the groups or privileges for `s.smith`.  I was
 
 ```text
 *Evil-WinRM* PS C:\Users\s.smith\Desktop> type user.txt
-****
+f29a****b507
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -963,7 +964,7 @@ Mode                LastWriteTime         Length Name
 -a----        3/25/2020  11:17 AM           1031 WinDirStat.lnk
 
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> type root.txt
-****
+c819****d488
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> whoami /all
 
 USER INFORMATION
@@ -1026,5 +1027,3 @@ SeTimeZonePrivilege             Change the time zone                            
 SeCreateSymbolicLinkPrivilege   Create symbolic links                                          Enabled
 *Evil-WinRM* PS C:\Users\Administrator\Desktop>
 ```
-
-Woot! Domain Admin!

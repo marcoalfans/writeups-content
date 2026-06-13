@@ -9,11 +9,10 @@ avatar: assets/htb/travel.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Travel
 ---
+
 ## HTB - Travel
 
 ### Overview
-
-_**TODO: Finish this writeup~!**_ Short description to include any strange things to be dealt with
 
 ### Useful Skills and Tools
 
@@ -572,7 +571,7 @@ I tried to see what `lynik-admin` could do with sudo, but apparently this user w
 lynik-admin@travel:~$ ls
 user.txt
 lynik-admin@travel:~$ cat user.txt 
-****
+c568****7230
 ```
 
 ## Path to Power \(Gaining Root Access\)
@@ -1142,7 +1141,5 @@ User lynik may run the following commands on travel:
     (ALL : ALL) ALL
 lynik@travel:~$ sudo su -
 root@travel:~# cat root.txt 
-****
+5500****5eb0
 ```
-
-### Root.txt

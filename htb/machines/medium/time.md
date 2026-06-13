@@ -9,19 +9,6 @@ avatar: assets/htb/time.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Time
 ---
-## Overview
-
-Short description to include any strange things to be dealt with...This machine was dissapointingly easy for a medium box. It definitely should have been classified 'Easy'. A simple test at the beginning revealed a verbose error message. Some quick googling leads to an easy to use exploit. After that simple enumeration leads to a weakly protected script that gets executed as root, and leaves the player a million routes to root through arbitrary code execution.
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -240,7 +227,7 @@ drwxr-xr-x 3 pericles pericles 4096 Oct  2 13:20 snap
 pericles@time:/home/pericles$ cat user
 cat: user: No such file or directory
 pericles@time:/home/pericles$ cat user.txt 
-****
+f255****13e3
 ```
 
 After checking `pericles`' home directory I found the `user.txt` proof!
@@ -502,7 +489,7 @@ root@time:~# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 time
 root@time:~# cat root.txt 
-****
+1433****89c6
 root@time:~# ls -la
 total 5816
 drwx------  7 root root    4096 Mar 16 22:43 .
@@ -524,7 +511,3 @@ root@time:~# cat timer_backup.sh
 #!/bin/bash
 zip -r website.bak.zip /var/www/html && mv website.bak.zip /root/backup.zip
 ```
-
-And that was it!
-
-note: If you ran `script` earlier to log your console, make sure to type exit until you get the "Script done." message, back on your box.

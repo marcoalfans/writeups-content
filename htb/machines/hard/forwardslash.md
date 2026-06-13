@@ -9,6 +9,7 @@ avatar: assets/htb/forwardslash.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/ForwardSlash
 ---
+
 ## Overview
 
 ### Useful Skills and Tools
@@ -491,7 +492,7 @@ Tried to decrypt the password at first, though it was not a hash despite its loo
 pain@forwardslash:~$ ls
 encryptorinator  note.txt  user.txt
 pain@forwardslash:~$ cat user.txt 
-****
+cd2c****8cf8
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -689,7 +690,5 @@ zweilos@kalimaa:~/htb/forwardslash$ ssh -i root.id_rsa root@<YOUR_IP>
 load pubkey "root.id_rsa": invalid format
 Welcome to Ubuntu 18.04.4 LTS (GNU/Linux 4.15.0-91-generic x86_64)
 root@forwardslash:~# cat root.txt 
-****
+a6a9****2287
 ```
-
-and...root.  While logging in, I received the error `load pubkey "root.id_rsa": invalid format`, though it didn't cause any issues.  According to [https://askubuntu.com/questions/698997/key-load-public-invalid-format-with-scp-or-git-clone-on-ubuntu-15-10/700172\#700172](https://askubuntu.com/questions/698997/key-load-public-invalid-format-with-scp-or-git-clone-on-ubuntu-15-10/700172#700172) this happens when the public key is missing or corrupted.  In this case it wasn't present, therefore the error.

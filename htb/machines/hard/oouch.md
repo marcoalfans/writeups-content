@@ -9,11 +9,10 @@ avatar: assets/htb/oouch.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Oouch
 ---
+
 ## Overview
 
 This had difficulty Linux machine taught me a lot about the internal workings of a federated access control system, specifically an implementation of Oauth2.  Persistence and the ability to take error messages and learn from them were necessary to progress through this machine.
-
-## Useful Skills and Tools
 
 ## Enumeration
 
@@ -517,7 +516,7 @@ qtc@oouch:~$ uname -a
 Linux oouch 4.19.0-8-amd64 #1 SMP Debian 4.19.98-1 (2020-01-26) x86_64 GNU/Linux
 
 qtc@oouch:~$ cat user.txt 
-****
+6c92****cd2b
 
 qtc@oouch:~$ cat .note.txt 
 Implementing an IPS using DBus and iptables == Genius?
@@ -844,5 +843,5 @@ connect to [172.18.0.1] from (UNKNOWN) [<YOUR_IP>] 50776
 root
 oouch
 # cat root.txt
-****
+d63a****f187
 ```
