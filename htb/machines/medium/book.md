@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Book
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-book-infocard.png)
-
 A medium Linux box that was fairly straightforward, but still challenging enough to teach some interesting use cases for 'standard' attacks.
 
 ## Useful Skills and Tools
@@ -26,7 +24,7 @@ This tool is invaluable for doing any sort of website or web app testing.  From 
 ### Using an SSH Private Key for Remote Login
 
 1. First, give your private key file the proper secure permissions `chmod 600 root.id_rsa`
-2. Next use `-i <keyfile>` to identify the key to use: `ssh -i id_rsa <user>@10.10.10.176`
+2. Next use `-i <keyfile>` to identify the key to use: `ssh -i id_rsa <user>@<YOUR_IP>`
 3. If prompted, enter the user's key decryption passphrase \(sometimes not set by the user, and separate from the user's Unix password.\)
 
 ### Linpeas.sh
@@ -37,11 +35,11 @@ This amazing script automates a lot of useful enumeration tasks, and is geared t
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.176`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kali:~/htb/book$ nmap -p- -sC -sV -oN book.nmap 10.10.10.176
-Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-04 14:38 EDTNmap scan report for 10.10.10.176
+zweilos@kali:~/htb/book$ nmap -p- -sC -sV -oN book.nmap <YOUR_IP>
+Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-04 14:38 EDTNmap scan report for <YOUR_IP>
 Host is up (0.23s latency).
 Not shown: 65533 closed ports
 PORT   STATE SERVICE VERSION
@@ -67,7 +65,7 @@ With only two ports open, `22 - SSH` and `80 - HTTP`, there was nothing to do ex
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-login-page.png)
 
-I navigated to `http://10.10.10.176`  which led to a login page.  Peeking at the source code of the page revealed an interesting script embedded in the html.
+I navigated to `http://<YOUR_IP>`  which led to a login page.  Peeking at the source code of the page revealed an interesting script embedded in the html.
 
 ```javascript
 <script>
@@ -138,12 +136,12 @@ I sent the same exact request using Burp and to my surprise it went through.  I'
 
 ```text
 POST /index.php HTTP/1.1
-Host: 10.10.10.176
+Host: <YOUR_IP>
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 Accept-Language: en-US,en;q=0.5
 Accept-Encoding: gzip, deflate
-Referer: http://10.10.10.176/index.php
+Referer: http://<YOUR_IP>/index.php
 Content-Type: application/x-www-form-urlencoded
 Content-Length: 91
 Connection: close
@@ -174,7 +172,7 @@ http://www.owasp.org/index.php/Category:OWASP_DirBuster_Project
 Report produced on Sun Jun 07 12:08:31 EDT 2020
 --------------------------------
 
-http://10.10.10.176:80
+http://<YOUR_IP>:80
 --------------------------------
 Directories found during testing:
 
@@ -333,7 +331,7 @@ _Also, as always remember to run **`chmod 600 $key_file`** before using SSH keys
 {% endhint %}
 
 ```text
-zweilos@kali:~/htb/book$ ssh -i reader.id_rsa reader@10.10.10.176
+zweilos@kali:~/htb/book$ ssh -i reader.id_rsa reader@<YOUR_IP>
                     
 Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.4.1-050401-generic x86_64)
 
@@ -345,11 +343,10 @@ Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.4.1-050401-generic x86_64)
 
   System load:  0.02               Processes:            265
   Usage of /:   26.5% of 19.56GB   Users logged in:      2
-  Memory usage: 40%                IP address for ens33: 10.10.10.176
+  Memory usage: 40%                IP address for ens33: <YOUR_IP>
   Swap usage:   0%
 
   => There is 1 zombie process.
-
 
  * Canonical Livepatch is available for installation.
    - Reduce system reboots and improve kernel security. Activate at:
@@ -359,7 +356,6 @@ Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.4.1-050401-generic x86_64)
 0 updates are security updates.
 
 Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
-
 
 Last login: Sun Jun  7 17:00:50 2020 from 10.10.14.147
 reader@book:~$
@@ -371,7 +367,7 @@ First thing to do after logging in...collect my proof!
 
 ```text
 reader@book:~$ cat user.txt 
-51c1d4b5197fa30e3e5d37f8778f95bc
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -563,7 +559,7 @@ And, as always, remember to `chmod 600` your private SSH key files before use! _
 
 ```text
 zweilos@kali:~/htb/book$ chmod 600 root.id_rsa 
-zweilos@kali:~/htb/book$ ssh -i root.id_rsa root@10.10.10.176
+zweilos@kali:~/htb/book$ ssh -i root.id_rsa root@<YOUR_IP>
 Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.4.1-050401-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -571,7 +567,6 @@ Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.4.1-050401-generic x86_64)
  * Support:        https://ubuntu.com/advantage
 
  System information disabled due to load higher than 1.0
-
 
  * Canonical Livepatch is available for installation.
    - Reduce system reboots and improve kernel security. Activate at:
@@ -581,7 +576,6 @@ Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.4.1-050401-generic x86_64)
 0 updates are security updates.
 
 Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
-
 
 Last login: Wed Feb 19 14:49:02 2020 from ::1
 root@book:~# id && hostname
@@ -611,7 +605,3 @@ root@book:~# cat log.cfg
 ```
 
 Mystery solved!
-
-Thanks to [`MrR3boot`](https://www.hackthebox.eu/home/users/profile/13531) for creating a machine that had some new and interesting routes to gain privileges.  I definitely liked how there were few to no rabbit holes to lose myself in!
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

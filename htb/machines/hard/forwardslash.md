@@ -11,20 +11,18 @@ htb_url: https://app.hackthebox.com/machines/ForwardSlash
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-forwardslash-infocard.png)
-
 ### Useful Skills and Tools
 
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration of this system with an nmap scan of `10.10.10.183`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I started my enumeration of this system with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kalimaa:~/htb/forwardslash$ nmap -p- -sC -sV -oN forwardslash.nmap 10.10.10.183
+zweilos@kalimaa:~/htb/forwardslash$ nmap -p- -sC -sV -oN forwardslash.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-07-06 15:59 EDT
-Nmap scan report for forwardslash.htb (10.10.10.183)
+Nmap scan report for forwardslash.htb (<YOUR_IP>)
 Host is up (0.046s latency).
 Not shown: 65533 closed ports
 PORT   STATE SERVICE VERSION
@@ -42,14 +40,14 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 44.01 seconds
 ```
 
-This machine only had two ports open, `80 - HTTP` & `22 - SSH`.  Since I had no credentials to use for SSH I fired up a browser and navigated to `http://10.10.10.183`.
+This machine only had two ports open, `80 - HTTP` & `22 - SSH`.  Since I had no credentials to use for SSH I fired up a browser and navigated to `http://<YOUR_IP>`.
 
-![This page was automatically redirected to from 10.10.10.183](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-port80-redirect.png)
+![This page was automatically redirected to from <YOUR_IP>](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-port80-redirect.png)
 
 When I connected to port 80 it automatically redirected to `forwardslash.htb`.  In order to redirect my request to get to this pageI had to add the following line to `/etc/hosts`:
 
 ```text
-10.10.10.183    forwardslash.htb
+<YOUR_IP>    forwardslash.htb
 ```
 
 After adding the hostname to `/etc/hosts` I navigated to `http://forwardslash.htb` and was greeted by webpage that had been defaced by the "Backslash Gang".
@@ -127,8 +125,6 @@ This is a good habit to get into: always add new sites to `cewl` word list just 
 Around this time my Dirbuster report from this new subdomain had finished.  There were a lot of results to go through, so I decided to finish going through the ones I had seen when I logged in before exploring further.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-fileupload.png)
-
-
 
 The URL and Submit sections on the [http://backup.forwardslash.htb/profilepicture.php](http://backup.forwardslash.htb/profilepicture.php) page were disabled, but I wondered if it was something I could easily bypass by checking the HTML code.
 
@@ -495,7 +491,7 @@ Tried to decrypt the password at first, though it was not a hash despite its loo
 pain@forwardslash:~$ ls
 encryptorinator  note.txt  user.txt
 pain@forwardslash:~$ cat user.txt 
-cd2c04d272619fd6777527f19fd38cf8
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -672,7 +668,7 @@ I now had an SSH key.  Since neither `pain` or `chiv` needed an RSA key to login
 Trying to login with this key, I encountered an error I had seen before.
 
 ```text
-zweilos@kalimaa:~/htb/forwardslash$ ssh -i root.id_rsa root@10.10.10.183
+zweilos@kalimaa:~/htb/forwardslash$ ssh -i root.id_rsa root@<YOUR_IP>
 load pubkey "root.id_rsa": invalid format
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
@@ -681,7 +677,7 @@ Permissions 0644 for 'root.id_rsa' are too open.
 It is required that your private key files are NOT accessible by others.
 This private key will be ignored.
 Load key "root.id_rsa": bad permissions
-root@10.10.10.183's password: 
+root@<YOUR_IP>'s password: 
 ```
 
 I knew I was right that this was root's key.  _Though, as always, you have to make sure to apply `chmod 600 <file>` to your SSH private keys before use!_
@@ -689,15 +685,11 @@ I knew I was right that this was root's key.  _Though, as always, you have to ma
 ```text
 zweilos@kalimaa:~/htb/forwardslash$ chmod 600 root.id_rsa 
 
-zweilos@kalimaa:~/htb/forwardslash$ ssh -i root.id_rsa root@10.10.10.183
+zweilos@kalimaa:~/htb/forwardslash$ ssh -i root.id_rsa root@<YOUR_IP>
 load pubkey "root.id_rsa": invalid format
 Welcome to Ubuntu 18.04.4 LTS (GNU/Linux 4.15.0-91-generic x86_64)
 root@forwardslash:~# cat root.txt 
-a6a94932e6c6b3d237b147c5abca2287
+****
 ```
 
 and...root.  While logging in, I received the error `load pubkey "root.id_rsa": invalid format`, though it didn't cause any issues.  According to [https://askubuntu.com/questions/698997/key-load-public-invalid-format-with-scp-or-git-clone-on-ubuntu-15-10/700172\#700172](https://askubuntu.com/questions/698997/key-load-public-invalid-format-with-scp-or-git-clone-on-ubuntu-15-10/700172#700172) this happens when the public key is missing or corrupted.  In this case it wasn't present, therefore the error.
-
-Thanks to [`InfoSecJack`](https://www.hackthebox.eu/home/users/profile/52045) [`chivato`](https://www.hackthebox.eu/home/users/profile/44614)& for &lt;something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

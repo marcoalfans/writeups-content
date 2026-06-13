@@ -13,8 +13,6 @@ htb_url: https://app.hackthebox.com/machines/Travel
 
 ### Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-travel-infocard.png)
-
 _**TODO: Finish this writeup~!**_ Short description to include any strange things to be dealt with
 
 ### Useful Skills and Tools
@@ -31,14 +29,14 @@ _**TODO: Finish this writeup~!**_ Short description to include any strange thing
 
 #### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.189`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oG <name>` saves the output with a filename of `<name>`, `-n` stops DNS resolution of hosts, and `-v` allows me to see progress as it discovers things rather than waiting for the full report when it finishes.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oG <name>` saves the output with a filename of `<name>`, `-n` stops DNS resolution of hosts, and `-v` allows me to see progress as it discovers things rather than waiting for the full report when it finishes.
 
 ```text
 ┌──(zweilos㉿kali)-[~]
-└─$ nmap -n -p- -sC -sV --reason -v 10.10.10.189 -oG travel
+└─$ nmap -n -p- -sC -sV --reason -v <YOUR_IP> -oG travel
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-09-13 17:17 EDT
 
-Nmap scan report for 10.10.10.189
+Nmap scan report for <YOUR_IP>
 Host is up, received syn-ack (0.042s latency).
 
 PORT    STATE SERVICE  REASON  VERSION
@@ -76,8 +74,6 @@ Subject Alternative Name: DNS:www.travel.htb, DNS:blog.travel.htb, DNS:blog-dev.
 
 I added all three to my `/etc/hosts` file so I could connect.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-travel-site.png)
-
 Connecting to `www.travel.htb` I found a "coming soon" type site with a countdown. On this site I found a contact information section with a potential a user email format.
 
 ```text
@@ -85,11 +81,7 @@ CONTACT INFORMATION
 hello@travel.htb Park Ave, 987, London, United Kingdom.
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-ssl-under-construction.png)
-
 Checking port 443 only led to an under construction site with no useful information.
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-wappalyzer%2520%25281%2529.png)
 
 The Firefox plugin `wappalyzer` told me the site was using WordPress version 5.4. I fired up `wpscan` to check the site for vulnerabilities using the syntax`wpscan --url http://blog.travel.htb/ --enumerate`.
 
@@ -118,41 +110,23 @@ robots.txt found: http://blog.travel.htb/robots.txt
  | Found By: Author Posts
 ```
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-wp-login.png)
-
 I discovered a WordPress login page at `http://blog.travel.htb/wp-login.php` but there was nothing else useful from the scan.
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-noluck-reset.png)
 
 I tried resetting my password since this version of WordPress was reportedly vulnerable to information leakage through this, but it did not lead to anything useful.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-xmlrpc.png)
-
 The page at `xmlrpc.php` likewise did not seem to be useful at this time.
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-blog-dev.png)
 
 Navigating to the virtual host `blog-dev` also seemed to be a dead-end, so I started another Dirbuster scan to see if anything useful that I could access could be found.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-awesome-rss.png)
-
 There was an RSS feed using the Awesome RSS WordPress plugin on the `blog` site.
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-debug.png)
 
 In the source code of the page I noticed a section that said `DEBUG` that caught my eye. I didn't know what to do with it, but it seemed interesting.
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-todo.png)
-
 There was also a section that talked about using "Additional CSS" and importing it from the `dev` site. This seemed like a potential way to get code to cross domains.
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-feed-xml.png)
 
 Another interesting find was the raw XML output that feeds the RSS page. Perhaps there was an XML deserialization vulnerability in the site.
 
 Since the `wpscan` results didn't seem to yield any useful information I checked out my Dirbuster scan of the `dev-blog` site and looked for interesting directories.
-
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-dirbuster-git.png)
 
 I found a potentially accessible git repo while scanning `blog-dev` with dirbuster.
 
@@ -247,13 +221,13 @@ The `url_get_contents()` function in `rss_template.php` allows for the import of
 ┌──(zweilos㉿kali)-[~/htb/travel]
 └─$ python -m SimpleHTTPServer 8090
 Serving HTTP on 0.0.0.0 port 8090 ...
-10.10.10.189 - - [18/Sep/2020 20:59:47] "GET / HTTP/1.1" 200 -
-10.10.10.189 - - [18/Sep/2020 20:59:47] "GET / HTTP/1.1" 200 -
-10.10.10.189 - - [18/Sep/2020 20:59:47] "GET /10-awesome-rss.png HTTP/1.1" 200 -
-10.10.10.189 - - [18/Sep/2020 20:59:47] "GET /11-feed-xml.png HTTP/1.1" 200 -
-10.10.10.189 - - [18/Sep/2020 20:59:48] "GET /8-xmlrpc.png HTTP/1.1" 200 -
-10.10.10.189 - - [18/Sep/2020 21:04:23] "GET /test.html HTTP/1.1" 200 -
-10.10.10.189 - - [18/Sep/2020 21:04:23] "GET /test.html HTTP/1.1" 200 -
+<YOUR_IP> - - [18/Sep/2020 20:59:47] "GET / HTTP/1.1" 200 -
+<YOUR_IP> - - [18/Sep/2020 20:59:47] "GET / HTTP/1.1" 200 -
+<YOUR_IP> - - [18/Sep/2020 20:59:47] "GET /10-awesome-rss.png HTTP/1.1" 200 -
+<YOUR_IP> - - [18/Sep/2020 20:59:47] "GET /11-feed-xml.png HTTP/1.1" 200 -
+<YOUR_IP> - - [18/Sep/2020 20:59:48] "GET /8-xmlrpc.png HTTP/1.1" 200 -
+<YOUR_IP> - - [18/Sep/2020 21:04:23] "GET /test.html HTTP/1.1" 200 -
+<YOUR_IP> - - [18/Sep/2020 21:04:23] "GET /test.html HTTP/1.1" 200 -
 ```
 
 Unfortunately the test did not actually load anything on the page, though I noticed that it did reach back to my server and pull the contents of the directory, including pulling some .png files automatically \(and interestingly also including a .netxml file I had in the directory from playing around with airodump-ng earlier that day.\)
@@ -559,10 +533,10 @@ Unfortunately I was only able to crack one of the hashes. The password for `lyni
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/travel]
-└─$ ssh lynik-admin@10.10.10.189                                                                  255 ⨯
-lynik-admin@10.10.10.189's password: 
+└─$ ssh lynik-admin@<YOUR_IP>                                                                  255 ⨯
+lynik-admin@<YOUR_IP>'s password: 
 Permission denied, please try again.
-lynik-admin@10.10.10.189's password: 
+lynik-admin@<YOUR_IP>'s password: 
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
 
   System information as of Sat 19 Sep 2020 03:12:57 PM UTC
@@ -576,7 +550,7 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
   IPv4 address for br-836575a2ebbb: 172.20.0.1
   IPv4 address for br-8ec6dcae5ba1: 172.30.0.1
   IPv4 address for docker0:         172.17.0.1
-  IPv4 address for eth0:            10.10.10.189
+  IPv4 address for eth0:            <YOUR_IP>
 
 lynik-admin@travel:~$ id && hostname
 uid=1001(lynik-admin) gid=1001(lynik-admin) groups=1001(lynik-admin)
@@ -598,7 +572,7 @@ I tried to see what `lynik-admin` could do with sudo, but apparently this user w
 lynik-admin@travel:~$ ls
 user.txt
 lynik-admin@travel:~$ cat user.txt 
-c568778f414d770c700de3a7ff867230
+****
 ```
 
 ## Path to Power \(Gaining Root Access\)
@@ -915,7 +889,7 @@ lynik-admin@travel:/var$ ip a
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
     link/ether 00:50:56:b9:bc:d0 brd ff:ff:ff:ff:ff:ff
-    inet 10.10.10.189/24 brd 10.10.10.255 scope global eth0
+    inet <YOUR_IP>/24 brd <YOUR_IP> scope global eth0
        valid_lft forever preferred_lft forever
 3: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
     link/ether 02:42:eb:d3:9e:f4 brd ff:ff:ff:ff:ff:ff
@@ -959,13 +933,13 @@ checked `ip a` and /etc/hosts to find out more and noticed 172.20.0.10
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/travel]
-└─$ sudo ssh -L 389:172.20.0.10:389 lynik-admin@10.10.10.189 
+└─$ sudo ssh -L 389:172.20.0.10:389 lynik-admin@<YOUR_IP> 
 [sudo] password for zweilos: 
-The authenticity of host '10.10.10.189 (10.10.10.189)' can't be established.
+The authenticity of host '<YOUR_IP> (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:KSjh2mhuESUZQcaB1ewLHie9gTUCmvOlypvBpcyAF/w.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added '10.10.10.189' (ECDSA) to the list of known hosts.
-lynik-admin@10.10.10.189's password: 
+Warning: Permanently added '<YOUR_IP>' (ECDSA) to the list of known hosts.
+lynik-admin@<YOUR_IP>'s password: 
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
 
   System information as of Sat 19 Sep 2020 03:46:50 PM UTC
@@ -979,7 +953,7 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
   IPv4 address for br-836575a2ebbb: 172.20.0.1
   IPv4 address for br-8ec6dcae5ba1: 172.30.0.1
   IPv4 address for docker0:         172.17.0.1
-  IPv4 address for eth0:            10.10.10.189
+  IPv4 address for eth0:            <YOUR_IP>
 
 Last login: Sat Sep 19 15:46:18 2020 from 10.10.15.53
 lynik-admin@travel:~$
@@ -1001,7 +975,7 @@ pictures
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/travel]
-└─$ ssh lynik@10.10.10.189 -i lynik 
+└─$ ssh lynik@<YOUR_IP> -i lynik 
 Creating directory '/home@TRAVEL/lynik'.
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
 
@@ -1016,13 +990,12 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
   IPv4 address for br-836575a2ebbb: 172.20.0.1
   IPv4 address for br-8ec6dcae5ba1: 172.30.0.1
   IPv4 address for docker0:         172.17.0.1
-  IPv4 address for eth0:            10.10.10.189
+  IPv4 address for eth0:            <YOUR_IP>
 
           *** Travel.HTB News Flash ***
 We are currently experiencing some delay in domain
 replication times of about 3-5 seconds. Sorry for
 the inconvenience. Kind Regards, admin
-
 
 The programs included with the Ubuntu system are free software;
 the exact distribution terms for each program are described in the
@@ -1106,7 +1079,7 @@ I checked sudoers file and saw that admins and members of sudo group can run all
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/travel]
-└─$ ssh lynik@10.10.10.189 -i lynik
+└─$ ssh lynik@<YOUR_IP> -i lynik
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
 
   System information as of Sat 19 Sep 2020 04:12:42 PM UTC
@@ -1120,7 +1093,7 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
   IPv4 address for br-836575a2ebbb: 172.20.0.1
   IPv4 address for br-8ec6dcae5ba1: 172.30.0.1
   IPv4 address for docker0:         172.17.0.1
-  IPv4 address for eth0:            10.10.10.189
+  IPv4 address for eth0:            <YOUR_IP>
 
 Last login: Sat Sep 19 16:12:03 2020 from 10.10.15.53
 To run a command as administrator (user "root"), use "sudo <command>".
@@ -1130,7 +1103,7 @@ lynik@travel:~$ id
 uid=5000(lynik) gid=27(sudo) groups=27(sudo),5000(domainusers)
 
 ┌──(zweilos㉿kali)-[~/htb/travel]
-└─$ ssh lynik@10.10.10.189 -i lynik
+└─$ ssh lynik@<YOUR_IP> -i lynik
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
 
   System information as of Sat 19 Sep 2020 04:12:42 PM UTC
@@ -1144,7 +1117,7 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-26-generic x86_64)
   IPv4 address for br-836575a2ebbb: 172.20.0.1
   IPv4 address for br-8ec6dcae5ba1: 172.30.0.1
   IPv4 address for docker0:         172.17.0.1
-  IPv4 address for eth0:            10.10.10.189
+  IPv4 address for eth0:            <YOUR_IP>
 
 Last login: Sat Sep 19 16:12:03 2020 from 10.10.15.53
 To run a command as administrator (user "root"), use "sudo <command>".
@@ -1169,11 +1142,7 @@ User lynik may run the following commands on travel:
     (ALL : ALL) ALL
 lynik@travel:~$ sudo su -
 root@travel:~# cat root.txt 
-550099de4950e4d03a939943ad265eb0
+****
 ```
 
 ### Root.txt
-
-Thanks to [`xct`](https://www.hackthebox.eu/home/users/profile/13569) & [`jkr`](https://www.hackthebox.eu/home/users/profile/77141) for this very challenging and fun machine! It was quite a journey learning about PHP deserialization and learning how to read through the complex maze of the SimplePie code.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

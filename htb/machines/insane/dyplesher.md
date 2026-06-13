@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Dyplesher
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-dyplesher-infocard.png)
-
 Dyplesher was an insane difficulty Linux machine that tested both web enumeration skills, and code review and writing skills. Multiple Git repositories containing source code, the Memcache service, and a Minecraft server were all exploited to gain access to this machine.  I learned quite a bit about the inner workings of a Minecraft server and how their plugins work during the course of this challenge!
 
 ## Useful Skills and Tools
@@ -62,14 +60,14 @@ Initial credit to [https://gist.github.com/maxivak/513191447d15c4d30953006d99928
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.190`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/dyplesher]
-└─$ nmap -n -v -sCV -p- 10.10.10.190 -oA dyplesher
+└─$ nmap -n -v -sCV -p- <YOUR_IP> -oA dyplesher
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-10-05 20:41 EDT
 snipped...
-Nmap scan report for 10.10.10.190
+Nmap scan report for <YOUR_IP>
 Host is up (0.035s latency).
 Not shown: 65525 filtered ports
 PORT      STATE  SERVICE    VERSION
@@ -357,9 +355,9 @@ _This is source code for the page I saw hosted at `test.dyplesher.htb`, and it d
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/dyplesher]
-└─$ telnet 10.10.10.190 11211
-Trying 10.10.10.190...
-Connected to 10.10.10.190.
+└─$ telnet <YOUR_IP> 11211
+Trying <YOUR_IP>...
+Connected to <YOUR_IP>.
 Escape character is '^]'.
 stats
 stats slabs
@@ -370,11 +368,11 @@ Connection closed by foreign host.
 Unfortunately telnet did not work as described in the article. Next I tried a tool I found on GitHub called `memclient` from [https://github.com/jorisroovers/memclient](https://github.com/jorisroovers/memclient).  
 
 ```text
-ping -c 2 10.10.10.190
-echo "list" | nc 10.10.10.190 11211
-memclient --host 10.10.10.190 --port 11211 list
+ping -c 2 <YOUR_IP>
+echo "list" | nc <YOUR_IP> 11211
+memclient --host <YOUR_IP> --port 11211 list
 chmod +x memclient
-./memclient --host 10.10.10.190 --port 11211 list
+./memclient --host <YOUR_IP> --port 11211 list
 ./memclient --host felamos:zxcvbnm@dyplesher.htb --port 11211 list
 ./memclient --host dyplesher.htb --port 11211 list
 ./memclient --help
@@ -1114,10 +1112,10 @@ The final list of files included in my project before compiling.  After I built 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/dyplesher]
 └─$ ssh -i dyplesher.key MinatoTW@dyplesher.htb 
-The authenticity of host 'dyplesher.htb (10.10.10.190)' can't be established.
+The authenticity of host 'dyplesher.htb (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:8AtWtgBblX2fSG+yy8gqhogbr3lHiMCppbBkL1YY/Cg.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added 'dyplesher.htb,10.10.10.190' (ECDSA) to the list of known hosts.
+Warning: Permanently added 'dyplesher.htb,<YOUR_IP>' (ECDSA) to the list of known hosts.
 
 Welcome to Ubuntu 19.10 (GNU/Linux 5.3.0-46-generic x86_64)
 
@@ -1129,16 +1127,14 @@ Welcome to Ubuntu 19.10 (GNU/Linux 5.3.0-46-generic x86_64)
 
   System load:  0.2               Processes:              238
   Usage of /:   6.9% of 97.93GB   Users logged in:        0
-  Memory usage: 39%               IP address for ens33:   10.10.10.190
+  Memory usage: 39%               IP address for ens33:   <YOUR_IP>
   Swap usage:   0%                IP address for docker0: 172.17.0.1
-
 
 57 updates can be installed immediately.
 0 of these updates are security updates.
 To see these additional updates run: apt list --upgradable
 
 Failed to connect to https://changelogs.ubuntu.com/meta-release. Check your Internet connection or proxy settings
-
 
 Last login: Sun Oct 11 20:08:40 2020 from 10.10.14.216
 MinatoTW@dyplesher:~$ id && hostname
@@ -1411,7 +1407,7 @@ Sorry, user felamos may not run sudo on dyplesher.
 
 ```text
 felamos@dyplesher:~$ cat user.txt 
-a8ffa4d970e7a74c9039b7afd39c9dc8
+****
 ```
 
 However, I was happy to find the `user.txt` file under this user's home directory.
@@ -1550,7 +1546,7 @@ import pika
 
 credentials = pika.PlainCredentials('yuntao', 'EashAnicOc3Op')
 
-parameters = pika.ConnectionParameters('10.10.10.190',
+parameters = pika.ConnectionParameters('<YOUR_IP>',
         5672,
         '/',
         credentials)
@@ -1739,9 +1735,8 @@ Welcome to Ubuntu 19.10 (GNU/Linux 5.3.0-46-generic x86_64)
 
   System load:  0.02              Processes:              246
   Usage of /:   6.8% of 97.93GB   Users logged in:        1
-  Memory usage: 40%               IP address for ens33:   10.10.10.190
+  Memory usage: 40%               IP address for ens33:   <YOUR_IP>
   Swap usage:   0%                IP address for docker0: 172.17.0.1
-
 
 57 updates can be installed immediately.
 0 of these updates are security updates.
@@ -1749,19 +1744,14 @@ To see these additional updates run: apt list --upgradable
 
 Failed to connect to https://changelogs.ubuntu.com/meta-release. Check your Internet connection or proxy settings
 
-
 Last login: Sun May 24 03:33:34 2020
 root@dyplesher:~# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 dyplesher
 root@dyplesher:~# cat root.txt 
-a0a4e509a610c426f8eb668a977774f0
+****
 ```
 
 After writing my public key to `root` it was simple to login using SSH and collect my hard-earned proof!
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/21-pwned-.png)
-
-Thanks to [`felamos`](https://www.hackthebox.eu/home/users/profile/27390) & [yuntao](https://www.hackthebox.eu/home/users/profile/12438) for creating this very challenging, yet very fun and interesting machine! I learned a lot more about Minecraft plugins than I ever thought I would want to!
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

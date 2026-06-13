@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Compromised
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-compromised-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 TODO: finish writeup, and clean up
@@ -31,11 +29,11 @@ TODO: finish writeup, and clean up
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.207`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/compromised]
-└─$ nmap -sCV -n -p- -Pn -v 10.10.10.207
+└─$ nmap -sCV -n -p- -Pn -v <YOUR_IP>
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-12-26 15:53 EST
 NSE: Loaded 153 scripts for scanning.
@@ -47,25 +45,25 @@ Completed NSE at 15:53, 0.00s elapsed
 Initiating NSE at 15:53
 Completed NSE at 15:53, 0.00s elapsed
 Initiating Connect Scan at 15:53
-Scanning 10.10.10.207 [65535 ports]
-Discovered open port 22/tcp on 10.10.10.207
-Discovered open port 80/tcp on 10.10.10.207
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 22/tcp on <YOUR_IP>
+Discovered open port 80/tcp on <YOUR_IP>
 Connect Scan Timing: About 17.81% done; ETC: 15:56 (0:02:23 remaining)
 Connect Scan Timing: About 37.26% done; ETC: 15:56 (0:01:43 remaining)
 Connect Scan Timing: About 64.86% done; ETC: 15:56 (0:00:49 remaining)
 Connect Scan Timing: About 80.09% done; ETC: 15:56 (0:00:32 remaining)
 Completed Connect Scan at 15:56, 142.43s elapsed (65535 total ports)
 Initiating Service scan at 15:56
-Scanning 2 services on 10.10.10.207
+Scanning 2 services on <YOUR_IP>
 Completed Service scan at 15:56, 5.01s elapsed (2 services on 1 host)
-NSE: Script scanning 10.10.10.207.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 15:56
 Completed NSE at 15:57, 60.01s elapsed
 Initiating NSE at 15:57
 Completed NSE at 15:57, 2.01s elapsed
 Initiating NSE at 15:57
 Completed NSE at 15:57, 0.00s elapsed
-Nmap scan report for 10.10.10.207
+Nmap scan report for <YOUR_IP>
 Host is up (0.0000020s latency).
 Not shown: 65533 filtered ports
 PORT   STATE SERVICE    VERSION
@@ -424,7 +422,7 @@ To use the exploit I needed to supply admin credentials, and the path of the adm
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/compromised]
-└─$ python3 litecart_exploit.py -t http://10.10.10.207/shop/admin -u admin -p 'theNextGenSt0r3!~'
+└─$ python3 litecart_exploit.py -t http://<YOUR_IP>/shop/admin -u admin -p 'theNextGenSt0r3!~'
 Sorry something went wrong
 ```
 
@@ -507,8 +505,6 @@ Checked output of `ps aux` and noticed mysqld was running. Perhaps I could enume
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-mysql.png)
 
 I checked to see what configuration files there were for mysqld
-
-
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-mysql-running.png)
 
@@ -627,7 +623,7 @@ From these results I could see that this function was running in the context of 
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/compromised]
-└─$ ssh mysql@10.10.10.207 -i compromised.key                                                     130 ⨯
+└─$ ssh mysql@<YOUR_IP> -i compromised.key                                                     130 ⨯
 Last login: Thu Sep  3 11:52:44 2020 from 10.10.14.2
 mysql@compromised:~$ id && hostname
 uid=111(mysql) gid=113(mysql) groups=113(mysql)
@@ -792,7 +788,7 @@ lrwxrwxrwx 1 root sysadmin    9 May 13  2020 .bash_history -> /dev/null
 -rw-r--r-- 1 root sysadmin  807 May 13  2020 .profile
 -r--r----- 1 root sysadmin   33 Dec 25 05:48 user.txt
 sysadmin@compromised:~$ cat user.txt 
-50df571e8910dbb06fd65f5de92de03d
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -827,8 +823,8 @@ I was unable to ping my computer, so I was worried that I wouldn't be able to co
 
 ```text
 ┌──(zweilos㉿kali)-[~]
-└─$ scp ./linpeas.sh sysadmin@10.10.10.207:/dev/shm/lp                                  
-sysadmin@10.10.10.207's password: 
+└─$ scp ./linpeas.sh sysadmin@<YOUR_IP>:/dev/shm/lp                                  
+sysadmin@<YOUR_IP>'s password: 
 linpeas.sh                                                            100%  286KB 435.1KB/s   00:00
 ```
 
@@ -1006,13 +1002,9 @@ And that was it! I was logged in as root.
 
 ```text
 root@compromised:~# cat root.txt 
-5ecdcd0bab29ab67d325c26ed9deaec7
+****
 ```
 
 After that it was a simple matter to collect my proof!
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-compromised-pwned.png)
-
-Thanks to [`D4nch3n`](https://app.hackthebox.eu/users/103781) for... \[something interesting or useful about this machine.\]
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

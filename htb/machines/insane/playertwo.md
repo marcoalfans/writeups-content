@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/PlayerTwo
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/playertwo-infocard.png)
-
 An Insane difficulty Linux machine that tested my web skills quite a bit and also had me doing as much research on new protocols and services as three or four easy or medium boxes would.  Finding each pathway forward wasn't too difficult with proper enumeration, but getting past each step required patience and reading lots of documentation.  
 
 ## Useful Skills and Tools
@@ -22,8 +20,8 @@ An Insane difficulty Linux machine that tested my web skills quite a bit and als
 In order to get the intended page for a server, sometimes you may need to direct your traffic to the site's FQDN rather than it's IP address.  In order to do this you will need to tell your computer where to find that domain by adding the following line to `/etc/hosts` .   Subdomains need to be added on separate lines.
 
 ```text
-10.10.10.170    <domain.name>
-10.10.10.170    <subdomain.domain.name>
+<YOUR_IP>    <domain.name>
+<YOUR_IP>    <subdomain.domain.name>
 ```
 
 #### Using `cewl` to get a site-customized wordlist
@@ -56,13 +54,13 @@ After getting a rough shell on the machine, my first order of business is usuall
 
 ### Nmap scan
 
-I started my enumeration off with an nmap scan of `10.10.10.170`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and`-oN <name>` saves the output with a filename of `<name>`.  
+I started my enumeration off with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and`-oN <name>` saves the output with a filename of `<name>`.  
 
 ```text
-zweilos@kalimaa:~/htb/playertwo$ nmap -p- -sC -sV -O -oA playertwo.full 10.10.10.170
+zweilos@kalimaa:~/htb/playertwo$ nmap -p- -sC -sV -O -oA playertwo.full <YOUR_IP>
 
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-05-31 13:01 EDT
-Nmap scan report for 10.10.10.170
+Nmap scan report for <YOUR_IP>
 Host is up (0.33s latency).
 Not shown: 65532 closed ports
 PORT     STATE SERVICE VERSION
@@ -153,7 +151,7 @@ Despite all of that output, there were only three ports open; SSH and two that r
 
 ### Enumerating `Port 80 - HTTP`
 
-Before jumping off into any potential rabbit holes with the strange output from port 8545, it was best to fire up a browser and first try to connect to the open port 80 at [http://10.10.10.170](http://10.10.10.170).  
+Before jumping off into any potential rabbit holes with the strange output from port 8545, it was best to fire up a browser and first try to connect to the open port 80 at [http://<YOUR_IP>](http://<YOUR_IP>).  
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/1-error.png)
 
@@ -166,7 +164,7 @@ Looking again at the text in the image, I noticed that it says "Please contact `
 In order to get the intended page for a server, sometimes you need to direct your traffic to the site's FQDN rather than it's IP address.  In order to do this you will need to tell your computer where to find that domain by adding the following line to `/etc/hosts`
 
 ```text
-10.10.10.170    player2.htb 
+<YOUR_IP>    player2.htb 
 ```
 
 ### Enumerating the real website
@@ -178,8 +176,8 @@ After adding the domain to the hosts file, navigating to [http://player2.htb](ht
 After reading through the content on the page, I found a link to a subdomain at [http://product.player2.htb/](http://product.player2.htb/). Once again I added the new domain to my hosts file, and after navigating to this new site I found a login page.
 
 ```text
-10.10.10.170    player2.htb
-10.10.10.170    product.player2.htb
+<YOUR_IP>    player2.htb
+<YOUR_IP>    product.player2.htb
 ```
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/3-login-page.png)
@@ -235,7 +233,6 @@ Total requests: 87665
 ===================================================================
 ID           Response   Lines    Word     Chars       Payload                               
 ===================================================================
-
 
 000034176:   200        18 L     46 W     266 Ch      "generated"
 ```
@@ -700,7 +697,7 @@ $SYS/internal/firmware/signing Sent logs to apache server.
 I now was the proud owner of a shiny new SSH key! I took it and tried to log in as the `egre55` and `observer` users I saw earlier.
 
 ```text
-zweilos@kalimaa:~/htb/playertwo$ ssh -i observer_id_rsa observer@10.10.10.170
+zweilos@kalimaa:~/htb/playertwo$ ssh -i observer_id_rsa observer@<YOUR_IP>
 
 load pubkey "observer_id_rsa": invalid format
 Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.2.5-050205-generic x86_64)
@@ -713,9 +710,8 @@ Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.2.5-050205-generic x86_64)
 
   System load:  0.0                Processes:            167
   Usage of /:   26.1% of 19.56GB   Users logged in:      0
-  Memory usage: 25%                IP address for ens33: 10.10.10.170
+  Memory usage: 25%                IP address for ens33: <YOUR_IP>
   Swap usage:   0%
-
 
  * Canonical Livepatch is available for installation.
    - Reduce system reboots and improve kernel security. Activate at:
@@ -723,7 +719,6 @@ Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 5.2.5-050205-generic x86_64)
 
 121 packages can be updated.
 5 updates are security updates.
-
 
 Last login: Sun Dec  1 15:33:19 2019 from 172.16.118.129
 ```
@@ -736,7 +731,7 @@ First order of business...claim my hard-earned user flag!
 
 ```text
 observer@player2:~$ cat user.txt 
-b1aade7c541ab9a9cc82f34aaf61bcfa
+****
 ```
 
 _Yes, I know the real flag is in uppercase ._
@@ -762,7 +757,3 @@ It looked like I had found the configuration utility for the `protobs` program, 
 ### Root.txt
 
 ![Nope.](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/4-nope.png)
-
-Thanks to [`MrR3boot`](https://www.hackthebox.eu/home/users/profile/13531) & [`b14ckh34rt`](https://www.hackthebox.eu/home/users/profile/<profile_num>) for creating such a fun and challenging machine.  I feel like I had to learn as much just to get User access for this one as I normally would in three or four easy - medium ones all together.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

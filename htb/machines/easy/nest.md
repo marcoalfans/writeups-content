@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Nest
 ---
 ## Overview
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/nest-infocard.png)
-
 This was a fairly easy Windows box that required a bit of back-and-forth between locations and also a little bit of .NET-fu to proceed.  Luckily there are tools and websites out there that make disassembling and compiling easy for those who aren't fluent in VB.Net or C\#.
 
 ## Useful Skills and Tools
@@ -56,15 +54,15 @@ Binaries written in .NET languages are fairly simple to break down to the origin
 
 ### Nmap scan
 
-I started off my enumeration with an nmap scan of `10.10.10.177`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and`-oN <name>` saves the output with a filename of `<name>`.
+I started off my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and`-oN <name>` saves the output with a filename of `<name>`.
 
 At first my scan wouldn't go through until I added the `-Pn` flag to stop nmap from sending ICMP probes. After that it proceeded normally. The scan only showed one port open during my initial scan so I ran it again to verify, and it came back with the same results.
 
 ```bash
-zweilos@kalimaa:~/htb/nest$ nmap -p- -A -oA nest.full 10.10.10.178 -Pn
+zweilos@kalimaa:~/htb/nest$ nmap -p- -A -oA nest.full <YOUR_IP> -Pn
 
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-05-30 15:47 EDT
-Nmap scan report for 10.10.10.178
+Nmap scan report for <YOUR_IP>
 Host is up (0.14s latency).
 Not shown: 65534 filtered ports
 PORT    STATE SERVICE       VERSION
@@ -88,7 +86,7 @@ Nmap done: 1 IP address (1 host up) scanned in 330.76 seconds
 Well, nothing else to do but try to connect to SMB without any credentials:
 
 ```text
-zweilos@kalimaa:~/htb/nest$ smbclient -U "" -L \\10.10.10.178\
+zweilos@kalimaa:~/htb/nest$ smbclient -U "" -L \\<YOUR_IP>\
 > 
 Enter WORKGROUP\'s password: 
 
@@ -106,7 +104,7 @@ SMB1 disabled -- no workgroup available
 Luckily it worked, and I got back a listing of the shares on this machine. `Data`, `Secure$`, and `Users` all sound interesting as they are not default shares. I first tried connecting to `Secure$` but was denied. Next I tried to connect to `Data`.
 
 ```text
-zweilos@kalimaa:~/htb/nest$ smbclient -U "" \\\\10.10.10.178\\Data
+zweilos@kalimaa:~/htb/nest$ smbclient -U "" \\\\<YOUR_IP>\\Data
 Enter WORKGROUP\'s password: 
 Try "help" to get a list of possible commands.
 smb: \> ls
@@ -137,7 +135,6 @@ IT department and use the credentials below until all systems have been set up f
 Username: TempUser
 Password: welcome2019
 
-
 Thank you
 HR
 ```
@@ -147,7 +144,7 @@ HR
 The file `"Welcome Email.txt"` contained a set of credentials for the user `TempUser`, the location of the user's folder, and the hostname of the machine: `HTB-NEST`. Using this information I once again used `smbclient` and logged into the `Users` share.
 
 ```text
-zweilos@kalimaa:~/htb/nest$ smbclient -W HTB-NEST -U TempUser \\\\10.10.10.178\\Users
+zweilos@kalimaa:~/htb/nest$ smbclient -W HTB-NEST -U TempUser \\\\<YOUR_IP>\\Users
 Enter HTB-NEST\TempUser's password: 
 Try "help" to get a list of possible commands.
 smb: \> ls
@@ -412,7 +409,7 @@ As you can see, my shortened program worked and gave me the password for `c.smit
 Now that I had credentials as another user, time to see if I could find that `user.txt`. It was in the `Users` share, right in the `c.smith` folder.
 
 ```text
-zweilos@kalimaa:~/htb/nest$ smbclient -W HTB-NEST -U c.smith \\\\10.10.10.178\\Users xRxRxPANCAK3SxRxRx
+zweilos@kalimaa:~/htb/nest$ smbclient -W HTB-NEST -U c.smith \\\\<YOUR_IP>\\Users xRxRxPANCAK3SxRxRx
 Try "help" to get a list of possible commands.
 smb: \> cd c.smith
 smb: \c.smith\> ls
@@ -426,7 +423,7 @@ smb: \c.smith\> ls
 
 ```text
 zweilos@kalimaa:~/htb/nest$ cat 'c.smith\user.txt'
-81960e14de90f242c05d946fc1f94cbe
+****
 ```
 
 ## Path to Power \(Gaining Administrator Access\)
@@ -496,9 +493,9 @@ zweilos@kalimaa:~/htb/nest$ cat HQK\ Reporting\\HQK_Config_Backup.xml
 `HQK_Config_Backup.xml` mentioned port 4386, which I didn't recognize.  A quick internet search revealed nothing about this port other than it was in an unassigned block.  There are generally three things to try when dealing with unknown ports...netcat, telnet, and ssh.  In this case, `nc` simply reported back the banner `HQK Reporting Service V1.2` and nothing else. `Telnet` however gave me an interactive prompt.
 
 ```text
-zweilos@kalimaa:~/htb/nest$ telnet 10.10.10.178 4386
-Trying 10.10.10.178...
-Connected to 10.10.10.178.
+zweilos@kalimaa:~/htb/nest$ telnet <YOUR_IP> 4386
+Trying <YOUR_IP>...
+Connected to <YOUR_IP>.
 Escape character is '^]'.
 
 HQK Reporting Service V1.2
@@ -572,7 +569,7 @@ Initial Query Directory: C:\Program Files\HQK\ALL QUERIES
 Session ID: f5d4ced8-5de2-4fb4-80f7-84cebfea6538
 Debug: True
 Started At: 6/14/2020 9:53:05 AM
-Server Endpoint: 10.10.10.178:4386
+Server Endpoint: <YOUR_IP>:4386
 Client Endpoint: 10.10.14.253:51630
 Current Query Directory: C:\Program Files\HQK\ALL QUERIES
 
@@ -731,7 +728,7 @@ Once I had the Administrator password, it was simple to find the root flag.  It 
 
 ```text
 zweilos@kalimaa:~/htb/nest$ cat 'Administrator\Desktop\root.txt' 
-2f1fbb443419c664fff8b0f0424a3da1
+****
 ```
 
 ### Getting a shell
@@ -751,7 +748,3 @@ nt authority\system
 
 C:\Windows\system32>
 ```
-
-Thanks to [`Vbscrub`](https://www.hackthebox.eu/home/users/profile/158833) for creating such a unique and interesting challenge! I certainly learned a few useful new tricks, and learned to always check back in places where you may have already been upon gaining new levels of access.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!

