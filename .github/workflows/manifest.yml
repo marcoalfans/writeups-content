@@ -8,6 +8,8 @@ on:
       - "ctf/**"
       - "bugbounty/**"
       - "scripts/**"
+  schedule:
+    - cron: "0 6 * * 1"   # weekly refresh — re-pull HTB points/rating/avatars (Mon 06:00 UTC)
   workflow_dispatch:
 
 permissions:
