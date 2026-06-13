@@ -9,8 +9,8 @@ avatar: assets/htb/monteverde.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Monteverde
 ---
-
-## Useful Skills and Tools
+## 
+Useful Skills and Tools
 
 #### Using ldapsearch to enumerate a Windows domain
 
@@ -33,7 +33,8 @@ htb_url: https://app.hackthebox.com/machines/Monteverde
 
 `crackmapexec smb <YOUR_IP> -u users.txt -p users.txt`
 
-#### Connect to a Windows computer through Windows Remote Management \(WinRM\)
+#### 
+Connect to a Windows computer through Windows Remote Management \(WinRM\)
 
 `evil-winrm -i <ip> -u <username> -p '<password>'`
 
@@ -46,9 +47,11 @@ htb_url: https://app.hackthebox.com/machines/Monteverde
 * Remote Management Users
 * Azure Admins
 
-## Enumeration
+## 
+Enumeration
 
-### Nmap scan
+### 
+Nmap scan
 
 I started my enumeration with an nmap scan of `<YOUR_IP>`. The options I regularly use are: `-p-`, which is a shortcut which tells nmap to scan all TCP ports, `-sC` is the equivalent to `--script=default` and runs a collection of nmap enumeration scripts against the target, `-sV` does a service scan, and `-oN <name>` saves the nmap output with a filename of `<name>`.
 

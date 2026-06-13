@@ -9,7 +9,6 @@ avatar: assets/htb/playertwo.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/PlayerTwo
 ---
-
 ## Overview
 
 An Insane difficulty Linux machine that tested my web skills quite a bit and also had me doing as much research on new protocols and services as three or four easy or medium boxes would.  Finding each pathway forward wasn't too difficult with proper enumeration, but getting past each step required patience and reading lots of documentation.  

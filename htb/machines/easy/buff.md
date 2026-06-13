@@ -9,7 +9,6 @@ avatar: assets/htb/buff.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Buff
 ---
-
 ## Overview
 
 TODO: finish writeup, clean up. - I wish I had taken better notes on this one, but I finished it during a pretty busy time.

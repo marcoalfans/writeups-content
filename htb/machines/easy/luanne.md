@@ -9,7 +9,6 @@ avatar: assets/htb/luanne.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Luanne
 ---
-
 ## Useful Skills and Tools
 
 ### Decrypt `.enc` file in BSD

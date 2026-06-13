@@ -9,7 +9,6 @@ avatar: assets/htb/reel2.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Reel2
 ---
-
 ## HTB - Reel2
 
 ### Overview

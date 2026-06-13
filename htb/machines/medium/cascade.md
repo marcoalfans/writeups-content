@@ -9,7 +9,6 @@ avatar: assets/htb/cascade.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Cascade
 ---
-
 ## Overview
 
 This medium difficulty Windows machine was a good refresher on themes and techniques I had seen in other machines \(such as [Nest](nest-write-up.md)\), but also introduced new things and gave enough of a challenge to be quite fun. With proper enumeration this should be a fairly easy challenge, depending on the comfort level with some aspects \(such as reading C\# code\).

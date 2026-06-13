@@ -9,7 +9,6 @@ avatar: assets/htb/openkeys.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/OpenKeyS
 ---
-
 ## Useful Skills and Tools
 
 #### Recover a file from a vim .swp file
@@ -361,7 +360,10 @@ So the system seemed like it was vulnerable, but I was still not sure how to exp
 
  CVE-2019-19521: Authentication bypass
 
-> This is the second piece of the puzzle: if an attacker specifies the username "-schallenge" \(or "-schallenge:passwd" to force a passwd-style authentication\), then the authentication is automatically successful and therefore bypassed.
+> This is the second piece of the puzzle: if an attacker specifies the
+ username "-schallenge" \(or "-schallenge:passwd" to force a passwd-style
+ authentication\), then the authentication is automatically successful and
+ therefore bypassed.
 
 ![](https://raw.githubusercontent.com/kac0/htb-writeups/master/.gitbook/assets/4-schallenge.png)
 

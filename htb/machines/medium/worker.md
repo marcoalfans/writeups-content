@@ -9,7 +9,6 @@ avatar: assets/htb/worker.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Worker
 ---
-
 ## Useful Skills and Tools
 
 ### Interactive Windows Command/Tool List

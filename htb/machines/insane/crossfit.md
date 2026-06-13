@@ -9,7 +9,6 @@ avatar: assets/htb/crossfit.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Crossfit
 ---
-
 ## Overview
 
 This Insane-difficulty machine from Hack The Box took far longer to root than I would have liked, mostly due to getting hung up on the the final exploit. I took a break from it, after getting the user.txt, due to frustration and wanting to make progress elsewhere. This machine challenged me in a number of areas, from creative enumeration methods, to code and binary analysis, to "exploit" writing in a foreign language \(JavaScript and C!\). After taking a break for a few months, I came back with a fresh perspective and was able to quickly discover the errors I had been making. \(Along with fresh patience with the quick-clean script the authors used!\). A script to automate all of the moving pieces of the final exploit solved my issues and I was able to root the machine. 

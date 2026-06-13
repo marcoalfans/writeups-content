@@ -9,7 +9,6 @@ avatar: assets/htb/book.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Book
 ---
-
 ## Overview
 
 A medium Linux box that was fairly straightforward, but still challenging enough to teach some interesting use cases for 'standard' attacks.

@@ -9,7 +9,6 @@ avatar: assets/htb/magic.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Magic
 ---
-
 ## Enumeration
 
 ### Nmap scan
