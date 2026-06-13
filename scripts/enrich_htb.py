@@ -85,13 +85,23 @@ def main():
         name = (fm.get("title") or slug).strip('"')
         avatar_rel = "assets/htb/%s.png" % slug
         avatar_abs = os.path.join(ROOT, avatar_rel)
-        try:
-            data = fetch(API + urllib.request.quote(name), TOKEN)
-        except urllib.error.HTTPError as e:
-            print("HTTP %s for %s — skipping" % (e.code, name)); continue
-        except Exception as e:
-            print("error for %s: %s — skipping" % (name, e)); continue
-        info = data.get("info", data) if isinstance(data, dict) else {}
+        # fetch profile with retry/backoff — HTB rate-limits with empty/429 responses
+        info = None
+        for attempt in range(4):
+            try:
+                data = fetch(API + urllib.request.quote(name), TOKEN)
+                info = data.get("info", data) if isinstance(data, dict) else {}
+                break
+            except urllib.error.HTTPError as e:
+                if e.code in (429, 500, 502, 503) and attempt < 3:
+                    time.sleep(3 * (attempt + 1)); continue
+                print("HTTP %s for %s — skipping" % (e.code, name)); break
+            except Exception as e:
+                if attempt < 3:
+                    time.sleep(3 * (attempt + 1)); continue
+                print("error for %s: %s — skipping" % (name, e)); break
+        if info is None:
+            continue
         if not logged_keys:                # one-time schema dump (keys only, no values)
             print("HTB profile keys:", sorted(info.keys())); logged_keys = True
         # tolerant field extraction
@@ -133,7 +143,7 @@ def main():
         if dest != path:
             os.remove(path)
         print("enriched:", slug, "| diff:", diff, "| pts:", pts, "rating:", rating)
-        time.sleep(0.5)                    # be gentle with the API
+        time.sleep(1.2)                    # be gentle with the API (avoid rate limits)
 
 if __name__ == "__main__":
     main()

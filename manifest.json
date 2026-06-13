@@ -1,7 +1,49 @@
 {
   "version": 1,
-  "count": 15,
+  "count": 55,
   "entries": [
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "admirer",
+      "title": "Admirer",
+      "file": "htb/machines/easy/admirer.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Admirer",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "blunder",
+      "title": "Blunder",
+      "file": "htb/machines/easy/blunder.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Blunder",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "buff",
+      "title": "Buff",
+      "file": "htb/machines/easy/buff.md",
+      "difficulty": "Easy",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Buff",
+      "tags": []
+    },
     {
       "space": "htb",
       "category": [
@@ -26,6 +68,20 @@
         "backy",
         "sudo"
       ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "doctor",
+      "title": "Doctor",
+      "file": "htb/machines/easy/doctor.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Doctor",
+      "tags": []
     },
     {
       "space": "htb",
@@ -111,6 +167,20 @@
         "machines",
         "easy"
       ],
+      "slug": "luanne",
+      "title": "Luanne",
+      "file": "htb/machines/easy/luanne.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Luanne",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
       "slug": "monitorsfour",
       "title": "MonitorsFour",
       "file": "htb/machines/easy/monitorsfour.md",
@@ -128,6 +198,174 @@
         "docker-api",
         "container-escape"
       ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "omni",
+      "title": "Omni",
+      "file": "htb/machines/easy/omni.md",
+      "difficulty": "Easy",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Omni",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "remote",
+      "title": "Remote",
+      "file": "htb/machines/easy/remote.md",
+      "difficulty": "Easy",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Remote",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "sauna",
+      "title": "Sauna",
+      "file": "htb/machines/easy/sauna.md",
+      "difficulty": "Easy",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Sauna",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "servmon",
+      "title": "Servmon",
+      "file": "htb/machines/easy/servmon.md",
+      "difficulty": "Easy",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Servmon",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "tabby",
+      "title": "Tabby",
+      "file": "htb/machines/easy/tabby.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Tabby",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "traceback",
+      "title": "Traceback",
+      "file": "htb/machines/easy/traceback.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Traceback",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "blackfield",
+      "title": "Blackfield",
+      "file": "htb/machines/hard/blackfield.md",
+      "difficulty": "Hard",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Blackfield",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "compromised",
+      "title": "Compromised",
+      "file": "htb/machines/hard/compromised.md",
+      "difficulty": "Hard",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Compromised",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "feline",
+      "title": "Feline",
+      "file": "htb/machines/hard/feline.md",
+      "difficulty": "Hard",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Feline",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "forwardslash",
+      "title": "ForwardSlash",
+      "file": "htb/machines/hard/forwardslash.md",
+      "difficulty": "Hard",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/ForwardSlash",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "intense",
+      "title": "Intense",
+      "file": "htb/machines/hard/intense.md",
+      "difficulty": "Hard",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Intense",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "oouch",
+      "title": "Oouch",
+      "file": "htb/machines/hard/oouch.md",
+      "difficulty": "Hard",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Oouch",
+      "tags": []
     },
     {
       "space": "htb",
@@ -156,6 +394,76 @@
         "spn-jacking",
         "ntlm-relay"
       ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "quick",
+      "title": "Quick",
+      "file": "htb/machines/hard/quick.md",
+      "difficulty": "Hard",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Quick",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "reel2",
+      "title": "Reel2",
+      "file": "htb/machines/hard/reel2.md",
+      "difficulty": "Hard",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Reel2",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "travel",
+      "title": "Travel",
+      "file": "htb/machines/hard/travel.md",
+      "difficulty": "Hard",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Travel",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "unbalanced",
+      "title": "Unbalanced",
+      "file": "htb/machines/hard/unbalanced.md",
+      "difficulty": "Hard",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Unbalanced",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
+      "slug": "apt",
+      "title": "APT",
+      "file": "htb/machines/insane/apt.md",
+      "difficulty": "Insane",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/APT",
+      "tags": []
     },
     {
       "space": "htb",
@@ -190,6 +498,62 @@
         "machines",
         "insane"
       ],
+      "slug": "crossfit",
+      "title": "Crossfit",
+      "file": "htb/machines/insane/crossfit.md",
+      "difficulty": "Insane",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Crossfit",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
+      "slug": "dyplesher",
+      "title": "Dyplesher",
+      "file": "htb/machines/insane/dyplesher.md",
+      "difficulty": "Insane",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Dyplesher",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
+      "slug": "laser",
+      "title": "Laser",
+      "file": "htb/machines/insane/laser.md",
+      "difficulty": "Insane",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Laser",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
+      "slug": "multimaster",
+      "title": "Multimaster",
+      "file": "htb/machines/insane/multimaster.md",
+      "difficulty": "Insane",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Multimaster",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
       "slug": "pingpong",
       "title": "PingPong",
       "file": "htb/machines/insane/pingpong.md",
@@ -209,6 +573,20 @@
         "aes256",
         "no-ntlm"
       ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
+      "slug": "playertwo",
+      "title": "PlayerTwo",
+      "file": "htb/machines/insane/playertwo.md",
+      "difficulty": "Insane",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/PlayerTwo",
+      "tags": []
     },
     {
       "space": "htb",
@@ -292,6 +670,62 @@
         "machines",
         "medium"
       ],
+      "slug": "book",
+      "title": "Book",
+      "file": "htb/machines/medium/book.md",
+      "difficulty": "Medium",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Book",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "cache",
+      "title": "Cache",
+      "file": "htb/machines/medium/cache.md",
+      "difficulty": "Medium",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Cache",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "cascade",
+      "title": "Cascade",
+      "file": "htb/machines/medium/cascade.md",
+      "difficulty": "Medium",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Cascade",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "fuse",
+      "title": "Fuse",
+      "file": "htb/machines/medium/fuse.md",
+      "difficulty": "Medium",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Fuse",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
       "slug": "helix",
       "title": "Helix",
       "file": "htb/machines/medium/helix.md",
@@ -342,6 +776,76 @@
         "machines",
         "medium"
       ],
+      "slug": "jewel",
+      "title": "Jewel",
+      "file": "htb/machines/medium/jewel.md",
+      "difficulty": "Medium",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Jewel",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "magic",
+      "title": "Magic",
+      "file": "htb/machines/medium/magic.md",
+      "difficulty": "Medium",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Magic",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "monteverde",
+      "title": "Monteverde",
+      "file": "htb/machines/medium/monteverde.md",
+      "difficulty": "Medium",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Monteverde",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "nest",
+      "title": "Nest",
+      "file": "htb/machines/medium/nest.md",
+      "difficulty": "Medium",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Nest",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "openkeys",
+      "title": "OpenKeyS",
+      "file": "htb/machines/medium/openkeys.md",
+      "difficulty": "Medium",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/OpenKeyS",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
       "slug": "pterodactyl",
       "title": "Pterodactyl",
       "file": "htb/machines/medium/pterodactyl.md",
@@ -369,6 +873,48 @@
         "machines",
         "medium"
       ],
+      "slug": "resolute",
+      "title": "Resolute",
+      "file": "htb/machines/medium/resolute.md",
+      "difficulty": "Medium",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Resolute",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "sneakymailer",
+      "title": "SneakyMailer",
+      "file": "htb/machines/medium/sneakymailer.md",
+      "difficulty": "Medium",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/SneakyMailer",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "time",
+      "title": "Time",
+      "file": "htb/machines/medium/time.md",
+      "difficulty": "Medium",
+      "os": "Linux",
+      "htb_url": "https://app.hackthebox.com/machines/Time",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
       "slug": "variatype",
       "title": "VariaType",
       "file": "htb/machines/medium/variatype.md",
@@ -389,6 +935,20 @@
         "cve-2024-25082",
         "cve-2025-47273"
       ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "worker",
+      "title": "Worker",
+      "file": "htb/machines/medium/worker.md",
+      "difficulty": "Medium",
+      "os": "Windows",
+      "htb_url": "https://app.hackthebox.com/machines/Worker",
+      "tags": []
     }
   ]
 }
