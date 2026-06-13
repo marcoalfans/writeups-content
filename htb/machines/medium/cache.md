@@ -117,7 +117,7 @@ body  {
 
 I spotted a set of credentials inside `functionality.js`, located in the `/jquery` directory: `ash:H@v3_fun`. They let me log into the site, but I'd already established that the site contained nothing of value. The password was rejected for SSH. With a username in hand, I then ran my `cewl` wordlist hoping to brute force a valid password, but came up empty.
 
-Next I tried enumerating subdomains using virtual host enumeration as described in the HTB machine [Forwardslash](https://kac0.gitbook.io/htb-writeups/linux-machines/hard/forwardslash-write-up#virtual-host-enumeration)
+Next I tried enumerating subdomains using virtual host enumeration as described in the HTB machine [Forwardslash](/writeups/#/htb/machines/hard/forwardslash)
 
 ```text
 kac0@kali:~/htb/cache$ gobuster vhost -u http://cache.htb -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt
