@@ -6,6 +6,7 @@ points: 20
 rating: 3.9
 date: 2020-01-25
 avatar: assets/htb/nest.png
+tags: [Clear Text Credentials, Weak Cryptography, Anonymous/Guest Access, Hard-coded Credentials, Reconnaissance, Decompilation, C#, SMB]
 htb_url: https://app.hackthebox.com/machines/Nest
 ---
 ## Overview

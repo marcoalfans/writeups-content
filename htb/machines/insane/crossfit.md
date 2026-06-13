@@ -6,6 +6,7 @@ points: 50
 rating: 4.4
 date: 2020-09-19
 avatar: assets/htb/crossfit.png
+tags: [OS Command Injection, Cross Site Scripting (XSS), Group Membership, Cross Site Request Forgery (CSRF), Cross-Origin Resource Sharing (CORS), Password Reuse, Password Cracking, Scheduled Job Abuse]
 htb_url: https://app.hackthebox.com/machines/Crossfit
 ---
 ## Overview

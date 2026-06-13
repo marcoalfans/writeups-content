@@ -6,6 +6,7 @@ points: 20
 rating: 3.2
 date: 2020-08-22
 avatar: assets/htb/omni.png
+tags: [Weak Credentials, Remote Code Execution, Reconnaissance, Password Cracking, Maintain Access, Powershell, Backdoor, Web Application]
 htb_url: https://app.hackthebox.com/machines/Omni
 ---
 ## Enumeration

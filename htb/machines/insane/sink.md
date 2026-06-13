@@ -6,7 +6,7 @@ points: 50
 rating: 4.9
 date: 2021-01-30
 avatar: assets/htb/sink.png
-tags: [web, http-smuggling, aws, cloud, gitea, secrets-management]
+tags: [Information Disclosure, Misconfiguration, HTTP request smuggling, AWS Enumeration, Analysis of Logs, Password Reuse, Cookie Manipulation, HTTP Desync]
 source: https://github.com/momenbasel/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Sink
 ---

@@ -6,6 +6,7 @@ points: 20
 rating: 2.7
 date: 2020-11-28
 avatar: assets/htb/luanne.png
+tags: [Weak Credentials, Default Credentials, Code Injection, Reconnaissance, Web Site Structure Discovery, Password Reuse, Password Cracking, Lua]
 htb_url: https://app.hackthebox.com/machines/Luanne
 ---
 ## Useful Skills and Tools

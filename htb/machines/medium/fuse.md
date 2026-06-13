@@ -6,6 +6,7 @@ points: 30
 rating: 3.6
 date: 2020-06-13
 avatar: assets/htb/fuse.png
+tags: [Clear Text Credentials, Reconnaissance, User Enumeration, Password Spraying, Privilege Abuse, Powershell, IIS, SMB]
 htb_url: https://app.hackthebox.com/machines/Fuse
 ---
 ## Overview

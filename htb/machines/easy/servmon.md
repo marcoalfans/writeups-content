@@ -6,6 +6,7 @@ points: 20
 rating: 2.2
 date: 2020-04-11
 avatar: assets/htb/servmon.png
+tags: [Local File Inclusion, Clear Text Credentials, Weak Permissions, Anonymous/Guest Access, Reconnaissance, Tunneling, Password Spraying, Port Forwarding]
 htb_url: https://app.hackthebox.com/machines/Servmon
 ---
 ## Overview

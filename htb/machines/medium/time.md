@@ -6,6 +6,7 @@ points: 30
 rating: 3.5
 date: 2020-10-24
 avatar: assets/htb/time.png
+tags: [Deserialization, Weak Permissions, Reconnaissance, Java, JSON, Web Application, Vulnerability Assessment, Common Applications]
 htb_url: https://app.hackthebox.com/machines/Time
 ---
 ## Enumeration

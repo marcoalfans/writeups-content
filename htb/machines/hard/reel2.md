@@ -6,6 +6,7 @@ points: 40
 rating: 4.6
 date: 2020-10-03
 avatar: assets/htb/reel2.png
+tags: [Weak Credentials, Clear Text Credentials, Misconfiguration, Directory Traversal, Reconnaissance, Web Site Structure Discovery, Packet Capture Analysis, Password Cracking]
 htb_url: https://app.hackthebox.com/machines/Reel2
 ---
 ## HTB - Reel2

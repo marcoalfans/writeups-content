@@ -6,6 +6,7 @@ points: 20
 rating: 3.5
 date: 2020-05-02
 avatar: assets/htb/admirer.png
+tags: [Arbitrary File Read, Path Hijacking, Reconnaissance, SUDO Exploitation, PHP, Bash, Apache, MariaDB]
 htb_url: https://app.hackthebox.com/machines/Admirer
 ---
 ## Overview

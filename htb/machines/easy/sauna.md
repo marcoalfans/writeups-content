@@ -6,6 +6,7 @@ points: 20
 rating: 4.5
 date: 2020-02-15
 avatar: assets/htb/sauna.png
+tags: [Misconfiguration, Autologon Credentials, Reconnaissance, User Enumeration, Password Cracking, ASREPRoasting, AD DCSync, Pass the Hash]
 htb_url: https://app.hackthebox.com/machines/Sauna
 ---
 ## Overview

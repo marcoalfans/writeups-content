@@ -6,6 +6,7 @@ points: 30
 rating: 3.6
 date: 2020-10-10
 avatar: assets/htb/jewel.png
+tags: [Weak Credentials, Misconfiguration, SUDO Exploitation, Ruby, Rails, OTP, Web Application, Vulnerability Assessment]
 htb_url: https://app.hackthebox.com/machines/Jewel
 ---
 ## Useful Skills and Tools

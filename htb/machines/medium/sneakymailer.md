@@ -6,6 +6,7 @@ points: 30
 rating: 3.9
 date: 2020-07-11
 avatar: assets/htb/sneakymailer.png
+tags: [Weak Credentials, Misconfiguration, Password Reuse, Password Cracking, SUDO Exploitation, Phishing, FTP, PyPi]
 htb_url: https://app.hackthebox.com/machines/SneakyMailer
 ---
 ## Useful Skills and Tools

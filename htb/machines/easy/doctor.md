@@ -6,6 +6,7 @@ points: 20
 rating: 4
 date: 2020-09-26
 avatar: assets/htb/doctor.png
+tags: [Remote Code Execution, Clear Text Credentials, Misconfiguration, Server Side Template Injection (SSTI), SIEM, Web Application, Vulnerability Assessment, Injections]
 htb_url: https://app.hackthebox.com/machines/Doctor
 ---
 ## Enumeration

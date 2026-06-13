@@ -6,6 +6,7 @@ points: 40
 rating: 4.9
 date: 2020-05-16
 avatar: assets/htb/travel.png
+tags: [Deserialization, Group Membership, Server Side Request Forgery (SSRF), Password Cracking, Privilege Abuse, PHP, NGINX, LDAP]
 htb_url: https://app.hackthebox.com/machines/Travel
 ---
 ## HTB - Travel

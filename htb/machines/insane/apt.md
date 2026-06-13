@@ -6,6 +6,7 @@ points: 50
 rating: 3.7
 date: 2020-10-31
 avatar: assets/htb/apt.png
+tags: [Clear Text Credentials, Weak Authentication, Information Disclosure, Weak Cryptography, Reconnaissance, Password Cracking, AD DCSync, Python]
 htb_url: https://app.hackthebox.com/machines/APT
 ---
 ## Enumeration

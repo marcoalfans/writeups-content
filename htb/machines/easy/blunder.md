@@ -6,6 +6,7 @@ points: 20
 rating: 3.4
 date: 2020-05-30
 avatar: assets/htb/blunder.png
+tags: [Arbitrary File Upload, Directory Traversal, Reconnaissance, Brute Force Attack, SUDO Exploitation, PHP, Python, CMS]
 htb_url: https://app.hackthebox.com/machines/Blunder
 ---
 ## Overview

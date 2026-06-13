@@ -6,6 +6,7 @@ points: 20
 rating: 3.5
 date: 2020-07-18
 avatar: assets/htb/buff.png
+tags: [Buffer Overflow, Remote Code Execution, PHP, Python, Apache, Web Application, Vulnerability Assessment, Common Applications]
 htb_url: https://app.hackthebox.com/machines/Buff
 ---
 ## Useful Skills and Tools

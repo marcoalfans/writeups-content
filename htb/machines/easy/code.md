@@ -6,7 +6,7 @@ points: 20
 rating: 4
 date: 2025-03-22
 avatar: assets/htb/code.png
-tags: [python, sandbox-escape, keyword-filter, subprocess, backy, sudo]
+tags: [Remote Code Execution, Misconfiguration, Directory Traversal, Reconnaissance, Password Cracking, SUDO Exploitation, Python, SQL]
 source: https://github.com/momenbasel/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Code
 ---

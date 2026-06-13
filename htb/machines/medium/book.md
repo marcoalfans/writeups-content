@@ -6,6 +6,7 @@ points: 30
 rating: 4.1
 date: 2020-02-22
 avatar: assets/htb/book.png
+tags: [Arbitrary File Read, Cross Site Scripting (XSS), Misconfiguration, Race Condition, SQL Truncation, Reconnaissance, JavaScript, Apache]
 htb_url: https://app.hackthebox.com/machines/Book
 ---
 ## Overview

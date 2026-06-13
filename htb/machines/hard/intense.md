@@ -6,9 +6,9 @@ points: 40
 rating: 4.4
 date: 2020-07-04
 avatar: assets/htb/intense.png
+tags: [SQL Injection, Buffer Overflow, Directory Listing, Binary Exploitation, Hash Length Extension Attack, ROP Chains, Python, C]
 htb_url: https://app.hackthebox.com/machines/Intense
 ---
-
 ## Enumeration
 
 ### Nmap scan

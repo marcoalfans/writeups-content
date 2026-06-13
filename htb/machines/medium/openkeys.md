@@ -6,6 +6,7 @@ points: 30
 rating: 3.8
 date: 2020-07-25
 avatar: assets/htb/openkeys.png
+tags: [Information Disclosure, Reconnaissance, Cookie Manipulation, PHP, Web Application, Vulnerability Assessment, Broken Authentication and Authorization, Source Code Analysis]
 htb_url: https://app.hackthebox.com/machines/OpenKeyS
 ---
 ## Useful Skills and Tools

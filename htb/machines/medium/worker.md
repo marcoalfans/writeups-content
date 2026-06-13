@@ -6,6 +6,7 @@ points: 30
 rating: 4.1
 date: 2020-08-15
 avatar: assets/htb/worker.png
+tags: [Weak Credentials, Clear Text Credentials, Password Spraying, ASP, Azure, Azure DevOps, Web Application, Vulnerability Assessment]
 htb_url: https://app.hackthebox.com/machines/Worker
 ---
 ## Useful Skills and Tools

@@ -6,6 +6,7 @@ points: 20
 rating: 4.3
 date: 2020-03-21
 avatar: assets/htb/remote.png
+tags: [Remote Code Execution, Misconfiguration, Weak Cryptography, Reconnaissance, Impersonation, Password Cracking, Powershell, IIS]
 htb_url: https://app.hackthebox.com/machines/Remote
 ---
 ## Useful Skills and Tools

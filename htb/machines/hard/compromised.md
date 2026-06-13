@@ -6,6 +6,7 @@ points: 40
 rating: 3.9
 date: 2020-09-12
 avatar: assets/htb/compromised.png
+tags: [Clear Text Credentials, Arbitrary File Upload, PHP, SQL, C, Apache, MySQL, Backdoor]
 htb_url: https://app.hackthebox.com/machines/Compromised
 ---
 ## Enumeration

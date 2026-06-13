@@ -6,6 +6,7 @@ points: 50
 rating: 4.3
 date: 2020-03-07
 avatar: assets/htb/multimaster.png
+tags: [SQL Injection, OS Command Injection, Group Membership, Misconfiguration, Reconnaissance, User Enumeration, Password Reuse, Password Cracking]
 htb_url: https://app.hackthebox.com/machines/Multimaster
 ---
 ## Enumeration

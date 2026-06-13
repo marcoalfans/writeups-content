@@ -6,6 +6,7 @@ points: 30
 rating: 4.6
 date: 2020-03-28
 avatar: assets/htb/cascade.png
+tags: [Clear Text Credentials, Information Disclosure, Weak Cryptography, Hard-coded Credentials, Reconnaissance, User Enumeration, Password Reuse, Powershell]
 htb_url: https://app.hackthebox.com/machines/Cascade
 ---
 ## Overview

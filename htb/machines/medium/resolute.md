@@ -6,6 +6,7 @@ points: 30
 rating: 4.7
 date: 2019-12-07
 avatar: assets/htb/resolute.png
+tags: [Weak Credentials, Clear Text Credentials, Group Membership, Information Disclosure, Anonymous/Guest Access, Reconnaissance, Password Spraying, Enterprise Network]
 htb_url: https://app.hackthebox.com/machines/Resolute
 ---
 ## Overview

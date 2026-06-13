@@ -18,7 +18,16 @@
       "rating": "3.5",
       "avatar": "assets/htb/admirer.png",
       "htb_url": "https://app.hackthebox.com/machines/Admirer",
-      "tags": []
+      "tags": [
+        "Arbitrary File Read",
+        "Path Hijacking",
+        "Reconnaissance",
+        "SUDO Exploitation",
+        "PHP",
+        "Bash",
+        "Apache",
+        "MariaDB"
+      ]
     },
     {
       "space": "htb",
@@ -36,7 +45,16 @@
       "rating": "3.4",
       "avatar": "assets/htb/blunder.png",
       "htb_url": "https://app.hackthebox.com/machines/Blunder",
-      "tags": []
+      "tags": [
+        "Arbitrary File Upload",
+        "Directory Traversal",
+        "Reconnaissance",
+        "Brute Force Attack",
+        "SUDO Exploitation",
+        "PHP",
+        "Python",
+        "CMS"
+      ]
     },
     {
       "space": "htb",
@@ -54,7 +72,16 @@
       "rating": "3.5",
       "avatar": "assets/htb/buff.png",
       "htb_url": "https://app.hackthebox.com/machines/Buff",
-      "tags": []
+      "tags": [
+        "Buffer Overflow",
+        "Remote Code Execution",
+        "PHP",
+        "Python",
+        "Apache",
+        "Web Application",
+        "Vulnerability Assessment",
+        "Common Applications"
+      ]
     },
     {
       "space": "htb",
@@ -73,12 +100,14 @@
       "avatar": "assets/htb/code.png",
       "htb_url": "https://app.hackthebox.com/machines/Code",
       "tags": [
-        "python",
-        "sandbox-escape",
-        "keyword-filter",
-        "subprocess",
-        "backy",
-        "sudo"
+        "Remote Code Execution",
+        "Misconfiguration",
+        "Directory Traversal",
+        "Reconnaissance",
+        "Password Cracking",
+        "SUDO Exploitation",
+        "Python",
+        "SQL"
       ]
     },
     {
@@ -97,7 +126,16 @@
       "rating": "4",
       "avatar": "assets/htb/doctor.png",
       "htb_url": "https://app.hackthebox.com/machines/Doctor",
-      "tags": []
+      "tags": [
+        "Remote Code Execution",
+        "Clear Text Credentials",
+        "Misconfiguration",
+        "Server Side Template Injection (SSTI)",
+        "SIEM",
+        "Web Application",
+        "Vulnerability Assessment",
+        "Injections"
+      ]
     },
     {
       "space": "htb",
@@ -193,7 +231,16 @@
       "rating": "2.7",
       "avatar": "assets/htb/luanne.png",
       "htb_url": "https://app.hackthebox.com/machines/Luanne",
-      "tags": []
+      "tags": [
+        "Weak Credentials",
+        "Default Credentials",
+        "Code Injection",
+        "Reconnaissance",
+        "Web Site Structure Discovery",
+        "Password Reuse",
+        "Password Cracking",
+        "Lua"
+      ]
     },
     {
       "space": "htb",
@@ -212,11 +259,14 @@
       "avatar": "assets/htb/monitorsfour.png",
       "htb_url": "https://app.hackthebox.com/machines/MonitorsFour",
       "tags": [
-        "cacti",
-        "php-type-juggling",
-        "cve-chain",
-        "docker-api",
-        "container-escape"
+        "Remote Code Execution",
+        "Server Side Request Forgery (SSRF)",
+        "Insecure Direct Object Reference (IDOR)",
+        "Command Execution",
+        "Reconnaissance",
+        "Fuzzing",
+        "Password Reuse",
+        "Docker Abuse"
       ]
     },
     {
@@ -235,7 +285,16 @@
       "rating": "3.9",
       "avatar": "assets/htb/nest.png",
       "htb_url": "https://app.hackthebox.com/machines/Nest",
-      "tags": []
+      "tags": [
+        "Clear Text Credentials",
+        "Weak Cryptography",
+        "Anonymous/Guest Access",
+        "Hard-coded Credentials",
+        "Reconnaissance",
+        "Decompilation",
+        "C#",
+        "SMB"
+      ]
     },
     {
       "space": "htb",
@@ -253,7 +312,16 @@
       "rating": "3.2",
       "avatar": "assets/htb/omni.png",
       "htb_url": "https://app.hackthebox.com/machines/Omni",
-      "tags": []
+      "tags": [
+        "Weak Credentials",
+        "Remote Code Execution",
+        "Reconnaissance",
+        "Password Cracking",
+        "Maintain Access",
+        "Powershell",
+        "Backdoor",
+        "Web Application"
+      ]
     },
     {
       "space": "htb",
@@ -271,7 +339,16 @@
       "rating": "4.3",
       "avatar": "assets/htb/remote.png",
       "htb_url": "https://app.hackthebox.com/machines/Remote",
-      "tags": []
+      "tags": [
+        "Remote Code Execution",
+        "Misconfiguration",
+        "Weak Cryptography",
+        "Reconnaissance",
+        "Impersonation",
+        "Password Cracking",
+        "Powershell",
+        "IIS"
+      ]
     },
     {
       "space": "htb",
@@ -289,7 +366,16 @@
       "rating": "4.5",
       "avatar": "assets/htb/sauna.png",
       "htb_url": "https://app.hackthebox.com/machines/Sauna",
-      "tags": []
+      "tags": [
+        "Misconfiguration",
+        "Autologon Credentials",
+        "Reconnaissance",
+        "User Enumeration",
+        "Password Cracking",
+        "ASREPRoasting",
+        "AD DCSync",
+        "Pass the Hash"
+      ]
     },
     {
       "space": "htb",
@@ -307,7 +393,16 @@
       "rating": "2.2",
       "avatar": "assets/htb/servmon.png",
       "htb_url": "https://app.hackthebox.com/machines/Servmon",
-      "tags": []
+      "tags": [
+        "Local File Inclusion",
+        "Clear Text Credentials",
+        "Weak Permissions",
+        "Anonymous/Guest Access",
+        "Reconnaissance",
+        "Tunneling",
+        "Password Spraying",
+        "Port Forwarding"
+      ]
     },
     {
       "space": "htb",
@@ -343,7 +438,16 @@
       "rating": "4",
       "avatar": "assets/htb/traceback.png",
       "htb_url": "https://app.hackthebox.com/machines/Traceback",
-      "tags": []
+      "tags": [
+        "Information Disclosure",
+        "Default Credentials",
+        "Misconfiguration",
+        "Reconnaissance",
+        "SUDO Exploitation",
+        "PHP",
+        "Lua",
+        "Apache"
+      ]
     },
     {
       "space": "htb",
@@ -361,7 +465,16 @@
       "rating": "4.9",
       "avatar": "assets/htb/blackfield.png",
       "htb_url": "https://app.hackthebox.com/machines/Blackfield",
-      "tags": []
+      "tags": [
+        "Group Membership",
+        "Anonymous/Guest Access",
+        "Password Cracking",
+        "ASREPRoasting",
+        "Password Dump",
+        "SMB",
+        "DNS",
+        "Kerberos"
+      ]
     },
     {
       "space": "htb",
@@ -379,7 +492,16 @@
       "rating": "3.9",
       "avatar": "assets/htb/compromised.png",
       "htb_url": "https://app.hackthebox.com/machines/Compromised",
-      "tags": []
+      "tags": [
+        "Clear Text Credentials",
+        "Arbitrary File Upload",
+        "PHP",
+        "SQL",
+        "C",
+        "Apache",
+        "MySQL",
+        "Backdoor"
+      ]
     },
     {
       "space": "htb",
@@ -397,7 +519,16 @@
       "rating": "4.8",
       "avatar": "assets/htb/feline.png",
       "htb_url": "https://app.hackthebox.com/machines/Feline",
-      "tags": []
+      "tags": [
+        "Deserialization",
+        "Information Disclosure",
+        "Misconfiguration",
+        "Reconnaissance",
+        "Docker Abuse",
+        "Java",
+        "Apache",
+        "Tomcat"
+      ]
     },
     {
       "space": "htb",
@@ -415,7 +546,16 @@
       "rating": "3.8",
       "avatar": "assets/htb/forwardslash.png",
       "htb_url": "https://app.hackthebox.com/machines/ForwardSlash",
-      "tags": []
+      "tags": [
+        "Local File Inclusion",
+        "XXE Injection",
+        "Server Side Request Forgery (SSRF)",
+        "Information Disclosure",
+        "Directory Traversal",
+        "Weak Cryptography",
+        "Reconnaissance",
+        "Web Site Structure Discovery"
+      ]
     },
     {
       "space": "htb",
@@ -433,7 +573,16 @@
       "rating": "4.4",
       "avatar": "assets/htb/intense.png",
       "htb_url": "https://app.hackthebox.com/machines/Intense",
-      "tags": []
+      "tags": [
+        "SQL Injection",
+        "Buffer Overflow",
+        "Directory Listing",
+        "Binary Exploitation",
+        "Hash Length Extension Attack",
+        "ROP Chains",
+        "Python",
+        "C"
+      ]
     },
     {
       "space": "htb",
@@ -451,7 +600,16 @@
       "rating": "4.9",
       "avatar": "assets/htb/oouch.png",
       "htb_url": "https://app.hackthebox.com/machines/Oouch",
-      "tags": []
+      "tags": [
+        "OS Command Injection",
+        "Cross Site Request Forgery (CSRF)",
+        "Misconfiguration",
+        "Anonymous/Guest Access",
+        "Reconnaissance",
+        "Web Site Structure Discovery",
+        "Pivoting",
+        "WAF Bypass"
+      ]
     },
     {
       "space": "htb",
@@ -497,7 +655,16 @@
       "rating": "4.3",
       "avatar": "assets/htb/quick.png",
       "htb_url": "https://app.hackthebox.com/machines/Quick",
-      "tags": []
+      "tags": [
+        "Clear Text Credentials",
+        "Reconnaissance",
+        "Password Cracking",
+        "PHP",
+        "SQL",
+        "Bash",
+        "XML",
+        "Apache"
+      ]
     },
     {
       "space": "htb",
@@ -515,7 +682,16 @@
       "rating": "4.6",
       "avatar": "assets/htb/reel2.png",
       "htb_url": "https://app.hackthebox.com/machines/Reel2",
-      "tags": []
+      "tags": [
+        "Weak Credentials",
+        "Clear Text Credentials",
+        "Misconfiguration",
+        "Directory Traversal",
+        "Reconnaissance",
+        "Web Site Structure Discovery",
+        "Packet Capture Analysis",
+        "Password Cracking"
+      ]
     },
     {
       "space": "htb",
@@ -533,7 +709,16 @@
       "rating": "4.9",
       "avatar": "assets/htb/travel.png",
       "htb_url": "https://app.hackthebox.com/machines/Travel",
-      "tags": []
+      "tags": [
+        "Deserialization",
+        "Group Membership",
+        "Server Side Request Forgery (SSRF)",
+        "Password Cracking",
+        "Privilege Abuse",
+        "PHP",
+        "NGINX",
+        "LDAP"
+      ]
     },
     {
       "space": "htb",
@@ -551,7 +736,16 @@
       "rating": "4.7",
       "avatar": "assets/htb/unbalanced.png",
       "htb_url": "https://app.hackthebox.com/machines/Unbalanced",
-      "tags": []
+      "tags": [
+        "SQL Injection",
+        "Weak Credentials",
+        "Clear Text Credentials",
+        "Misconfiguration",
+        "XPath Injection",
+        "Reconnaissance",
+        "Password Reuse",
+        "PHP"
+      ]
     },
     {
       "space": "htb",
@@ -569,7 +763,16 @@
       "rating": "3.7",
       "avatar": "assets/htb/apt.png",
       "htb_url": "https://app.hackthebox.com/machines/APT",
-      "tags": []
+      "tags": [
+        "Clear Text Credentials",
+        "Weak Authentication",
+        "Information Disclosure",
+        "Weak Cryptography",
+        "Reconnaissance",
+        "Password Cracking",
+        "AD DCSync",
+        "Python"
+      ]
     },
     {
       "space": "htb",
@@ -614,7 +817,16 @@
       "rating": "4.4",
       "avatar": "assets/htb/crossfit.png",
       "htb_url": "https://app.hackthebox.com/machines/Crossfit",
-      "tags": []
+      "tags": [
+        "OS Command Injection",
+        "Cross Site Scripting (XSS)",
+        "Group Membership",
+        "Cross Site Request Forgery (CSRF)",
+        "Cross-Origin Resource Sharing (CORS)",
+        "Password Reuse",
+        "Password Cracking",
+        "Scheduled Job Abuse"
+      ]
     },
     {
       "space": "htb",
@@ -650,7 +862,16 @@
       "rating": "4.1",
       "avatar": "assets/htb/laser.png",
       "htb_url": "https://app.hackthebox.com/machines/Laser",
-      "tags": []
+      "tags": [
+        "Remote Code Execution",
+        "Server Side Request Forgery (SSRF)",
+        "Information Disclosure",
+        "Misconfiguration",
+        "Race Condition",
+        "Weak Cryptography",
+        "Reconnaissance",
+        "Exploit Development"
+      ]
     },
     {
       "space": "htb",
@@ -668,7 +889,16 @@
       "rating": "4.3",
       "avatar": "assets/htb/multimaster.png",
       "htb_url": "https://app.hackthebox.com/machines/Multimaster",
-      "tags": []
+      "tags": [
+        "SQL Injection",
+        "OS Command Injection",
+        "Group Membership",
+        "Misconfiguration",
+        "Reconnaissance",
+        "User Enumeration",
+        "Password Reuse",
+        "Password Cracking"
+      ]
     },
     {
       "space": "htb",
@@ -712,7 +942,16 @@
       "rating": "4.4",
       "avatar": "assets/htb/playertwo.png",
       "htb_url": "https://app.hackthebox.com/machines/PlayerTwo",
-      "tags": []
+      "tags": [
+        "Information Disclosure",
+        "Misconfiguration",
+        "PHP type juggling",
+        "Heap Overflow",
+        "Reconnaissance",
+        "Web Site Structure Discovery",
+        "Binary Exploitation",
+        "Exploit Development"
+      ]
     },
     {
       "space": "htb",
@@ -731,12 +970,14 @@
       "avatar": "assets/htb/sink.png",
       "htb_url": "https://app.hackthebox.com/machines/Sink",
       "tags": [
-        "web",
-        "http-smuggling",
-        "aws",
-        "cloud",
-        "gitea",
-        "secrets-management"
+        "Information Disclosure",
+        "Misconfiguration",
+        "HTTP request smuggling",
+        "AWS Enumeration",
+        "Analysis of Logs",
+        "Password Reuse",
+        "Cookie Manipulation",
+        "HTTP Desync"
       ]
     },
     {
@@ -806,7 +1047,16 @@
       "rating": "4.1",
       "avatar": "assets/htb/book.png",
       "htb_url": "https://app.hackthebox.com/machines/Book",
-      "tags": []
+      "tags": [
+        "Arbitrary File Read",
+        "Cross Site Scripting (XSS)",
+        "Misconfiguration",
+        "Race Condition",
+        "SQL Truncation",
+        "Reconnaissance",
+        "JavaScript",
+        "Apache"
+      ]
     },
     {
       "space": "htb",
@@ -824,7 +1074,16 @@
       "rating": "3.8",
       "avatar": "assets/htb/cache.png",
       "htb_url": "https://app.hackthebox.com/machines/Cache",
-      "tags": []
+      "tags": [
+        "SQL Injection",
+        "Remote Code Execution",
+        "Arbitrary File Upload",
+        "Group Membership",
+        "Web Site Structure Discovery",
+        "Password Cracking",
+        "Docker Abuse",
+        "PHP"
+      ]
     },
     {
       "space": "htb",
@@ -842,7 +1101,16 @@
       "rating": "4.6",
       "avatar": "assets/htb/cascade.png",
       "htb_url": "https://app.hackthebox.com/machines/Cascade",
-      "tags": []
+      "tags": [
+        "Clear Text Credentials",
+        "Information Disclosure",
+        "Weak Cryptography",
+        "Hard-coded Credentials",
+        "Reconnaissance",
+        "User Enumeration",
+        "Password Reuse",
+        "Powershell"
+      ]
     },
     {
       "space": "htb",
@@ -860,7 +1128,16 @@
       "rating": "3.6",
       "avatar": "assets/htb/fuse.png",
       "htb_url": "https://app.hackthebox.com/machines/Fuse",
-      "tags": []
+      "tags": [
+        "Clear Text Credentials",
+        "Reconnaissance",
+        "User Enumeration",
+        "Password Spraying",
+        "Privilege Abuse",
+        "Powershell",
+        "IIS",
+        "SMB"
+      ]
     },
     {
       "space": "htb",
@@ -928,7 +1205,16 @@
       "rating": "3.6",
       "avatar": "assets/htb/jewel.png",
       "htb_url": "https://app.hackthebox.com/machines/Jewel",
-      "tags": []
+      "tags": [
+        "Weak Credentials",
+        "Misconfiguration",
+        "SUDO Exploitation",
+        "Ruby",
+        "Rails",
+        "OTP",
+        "Web Application",
+        "Vulnerability Assessment"
+      ]
     },
     {
       "space": "htb",
@@ -946,7 +1232,16 @@
       "rating": "4.7",
       "avatar": "assets/htb/magic.png",
       "htb_url": "https://app.hackthebox.com/machines/Magic",
-      "tags": []
+      "tags": [
+        "SQL Injection",
+        "Clear Text Credentials",
+        "Arbitrary File Upload",
+        "Path Hijacking",
+        "Password Reuse",
+        "PHP",
+        "SQL",
+        "Apache"
+      ]
     },
     {
       "space": "htb",
@@ -982,7 +1277,16 @@
       "rating": "3.8",
       "avatar": "assets/htb/openkeys.png",
       "htb_url": "https://app.hackthebox.com/machines/OpenKeyS",
-      "tags": []
+      "tags": [
+        "Information Disclosure",
+        "Reconnaissance",
+        "Cookie Manipulation",
+        "PHP",
+        "Web Application",
+        "Vulnerability Assessment",
+        "Broken Authentication and Authorization",
+        "Source Code Analysis"
+      ]
     },
     {
       "space": "htb",
@@ -1001,14 +1305,14 @@
       "avatar": "assets/htb/pterodactyl.png",
       "htb_url": "https://app.hackthebox.com/machines/Pterodactyl",
       "tags": [
-        "pterodactyl-panel",
-        "cve-2025-49132",
-        "pear",
-        "pearcmd",
-        "lfi",
-        "pam",
-        "polkit",
-        "suse"
+        "Local File Inclusion",
+        "Remote Code Execution",
+        "Information Disclosure",
+        "Misconfiguration",
+        "Code Injection",
+        "Hard-coded Credentials",
+        "Reconnaissance",
+        "Password Reuse"
       ]
     },
     {
@@ -1027,7 +1331,16 @@
       "rating": "4.7",
       "avatar": "assets/htb/resolute.png",
       "htb_url": "https://app.hackthebox.com/machines/Resolute",
-      "tags": []
+      "tags": [
+        "Weak Credentials",
+        "Clear Text Credentials",
+        "Group Membership",
+        "Information Disclosure",
+        "Anonymous/Guest Access",
+        "Reconnaissance",
+        "Password Spraying",
+        "Enterprise Network"
+      ]
     },
     {
       "space": "htb",
@@ -1045,7 +1358,16 @@
       "rating": "3.9",
       "avatar": "assets/htb/sneakymailer.png",
       "htb_url": "https://app.hackthebox.com/machines/SneakyMailer",
-      "tags": []
+      "tags": [
+        "Weak Credentials",
+        "Misconfiguration",
+        "Password Reuse",
+        "Password Cracking",
+        "SUDO Exploitation",
+        "Phishing",
+        "FTP",
+        "PyPi"
+      ]
     },
     {
       "space": "htb",
@@ -1063,7 +1385,16 @@
       "rating": "3.5",
       "avatar": "assets/htb/time.png",
       "htb_url": "https://app.hackthebox.com/machines/Time",
-      "tags": []
+      "tags": [
+        "Deserialization",
+        "Weak Permissions",
+        "Reconnaissance",
+        "Java",
+        "JSON",
+        "Web Application",
+        "Vulnerability Assessment",
+        "Common Applications"
+      ]
     },
     {
       "space": "htb",
@@ -1082,14 +1413,14 @@
       "avatar": "assets/htb/variatype.png",
       "htb_url": "https://app.hackthebox.com/machines/VariaType",
       "tags": [
-        "git-disclosure",
-        "fonttools",
-        "fontforge",
-        "setuptools",
-        "path-traversal",
-        "cve-2025-66034",
-        "cve-2024-25082",
-        "cve-2025-47273"
+        "Arbitrary File Read",
+        "Remote Code Execution",
+        "OS Command Injection",
+        "Arbitrary File Write",
+        "Directory Traversal",
+        "Hard-coded Credentials",
+        "Insecure Design",
+        "Reconnaissance"
       ]
     },
     {
@@ -1108,7 +1439,16 @@
       "rating": "4.1",
       "avatar": "assets/htb/worker.png",
       "htb_url": "https://app.hackthebox.com/machines/Worker",
-      "tags": []
+      "tags": [
+        "Weak Credentials",
+        "Clear Text Credentials",
+        "Password Spraying",
+        "ASP",
+        "Azure",
+        "Azure DevOps",
+        "Web Application",
+        "Vulnerability Assessment"
+      ]
     }
   ]
 }

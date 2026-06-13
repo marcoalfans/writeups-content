@@ -6,6 +6,7 @@ points: 30
 rating: 4.7
 date: 2020-04-18
 avatar: assets/htb/magic.png
+tags: [SQL Injection, Clear Text Credentials, Arbitrary File Upload, Path Hijacking, Password Reuse, PHP, SQL, Apache]
 htb_url: https://app.hackthebox.com/machines/Magic
 ---
 ## Enumeration

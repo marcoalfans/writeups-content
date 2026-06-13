@@ -6,6 +6,7 @@ points: 50
 rating: 4.1
 date: 2020-08-08
 avatar: assets/htb/laser.png
+tags: [Remote Code Execution, Server Side Request Forgery (SSRF), Information Disclosure, Misconfiguration, Race Condition, Weak Cryptography, Reconnaissance, Exploit Development]
 htb_url: https://app.hackthebox.com/machines/Laser
 ---
 ## Overview

@@ -6,6 +6,7 @@ points: 50
 rating: 4.4
 date: 2019-12-14
 avatar: assets/htb/playertwo.png
+tags: [Information Disclosure, Misconfiguration, PHP type juggling, Heap Overflow, Reconnaissance, Web Site Structure Discovery, Binary Exploitation, Exploit Development]
 htb_url: https://app.hackthebox.com/machines/PlayerTwo
 ---
 ## Overview

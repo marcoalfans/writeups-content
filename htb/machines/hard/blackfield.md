@@ -6,6 +6,7 @@ points: 40
 rating: 4.9
 date: 2020-06-06
 avatar: assets/htb/blackfield.png
+tags: [Group Membership, Anonymous/Guest Access, Password Cracking, ASREPRoasting, Password Dump, SMB, DNS, Kerberos]
 htb_url: https://app.hackthebox.com/machines/Blackfield
 ---
 ## Enumeration

@@ -6,7 +6,7 @@ points: 20
 rating: 3.6
 date: 2025-12-06
 avatar: assets/htb/monitorsfour.png
-tags: [cacti, php-type-juggling, cve-chain, docker-api, container-escape]
+tags: [Remote Code Execution, Server Side Request Forgery (SSRF), Insecure Direct Object Reference (IDOR), Command Execution, Reconnaissance, Fuzzing, Password Reuse, Docker Abuse]
 source: https://github.com/momenbasel/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/MonitorsFour
 ---

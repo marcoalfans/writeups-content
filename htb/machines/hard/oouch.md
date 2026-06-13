@@ -6,6 +6,7 @@ points: 40
 rating: 4.9
 date: 2020-02-29
 avatar: assets/htb/oouch.png
+tags: [OS Command Injection, Cross Site Request Forgery (CSRF), Misconfiguration, Anonymous/Guest Access, Reconnaissance, Web Site Structure Discovery, Pivoting, WAF Bypass]
 htb_url: https://app.hackthebox.com/machines/Oouch
 ---
 ## Overview

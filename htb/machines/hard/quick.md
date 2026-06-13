@@ -6,6 +6,7 @@ points: 40
 rating: 4.3
 date: 2020-04-25
 avatar: assets/htb/quick.png
+tags: [Clear Text Credentials, Reconnaissance, Password Cracking, PHP, SQL, Bash, XML, Apache]
 htb_url: https://app.hackthebox.com/machines/Quick
 ---
 ## Useful Skills and Tools

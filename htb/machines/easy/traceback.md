@@ -6,6 +6,7 @@ points: 20
 rating: 4
 date: 2020-03-14
 avatar: assets/htb/traceback.png
+tags: [Information Disclosure, Default Credentials, Misconfiguration, Reconnaissance, SUDO Exploitation, PHP, Lua, Apache]
 htb_url: https://app.hackthebox.com/machines/Traceback
 ---
 ## Overview

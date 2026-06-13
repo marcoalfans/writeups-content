@@ -6,6 +6,7 @@ points: 40
 rating: 4.7
 date: 2020-08-01
 avatar: assets/htb/unbalanced.png
+tags: [SQL Injection, Weak Credentials, Clear Text Credentials, Misconfiguration, XPath Injection, Reconnaissance, Password Reuse, PHP]
 htb_url: https://app.hackthebox.com/machines/Unbalanced
 ---
 ## Enumeration

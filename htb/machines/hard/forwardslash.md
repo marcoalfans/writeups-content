@@ -6,9 +6,9 @@ points: 40
 rating: 3.8
 date: 2020-04-04
 avatar: assets/htb/forwardslash.png
+tags: [Local File Inclusion, XXE Injection, Server Side Request Forgery (SSRF), Information Disclosure, Directory Traversal, Weak Cryptography, Reconnaissance, Web Site Structure Discovery]
 htb_url: https://app.hackthebox.com/machines/ForwardSlash
 ---
-
 ## Overview
 
 ### Useful Skills and Tools

@@ -6,6 +6,7 @@ points: 40
 rating: 4.8
 date: 2020-08-29
 avatar: assets/htb/feline.png
+tags: [Deserialization, Information Disclosure, Misconfiguration, Reconnaissance, Docker Abuse, Java, Apache, Tomcat]
 htb_url: https://app.hackthebox.com/machines/Feline
 ---
 ## Enumeration
