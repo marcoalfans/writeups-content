@@ -2,6 +2,10 @@
 title: "PlayerTwo"
 difficulty: Insane
 os: Linux
+points: 50
+rating: 4.4
+date: 2019-12-14
+avatar: assets/htb/playertwo.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/PlayerTwo
 ---

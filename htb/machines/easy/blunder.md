@@ -2,6 +2,10 @@
 title: "Blunder"
 difficulty: Easy
 os: Linux
+points: 20
+rating: 3.4
+date: 2020-05-30
+avatar: assets/htb/blunder.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Blunder
 ---

@@ -2,6 +2,10 @@
 title: "Time"
 difficulty: Medium
 os: Linux
+points: 30
+rating: 3.5
+date: 2020-10-24
+avatar: assets/htb/time.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Time
 ---

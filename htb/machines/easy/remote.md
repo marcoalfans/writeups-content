@@ -2,6 +2,10 @@
 title: "Remote"
 difficulty: Easy
 os: Windows
+points: 20
+rating: 4.3
+date: 2020-03-21
+avatar: assets/htb/remote.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Remote
 ---

@@ -2,6 +2,10 @@
 title: "Resolute"
 difficulty: Medium
 os: Windows
+points: 30
+rating: 4.7
+date: 2019-12-07
+avatar: assets/htb/resolute.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Resolute
 ---

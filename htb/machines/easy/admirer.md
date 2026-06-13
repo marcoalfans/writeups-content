@@ -2,6 +2,10 @@
 title: "Admirer"
 difficulty: Easy
 os: Linux
+points: 20
+rating: 3.5
+date: 2020-05-02
+avatar: assets/htb/admirer.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Admirer
 ---

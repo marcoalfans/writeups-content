@@ -2,6 +2,10 @@
 title: "Monteverde"
 difficulty: Medium
 os: Windows
+points: 30
+rating: 4.4
+date: 2020-01-11
+avatar: assets/htb/monteverde.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Monteverde
 ---

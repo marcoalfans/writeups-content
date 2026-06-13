@@ -1,7 +1,11 @@
 ---
 title: "OpenKeyS"
 difficulty: Medium
-os: Linux
+os: OpenBSD
+points: 30
+rating: 3.8
+date: 2020-07-25
+avatar: assets/htb/openkeys.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/OpenKeyS
 ---

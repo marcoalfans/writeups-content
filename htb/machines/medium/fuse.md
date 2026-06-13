@@ -2,6 +2,10 @@
 title: "Fuse"
 difficulty: Medium
 os: Windows
+points: 30
+rating: 3.6
+date: 2020-06-13
+avatar: assets/htb/fuse.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Fuse
 ---

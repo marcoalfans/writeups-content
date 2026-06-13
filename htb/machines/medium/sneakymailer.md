@@ -2,6 +2,10 @@
 title: "SneakyMailer"
 difficulty: Medium
 os: Linux
+points: 30
+rating: 3.9
+date: 2020-07-11
+avatar: assets/htb/sneakymailer.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/SneakyMailer
 ---

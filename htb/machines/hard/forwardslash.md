@@ -2,6 +2,10 @@
 title: "ForwardSlash"
 difficulty: Hard
 os: Linux
+points: 40
+rating: 3.8
+date: 2020-04-04
+avatar: assets/htb/forwardslash.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/ForwardSlash
 ---

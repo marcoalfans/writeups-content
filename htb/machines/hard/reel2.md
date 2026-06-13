@@ -2,6 +2,10 @@
 title: "Reel2"
 difficulty: Hard
 os: Windows
+points: 40
+rating: 4.6
+date: 2020-10-03
+avatar: assets/htb/reel2.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Reel2
 ---

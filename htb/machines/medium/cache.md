@@ -2,6 +2,10 @@
 title: "Cache"
 difficulty: Medium
 os: Linux
+points: 30
+rating: 3.8
+date: 2020-05-09
+avatar: assets/htb/cache.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Cache
 ---

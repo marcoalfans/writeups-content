@@ -2,6 +2,10 @@
 title: "Jewel"
 difficulty: Medium
 os: Linux
+points: 30
+rating: 3.6
+date: 2020-10-10
+avatar: assets/htb/jewel.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Jewel
 ---

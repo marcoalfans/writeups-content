@@ -2,6 +2,10 @@
 title: "Multimaster"
 difficulty: Insane
 os: Windows
+points: 50
+rating: 4.3
+date: 2020-03-07
+avatar: assets/htb/multimaster.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Multimaster
 ---

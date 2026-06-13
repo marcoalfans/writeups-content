@@ -2,6 +2,10 @@
 title: "Sauna"
 difficulty: Easy
 os: Windows
+points: 20
+rating: 4.5
+date: 2020-02-15
+avatar: assets/htb/sauna.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Sauna
 ---

@@ -2,6 +2,10 @@
 title: "Unbalanced"
 difficulty: Hard
 os: Linux
+points: 40
+rating: 4.7
+date: 2020-08-01
+avatar: assets/htb/unbalanced.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Unbalanced
 ---

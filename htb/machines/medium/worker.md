@@ -2,6 +2,10 @@
 title: "Worker"
 difficulty: Medium
 os: Windows
+points: 30
+rating: 4.1
+date: 2020-08-15
+avatar: assets/htb/worker.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Worker
 ---

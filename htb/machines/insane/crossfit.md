@@ -2,6 +2,10 @@
 title: "Crossfit"
 difficulty: Insane
 os: Linux
+points: 50
+rating: 4.4
+date: 2020-09-19
+avatar: assets/htb/crossfit.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Crossfit
 ---

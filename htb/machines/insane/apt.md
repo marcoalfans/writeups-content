@@ -2,6 +2,10 @@
 title: "APT"
 difficulty: Insane
 os: Windows
+points: 50
+rating: 3.7
+date: 2020-10-31
+avatar: assets/htb/apt.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/APT
 ---

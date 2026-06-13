@@ -2,6 +2,10 @@
 title: "Servmon"
 difficulty: Easy
 os: Windows
+points: 20
+rating: 2.2
+date: 2020-04-11
+avatar: assets/htb/servmon.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Servmon
 ---

@@ -2,6 +2,10 @@
 title: "Buff"
 difficulty: Easy
 os: Windows
+points: 20
+rating: 3.5
+date: 2020-07-18
+avatar: assets/htb/buff.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Buff
 ---

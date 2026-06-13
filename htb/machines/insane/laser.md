@@ -2,6 +2,10 @@
 title: "Laser"
 difficulty: Insane
 os: Linux
+points: 50
+rating: 4.1
+date: 2020-08-08
+avatar: assets/htb/laser.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Laser
 ---

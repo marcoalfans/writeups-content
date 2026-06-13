@@ -2,6 +2,10 @@
 title: "Tabby"
 difficulty: Easy
 os: Linux
+points: 20
+rating: 4.2
+date: 2020-06-20
+avatar: assets/htb/tabby.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Tabby
 ---

@@ -2,6 +2,10 @@
 title: "Magic"
 difficulty: Medium
 os: Linux
+points: 30
+rating: 4.7
+date: 2020-04-18
+avatar: assets/htb/magic.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Magic
 ---

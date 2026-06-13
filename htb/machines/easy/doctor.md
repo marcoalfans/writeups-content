@@ -2,6 +2,10 @@
 title: "Doctor"
 difficulty: Easy
 os: Linux
+points: 20
+rating: 4
+date: 2020-09-26
+avatar: assets/htb/doctor.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Doctor
 ---

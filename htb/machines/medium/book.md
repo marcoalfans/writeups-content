@@ -2,6 +2,10 @@
 title: "Book"
 difficulty: Medium
 os: Linux
+points: 30
+rating: 4.1
+date: 2020-02-22
+avatar: assets/htb/book.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Book
 ---

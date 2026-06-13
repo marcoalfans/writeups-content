@@ -1,7 +1,11 @@
 ---
 title: "Nest"
-difficulty: Medium
+difficulty: Easy
 os: Windows
+points: 20
+rating: 3.9
+date: 2020-01-25
+avatar: assets/htb/nest.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Nest
 ---

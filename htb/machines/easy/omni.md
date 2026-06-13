@@ -1,7 +1,11 @@
 ---
 title: "Omni"
 difficulty: Easy
-os: Windows
+os: Other
+points: 20
+rating: 3.2
+date: 2020-08-22
+avatar: assets/htb/omni.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Omni
 ---

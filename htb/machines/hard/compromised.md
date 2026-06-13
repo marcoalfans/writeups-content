@@ -2,6 +2,10 @@
 title: "Compromised"
 difficulty: Hard
 os: Linux
+points: 40
+rating: 3.9
+date: 2020-09-12
+avatar: assets/htb/compromised.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Compromised
 ---

@@ -2,6 +2,10 @@
 title: "Traceback"
 difficulty: Easy
 os: Linux
+points: 20
+rating: 4
+date: 2020-03-14
+avatar: assets/htb/traceback.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Traceback
 ---

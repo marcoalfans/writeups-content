@@ -1,7 +1,11 @@
 ---
 title: "Luanne"
 difficulty: Easy
-os: Linux
+os: Other
+points: 20
+rating: 2.7
+date: 2020-11-28
+avatar: assets/htb/luanne.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Luanne
 ---

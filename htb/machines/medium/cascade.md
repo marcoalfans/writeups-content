@@ -2,6 +2,10 @@
 title: "Cascade"
 difficulty: Medium
 os: Windows
+points: 30
+rating: 4.6
+date: 2020-03-28
+avatar: assets/htb/cascade.png
 source: https://github.com/zweilosec/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Cascade
 ---
