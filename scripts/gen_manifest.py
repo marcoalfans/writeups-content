@@ -44,7 +44,7 @@ for path in sorted(glob.glob(os.path.join(ROOT, "**", "*.md"), recursive=True)):
         fm = parse_frontmatter(f.read())
     entry = {"space": space, "category": category, "slug": slug,
              "title": fm.get("title", slug.replace("-", " ").title()), "file": rel}
-    for k in ("difficulty", "os", "date"):
+    for k in ("difficulty", "os", "date", "points", "rating", "avatar", "htb_url"):
         if fm.get(k):
             entry[k] = fm[k]
     entry["tags"] = fm.get("tags", []) if isinstance(fm.get("tags"), list) else []
