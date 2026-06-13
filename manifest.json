@@ -1,0 +1,453 @@
+{
+  "version": 1,
+  "count": 27,
+  "entries": [
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "ai-ml",
+      "title": "AI/ML",
+      "file": "htb/challenges/ai-ml.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "blockchain",
+      "title": "Blockchain",
+      "file": "htb/challenges/blockchain.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "crypto",
+      "title": "Crypto",
+      "file": "htb/challenges/crypto.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "forensics",
+      "title": "Forensics",
+      "file": "htb/challenges/forensics.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "hardware",
+      "title": "Hardware",
+      "file": "htb/challenges/hardware.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "misc",
+      "title": "Misc",
+      "file": "htb/challenges/misc.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "mobile",
+      "title": "Mobile",
+      "file": "htb/challenges/mobile.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "osint",
+      "title": "OSINT",
+      "file": "htb/challenges/osint.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "pwn",
+      "title": "Pwn",
+      "file": "htb/challenges/pwn.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "reversing",
+      "title": "Reversing",
+      "file": "htb/challenges/reversing.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "stego",
+      "title": "Stego",
+      "file": "htb/challenges/stego.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "challenges"
+      ],
+      "slug": "web",
+      "title": "Web",
+      "file": "htb/challenges/web.md",
+      "tags": []
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "code",
+      "title": "Code",
+      "file": "htb/machines/easy/code.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "date": "2025-08-02",
+      "tags": [
+        "python",
+        "sandbox-escape",
+        "keyword-filter",
+        "subprocess",
+        "backy",
+        "sudo"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "facts",
+      "title": "Facts",
+      "file": "htb/machines/easy/facts.md",
+      "difficulty": "Easy",
+      "os": "Linux (Ubuntu)",
+      "date": "2026-01-31 (Season 10, Week 1)",
+      "tags": [
+        "web",
+        "idor",
+        "path-traversal",
+        "s3",
+        "minio",
+        "ruby",
+        "sudo"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "easy"
+      ],
+      "slug": "kobold",
+      "title": "Kobold",
+      "file": "htb/machines/easy/kobold.md",
+      "difficulty": "Easy",
+      "os": "Linux",
+      "date": "2026-03-21 (Season 10, Week 8)",
+      "tags": [
+        "mcp",
+        "ai",
+        "cve-2026-23744",
+        "rce",
+        "docker-escape",
+        "busybox"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "airtouch",
+      "title": "AirTouch",
+      "file": "htb/machines/hard/airtouch.md",
+      "difficulty": "Hard",
+      "os": "Linux (Ubuntu)",
+      "date": "2026-04-18",
+      "tags": [
+        "802.11",
+        "wpa2-psk",
+        "evil-twin",
+        "peap-mschapv2",
+        "eaphammer",
+        "aircrack-ng",
+        "wifi"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "eighteen",
+      "title": "Eighteen",
+      "file": "htb/machines/hard/eighteen.md",
+      "difficulty": "Hard",
+      "os": "Windows Server 2025",
+      "date": "2026-04-11",
+      "tags": [
+        "windows-server-2025",
+        "assume-breach",
+        "mssql-impersonation",
+        "bad-successor",
+        "dmsa",
+        "cve-2025-53779",
+        "werkzeug-pbkdf2",
+        "winrm"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "pingpong",
+      "title": "PingPong",
+      "file": "htb/machines/hard/pingpong.md",
+      "difficulty": "Hard",
+      "os": "Windows (Multi-Forest AD)",
+      "date": "2026-04-25 (Season 10, Final Week)",
+      "tags": [
+        "active-directory",
+        "cross-forest-trust",
+        "kerberos-only",
+        "mssql-delegation",
+        "adcs",
+        "aes256",
+        "no-ntlm"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "hard"
+      ],
+      "slug": "pirate",
+      "title": "Pirate",
+      "file": "htb/machines/hard/pirate.md",
+      "difficulty": "Hard",
+      "os": "Windows Server 2019",
+      "date": "2026-02-28 (Season 10, Week 5)",
+      "tags": [
+        "active-directory",
+        "pre2k",
+        "gmsa",
+        "ligolo",
+        "petitpotam",
+        "rbcd",
+        "s4u2proxy",
+        "spn-jacking",
+        "ntlm-relay"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
+      "slug": "cobblestone",
+      "title": "Cobblestone",
+      "file": "htb/machines/insane/cobblestone.md",
+      "difficulty": "Insane",
+      "os": "Debian 12",
+      "date": "2025 (Season 8)",
+      "tags": [
+        "second-order-sqli",
+        "load_file",
+        "xss",
+        "ssti",
+        "twig",
+        "hash-crack",
+        "cobbler",
+        "cve-2024-47533"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
+      "slug": "monitorsfour",
+      "title": "MonitorsFour",
+      "file": "htb/machines/insane/monitorsfour.md",
+      "difficulty": "Insane",
+      "os": "Windows",
+      "date": "2026-05-23",
+      "tags": [
+        "cacti",
+        "php-type-juggling",
+        "cve-chain",
+        "docker-api",
+        "container-escape"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
+      "slug": "pterodactyl",
+      "title": "Pterodactyl",
+      "file": "htb/machines/insane/pterodactyl.md",
+      "difficulty": "Insane",
+      "os": "openSUSE Linux",
+      "date": "2026-05-16",
+      "tags": [
+        "pterodactyl-panel",
+        "cve-2025-49132",
+        "pear",
+        "pearcmd",
+        "lfi",
+        "pam",
+        "polkit",
+        "suse"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
+      "slug": "sink",
+      "title": "Sink",
+      "file": "htb/machines/insane/sink.md",
+      "difficulty": "Insane",
+      "os": "Linux",
+      "tags": [
+        "web",
+        "http-smuggling",
+        "aws",
+        "cloud",
+        "gitea",
+        "secrets-management"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "insane"
+      ],
+      "slug": "sorcery",
+      "title": "Sorcery",
+      "file": "htb/machines/insane/sorcery.md",
+      "difficulty": "Insane",
+      "os": "Linux",
+      "date": "2026-04-25",
+      "tags": [
+        "cypher-injection",
+        "neo4j",
+        "webauthn",
+        "passkey",
+        "kafka",
+        "freeipa"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "helix",
+      "title": "Helix",
+      "file": "htb/machines/medium/helix.md",
+      "difficulty": "Medium",
+      "os": "Linux",
+      "date": "2026-05-08",
+      "tags": [
+        "apache-nifi",
+        "h2-database",
+        "java-aliases",
+        "ics",
+        "scada",
+        "rce"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "interpreter",
+      "title": "Interpreter",
+      "file": "htb/machines/medium/interpreter.md",
+      "difficulty": "Medium",
+      "os": "Linux (Debian 12)",
+      "date": "2026-02-21 (Season 10, Week 4)",
+      "tags": [
+        "mirth-connect",
+        "cve-2023-43208",
+        "xstream",
+        "java-deserialization",
+        "python-eval",
+        "mysql"
+      ]
+    },
+    {
+      "space": "htb",
+      "category": [
+        "machines",
+        "medium"
+      ],
+      "slug": "variatype",
+      "title": "VariaType",
+      "file": "htb/machines/medium/variatype.md",
+      "difficulty": "Medium",
+      "os": "Linux",
+      "date": "2026-03-15 (Season 10, Week 7)",
+      "tags": [
+        "git-disclosure",
+        "fonttools",
+        "fontforge",
+        "setuptools",
+        "path-traversal",
+        "cve-2025-66034",
+        "cve-2024-25082",
+        "cve-2025-47273"
+      ]
+    }
+  ]
+}

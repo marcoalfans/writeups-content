@@ -1,0 +1,33 @@
+name: Regenerate manifest
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "htb/**"
+      - "ctf/**"
+      - "bugbounty/**"
+      - "scripts/gen_manifest.py"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate manifest.json
+        run: python3 scripts/gen_manifest.py
+      - name: Commit if changed
+        run: |
+          if ! git diff --quiet -- manifest.json; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add manifest.json
+            git commit -m "chore: regenerate manifest.json [skip ci]"
+            git push
+          else
+            echo "manifest.json unchanged"
+          fi
