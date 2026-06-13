@@ -103,9 +103,7 @@ body  {
 </head>
 <center>
     <h1> Welcome Back!</h1>
-    <img src="https://raw.githubusercontent.com/kac0/htb-writeups/master/4202252.jpg">
-
-<h1>This page is still underconstruction</h1>
+    <h1>This page is still underconstruction</h1>
 </center>
  </body>
 </html>

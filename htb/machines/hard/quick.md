@@ -280,7 +280,6 @@ kac0@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=abo
 <div class="row">
   <div class="column">
     <div class="card">
-      <img src="https://raw.githubusercontent.com/kac0/htb-writeups/master//w3images/team1.jpg" alt="Jane" style="width:100%">
       <div class="container">
         <h2>Jane Doe</h2>
         <p class="title">CEO & Founder</p>
@@ -292,7 +291,6 @@ kac0@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=abo
 
   <div class="column">
     <div class="card">
-      <img src="https://raw.githubusercontent.com/kac0/htb-writeups/master//w3images/team2.jpg" alt="Mike" style="width:100%">
       <div class="container">
         <h2>Mike Ross</h2>
         <p class="title">Sales Manager</p>
@@ -304,7 +302,6 @@ kac0@kali:~/htb/quick$ curl3 --http3 https://portal.quick.htb/index.php?view=abo
 
   <div class="column">
     <div class="card">
-      <img src="https://raw.githubusercontent.com/kac0/htb-writeups/master//w3images/team3.jpg" alt="John" style="width:100%">
       <div class="container">
         <h2>John Doe</h2>
         <p class="title">Web Designer</p>
@@ -1110,15 +1107,13 @@ Last login: Sun Aug 16 18:30:27 2020 from 10.10.15.57
 sam@quick:~$
 ```
 
-I logged in fine; now to test the port forwarding in the browser. ![](https://github.com/kac0/htb-writeups/tree/de76ed6e78e992dd3769f7fa850ef9167e04b2c0/linux-machines/hard/connection-reset.png) It didn't work at first, but I quickly saw why. I was forwarding to <YOUR_IP> on port 80, which I already knew was blocked from outside the `quick.htb` machine. I needed to reach the site the same way I had with curl, via `127.0.0.1:80`.
+I logged in fine; now to test the port forwarding in the browser. It didn't work at first, but I quickly saw why. I was forwarding to <YOUR_IP> on port 80, which I already knew was blocked from outside the `quick.htb` machine. I needed to reach the site the same way I had with curl, via `127.0.0.1:80`.
 
 ```text
 kac0@kali:~/htb/quick$ ssh -L 40905:127.0.0.1:80 sam@quick.htb
 ```
 
-With the IP corrected, I could reach the virtual-hosted page. ![](https://github.com/kac0/htb-writeups/tree/de76ed6e78e992dd3769f7fa850ef9167e04b2c0/linux-machines/hard/virtual_printer.png) 
-
-![](assets/wu/quick/img-22.png)
+With the IP corrected, I could reach the virtual-hosted page. ![](assets/wu/quick/img-22.png)
 
 This brought up a login page. Knowing the page ran as `srvadm`, I assumed the credentials were the ones I'd recovered for that user from the MySQL database earlier. [http://pentestmonkey.net/tools/web-shells/php-reverse-shell](http://pentestmonkey.net/tools/web-shells/php-reverse-shell)
 

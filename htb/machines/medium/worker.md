@@ -201,7 +201,7 @@ You can find the latest version at: http://devops.worker.htb
      <!-- Work -->
              <article id="work">
                      <h2 class="major">Work</h2>
-                     <span class="image main"><img src="https://raw.githubusercontent.com/kac0/htb-writeups/master/images/pic02.jpg" alt="" /></span>
+                     <span class="image main"></span>
                      <p>Curios on what we're currently working on are you? Well let's please you with a couple of teasers.</p>
                      <a href="http://alpha.worker.htb/">Alpha</a><p>This is our first page</p>
                      <a href="http://cartoon.worker.htb/">Cartoon</a><p>When we're not working we enjoy watching cartoons. Guess who in our team is what cartoon character!</p>
