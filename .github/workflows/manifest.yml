@@ -23,6 +23,7 @@ jobs:
       - name: Enrich HTB metadata (avatar + stats)
         env:
           HTB_TOKEN: ${{ secrets.HTB_TOKEN }}
+          FULL_REFRESH: ${{ github.event_name != 'push' && '1' || '' }}
         run: python3 scripts/enrich_htb.py
       - name: Generate manifest.json
         run: python3 scripts/gen_manifest.py

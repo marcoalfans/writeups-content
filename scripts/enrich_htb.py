@@ -13,6 +13,7 @@ already carries `points` (delete the png to force a refresh).
 import os, re, json, glob, time, urllib.request, urllib.error
 
 TOKEN = os.environ.get("HTB_TOKEN", "").strip()
+FULL = bool(os.environ.get("FULL_REFRESH"))   # weekly cron / manual: refresh everything. push: only new files.
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 API = "https://labs.hackthebox.com/api/v4/machine/profile/"
 TAGS = "https://labs.hackthebox.com/api/v4/machine/tags/"
@@ -87,6 +88,10 @@ def main():
         name = (fm.get("title") or slug).strip('"')
         avatar_rel = "assets/htb/%s.png" % slug
         avatar_abs = os.path.join(ROOT, avatar_rel)
+        # on a normal push, skip machines already fully enriched — saves API calls & avoids rate limits.
+        # (weekly cron / manual run sets FULL_REFRESH to re-pull everything.)
+        if not FULL and fm.get("points") and fm.get("tags"):
+            continue
         # fetch profile with retry/backoff — HTB rate-limits with empty/429 responses
         info = None
         for attempt in range(4):
