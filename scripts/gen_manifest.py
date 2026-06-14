@@ -8,7 +8,7 @@ Path -> nav mapping:  htb/machines/easy/code.md
   category = [machines,easy] (segments between space and filename)
   slug     = code            (filename without .md)
 """
-import os, re, json, glob
+import os, re, json, glob, hashlib
 
 SPACES = {"htb", "ctf", "bugbounty"}
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -41,9 +41,11 @@ for path in sorted(glob.glob(os.path.join(ROOT, "**", "*.md"), recursive=True)):
     category = parts[1:-1]
     slug = re.sub(r"\.md$", "", parts[-1])
     with open(path, encoding="utf-8") as f:
-        fm = parse_frontmatter(f.read())
+        raw = f.read()
+    fm = parse_frontmatter(raw)
+    rev = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:10]   # content hash for auto cache-busting
     entry = {"space": space, "category": category, "slug": slug,
-             "title": fm.get("title", slug.replace("-", " ").title()), "file": rel}
+             "title": fm.get("title", slug.replace("-", " ").title()), "file": rel, "rev": rev}
     for k in ("difficulty", "os", "date", "points", "rating", "avatar", "htb_url"):
         if fm.get(k):
             entry[k] = fm[k]
@@ -51,7 +53,8 @@ for path in sorted(glob.glob(os.path.join(ROOT, "**", "*.md"), recursive=True)):
     entries.append(entry)
 
 entries.sort(key=lambda e: (e["space"], e["category"], e["slug"]))
-manifest = {"version": 1, "count": len(entries), "entries": entries}
+rev = hashlib.sha1("".join(e["rev"] for e in entries).encode()).hexdigest()[:10]
+manifest = {"version": 1, "rev": rev, "count": len(entries), "entries": entries}
 with open(os.path.join(ROOT, "manifest.json"), "w", encoding="utf-8") as f:
     f.write(json.dumps(manifest, indent=2) + "\n")
 print("manifest.json: %d entries" % len(entries))
