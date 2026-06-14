@@ -9,7 +9,6 @@ avatar: assets/htb/airtouch.png
 tags: [802.11, wpa2-psk, evil-twin, peap-mschapv2, eaphammer, aircrack-ng, wifi]
 htb_url: https://app.hackthebox.com/machines/AirTouch
 ---
-
 ## Summary
 
 AirTouch is a rare wireless-focused Linux machine. The chain begins on the air: I capture an 802.11 WPA2-PSK 4-way handshake, crack it with `hashcat -m 22000`, and associate to the home network. From there I stand up an Evil Twin access point with `eaphammer` to harvest PEAP-MSCHAPv2 credentials from a connecting client. Those enterprise creds unlock a VPN, which drops me onto the internal subnet where a standard Linux privesc playbook finishes the job.

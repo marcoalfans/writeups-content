@@ -9,7 +9,6 @@ avatar: assets/htb/helix.png
 tags: [apache-nifi, h2-database, java-aliases, ics, scada, rce]
 htb_url: https://app.hackthebox.com/machines/Helix
 ---
-
 ## Summary
 
 Helix is a medium Linux box built around an exposed **Apache NiFi 1.21.0** instance (vhost `flow.helix.htb:8080/nifi`) modelling an industrial ICS/SCADA workflow. The attack chain abuses NiFi's `ExecuteSQL` processor by pointing it at a malicious **H2 Database** JDBC URL. H2's `CREATE ALIAS` feature lets me register a Java method as a SQL alias - calling that alias executes arbitrary Java in the NiFi JVM, yielding a shell as the NiFi service account. Root follows from a standard sudo / service misconfiguration review.

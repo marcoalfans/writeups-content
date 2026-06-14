@@ -9,7 +9,6 @@ avatar: assets/htb/sorcery.png
 tags: [cypher-injection, neo4j, webauthn, passkey, kafka, freeipa]
 htb_url: https://app.hackthebox.com/machines/Sorcery
 ---
-
 ## Summary
 
 Sorcery is an Insane-difficulty Linux box that chains four modern application-layer flaws. I start with a Cypher injection in a Neo4j-backed graph application to dump registration secrets, then abuse an XSS sink in the WebAuthn passkey registration flow to attach an attacker-controlled authenticator to the admin account. From the admin dashboard I pivot through a thin Kafka HTTP gateway by hand-crafting raw wire-protocol bytes to read internal service credentials, and finally escalate to root by abusing a FreeIPA HBAC/sudo misconfiguration. Each layer is independently rare; chained together they make Sorcery one of the most realistic enterprise-targeting Insane boxes HTB has shipped.

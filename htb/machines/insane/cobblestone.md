@@ -9,7 +9,6 @@ avatar: assets/htb/cobblestone.png
 tags: [second-order-sqli, load_file, xss, ssti, twig, hash-crack, cobbler, cve-2024-47533]
 htb_url: https://app.hackthebox.com/machines/Cobblestone
 ---
-
 ## Summary
 
 Cobblestone is a multi-stage web-to-root Insane chain on Debian 12. Subdomain fuzzing reveals two vhosts: `vote.cobblestone.htb`, which is vulnerable to second-order SQL injection, and `deploy.cobblestone.htb`, an admin panel with a Twig SSTI sink. I abuse the stored SQLi together with MySQL's `LOAD_FILE` to read server-side files such as the deploy panel's `.env`, use stored XSS to steal an admin session, then land code execution through Twig template injection on the deploy panel. From there I crack database hashes for an SSH foothold, and finally escalate to root by exploiting the Cobbler XMLRPC API (CVE-2024-47533) bound to `127.0.0.1:25151` and running as root.

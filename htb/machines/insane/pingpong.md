@@ -9,7 +9,6 @@ avatar: assets/htb/pingpong.png
 tags: [active-directory, cross-forest-trust, kerberos-only, mssql-delegation, adcs, aes256, no-ntlm]
 htb_url: https://app.hackthebox.com/machines/PingPong
 ---
-
 ## Summary
 
 PingPong is an Insane Windows machine built as an assume-breach, two-forest Active Directory engagement. The external entry point is `PING.HTB` (DC1: `dc1.ping.htb`), which has a bidirectional trust with the internal-only `PONG.HTB` (DC2: `dc2.pong.htb`, reachable only through DC1). Both domains have NTLM disabled, forcing Kerberos-only authentication, and `PONG.HTB` additionally disables RC4 so AES256 keys are mandatory. Significant host clock skew from real UTC means every Kerberos operation needs a `faketime` / `ntpdate` workaround. Starting from a low-privilege foothold in `ping.htb`, I leverage Kerberos and MSSQL constrained delegation to compromise `dc2.pong.htb`, extract cross-realm credential material, and return to `ping.htb` to abuse AD CS, obtaining a certificate that maps to `Administrator@ping.htb`.

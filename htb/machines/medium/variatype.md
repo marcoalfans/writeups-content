@@ -9,7 +9,6 @@ avatar: assets/htb/variatype.png
 tags: [Arbitrary File Read, Remote Code Execution, OS Command Injection, Arbitrary File Write, Directory Traversal, Hard-coded Credentials, Insecure Design, Reconnaissance]
 htb_url: https://app.hackthebox.com/machines/VariaType
 ---
-
 ## Summary
 
 VariaType is a Linux box built around a font-processing web stack split across two virtual hosts, one public and one internal. I get my foothold by chaining an exposed `.git` directory whose history leaks hardcoded credentials, then weaponising CVE-2025-66034 (fontTools varLib arbitrary file write via XML/CDATA injection in a `.designspace`) to drop a PHP webshell. I move laterally with CVE-2024-25082 (FontForge ZIP-filename command injection) to land a shell as a real user. Root falls to a sudo-runnable Python plugin loader that fetches plugins over a remote URL parsed by a vulnerable setuptools: CVE-2025-47273 path traversal writes my `authorized_keys` into `/root/.ssh/`.

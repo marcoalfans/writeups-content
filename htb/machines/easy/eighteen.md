@@ -9,7 +9,6 @@ avatar: assets/htb/eighteen.png
 tags: [windows-server-2025, assume-breach, mssql-impersonation, bad-successor, dmsa, cve-2025-53779, werkzeug-pbkdf2, winrm]
 htb_url: https://app.hackthebox.com/machines/Eighteen
 ---
-
 ## Summary
 
 Eighteen is a Windows Server 2025 assume-breach scenario that starts with valid MSSQL credentials. I use MSSQL login impersonation (`EXECUTE AS LOGIN`) to reach a `FinancePlanner` database where the web admin's password is stored as a Werkzeug PBKDF2-SHA256 hash. Cracking that hash gives me a password that sprays positively against another domain user holding WinRM rights. I escalate by abusing the "Bad Successor" vulnerability (CVE-2025-53779), a flaw in delegated Managed Service Account (dMSA) migration on Windows Server 2025 that lets me forge keys to impersonate Domain Admin.

@@ -9,7 +9,6 @@ avatar: assets/htb/facts.png
 tags: [web, idor, path-traversal, s3, minio, ruby, sudo]
 htb_url: https://app.hackthebox.com/machines/Facts
 ---
-
 ## Summary
 
 Facts is the first machine of HTB Season 10 (Underground), a Linux box built around a Ruby on Rails CMS called Camaleon CMS. My attack chain starts on the web: an IDOR in the admin registration/update flow lets me mass-assign myself the `admin` role, and from there a path traversal in Camaleon's `download_private_file` reads an SSH private key off disk for the user shell. Pivoting through plaintext cloud-storage credentials wired into the CMS settings unlocks a MinIO bucket holding a backup key, and root falls to `sudo facter --custom-dir=`, which executes the first `.rb` script in a supplied directory as root.

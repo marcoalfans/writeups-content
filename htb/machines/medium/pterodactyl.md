@@ -9,7 +9,6 @@ avatar: assets/htb/pterodactyl.png
 tags: [Local File Inclusion, Remote Code Execution, Information Disclosure, Misconfiguration, Code Injection, Hard-coded Credentials, Reconnaissance, Password Reuse]
 htb_url: https://app.hackthebox.com/machines/Pterodactyl
 ---
-
 ## Summary
 
 Pterodactyl is a medium Linux box built around the Pterodactyl game-server management panel running on openSUSE. I abused a directory traversal in the panel (CVE-2025-49132) to read arbitrary files and recover panel secrets, then leveraged the classic PEAR `pearcmd.php` LFI-to-RCE technique — `register_argc_argv` being enabled in php.ini let me inject CLI arguments through the query string and drop a webshell. From there I recovered database credentials, pivoted to a real OS user through password reuse, and escalated to root through the openSUSE PAM/Polkit stack.

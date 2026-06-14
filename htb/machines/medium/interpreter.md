@@ -9,7 +9,6 @@ avatar: assets/htb/interpreter.png
 tags: [mirth-connect, cve-2023-43208, xstream, java-deserialization, python-eval, mysql]
 htb_url: https://app.hackthebox.com/machines/Interpreter
 ---
-
 ## Summary
 
 Interpreter is a medium Linux box built around **NextGen Healthcare Mirth Connect** vulnerable to **CVE-2023-43208**, an unauthenticated Java deserialization RCE caused by XStream consuming attacker-controlled XML on `/api/users` with no class allowlist. The foothold lands as `mirth`. From there the Mirth installation properties expose MySQL credentials, where a stored hash cracks to an SSH login for a low-privileged user. Finally, a locally-bound root-owned Python HTTP service on port 54321 contains a Channel handler with a vulnerable `eval()`, which I abuse to escalate to root.

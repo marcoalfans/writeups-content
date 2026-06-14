@@ -9,7 +9,6 @@ avatar: assets/htb/monitorsfour.png
 tags: [Remote Code Execution, Server Side Request Forgery (SSRF), Insecure Direct Object Reference (IDOR), Command Execution, Reconnaissance, Fuzzing, Password Reuse, Docker Abuse]
 htb_url: https://app.hackthebox.com/machines/MonitorsFour
 ---
-
 ## Summary
 
 MonitorsFour is the fourth box in 0xdf's Monitors series, running Cacti behind a web stack. I gained initial access by abusing a PHP type-juggling weakness in Cacti's authentication/installation flow, then chained a Cacti CVE for remote code execution as the container's web user. From there I escalated by abusing an exposed Docker API: the daemon's TCP socket was reachable from inside the Cacti container, so I spun up a privileged container with the host root filesystem bind-mounted, which gave me SYSTEM-equivalent control over the underlying host.

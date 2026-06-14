@@ -9,7 +9,6 @@ avatar: assets/htb/code.png
 tags: [Remote Code Execution, Misconfiguration, Directory Traversal, Reconnaissance, Password Cracking, SUDO Exploitation, Python, SQL]
 htb_url: https://app.hackthebox.com/machines/Code
 ---
-
 ## Summary
 
 Code is an easy Linux box built around a Python in-browser code editor. The editor blocklists dangerous keywords (e.g. `import`, `os`, `subprocess`, `exec`, `eval`, `open`, `__`), but the filtering is purely string-based, so the execution environment still holds dangerous objects in memory. By walking the object graph via `().__class__.__base__.__subclasses__()` and selecting `subprocess.Popen` by numeric index (commonly 317), I bypass the filter and run arbitrary commands, landing a shell as `app-production`. From there the web-app SQLite database yields bcrypt credentials that crack to user `martin`. Root falls to a `sudo` rule for `/usr/bin/backy.sh` whose JSON config allows path-traversal, letting me archive and read `/root`.

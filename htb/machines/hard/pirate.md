@@ -9,7 +9,6 @@ avatar: assets/htb/pirate.png
 tags: [active-directory, pre2k, gmsa, ligolo, petitpotam, rbcd, s4u2proxy, spn-jacking, ntlm-relay]
 htb_url: https://app.hackthebox.com/machines/Pirate
 ---
-
 ## Summary
 
 Pirate is a Windows multi-host Active Directory attack spread across two network segments. My initial access exploits Pre-Windows 2000 compatible computer accounts, where the password equals the lowercase machine name truncated to 14 characters. From a Pre2k computer account I read a gMSA managed password and pivot into a second segment with Ligolo-ng. Inside, I use PetitPotam to coerce WEB01 to authenticate and relay that to LDAPS to write RBCD (msDS-AllowedToActOnBehalfOfOtherIdentity), granting MS01$ delegation rights over WEB01$. The chain finishes with WriteSPN + S4U2Proxy + altservice, letting me impersonate Administrator on any service - including DC01 - for Domain Admin.
