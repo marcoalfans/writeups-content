@@ -7,7 +7,6 @@ rating: 4.5
 date: 2026-05-09
 avatar: assets/htb/helix.png
 tags: [apache-nifi, h2-database, java-aliases, ics, scada, rce]
-source: https://github.com/momenbasel/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Helix
 ---
 ## Summary

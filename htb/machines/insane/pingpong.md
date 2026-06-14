@@ -7,7 +7,6 @@ rating: 4.8
 date: 2026-04-25
 avatar: assets/htb/pingpong.png
 tags: [active-directory, cross-forest-trust, kerberos-only, mssql-delegation, adcs, aes256, no-ntlm]
-source: https://github.com/momenbasel/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/PingPong
 ---
 ## Summary

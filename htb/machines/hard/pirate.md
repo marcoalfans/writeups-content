@@ -7,7 +7,6 @@ rating: 4.7
 date: 2026-02-28
 avatar: assets/htb/pirate.png
 tags: [active-directory, pre2k, gmsa, ligolo, petitpotam, rbcd, s4u2proxy, spn-jacking, ntlm-relay]
-source: https://github.com/momenbasel/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Pirate
 ---
 ## Summary

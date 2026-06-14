@@ -18,6 +18,12 @@ scripts/gen_manifest.py    # builds manifest.json from folders + frontmatter
 .github/workflows/manifest.yml
 ```
 
+## Conventions
+
+All writeups follow [`STYLE.md`](STYLE.md) — the single source of truth for frontmatter,
+structure, flag masking, IP redaction, and formatting. The rules there are **enforced in CI**
+(`scripts/validate.py`), so the site stays consistent as content grows.
+
 ## Authoring a writeup
 
 1. Add a Markdown file under `htb/`, `ctf/`, or `bugbounty/` with frontmatter:

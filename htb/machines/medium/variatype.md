@@ -7,7 +7,6 @@ rating: 3.8
 date: 2026-03-14
 avatar: assets/htb/variatype.png
 tags: [Arbitrary File Read, Remote Code Execution, OS Command Injection, Arbitrary File Write, Directory Traversal, Hard-coded Credentials, Insecure Design, Reconnaissance]
-source: https://github.com/momenbasel/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/VariaType
 ---
 ## Summary

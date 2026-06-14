@@ -7,7 +7,6 @@ rating: 3
 date: 2026-02-07
 avatar: assets/htb/pterodactyl.png
 tags: [Local File Inclusion, Remote Code Execution, Information Disclosure, Misconfiguration, Code Injection, Hard-coded Credentials, Reconnaissance, Password Reuse]
-source: https://github.com/momenbasel/htb-writeups (MIT)
 htb_url: https://app.hackthebox.com/machines/Pterodactyl
 ---
 ## Summary
