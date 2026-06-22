@@ -3,7 +3,7 @@ title: "Book"
 difficulty: Medium
 os: Linux
 points: 30
-rating: 4.1
+rating: 4
 date: 2020-02-22
 avatar: assets/htb/book.png
 tags: [Arbitrary File Read, Cross Site Scripting (XSS), Misconfiguration, Race Condition, SQL Truncation, Reconnaissance, JavaScript, Apache]

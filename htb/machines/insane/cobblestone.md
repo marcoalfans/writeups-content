@@ -3,7 +3,7 @@ title: "Cobblestone"
 difficulty: Insane
 os: Linux
 points: 50
-rating: 3.3
+rating: 3.4
 date: 2025-08-09
 avatar: assets/htb/cobblestone.png
 tags: [second-order-sqli, load_file, xss, ssti, twig, hash-crack, cobbler, cve-2024-47533]

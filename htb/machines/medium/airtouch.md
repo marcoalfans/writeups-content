@@ -1,7 +1,7 @@
 ---
 title: "AirTouch"
 difficulty: Medium
-os: Linux
+os: linux
 points: 30
 rating: 4.4
 date: 2026-01-17
