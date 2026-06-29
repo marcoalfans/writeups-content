@@ -6,7 +6,7 @@ points: 30
 rating: 4.4
 date: 2026-01-17
 avatar: assets/htb/airtouch.png
-tags: [802.11, wpa2-psk, evil-twin, peap-mschapv2, eaphammer, aircrack-ng, wifi]
+tags: [Weak Credentials, Remote Code Execution, Clear Text Credentials, Information Disclosure, Misconfiguration, Hard-coded Credentials, Reconnaissance, Packet Capture Analysis]
 htb_url: https://app.hackthebox.com/machines/AirTouch
 ---
 ## Summary

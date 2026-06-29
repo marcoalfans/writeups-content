@@ -6,7 +6,7 @@ points: 50
 rating: 4.6
 date: 2025-06-14
 avatar: assets/htb/sorcery.png
-tags: [cypher-injection, neo4j, webauthn, passkey, kafka, freeipa]
+tags: [Cross Site Scripting (XSS), Server Side Request Forgery (SSRF), Information Disclosure, Misconfiguration, Weak Permissions, Race Condition, Weak Cryptography, Hard-coded Credentials]
 htb_url: https://app.hackthebox.com/machines/Sorcery
 ---
 ## Summary

@@ -1,7 +1,7 @@
 ---
 title: "MonitorsFour"
 difficulty: Easy
-os: Windows
+os: windows
 points: 20
 rating: 3.6
 date: 2025-12-06

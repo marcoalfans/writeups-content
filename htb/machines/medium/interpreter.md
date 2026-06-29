@@ -1,7 +1,7 @@
 ---
 title: "Interpreter"
 difficulty: Medium
-os: Linux
+os: linux
 points: 30
 rating: 3.1
 date: 2026-02-21

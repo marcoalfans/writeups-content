@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": "f1a438aa20",
+  "rev": "d170f948af",
   "count": 66,
   "entries": [
     {
@@ -400,9 +400,9 @@
       "slug": "facts",
       "title": "Facts",
       "file": "htb/machines/easy/facts.md",
-      "rev": "f00d733aac",
+      "rev": "88a648aa50",
       "difficulty": "Easy",
-      "os": "Linux",
+      "os": "linux",
       "date": "2026-01-31",
       "points": "20",
       "rating": "4.5",
@@ -481,9 +481,9 @@
       "slug": "monitorsfour",
       "title": "MonitorsFour",
       "file": "htb/machines/easy/monitorsfour.md",
-      "rev": "31a3aa29e7",
+      "rev": "3b80e14799",
       "difficulty": "Easy",
-      "os": "Windows",
+      "os": "windows",
       "date": "2025-12-06",
       "points": "20",
       "rating": "3.6",
@@ -1348,7 +1348,7 @@
       "slug": "sorcery",
       "title": "Sorcery",
       "file": "htb/machines/insane/sorcery.md",
-      "rev": "30417c08bb",
+      "rev": "4849c70ea8",
       "difficulty": "Insane",
       "os": "Linux",
       "date": "2025-06-14",
@@ -1357,12 +1357,14 @@
       "avatar": "assets/htb/sorcery.png",
       "htb_url": "https://app.hackthebox.com/machines/Sorcery",
       "tags": [
-        "cypher-injection",
-        "neo4j",
-        "webauthn",
-        "passkey",
-        "kafka",
-        "freeipa"
+        "Cross Site Scripting (XSS)",
+        "Server Side Request Forgery (SSRF)",
+        "Information Disclosure",
+        "Misconfiguration",
+        "Weak Permissions",
+        "Race Condition",
+        "Weak Cryptography",
+        "Hard-coded Credentials"
       ]
     },
     {
@@ -1374,7 +1376,7 @@
       "slug": "airtouch",
       "title": "AirTouch",
       "file": "htb/machines/medium/airtouch.md",
-      "rev": "2b1579a77a",
+      "rev": "ca8290a779",
       "difficulty": "Medium",
       "os": "linux",
       "date": "2026-01-17",
@@ -1383,13 +1385,14 @@
       "avatar": "assets/htb/airtouch.png",
       "htb_url": "https://app.hackthebox.com/machines/AirTouch",
       "tags": [
-        "802.11",
-        "wpa2-psk",
-        "evil-twin",
-        "peap-mschapv2",
-        "eaphammer",
-        "aircrack-ng",
-        "wifi"
+        "Weak Credentials",
+        "Remote Code Execution",
+        "Clear Text Credentials",
+        "Information Disclosure",
+        "Misconfiguration",
+        "Hard-coded Credentials",
+        "Reconnaissance",
+        "Packet Capture Analysis"
       ]
     },
     {
@@ -1539,9 +1542,9 @@
       "slug": "interpreter",
       "title": "Interpreter",
       "file": "htb/machines/medium/interpreter.md",
-      "rev": "5ff6495743",
+      "rev": "965d04adf3",
       "difficulty": "Medium",
-      "os": "Linux",
+      "os": "linux",
       "date": "2026-02-21",
       "points": "30",
       "rating": "3.1",

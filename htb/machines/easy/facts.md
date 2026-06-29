@@ -1,7 +1,7 @@
 ---
 title: "Facts"
 difficulty: Easy
-os: Linux
+os: linux
 points: 20
 rating: 4.5
 date: 2026-01-31
